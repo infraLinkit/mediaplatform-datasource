@@ -67,9 +67,9 @@ func (h *BaseModel) IncrCounterData(key string, path string, val float64) {
 	ctx := context.Background()
 
 	if err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonNumincrby().Key(key).Path(path).Value(val).Build()).Error(); err != nil {
-		h.Logs.Debug(fmt.Sprintf("Append error counter key (%s), path (%s), err : %#v ...\n", key, path, err))
+		h.Logs.Debug(fmt.Sprintf("Increament error counter key (%s), path (%s), err : %#v ...\n", key, path, err))
 	} else {
-		h.Logs.Debug(fmt.Sprintf("Append success counter key (%s), path (%s) ...\n", key, path))
+		h.Logs.Debug(fmt.Sprintf("Increament success counter key (%s), path (%s) ...\n", key, path))
 	}
 
 }
@@ -81,9 +81,9 @@ func (h *BaseModel) AppendCounterData(key string, path string, o entity.DataCoun
 
 	b, _ := json.Marshal(o)
 	if err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonArrappend().Key(key).Path(path).Value(string(b)).Build()).Error(); err != nil {
-		h.Logs.Debug(fmt.Sprintf("Append error counter key (%s), path (%s), err : %#v ...\n", key, path, err))
+		h.Logs.Debug(fmt.Sprintf("Append data error key (%s), path (%s), err : %#v ...\n", key, path, err))
 	} else {
-		h.Logs.Debug(fmt.Sprintf("Append success counter key (%s), path (%s) ...\n", key, path))
+		h.Logs.Debug(fmt.Sprintf("Append data success key (%s), path (%s) ...\n", key, path))
 	}
 
 }

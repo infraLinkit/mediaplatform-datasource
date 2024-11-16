@@ -50,8 +50,11 @@ func MakeLogger(filename string, display bool, level string) *logrus.Logger {
 		logger.SetOutput(io.MultiWriter(f))
 	}
 	logger.SetReportCaller(true)
-	//logger.SetFormatter(&MyFormatter{})
-	logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.SetFormatter(&logrus.TextFormatter{
+		DisableColors: true,
+		FullTimestamp: true,
+	})
+	//logger.SetFormatter(&logrus.JSONFormatter{})
 
 	level = strings.ToUpper(level)
 	if level == "INFO" {

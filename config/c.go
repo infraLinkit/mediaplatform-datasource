@@ -16,7 +16,7 @@ import (
 
 const (
 	//APP_PATH       = "/app"
-	APP_PATH       = "/Users/wiliewahyuhidayat/Documents/GO/mediaplatform/cores/lp" // local
+	APP_PATH       = "/Users/wiliewahyuhidayat/Documents/GO/mediaplatform/cores/" // local
 	EVENT_TRAFFIC  = "Traffic"
 	EVENT_LANDING  = "Landing"
 	EVENT_CLICK    = "Click Landing"
@@ -184,6 +184,6 @@ func (c *Cfg) InitMessageBroker() rmqp.AMQP {
 
 	rb.SetUpConnectionAmqp()
 
-	rb.SetUpChannel("direct", true, c.RabbitMQExchangeName, true, c.RabbitMQQueueName)
+	//rb.SetUpChannel("direct", true, c.RabbitMQExchangeName, true, c.RabbitMQQueueName)
 	return rb
 }

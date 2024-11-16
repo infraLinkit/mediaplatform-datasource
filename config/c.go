@@ -28,27 +28,31 @@ const (
 
 type (
 	Cfg struct {
-		AppHost              string
-		RedisHost            string
-		RedisPort            int
-		RedisPwd             string
-		RedisKeyExpiration   int64
-		PSQLHost             string
-		PSQLUsername         string
-		PSQLPassword         string
-		PSQLPort             string
-		PSQLDB               string
-		RabbitMQHost         string
-		RabbitMQPort         int
-		RabbitMQUsername     string
-		RabbitMQPassword     string
-		RabbitMQVHost        string
-		RabbitMQExchangeName string
-		RabbitMQQueueName    string
-		RabbitMQDataType     string
-		LogPath              string
-		LogLevel             string
-		TZ                   *time.Location
+		AppHost                          string
+		RedisHost                        string
+		RedisPort                        int
+		RedisPwd                         string
+		RedisKeyExpiration               int64
+		PSQLHost                         string
+		PSQLUsername                     string
+		PSQLPassword                     string
+		PSQLPort                         string
+		PSQLDB                           string
+		RabbitMQHost                     string
+		RabbitMQPort                     int
+		RabbitMQUsername                 string
+		RabbitMQPassword                 string
+		RabbitMQVHost                    string
+		RabbitMQDataType                 string
+		RabbitMQExchangeName             string
+		RabbitMQQueueName                string
+		RabbitMQPixelStorageExchangeName string
+		RabbitMQPixelStorageQueueName    string
+		RabbitMQRedisCounterExchangeName string
+		RabbitMQRedisCounterQueueName    string
+		LogPath                          string
+		LogLevel                         string
+		TZ                               *time.Location
 	}
 
 	Setup struct {
@@ -69,27 +73,31 @@ func InitCfg() *Cfg {
 	redis_exp, _ := strconv.Atoi(os.Getenv("REDISKEYEXPIRE"))
 
 	cfg := &Cfg{
-		AppHost:              os.Getenv("APPHOST"),
-		RedisHost:            os.Getenv("REDISHOST"),
-		RedisPort:            redis_port,
-		RedisPwd:             os.Getenv("REDISPASSWORD"),
-		RedisKeyExpiration:   int64(redis_exp),
-		PSQLHost:             os.Getenv("DB_HOST"),
-		PSQLUsername:         os.Getenv("DB_USERNAME"),
-		PSQLPassword:         os.Getenv("DB_PASSWORD"),
-		PSQLPort:             os.Getenv("DB_PORT"),
-		PSQLDB:               os.Getenv("DB_DATABASE"),
-		RabbitMQHost:         os.Getenv("RABBITMQHOST"),
-		RabbitMQPort:         rabbitmq_port,
-		RabbitMQUsername:     os.Getenv("RABBITMQUSERNAME"),
-		RabbitMQPassword:     os.Getenv("RABBITMQPASSWORD"),
-		RabbitMQVHost:        os.Getenv("RABBITMQVHOST"),
-		RabbitMQExchangeName: os.Getenv("RABBITMQEXCHANGENAME"),
-		RabbitMQQueueName:    os.Getenv("RABBITMQQUEUENAME"),
-		RabbitMQDataType:     "application/json",
-		LogPath:              os.Getenv("LOGPATH"),
-		LogLevel:             os.Getenv("LOGLEVEL"),
-		TZ:                   loc,
+		AppHost:                          os.Getenv("APPHOST"),
+		RedisHost:                        os.Getenv("REDISHOST"),
+		RedisPort:                        redis_port,
+		RedisPwd:                         os.Getenv("REDISPASSWORD"),
+		RedisKeyExpiration:               int64(redis_exp),
+		PSQLHost:                         os.Getenv("DB_HOST"),
+		PSQLUsername:                     os.Getenv("DB_USERNAME"),
+		PSQLPassword:                     os.Getenv("DB_PASSWORD"),
+		PSQLPort:                         os.Getenv("DB_PORT"),
+		PSQLDB:                           os.Getenv("DB_DATABASE"),
+		RabbitMQHost:                     os.Getenv("RABBITMQHOST"),
+		RabbitMQPort:                     rabbitmq_port,
+		RabbitMQUsername:                 os.Getenv("RABBITMQUSERNAME"),
+		RabbitMQPassword:                 os.Getenv("RABBITMQPASSWORD"),
+		RabbitMQVHost:                    os.Getenv("RABBITMQVHOST"),
+		RabbitMQDataType:                 "application/json",
+		RabbitMQExchangeName:             os.Getenv("RABBITMQEXCHANGENAME"),
+		RabbitMQQueueName:                os.Getenv("RABBITMQQUEUENAME"),
+		RabbitMQPixelStorageExchangeName: os.Getenv("RABBITMQPIXELSTORAGEEXCHANGENAME"),
+		RabbitMQPixelStorageQueueName:    os.Getenv("RABBITMQPIXELSTORAGEQUEUENAME"),
+		RabbitMQRedisCounterExchangeName: os.Getenv("RABBITMQREDISCOUNTEREXCHANGENAME"),
+		RabbitMQRedisCounterQueueName:    os.Getenv("RABBITMQREDISCOUNTERQUEUENAME"),
+		LogPath:                          os.Getenv("LOGPATH"),
+		LogLevel:                         os.Getenv("LOGLEVEL"),
+		TZ:                               loc,
 	}
 
 	return cfg

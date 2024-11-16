@@ -116,6 +116,7 @@ func (c *Cfg) Initiate(logname string) *Setup {
 		Config: c,
 		Logs:   l,
 		R:      c.InitRedisJSON(l, 0),
+		DB:     c.InitPsql(l),
 		Rmqp:   c.InitMessageBroker(),
 	}
 

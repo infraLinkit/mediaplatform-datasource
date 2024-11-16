@@ -10,7 +10,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type MyFormatter struct{}
+type (
+	Setup struct {
+		Env     string
+		Logname string
+		Display bool
+		Level   string
+	}
+	MyFormatter struct{}
+)
 
 var levelList = []string{
 	"PANIC",
@@ -38,38 +46,42 @@ func (mf *MyFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
-func MakeLogger(filename string, display bool, level string) *logrus.Logger {
-	f, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0755)
+func MakeLogger(s Setup) *logrus.Logger {
+	f, err := os.OpenFile(s.Logname, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0755)
 	if err != nil {
 		panic(err.Error())
 	}
 	logger := logrus.New()
-	if display {
+	if s.Display {
 		logger.SetOutput(io.MultiWriter(os.Stdout, f))
 	} else {
 		logger.SetOutput(io.MultiWriter(f))
 	}
 	logger.SetReportCaller(true)
-	logger.SetFormatter(&logrus.TextFormatter{
-		DisableColors: true,
-		FullTimestamp: true,
-	})
-	//logger.SetFormatter(&logrus.JSONFormatter{})
 
-	level = strings.ToUpper(level)
-	if level == "INFO" {
+	if s.Env == "Production" {
+		logger.SetFormatter(&logrus.JSONFormatter{})
+	} else if s.Env == "Staging" {
+		logger.SetFormatter(&logrus.TextFormatter{
+			DisableColors: true,
+			FullTimestamp: true,
+		})
+	}
+
+	s.Level = strings.ToUpper(s.Level)
+	if s.Level == "INFO" {
 		logger.Level = logrus.InfoLevel
-	} else if level == "DEBUG" {
+	} else if s.Level == "DEBUG" {
 		logger.Level = logrus.DebugLevel
-	} else if level == "WARN" {
+	} else if s.Level == "WARN" {
 		logger.Level = logrus.WarnLevel
-	} else if level == "ERROR" {
+	} else if s.Level == "ERROR" {
 		logger.Level = logrus.ErrorLevel
-	} else if level == "FATAL" {
+	} else if s.Level == "FATAL" {
 		logger.Level = logrus.FatalLevel
-	} else if level == "PANIC" {
+	} else if s.Level == "PANIC" {
 		logger.Level = logrus.PanicLevel
-	} else if level == "TRACE" {
+	} else if s.Level == "TRACE" {
 		logger.Level = logrus.TraceLevel
 	}
 

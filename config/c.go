@@ -50,6 +50,7 @@ type (
 		RabbitMQPixelStorageQueueName    string
 		RabbitMQRedisCounterExchangeName string
 		RabbitMQRedisCounterQueueName    string
+		LogEnv                           string
 		LogPath                          string
 		LogLevel                         string
 		TZ                               *time.Location
@@ -95,6 +96,7 @@ func InitCfg() *Cfg {
 		RabbitMQPixelStorageQueueName:    os.Getenv("RABBITMQPIXELSTORAGEQUEUENAME"),
 		RabbitMQRedisCounterExchangeName: os.Getenv("RABBITMQREDISCOUNTEREXCHANGENAME"),
 		RabbitMQRedisCounterQueueName:    os.Getenv("RABBITMQREDISCOUNTERQUEUENAME"),
+		LogEnv:                           os.Getenv("LOGENV"),
 		LogPath:                          os.Getenv("LOGPATH"),
 		LogLevel:                         os.Getenv("LOGLEVEL"),
 		TZ:                               loc,
@@ -105,7 +107,9 @@ func InitCfg() *Cfg {
 
 func (c *Cfg) Initiate(logname string) *Setup {
 
-	l := helper.MakeLogger(c.LogPath+"/"+logname, true, c.LogLevel)
+	//l := helper.MakeLogger(c.LogPath+"/"+logname, true, c.LogLevel)
+	l := helper.MakeLogger(
+		helper.Setup{Env: c.LogEnv, Logname: c.LogPath + "/" + logname, Display: true, Level: c.LogLevel})
 	l.Info(fmt.Sprintf("Config Loaded : %#v\n", c))
 
 	return &Setup{

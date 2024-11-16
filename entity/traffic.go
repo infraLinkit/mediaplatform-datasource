@@ -2,6 +2,7 @@ package entity
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
 	"github.com/sirupsen/logrus"
 )
@@ -26,7 +27,7 @@ type (
 	}
 )
 
-func NewInstanceTraffic(cfg *Cfg, o DataTraffic) *Traffic {
+func NewInstanceTraffic(cfg *config.Cfg, o DataTraffic) *Traffic {
 
 	date := helper.GetFormatTime(cfg.TZ, "20060102")
 	//key := helper.Concat("-", o.URLServiceKey)

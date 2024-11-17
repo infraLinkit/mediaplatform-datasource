@@ -142,5 +142,7 @@ type (
 		URLPostback       string `json:"url_postback"`
 		StatusURLPostback string `json:"status_url_postback"`
 		ReasonURLPostback string `json:"reason_url_postback"`
+		PO                string `json:"po"`
+		Cost              string `json:"cost"`
 	}
 )

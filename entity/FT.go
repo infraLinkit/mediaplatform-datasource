@@ -114,6 +114,7 @@ type (
 		Pixel             string `json:"pixel"`
 		TrxId             string `json:"trx_id"`
 		Token             string `json:"token"`
+		Msisdn            string `json:"msisdn"`
 		IsUsed            bool   `json:"is_used"`
 		Browser           string `json:"browser"`
 		OS                string `json:"os"`
@@ -134,5 +135,6 @@ type (
 		URLWarpLanding    string `json:"url_warp_landing"`
 		URLService        string `json:"url_service"`
 		URLTFCSmartlink   string `json:"url_tfc_or_smartlink"`
+		PixelUsedDate     string `json:"pixel_used_date"`
 	}
 )

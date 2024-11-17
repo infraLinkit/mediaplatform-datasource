@@ -77,31 +77,22 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 				SameSite: "lax",
 			})
 
-			if px, err := h.DS.GetPx(entity.PixelStorage{
-				Country: p.Country, Operator: p.Operator, Partner: p.Partner, Service: p.ServiceId, Keyword: p.Keyword, IsBillable: p.IsBillable, Pixel: p.Px,
-			}); err != nil {
+			pxData := entity.PixelStorage{
+				Country: p.Country, Operator: p.Operator, Partner: p.Partner, Service: p.ServiceId, Keyword: p.Keyword, IsBillable: p.IsBillable, Pixel: p.Px}
+
+			if px, err := h.DS.GetPx(pxData); err != nil {
 
 				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found"})
 
 			} else {
 
-				pixelUsedDate := helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+				pxData.Id = px.Id
+				pxData.Msisdn = p.Msisdn
+				pxData.TrxId = p.TrxId
+				pxData.IsUsed = true
+				pxData.PixelUsedDate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
 
-				/* h.DS.UpdatePixelById(entity.PixelStorage{
-					Msisdn:        p.Msisdn,
-					TrxId:         p.TrxId,
-					IsUsed:        true,
-					PixelUsedDate: pixelUsedDate,
-					Id:            px.Id,
-				}) */
-
-				bodyReq, _ := json.Marshal(entity.PixelStorage{
-					Msisdn:        p.Msisdn,
-					TrxId:         p.TrxId,
-					IsUsed:        true,
-					PixelUsedDate: pixelUsedDate,
-					Id:            px.Id,
-				})
+				bodyReq, _ := json.Marshal(pxData)
 
 				corId := "PBA" + helper.GetUniqId(h.Config.TZ)
 
@@ -133,7 +124,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 					OS:            px.OS,
 					PubId:         px.PubId,
 					Handset:       px.Handset,
-					PixelUsedDate: pixelUsedDate,
+					PixelUsedDate: pxData.PixelUsedDate,
 				}})
 			}
 		}

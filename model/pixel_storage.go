@@ -12,7 +12,7 @@ import (
 const (
 	NEWPX    = "INSERT INTO pixel_storage (id, campaign_detail_id, pxdate, urlservicekey, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pubid, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfc_or_smartlink) VALUES (DEFAULT, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', %t, '%s', %t, %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s')"
 	GETPX    = "SELECT id, campaign_detail_id, pixel, adnet, is_billable, browser, os, handset, pubid FROM pixel_storage WHERE country = '%s' AND operator = '%s' AND partner = '%s' AND service = '%s' AND keyword = '%s' AND is_billable = %t AND pixel = '%s'"
-	UPDATEPX = "UPDATE pixel_storage SET msisdn = '%s', trx_id = '%s', is_used = %t, pixel_used_date = '%s' WHERE id = %d"
+	UPDATEPX = "UPDATE pixel_storage SET msisdn = '%s', trx_id = '%s', is_used = %t, pixel_used_date = '%s', status_postback = %t, is_unique = %t, url_postback = '%s', status_url_postback = '%s', reason_url_postback = '%s' WHERE id = %d"
 )
 
 func (r *BaseModel) NewPixel(o entity.PixelStorage) error {
@@ -82,7 +82,7 @@ func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, error) {
 
 func (r *BaseModel) UpdatePixelById(o entity.PixelStorage) error {
 
-	SQL := fmt.Sprintf(UPDATEPX, o.Msisdn, o.TrxId, o.IsUsed, o.PixelUsedDate, o.Id)
+	SQL := fmt.Sprintf(UPDATEPX, o.Msisdn, o.TrxId, o.IsUsed, o.PixelUsedDate, o.StatusPostback, o.IsUnique, o.URLPostback, o.StatusURLPostback, o.ReasonURLPostback, o.Id)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 

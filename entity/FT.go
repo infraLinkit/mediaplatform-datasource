@@ -50,6 +50,7 @@ type (
 		IsMachineLearningCapping  bool     `json:"is_machine_learning_capping"`
 		RatioSend                 int      `json:"ratio_send"`
 		RatioReceive              int      `json:"ratio_receive"`
+		CounterMORatio            int      `json:"counter_mo_ratio"`
 		StatusRatio               bool     `json:"status_ratio"`
 		KPIUpperLimitRatioSend    int      `json:"kpi_upper_limit_ratio_send"`
 		KPIUpperLimitRatioReceive int      `json:"kpi_upper_limit_ratio_receive"`
@@ -136,5 +137,10 @@ type (
 		URLService        string `json:"url_service"`
 		URLTFCSmartlink   string `json:"url_tfc_or_smartlink"`
 		PixelUsedDate     string `json:"pixel_used_date"`
+		StatusPostback    bool   `json:"status_postback"`
+		IsUnique          bool   `json:"is_unique"`
+		URLPostback       string `json:"url_postback"`
+		StatusURLPostback string `json:"status_url_postback"`
+		ReasonURLPostback string `json:"reason_url_postback"`
 	}
 )

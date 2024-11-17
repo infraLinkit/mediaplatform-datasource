@@ -16,7 +16,7 @@ jobs:
         matrix:
             include:
                 - 
-                    dockerfile: ./Dockerfile.datasource.server
+                    dockerfile: Dockerfile.datasource.server
                     image: wiliehidayat87/mediaplatform-datasource-server
     steps:
       - name: Docker meta

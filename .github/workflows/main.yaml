@@ -17,12 +17,14 @@ jobs:
             include:
                 - 
                     dockerfile: Dockerfile.datasource.server
-                    image: wiliehidayat87/mediaplatform-datasource-server
     steps:
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
+          # list of Docker images to use as base name for tags
+          images: |
+            wiliehidayat87/mediaplatform-datasource-server
           # generate Docker tags based on the following events/attributes
           tags: |
             type=schedule

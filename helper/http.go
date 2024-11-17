@@ -73,6 +73,7 @@ func HttpClient(p PHttp) *http.Client {
 	return &client
 }
 
+// @return param : respBody, response.Status, response.StatusCode, strlog, err
 func Get(url string, headers map[string]string, transport PHttp) ([]byte, string, int, string, error) {
 
 	start := time.Now()
@@ -157,6 +158,7 @@ func Get(url string, headers map[string]string, transport PHttp) ([]byte, string
 	return respBody, response.Status, response.StatusCode, strlog, err
 }
 
+// @return param : respBody, response.Status, response.StatusCode, strlog, err
 func Post(url string, headers map[string]string, body []byte, transport PHttp) ([]byte, string, int, string, error) {
 
 	start := time.Now()

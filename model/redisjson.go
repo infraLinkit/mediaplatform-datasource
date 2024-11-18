@@ -88,13 +88,12 @@ func (h *BaseModel) AppendCounterData(key string, path string, o entity.DataCoun
 
 }
 
-func (h *BaseModel) SetCounterData(key string, path string, o entity.DataCounterDetail) {
+func (h *BaseModel) SetCounterData(key string, path string, val string) {
 
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	b, _ := json.Marshal(o)
-	if err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonSet().Key(key).Path(path).Value(string(b)).Build()).Error(); err != nil {
+	if err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonSet().Key(key).Path(path).Value(val).Build()).Error(); err != nil {
 		h.Logs.Debug(fmt.Sprintf("Set data error key (%s), path (%s), err : %#v ...\n", key, path, err))
 	} else {
 		h.Logs.Debug(fmt.Sprintf("Set data success key (%s), path (%s) ...\n", key, path))

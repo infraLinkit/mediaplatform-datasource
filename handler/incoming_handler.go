@@ -90,6 +90,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 					return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found"})
 				} else {
 					pxData.Id = px.Id
+					pxData.CampaignDetailId = px.CampaignDetailId
 					pxData.Msisdn = p.Msisdn
 					pxData.TrxId = p.TrxId
 					pxData.IsUsed = true

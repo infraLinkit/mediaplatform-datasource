@@ -11,7 +11,7 @@ import (
 
 const (
 	GETCAMPAIGNDETAIL   = "SELECT id, is_active, counter_mo_capping, mo_capping, status_capping, counter_mo_ratio, ratio_send, ratio_receive, status_ratio, api_url, pubid, cost, po FROM campaign_detail WHERE id = %d;"
-	COUNTERCAPPING      = "UPDATE campaign_detail SET counter_mo_capping = counter_mo_capping+1, last_update_capping CASE WHEN counter_mo_capping >= mo_capping THEN '%s' END WHERE id = %d;"
+	COUNTERCAPPING      = "UPDATE campaign_detail SET counter_mo_capping = counter_mo_capping+1, last_update_capping = CASE WHEN counter_mo_capping >= mo_capping THEN '%s' END WHERE id = %d;"
 	COUNTERRATIO        = "UPDATE campaign_detail SET counter_mo_ratio = counter_mo_ratio+1 WHERE id = %d;"
 	UPDATESTATUSCOUNTER = "UPDATE campaign_detail SET status_capping = %t, status_ratio = %t, last_update = '%s' WHERE id = %d"
 )

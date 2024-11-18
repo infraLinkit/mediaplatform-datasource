@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	GETCAMPAIGNDETAIL   = "SELECT id, is_active, counter_mo_capping, mo_capping, status_capping, counter_mo_ratio, ratio_send, ratio_receive, status_ratio, api_url, pubid, cost, po FROM campaign_detail WHERE id = %d;"
+	GETCAMPAIGNDETAIL   = "SELECT id, urlservicekey, is_active, counter_mo_capping, mo_capping, status_capping, counter_mo_ratio, ratio_send, ratio_receive, status_ratio, api_url, pubid, cost, po FROM campaign_detail WHERE id = %d;"
 	COUNTERCAPPING      = "UPDATE campaign_detail SET counter_mo_capping = counter_mo_capping+1, last_update_capping = CASE WHEN counter_mo_capping >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d;"
 	COUNTERRATIO        = "UPDATE campaign_detail SET counter_mo_ratio = counter_mo_ratio+1 WHERE id = %d;"
 	UPDATESTATUSCOUNTER = "UPDATE campaign_detail SET status_capping = %t, status_ratio = %t, last_update = '%s' WHERE id = %d"
@@ -29,7 +29,7 @@ func (r *BaseModel) GetCampaignDetail(o entity.DataConfig) (entity.DataConfig, e
 
 	for rows.Next() {
 
-		err = rows.Scan(&o.Id, &o.IsActive, &o.CounterMOCapping, &o.MOCapping, &o.StatusCapping, &o.CounterMORatio, &o.RatioSend, &o.RatioReceive, &o.StatusRatio, &o.APIURL, &o.PubId, &o.Cost, &o.PO)
+		err = rows.Scan(&o.Id, &o.URLServiceKey, &o.IsActive, &o.CounterMOCapping, &o.MOCapping, &o.StatusCapping, &o.CounterMORatio, &o.RatioSend, &o.RatioReceive, &o.StatusRatio, &o.APIURL, &o.PubId, &o.Cost, &o.PO)
 
 		if err != nil {
 

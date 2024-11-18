@@ -18,6 +18,7 @@ var serverCmd = &cobra.Command{
 		c := cfg.Initiate("api")
 
 		c.Rmqp.SetUpChannel("direct", true, cfg.RabbitMQPixelStorageExchangeName, true, cfg.RabbitMQPixelStorageQueueName)
+		c.Rmqp.SetUpChannel("direct", true, cfg.RabbitMQRatioExchangeName, true, cfg.RabbitMQRatioQueueName)
 
 		router := app.MapUrls(app.App3rdParty{
 			Config: cfg,

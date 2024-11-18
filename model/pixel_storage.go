@@ -17,7 +17,7 @@ const (
 
 func (r *BaseModel) NewPixel(o entity.PixelStorage) error {
 
-	SQL := fmt.Sprintf(NEWPX, o.CampaignDetailId, o.PxDate, o.URLServiceKey, o.CampaignId, o.Country, o.Partner, o.Partner, o.Aggregator, o.Service, o.ShortCode, o.Adnet, o.Keyword, o.Subkeyword, o.IsBillable, o.Plan, o.URL, o.URLType, o.Pixel, o.TrxId, o.Token, o.Msisdn, o.IsUsed, o.Browser, o.OS, o.IP, o.ISP, o.ReferralURL, o.PubId, o.UserAgent, o.TrafficSource, o.TrafficSourceData, o.UserRejected, o.UserDuplicated, o.Handset, o.HandsetCode, o.HandsetType, o.URLLanding, o.URLWarpLanding, o.URLService, o.URLTFCSmartlink, o.PO, o.Cost)
+	SQL := fmt.Sprintf(NEWPX, o.CampaignDetailId, o.PxDate, o.URLServiceKey, o.CampaignId, o.Country, o.Partner, o.Operator, o.Aggregator, o.Service, o.ShortCode, o.Adnet, o.Keyword, o.Subkeyword, o.IsBillable, o.Plan, o.URL, o.URLType, o.Pixel, o.TrxId, o.Token, o.Msisdn, o.IsUsed, o.Browser, o.OS, o.IP, o.ISP, o.ReferralURL, o.PubId, o.UserAgent, o.TrafficSource, o.TrafficSourceData, o.UserRejected, o.UserDuplicated, o.Handset, o.HandsetCode, o.HandsetType, o.URLLanding, o.URLWarpLanding, o.URLService, o.URLTFCSmartlink, o.PO, o.Cost)
 
 	//L.Write(L.LogName, "debug", fmt.Sprintf("NewSubs (%s)", SQL))
 
@@ -58,7 +58,6 @@ func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, error) {
 	rows, err := r.DBPostgre.Query(SQL)
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("GetPx, SQL : %s, error querying occured : %#v", SQL, err))
-
 		return entity.PixelStorage{}, err
 	}
 	defer rows.Close()
@@ -72,7 +71,7 @@ func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, error) {
 		if err != nil {
 
 			r.Logs.Error(fmt.Sprintf("GetPx, SQL : %s, error scan occured : %#v", SQL, err))
-
+			return entity.PixelStorage{}, err
 		}
 	}
 

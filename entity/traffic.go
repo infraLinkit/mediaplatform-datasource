@@ -36,7 +36,7 @@ func NewInstanceTraffic(cfg *config.Cfg, o DataTraffic) *Traffic {
 		Date:       date,
 		Key:        o.URLServiceKey,
 		KeyCfg:     helper.Concat("-", o.URLServiceKey, "configIdx"),
-		KeyCounter: helper.Concat("-", date, o.URLServiceKey, "counterIdx"),
+		KeyCounter: helper.Concat("-", o.URLServiceKey, "counterIdx"),
 		//KeyDataMining: helper.Concat("-", date, key, "dataminingIdx"),
 		DataTraffic: o,
 	}

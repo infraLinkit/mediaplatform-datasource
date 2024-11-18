@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	GETCAMPAIGNDETAIL   = "SELECT * FROM campaign_detail WHERE id = %d;"
+	GETCAMPAIGNDETAIL   = "SELECT id, is_active, counter_mo_capping, mo_capping, status_capping, counter_mo_ratio, ratio_send, ratio_receive, status_ratio, api_url, pubid, cost, po FROM campaign_detail WHERE id = %d;"
 	COUNTERCAPPING      = "UPDATE campaign_detail SET counter_mo_capping = counter_mo_capping+1, last_update_capping CASE WHEN counter_mo_capping >= mo_capping THEN '%s' END WHERE id = %d;"
 	COUNTERRATIO        = "UPDATE campaign_detail SET counter_mo_ratio = counter_mo_ratio+1 WHERE id = %d;"
 	UPDATESTATUSCOUNTER = "UPDATE campaign_detail SET status_capping = %t, status_ratio = %t, last_update = '%s' WHERE id = %d"
@@ -29,7 +29,7 @@ func (r *BaseModel) GetCampaignDetail(o entity.DataConfig) (entity.DataConfig, e
 
 	for rows.Next() {
 
-		err = rows.Scan(&o.Id, &o.URLServiceKey, &o.CampaignId, &o.Country, &o.Operator, &o.Partner, &o.Aggregator, &o.Adnet, &o.Service, &o.Keyword, &o.SubKeyword, &o.IsBillable, &o.Plan, &o.PO, &o.Cost, &o.PubId, &o.ShortCode, &o.DeviceType, &o.OS, &o.URLType, &o.ClickType, &o.ClickDelay, &o.ClientType, &o.TrafficSource, &o.UniqueClick, &o.URLBanner, &o.URLLanding, &o.URLWarpLanding, &o.URLService, &o.URLTFCSmartlink, &o.GlobPost, &o.URLGlobPost, &o.CustomIntegration, &o.IPAddress, &o.IsActive, &o.MOCapping, &o.CounterMOCapping, &o.StatusCapping, &o.KPIUpperLimitCapping, &o.IsMachineLearningCapping, &o.RatioSend, &o.RatioReceive, &o.CounterMORatio, &o.StatusRatio, &o.KPIUpperLimitRatioSend, &o.KPIUpperLimitRatioReceive, &o.IsMachineLearningRatio, &o.APIURL, &o.LastUpdate, &o.LastUpdateCapping)
+		err = rows.Scan(&o.Id, &o.IsActive, &o.CounterMOCapping, &o.MOCapping, &o.StatusCapping, &o.CounterMORatio, &o.RatioSend, &o.RatioReceive, &o.StatusRatio, &o.APIURL, &o.PubId, &o.Cost, &o.PO)
 
 		if err != nil {
 

@@ -10,6 +10,7 @@ RUN apk add --update curl && \
 LABEL author="Wilie wahyu hidayat"
 
 RUN mkdir -p /app/logs
+RUN mkdir -p /app/config
 
 WORKDIR /app/
 COPY . .
@@ -17,7 +18,7 @@ COPY . .
 RUN go mod download
 RUN go mod verify
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /datasource .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/datasource .
 
 FROM build-stage AS run-test-stage
 RUN go test -v ./...
@@ -30,6 +31,8 @@ COPY --from=golang /etc/passwd /etc/passwd
 COPY --from=golang /etc/group /etc/group
 COPY --from=golang /bin/sh /bin/sh
 
-COPY --from=golang /datasource .
+COPY --from=golang /app/datasource .
+
+VOLUME ["/app/logs"]
 
 CMD ["/datasource", "server"]

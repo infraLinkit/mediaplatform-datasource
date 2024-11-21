@@ -14,9 +14,10 @@ import (
 	"github.com/wiliehidayat87/rmqp"
 )
 
+var APP_PATH = "/Users/wiliewahyuhidayat/Documents/GO/mediaplatform/cores/" // local
+
 const (
 	//APP_PATH       = "/app"
-	APP_PATH       = "/Users/wiliewahyuhidayat/Documents/GO/mediaplatform/cores/" // local
 	EVENT_TRAFFIC  = "Traffic"
 	EVENT_LANDING  = "Landing"
 	EVENT_CLICK    = "Click Landing"
@@ -68,6 +69,10 @@ type (
 )
 
 func InitCfg() *Cfg {
+
+	if os.Getenv("APPPATH") != "" {
+		APP_PATH = os.Getenv("APPPATH")
+	}
 
 	loc, _ := time.LoadLocation(os.Getenv("TZ"))
 

@@ -21,6 +21,11 @@ type (
 		Px         string `json:"px"`
 		IsBillable bool   `json:"is_billable"`
 	}
+
+	PostbackData struct {
+		CmpDetail DataConfig
+		Pxs       PixelStorage
+	}
 )
 
 func NewDataPostback(c *fiber.Ctx) *Postback {

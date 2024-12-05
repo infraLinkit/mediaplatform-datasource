@@ -3,14 +3,10 @@ FROM golang:1.22-alpine as golang
 RUN apk --no-cache add tzdata
 
 RUN apk --update add ca-certificates
-RUN apk --no-cache add curl
-RUN apk add --update curl && \
-    rm -rf /var/cache/apk/*
 
 LABEL author="Wilie wahyu hidayat"
 
 RUN mkdir -p /app/logs
-RUN mkdir -p /app/config
 
 WORKDIR /app/
 COPY . .

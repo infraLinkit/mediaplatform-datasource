@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	GETLASTIDCAMPDETAIL  = "SELECT MAX(id) campaign"
+	GETLASTIDCAMPDETAIL  = "SELECT MAX(id) FROM %s"
 	NEWCAMPAIGN          = "INSERT INTO campaign (id, campaign_id, name, campaign_objective, country, advertiser) VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%s')"
 	NEWCAMPAIGNDETAIL    = "INSERT INTO campaign_detail (id, urlservicekey, campaign_id, country, operator, partner, aggregator, adnet, service, keyword, subkeyword, is_billable, plan, po, cost, pubid, short_code, device_type, os, url_type, click_type, click_delay, client_type, traffic_source, unique_click, url_banner, url_landing, url_warp_landing, url_service, url_tfc_or_smartlink, glob_post, url_globpost, custom_integration, ip_address, is_active, mo_capping, counter_mo_capping, status_capping, kpi_upper_limit_capping, is_machine_learning_capping, ratio_send, ratio_receive, counter_mo_ratio, status_ratio, kpi_upper_limit_ratio_send, kpi_upper_limit_ratio_receive, is_machine_learning_auto, api_url, last_update, last_update_capping) VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, '%s', %t, %t, '%s', '%s', '%s', '%s', '%s', %t, '%s', '%s', '%s', %t, %d, %d, %t, %d, %t, %d, %d, %d, %t, %d, %d, %t, '%s', '%s', '%s')"
 	UPDATECAMPAIGN       = "UPDATE campaign SET name = '%s', campaign_objective = '%s', country = '%s', advertiser = '%s' WHERE campaign_id = '%s'"
@@ -23,9 +23,9 @@ const (
 	UPDATESTATUSCOUNTER  = "UPDATE campaign_detail SET counter_mo_capping = %d, status_capping = %t, counter_mo_ratio = %d, status_ratio = %t, last_update = '%s'::timestamp(0), last_update_capping = CASE WHEN counter_mo_capping+1 >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d"
 )
 
-func (r *BaseModel) GetLastCampaignId() int {
+func (r *BaseModel) GetLastCampaignId(tbl string) int {
 
-	SQL := GETLASTIDCAMPDETAIL
+	SQL := fmt.Sprintf(GETLASTIDCAMPDETAIL, tbl)
 
 	var id int
 	err := r.DBPostgre.QueryRow(SQL).Scan(&id)

@@ -5,6 +5,7 @@ type (
 
 	DataCampaignAction struct {
 		Action       string       `json:"action"`
+		Id           string       `json:"id"`
 		CampaignId   string       `json:"campaign_id"`
 		CampaignName string       `json:"name"`
 		Objective    string       `json:"campaign_objective"`

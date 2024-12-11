@@ -40,7 +40,7 @@ func (r *BaseModel) GetLastCampaignId(tbl string) int {
 
 }
 
-func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) error {
+func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) int {
 
 	SQL := fmt.Sprintf(NEWCAMPAIGN, o.CampaignId, o.CampaignName, o.Objective, o.Country, o.Advertiser)
 
@@ -50,7 +50,7 @@ func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) error {
 
 		r.Logs.Debug(fmt.Sprintf("NewCampaign (%s) Error %s when preparing SQL statement", SQL, err))
 
-		return err
+		return 0
 	}
 	defer stmt.Close()
 
@@ -60,7 +60,7 @@ func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) error {
 
 		r.Logs.Debug(fmt.Sprintf("NewCampaign, SQL : %s, Error %s when update to table", SQL, err))
 
-		return err
+		return 0
 	}
 
 	rows, err := res.LastInsertId()
@@ -68,14 +68,14 @@ func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) error {
 
 		r.Logs.Debug(fmt.Sprintf("NewCampaign, SQL : %s, Error %s when finding rows affected", SQL, err))
 
-		return err
+		return 0
 	}
 
 	r.Logs.Debug(fmt.Sprintf("NewCampaign, SQL : %s, row affected : %d", SQL, rows))
-	return nil
+	return int(rows)
 }
 
-func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) error {
+func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) int {
 
 	SQL := fmt.Sprintf(NEWCAMPAIGNDETAIL, o.URLServiceKey, o.CampaignId, o.Country, o.Operator, o.Partner, o.Aggregator, o.Adnet, o.Service, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan, o.PO, o.Cost, o.PubId, o.ShortCode, o.DeviceType, o.OS, o.URLType, o.ClickType, o.ClickDelay, o.ClientType, o.TrafficSource, o.UniqueClick, o.URLBanner, o.URLLanding, o.URLWarpLanding, o.URLService, o.URLTFCSmartlink, o.GlobPost, o.URLGlobPost, o.CustomIntegration, o.IPAddress, o.IsActive, o.MOCapping, o.CounterMOCapping, o.StatusCapping, o.KPIUpperLimitCapping, o.IsMachineLearningCapping, o.RatioSend, o.RatioReceive, o.CounterMORatio, o.StatusRatio, o.KPIUpperLimitRatioSend, o.KPIUpperLimitRatioReceive, o.IsMachineLearningRatio, o.APIURL, o.LastUpdate, o.LastUpdateCapping)
 
@@ -85,7 +85,7 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) error {
 
 		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail (%s) Error %s when preparing SQL statement", SQL, err))
 
-		return err
+		return 0
 	}
 	defer stmt.Close()
 
@@ -95,7 +95,7 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) error {
 
 		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, Error %s when update to table", SQL, err))
 
-		return err
+		return 0
 	}
 
 	rows, err := res.LastInsertId()
@@ -103,11 +103,11 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) error {
 
 		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, Error %s when finding rows affected", SQL, err))
 
-		return err
+		return 0
 	}
 
 	r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, row affected : %d", SQL, rows))
-	return nil
+	return int(rows)
 }
 
 func (r *BaseModel) UpdateCampaign(o entity.DataCampaignAction) error {

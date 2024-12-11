@@ -145,3 +145,22 @@ func Decrypt(ciphertext string) string {
 
 	return string(plaintext)
 }
+
+func CounterZeroNumber(length int) string {
+
+	var wordNumbers string
+
+	for w := 0; w < length; w++ {
+		wordNumbers += "0"
+	}
+
+	return wordNumbers
+}
+
+func ReduceWords(words string, start int, length int) string {
+
+	runes := []rune(words)
+	inputFmt := string(runes[start:length])
+
+	return inputFmt
+}

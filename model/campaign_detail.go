@@ -77,20 +77,20 @@ func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) int {
 	return int(rows)
 }
 
-func (r *BaseModel) GetCampaignByCampaignId(campId string) int {
+func (r *BaseModel) GetCampaignByCampaignId(campId string) entity.DataCampaignAction {
 
 	SQL := fmt.Sprintf(GETCAMPAIGNBYCAMPAIGNID, campId)
 
-	var id int
-	err := r.DBPostgre.QueryRow(SQL).Scan(&id)
+	var o entity.DataCampaignAction
+	err := r.DBPostgre.QueryRow(SQL).Scan(&o.Id, &o.CampaignId, &o.CampaignName, &o.Objective, &o.Country, &o.Advertiser)
 	if err != nil {
 
 		r.Logs.Debug(fmt.Sprintf("GetCampaignByCampaignId (%s) Error %s when preparing SQL statement", SQL, err))
-		return 0
+		return entity.DataCampaignAction{}
 	}
 
-	r.Logs.Debug(fmt.Sprintf("GetCampaignByCampaignId (%s) found %d", SQL, id))
-	return id
+	r.Logs.Debug(fmt.Sprintf("GetCampaignByCampaignId (%s) found %#v", SQL, o))
+	return o
 
 }
 
@@ -133,7 +133,7 @@ func (r *BaseModel) GetCampaignByCampaignDetailId(o entity.DataConfig) entity.Da
 
 	SQL := fmt.Sprintf(GETCAMPAIGNBYCAMPAIGNDETAILID, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Adnet, o.Service)
 
-	err := r.DBPostgre.QueryRow(SQL).Scan(o.URLServiceKey, o.CampaignId, o.Country, o.Operator, o.Partner, o.Aggregator, o.Adnet, o.Service, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan, o.PO, o.Cost, o.PubId, o.ShortCode, o.DeviceType, o.OS, o.URLType, o.ClickType, o.ClickDelay, o.ClientType, o.TrafficSource, o.UniqueClick, o.URLBanner, o.URLLanding, o.URLWarpLanding, o.URLService, o.URLTFCSmartlink, o.GlobPost, o.URLGlobPost, o.CustomIntegration, o.IPAddress, o.IsActive, o.MOCapping, o.CounterMOCapping, o.StatusCapping, o.KPIUpperLimitCapping, o.IsMachineLearningCapping, o.RatioSend, o.RatioReceive, o.CounterMORatio, o.StatusRatio, o.KPIUpperLimitRatioSend, o.KPIUpperLimitRatioReceive, o.IsMachineLearningRatio, o.APIURL, o.LastUpdate, o.LastUpdateCapping)
+	err := r.DBPostgre.QueryRow(SQL).Scan(&o.Id, &o.URLServiceKey, &o.CampaignId, &o.Country, &o.Operator, &o.Partner, &o.Aggregator, &o.Adnet, &o.Service, &o.Keyword, &o.SubKeyword, &o.IsBillable, &o.Plan, &o.PO, &o.Cost, &o.PubId, &o.ShortCode, &o.DeviceType, &o.OS, &o.URLType, &o.ClickType, &o.ClickDelay, &o.ClientType, &o.TrafficSource, &o.UniqueClick, &o.URLBanner, &o.URLLanding, &o.URLWarpLanding, &o.URLService, &o.URLTFCSmartlink, &o.GlobPost, &o.URLGlobPost, &o.CustomIntegration, &o.IPAddress, &o.IsActive, &o.MOCapping, &o.CounterMOCapping, &o.StatusCapping, &o.KPIUpperLimitCapping, &o.IsMachineLearningCapping, &o.RatioSend, &o.RatioReceive, &o.CounterMORatio, &o.StatusRatio, &o.KPIUpperLimitRatioSend, &o.KPIUpperLimitRatioReceive, &o.IsMachineLearningRatio, &o.APIURL, &o.LastUpdate, &o.LastUpdateCapping)
 	if err != nil {
 
 		r.Logs.Debug(fmt.Sprintf("GetCampaignByCampaignDetailId (%s) Error %s when preparing SQL statement", SQL, err))

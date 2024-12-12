@@ -65,7 +65,7 @@ func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) int {
 		return 0
 	}
 
-	rows, err := res.LastInsertId()
+	rows, err := res.RowsAffected()
 	if err != nil {
 
 		r.Logs.Debug(fmt.Sprintf("NewCampaign, SQL : %s, Error %s when finding rows affected", SQL, err))
@@ -117,7 +117,7 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) int {
 		return 0
 	}
 
-	rows, err := res.LastInsertId()
+	rows, err := res.RowsAffected()
 	if err != nil {
 
 		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, Error %s when finding rows affected", SQL, err))

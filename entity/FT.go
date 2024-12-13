@@ -11,6 +11,7 @@ type (
 		Objective    string       `json:"campaign_objective"`
 		Country      string       `json:"country"`
 		Advertiser   string       `json:"advertiser"`
+		IsDelCamp    bool         `json:"is_del_camp"`
 		DataConfig   []DataConfig `json:"data"`
 	}
 

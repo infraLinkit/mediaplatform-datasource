@@ -65,7 +65,8 @@ func GetUniqId(loc *time.Location) string {
 
 func GetIpAddress(c *fiber.Ctx) string {
 
-	ipAddress := ""
+	ip := ""
+
 	for k, v := range c.GetReqHeaders() {
 		//fmt.Printf("(k1) %#v", k)
 
@@ -73,7 +74,7 @@ func GetIpAddress(c *fiber.Ctx) string {
 			for _, v2 := range v {
 				//fmt.Printf("(2) %#v", v2)
 				if v2 != "" {
-					ipAddress = v2
+					ip = v2
 					break
 				}
 			}
@@ -81,11 +82,45 @@ func GetIpAddress(c *fiber.Ctx) string {
 		}
 	}
 
-	if ipAddress == "" {
-		ipAddress = c.IP()
+	if ip == "" {
+		for k, v := range c.GetReqHeaders() {
+			//fmt.Printf("(k1) %#v", k)
+
+			if k == "X-Forwarded-For" {
+				for _, v2 := range v {
+					//fmt.Printf("(2) %#v", v2)
+					if v2 != "" {
+						ip = v2
+						break
+					}
+				}
+				break
+			}
+		}
 	}
 
-	return ipAddress
+	if ip == "" {
+		for k, v := range c.GetReqHeaders() {
+			//fmt.Printf("(k1) %#v", k)
+
+			if k == "X-Real-Ip" {
+				for _, v2 := range v {
+					//fmt.Printf("(2) %#v", v2)
+					if v2 != "" {
+						ip = v2
+						break
+					}
+				}
+				break
+			}
+		}
+	}
+
+	if ip == "" {
+		ip = c.IP()
+	}
+
+	return ip
 }
 
 var (

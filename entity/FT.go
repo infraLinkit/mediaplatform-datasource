@@ -75,34 +75,49 @@ type (
 	//'{"id":1,"urlservicekey":"idtelgempastelmbv","campaign_id":"ID01","country":"ID","partner":"pass","operator":"telkomsel","aggregator":"telesat","service":"gazy","short_code":"1234","adnet":"mbv","keyword":"gazy","subkeyword":"","is_billable":false,"plan":"","traffic":0,"landing":0,"click":0,"redirect":0,"traffic_data":[],"landing_data":[],"click_data":[],"redirect_data":[]}'
 
 	DataCounter struct {
-		CampaignDetailId int                 `json:"campaign_detail_id"`
-		URLServiceKey    string              `json:"urlservicekey"`
-		CampaignId       string              `json:"campaign_id"`
-		Country          string              `json:"country"`
-		Partner          string              `json:"partner"`
-		Operator         string              `json:"operator"`
-		Aggregator       string              `json:"aggregator"`
-		Service          string              `json:"service"`
-		ShortCode        string              `json:"short_code"`
-		Adnet            string              `json:"adnet"`
-		Keyword          string              `json:"keyword"`
-		SubKeyword       string              `json:"subkeyword"`
-		IsBillable       bool                `json:"is_billable"`
-		Plan             string              `json:"plan"`
-		Traffic          int                 `json:"traffic"`
-		Landing          int                 `json:"landing"`
-		Click            int                 `json:"click"`
-		Redirect         int                 `json:"redirect"`
-		TrafficData      []DataCounterDetail `json:"traffic_data"`
-		LandingData      []DataCounterDetail `json:"landing_data"`
-		ClickData        []DataCounterDetail `json:"click_data"`
-		RedirectData     []DataCounterDetail `json:"redirect_data"`
+		CampaignDetailId int                         `json:"campaign_detail_id"`
+		URLServiceKey    string                      `json:"urlservicekey"`
+		CampaignId       string                      `json:"campaign_id"`
+		Country          string                      `json:"country"`
+		Partner          string                      `json:"partner"`
+		Operator         string                      `json:"operator"`
+		Aggregator       string                      `json:"aggregator"`
+		Service          string                      `json:"service"`
+		ShortCode        string                      `json:"short_code"`
+		Adnet            string                      `json:"adnet"`
+		Keyword          string                      `json:"keyword"`
+		SubKeyword       string                      `json:"subkeyword"`
+		IsBillable       bool                        `json:"is_billable"`
+		Plan             string                      `json:"plan"`
+		Traffic          int                         `json:"traffic"`
+		Landing          int                         `json:"landing"`
+		Click            int                         `json:"click"`
+		Redirect         int                         `json:"redirect"`
+		MOReceived       int                         `json:"moreceived"`
+		Postback         int                         `json:"postback"`
+		TotalFP          int                         `json:"totalfp"`
+		TrafficData      []DataCounterDetail         `json:"traffic_data"`
+		LandingData      []DataCounterDetail         `json:"landing_data"`
+		ClickData        []DataCounterDetail         `json:"click_data"`
+		RedirectData     []DataCounterDetail         `json:"redirect_data"`
+		MOData           []DataCounterDetailInternal `json:"mo_data"`
+		PostbackData     []DataCounterDetailInternal `json:"postback_data"`
+		FPData           []DataCounterDetailInternal `json:"fp_data"`
 	}
 
 	DataCounterDetail struct {
 		Date       string `json:"date"`
 		Time       string `json:"time"`
 		HTTPStatus string `json:"http_status"`
+	}
+
+	DataCounterDetailInternal struct {
+		Date   string `json:"date"`
+		Msisdn string `json:"msisdn"`
+		TrxId  string `json:"trxid"`
+		Pixel  string `json:"pixel"`
+		Code   string `json:"code"`
+		Status bool   `json:"status"`
 	}
 
 	PixelStorage struct {

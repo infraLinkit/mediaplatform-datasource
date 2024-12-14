@@ -23,11 +23,14 @@ const (
 	EDITSETTINGCAMPAIGNDETAIL     = "UPDATE campaign_detail SET po = '%s', mo_capping = %d, ratio_send = %d, ratio_receive = %d, last_update = '%s' WHERE urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s' AND campaign_id = '%s'"
 	EDITSETTINGSUMMARYCAMPAIGN    = "UPDATE summary_campaign SET po = '%s', mo_capping = %d, ratio_send = %d, ratio_receive = %d, last_update = '%s' WHERE id = %d"
 	UPDATESTATUSCAMPAIGNDETAIL    = "UPDATE campaign_detail SET is_active = %t WHERE urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s' AND campaign_id = '%s'"
-	UPDATESUMMARYCAMPAIGN         = "UPDATE summary_campaign SET is_active = %t WHERE id = %d'"
+	UPDATESUMMARYCAMPAIGN         = "UPDATE summary_campaign SET status = %t WHERE id = %d'"
 	GETCAMPAIGNDETAIL             = "SELECT id, urlservicekey, is_active, counter_mo_capping, mo_capping, status_capping, counter_mo_ratio, ratio_send, ratio_receive, status_ratio, api_url, pubid, cost, po FROM campaign_detail WHERE id = %d;"
 	COUNTERCAPPING                = "UPDATE campaign_detail SET counter_mo_capping = counter_mo_capping+1, last_update_capping = CASE WHEN counter_mo_capping >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d;"
 	COUNTERRATIO                  = "UPDATE campaign_detail SET counter_mo_ratio = counter_mo_ratio+1 WHERE id = %d;"
 	UPDATESTATUSCOUNTER           = "UPDATE campaign_detail SET counter_mo_capping = %d, status_capping = %t, counter_mo_ratio = %d, status_ratio = %t, last_update = '%s'::timestamp(0), last_update_capping = CASE WHEN counter_mo_capping+1 >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d"
+	GETCAMPAIGNDETAILBYSTATUS     = "SELECT * FROM campaign_detail WHERE is_active = %t;"
+	GETCAMPAIGNDETAILALL          = "SELECT * FROM campaign_detail;"
+	SUMMARYCAMPAIGN               = "INSERT INTO summary_campaign (id, status, summary_date, campaign_id, campaign_name, country, partner, operator, category, aggregator, service, adnet, short_code, traffic, landing, mo_received, cr, postback, total_fp, success_fp, billrate, po, cost, sbaf, saaf, cpa, revenue, mo_sent, url_after, url_before, mo_limit, ratio_send, ratio_receive, company, client_type, adn, cost_per_conversion, agency_fee) VALUES (DEFAULT, %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s'::double precision, %d, %d, %d, '%s'::double precision, '%s'::double precision, %d, %d, %d, %d, %d, %d, '%s', '%s', %d, %d, %d, '%s', '%s', %d, %d, %d)"
 )
 
 func (r *BaseModel) GetLastCampaignId(tbl string) int {
@@ -589,7 +592,7 @@ func (r *BaseModel) UpdateStatusCounterById(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateStatusCounterById (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -599,7 +602,7 @@ func (r *BaseModel) UpdateStatusCounterById(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateStatusCounterById, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -607,11 +610,49 @@ func (r *BaseModel) UpdateStatusCounterById(o entity.DataConfig) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateStatusCounterById, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("UpdateStatusCounterById, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
+}
+
+func (r *BaseModel) GetCampaignDetailByStatus(obj entity.DataConfig, useStatus bool) ([]entity.DataConfig, error) {
+
+	var SQL string
+	if useStatus {
+		SQL = fmt.Sprintf(GETCAMPAIGNDETAILBYSTATUS, obj.IsActive)
+	} else {
+		SQL = GETCAMPAIGNDETAILALL
+	}
+
+	rows, err := r.DBPostgre.Query(SQL)
+	if err != nil {
+		r.Logs.Error(fmt.Sprintf("SQL : %s, error querying occured : %#v", SQL, err))
+
+		return []entity.DataConfig{}, err
+	}
+	defer rows.Close()
+
+	var oo []entity.DataConfig
+
+	for rows.Next() {
+
+		var o entity.DataConfig
+
+		if err = rows.Scan(&o.Id, &o.URLServiceKey, &o.CampaignId, &o.Country, &o.Operator, &o.Partner, &o.Aggregator, &o.Adnet, &o.Service, &o.Keyword, &o.SubKeyword, &o.IsBillable, &o.Plan, &o.PO, &o.Cost, &o.PubId, &o.ShortCode, &o.DeviceType, &o.OS, &o.URLType, &o.ClickType, &o.ClickDelay, &o.ClientType, &o.TrafficSource, &o.UniqueClick, &o.URLBanner, &o.URLLanding, &o.URLWarpLanding, &o.URLService, &o.URLTFCSmartlink, &o.GlobPost, &o.URLGlobPost, &o.CustomIntegration, &o.IPAddress, &o.IsActive, &o.MOCapping, &o.CounterMOCapping, &o.StatusCapping, &o.KPIUpperLimitCapping, &o.IsMachineLearningCapping, &o.RatioSend, &o.RatioReceive, &o.CounterMORatio, &o.StatusRatio, &o.KPIUpperLimitRatioSend, &o.KPIUpperLimitRatioReceive, &o.IsMachineLearningRatio, &o.APIURL, &o.LastUpdate, &o.LastUpdateCapping); err != nil {
+
+			r.Logs.Error(fmt.Sprintf("SQL : %s, error scan occured : %#v", SQL, err))
+
+			return []entity.DataConfig{}, err
+		}
+
+		oo = append(oo, o)
+	}
+
+	r.Logs.Info(fmt.Sprintf("SQL : %s, row selected occured : %#v", SQL, len(oo)))
+
+	return oo, nil
 }

@@ -30,7 +30,9 @@ const (
 	UPDATESTATUSCOUNTER           = "UPDATE campaign_detail SET counter_mo_capping = %d, status_capping = %t, counter_mo_ratio = %d, status_ratio = %t, last_update = '%s'::timestamp(0), last_update_capping = CASE WHEN counter_mo_capping+1 >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d"
 	GETCAMPAIGNDETAILBYSTATUS     = "SELECT * FROM campaign_detail WHERE is_active = %t;"
 	GETCAMPAIGNDETAILALL          = "SELECT * FROM campaign_detail;"
-	SUMMARYCAMPAIGN               = "INSERT INTO summary_campaign (id, status, summary_date, campaign_id, campaign_name, country, partner, operator, category, aggregator, service, adnet, short_code, traffic, landing, mo_received, cr, postback, total_fp, success_fp, billrate, po, cost, sbaf, saaf, cpa, revenue, mo_sent, url_after, url_before, mo_limit, ratio_send, ratio_receive, company, client_type, adn, cost_per_conversion, agency_fee) VALUES (DEFAULT, %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s'::double precision, %d, %d, %d, '%s'::double precision, '%s'::double precision, %d, %d, %d, %d, %d, %d, '%s', '%s', %d, %d, %d, '%s', '%s', %d, %d, %d)"
+	SUMMARYCAMPAIGN               = "INSERT INTO summary_campaign (id, status, summary_date, campaign_id, campaign_name, country, partner, operator, urlservicekey, aggregator, service, adnet, short_code, traffic, landing, mo_received, cr, postback, total_fp, success_fp, billrate, po, cost, sbaf, saaf, cpa, revenue, mo_sent, url_after, url_before, mo_limit, ratio_send, ratio_receive, company, client_type, adn, cost_per_conversion, agency_fee) VALUES (DEFAULT, %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s'::double precision, %d, %d, '%s', '%s'::double precision, '%s'::double precision, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s', '%s', '%s', '%s', '%s') ON CONFLICT (summary_date, campaign_id, country, partner, operator, urlservicekey, service, adnet) DO UPDATE SET traffic = %d, landing = %d, mo_received = %d, cr = '%s'::double precision, postback = %d, total_fp = %d, success_fp = '%s', billrate = '%s'::double precision, po = '%s'::double precision, cost = '%s', sbaf = '%s', saaf = '%s', cpa = '%s', revenue = '%s', mo_sent = '%s', url_after = '%s', url_before = '%s', mo_limit = %d, ratio_send = %d, ratio_receive = %d, client_type = '%s', adn = '%s', cost_per_conversion = '%s', agency_fee = '%s';"
+	/* UPDATESUMMARYCAMPAIGN = "INSERT INTO summary_campaign (id, status, summary_date, campaign_id, campaign_name, country, partner, operator, urlservicekey, aggregator, service, adnet, short_code, traffic, landing, mo_received, cr, postback, total_fp, success_fp, billrate, po, cost, sbaf, saaf, cpa, revenue, mo_sent, url_after, url_before, mo_limit, ratio_send, ratio_receive, company, client_type, adn, cost_per_conversion, agency_fee) VALUES (DEFAULT, %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s'::double precision, %d, %d, '%s', '%s'::double precision, '%s'::double precision, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s', '%s', '%s', '%s', '%s') ON CONFLICT (summary_date, campaign_id, country, partner, operator, urlservicekey, service, adnet) DO UPDATE SET traffic, landing, mo_received, cr, postback, total_fp, success_fp, billrate, po, cost, sbaf, saaf, cpa, revenue, mo_sent, url_after, url_before, mo_limit, ratio_send, ratio_receive, client_type, adn, cost_per_conversion, agency_fee;"
+	GETSUMMARYDATE                = "SELECT * FROM summary_campaign WHERE summary_date = '%s' AND campaign_id = '%s' AND country = '%s' AND partner = '%s' AND operator = '%s' AND urlservicekey = '%s' AND service = '%s' AND adnet = '%s';" */
 )
 
 func (r *BaseModel) GetLastCampaignId(tbl string) int {
@@ -655,4 +657,39 @@ func (r *BaseModel) GetCampaignDetailByStatus(obj entity.DataConfig, useStatus b
 	r.Logs.Info(fmt.Sprintf("SQL : %s, row selected occured : %#v", SQL, len(oo)))
 
 	return oo, nil
+}
+
+func (r *BaseModel) SummaryCampaign(data map[string]string, o entity.DataConfig, o2 entity.DataCounter) int {
+
+	SQL := fmt.Sprintf(SUMMARYCAMPAIGN, o.IsActive, data["summary_date"], o.CampaignId, o.CampaignName, o.Country, o.Partner, o.Operator, o.URLServiceKey, o.Aggregator, o.Service, o.Adnet, o.ShortCode, o2.Traffic, o2.Landing, o2.MOReceived, data["cr"], o2.Postback, o2.TotalFP, data["success_fp"], data["billrate"], o.PO, o.Cost, data["sbaf"], data["saaf"], data["cpa"], data["revenue"], data["mo_sent"], o.URLWarpLanding, o.URLLanding, o.MOCapping, o.RatioSend, o.RatioReceive, data["company"], o.ClientType, o.ShortCode, data["cost_per_conversion"], data["agency_fee"], o2.Traffic, o2.Landing, o2.MOReceived, data["cr"], o2.Postback, o2.TotalFP, data["success_fp"], data["billrate"], o.PO, o.Cost, data["sbaf"], data["saaf"], data["cpa"], data["revenue"], data["mo_sent"], o.URLWarpLanding, o.URLLanding, o.MOCapping, o.RatioSend, o.RatioReceive, o.ClientType, o.ShortCode, data["cost_per_conversion"], data["agency_fee"])
+
+	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
+
+	if err != nil {
+
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
+
+		return 0
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(context.Background())
+
+	if err != nil {
+
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
+
+		return 0
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
+
+		return 0
+	}
+
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
+	return int(rows)
 }

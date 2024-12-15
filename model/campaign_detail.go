@@ -31,7 +31,7 @@ const (
 	UPDATESTATUSCOUNTER           = "UPDATE campaign_detail SET counter_mo_capping = %d, status_capping = %t, counter_mo_ratio = %d, status_ratio = %t, last_update = '%s'::timestamp(0), last_update_capping = CASE WHEN counter_mo_capping+1 >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d"
 	GETCAMPAIGNDETAILBYSTATUS     = "SELECT * FROM campaign_detail WHERE is_active = %t;"
 	GETCAMPAIGNDETAILALL          = "SELECT * FROM campaign_detail;"
-	SUMMARYCAMPAIGN               = "INSERT INTO summary_campaign (id, status, summary_date, campaign_id, campaign_name, country, partner, operator, urlservicekey, aggregator, service, adnet, short_code, traffic, landing, mo_received, cr, postback, total_fp, success_fp, billrate, po, cost, sbaf, saaf, cpa, revenue, mo_sent, url_after, url_before, mo_limit, ratio_send, ratio_receive, company, client_type, adn, cost_per_conversion, agency_fee) VALUES (DEFAULT, %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s'::double precision, %d, %d, '%s', '%s'::double precision, '%s'::double precision, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s', '%s', '%s', '%s', '%s') ON CONFLICT (summary_date, campaign_id, country, partner, operator, urlservicekey, service, adnet) DO UPDATE SET traffic = %d, landing = %d, mo_received = %d, cr = '%s'::double precision, postback = %d, total_fp = %d, success_fp = '%s', billrate = '%s'::double precision, po = '%s'::double precision, cost = '%s', sbaf = '%s', saaf = '%s', cpa = '%s', revenue = '%s', mo_sent = '%s', url_after = '%s', url_before = '%s', mo_limit = %d, ratio_send = %d, ratio_receive = %d, client_type = '%s', adn = '%s', cost_per_conversion = '%s', agency_fee = '%s';"
+	SUMMARYCAMPAIGN               = "INSERT INTO summary_campaign (id, status, summary_date, campaign_id, campaign_name, country, partner, operator, urlservicekey, aggregator, service, adnet, short_code, traffic, landing, mo_received, cr, postback, total_fp, success_fp, billrate, po, cost, sbaf, saaf, cpa, revenue, mo_sent, url_after, url_before, mo_limit, ratio_send, ratio_receive, company, client_type, adn, cost_per_conversion, agency_fee) VALUES (DEFAULT, %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s'::double precision, %d, %d, '%s', '%s'::double precision, '%s'::double precision, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, %d, '%s', '%s', '%s', '%s', '%s') ON CONFLICT (summary_date, campaign_id, country, partner, operator, urlservicekey, service, adnet) DO UPDATE SET traffic = traffic + %d, landing = landing + %d, mo_received = mo_received + %d, cr = '%s'::double precision, postback = postback + %d, total_fp = total_fp + %d, success_fp = '%s', billrate = '%s'::double precision, po = '%s'::double precision, cost = '%s', sbaf = '%s', saaf = '%s', cpa = '%s', revenue = '%s', mo_sent = '%s', url_after = '%s', url_before = '%s', mo_limit = %d, ratio_send = %d, ratio_receive = %d, client_type = '%s', adn = '%s', cost_per_conversion = '%s', agency_fee = '%s';"
 	INSERTTRAFFIC                 = "INSERT INTO data_traffic (id, traffic_time, traffic_added_time, http_status, urlservicekey, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan) VALUES (DEFAULT, '%s', %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %t, '%s');"
 	GETTOTALDATATRAFFIC           = "SELECT COUNT(1) FROM data_traffic WHERE DATE(traffic_time) = '%s' AND urlservicekey = '%s' AND campaign_id = '%s' AND country = '%s' AND partner = '%s' AND operator = '%s' AND service = '%s' AND short_code = '%s' AND adnet = '%s'"
 	INSERTLANDING                 = "INSERT INTO data_landing (id, landing_time, landed_time, http_status, urlservicekey, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan) VALUES (DEFAULT, '%s', %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %t, '%s');"
@@ -50,11 +50,11 @@ func (r *BaseModel) GetLastCampaignId(tbl string) int {
 	err := r.DBPostgre.QueryRow(SQL).Scan(&id)
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("GetLastCampaignId (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 		return 0
 	}
 
-	r.Logs.Debug(fmt.Sprintf("GetLastCampaignId (%s) found %d", SQL, id))
+	r.Logs.Debug(fmt.Sprintf("(%s) found %d", SQL, id))
 	return id
 
 }
@@ -67,7 +67,7 @@ func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) int {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("NewCampaign (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return 0
 	}
@@ -77,7 +77,7 @@ func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) int {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("NewCampaign, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return 0
 	}
@@ -85,12 +85,12 @@ func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) int {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("NewCampaign, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return 0
 	}
 
-	r.Logs.Debug(fmt.Sprintf("NewCampaign, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return int(rows)
 }
 
@@ -102,11 +102,11 @@ func (r *BaseModel) GetCampaignByCampaignId(campId string) entity.DataCampaignAc
 	err := r.DBPostgre.QueryRow(SQL).Scan(&o.Id, &o.CampaignId, &o.CampaignName, &o.Objective, &o.Country, &o.Advertiser)
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("GetCampaignByCampaignId (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 		return entity.DataCampaignAction{}
 	}
 
-	r.Logs.Debug(fmt.Sprintf("GetCampaignByCampaignId (%s) found %#v", SQL, o))
+	r.Logs.Debug(fmt.Sprintf("(%s) found %#v", SQL, o))
 	return o
 
 }
@@ -129,7 +129,7 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) int {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return 0
 	}
@@ -139,7 +139,7 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) int {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return 0
 	}
@@ -147,12 +147,12 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) int {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return 0
 	}
 
-	r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return int(rows)
 }
 
@@ -163,11 +163,11 @@ func (r *BaseModel) GetCampaignByCampaignDetailId(o entity.DataConfig) entity.Da
 	err := r.DBPostgre.QueryRow(SQL).Scan(&o.Id, &o.URLServiceKey, &o.CampaignId, &o.Country, &o.Operator, &o.Partner, &o.Aggregator, &o.Adnet, &o.Service, &o.Keyword, &o.SubKeyword, &o.IsBillable, &o.Plan, &o.PO, &o.Cost, &o.PubId, &o.ShortCode, &o.DeviceType, &o.OS, &o.URLType, &o.ClickType, &o.ClickDelay, &o.ClientType, &o.TrafficSource, &o.UniqueClick, &o.URLBanner, &o.URLLanding, &o.URLWarpLanding, &o.URLService, &o.URLTFCSmartlink, &o.GlobPost, &o.URLGlobPost, &o.CustomIntegration, &o.IPAddress, &o.IsActive, &o.MOCapping, &o.CounterMOCapping, &o.StatusCapping, &o.KPIUpperLimitCapping, &o.IsMachineLearningCapping, &o.RatioSend, &o.RatioReceive, &o.CounterMORatio, &o.StatusRatio, &o.KPIUpperLimitRatioSend, &o.KPIUpperLimitRatioReceive, &o.IsMachineLearningRatio, &o.APIURL, &o.LastUpdate, &o.LastUpdateCapping)
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("GetCampaignByCampaignDetailId (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 		return o
 	}
 
-	r.Logs.Debug(fmt.Sprintf("GetCampaignByCampaignDetailId (%s) found %#v", SQL, o))
+	r.Logs.Debug(fmt.Sprintf("(%s) found %#v", SQL, o))
 	return o
 
 }
@@ -180,7 +180,7 @@ func (r *BaseModel) UpdateCampaign(o entity.DataCampaignAction) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateCampaign (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -190,7 +190,7 @@ func (r *BaseModel) UpdateCampaign(o entity.DataCampaignAction) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateCampaign, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -198,12 +198,12 @@ func (r *BaseModel) UpdateCampaign(o entity.DataCampaignAction) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateCampaign, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("UpdateCampaign, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -225,7 +225,7 @@ func (r *BaseModel) UpdateCampaignDetail(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -235,7 +235,7 @@ func (r *BaseModel) UpdateCampaignDetail(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -243,12 +243,12 @@ func (r *BaseModel) UpdateCampaignDetail(o entity.DataConfig) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("NewCampaignDetail, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -260,7 +260,7 @@ func (r *BaseModel) DelCampaign(o entity.DataCampaignAction) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("DelCampaign (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -270,7 +270,7 @@ func (r *BaseModel) DelCampaign(o entity.DataCampaignAction) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("DelCampaign, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -278,12 +278,12 @@ func (r *BaseModel) DelCampaign(o entity.DataCampaignAction) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("DelCampaign, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("DelCampaign, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -295,7 +295,7 @@ func (r *BaseModel) DelCampaignDetail(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("DelCampaignDetail (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -305,7 +305,7 @@ func (r *BaseModel) DelCampaignDetail(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("DelCampaignDetail, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -313,12 +313,12 @@ func (r *BaseModel) DelCampaignDetail(o entity.DataConfig) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("DelCampaignDetail, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("DelCampaignDetail, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -330,7 +330,7 @@ func (r *BaseModel) DelSummaryCampaign(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("DelSummaryCampaign (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -340,7 +340,7 @@ func (r *BaseModel) DelSummaryCampaign(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("DelSummaryCampaign, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -348,12 +348,12 @@ func (r *BaseModel) DelSummaryCampaign(o entity.DataConfig) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("DelSummaryCampaign, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("DelSummaryCampaign, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -365,7 +365,7 @@ func (r *BaseModel) EditSettingCampaignDetail(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("EditSettingCampaignDetail (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -375,7 +375,7 @@ func (r *BaseModel) EditSettingCampaignDetail(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("EditSettingCampaignDetail, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -383,12 +383,12 @@ func (r *BaseModel) EditSettingCampaignDetail(o entity.DataConfig) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("EditSettingCampaignDetail, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("EditSettingCampaignDetail, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -400,7 +400,7 @@ func (r *BaseModel) EditSettingSummaryCampaign(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("EditSettingSummaryCampaign (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -410,7 +410,7 @@ func (r *BaseModel) EditSettingSummaryCampaign(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("EditSettingSummaryCampaign, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -418,12 +418,12 @@ func (r *BaseModel) EditSettingSummaryCampaign(o entity.DataConfig) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("EditSettingSummaryCampaign, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("EditSettingSummaryCampaign, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -435,7 +435,7 @@ func (r *BaseModel) UpdateStatusCampaignDetail(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateStatusCampaignDetail (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -445,7 +445,7 @@ func (r *BaseModel) UpdateStatusCampaignDetail(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateStatusCampaignDetail, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -453,12 +453,12 @@ func (r *BaseModel) UpdateStatusCampaignDetail(o entity.DataConfig) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateStatusCampaignDetail, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("UpdateStatusCampaignDetail, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -470,7 +470,7 @@ func (r *BaseModel) UpdateSummaryCampaign(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateSummaryCampaign (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -480,7 +480,7 @@ func (r *BaseModel) UpdateSummaryCampaign(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateSummaryCampaign, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -488,12 +488,12 @@ func (r *BaseModel) UpdateSummaryCampaign(o entity.DataConfig) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("UpdateSummaryCampaign, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("UpdateSummaryCampaign, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -502,7 +502,7 @@ func (r *BaseModel) GetCampaignDetail(o entity.DataConfig) (entity.DataConfig, e
 	SQL := fmt.Sprintf(GETCAMPAIGNDETAIL, o.Id)
 	rows, err := r.DBPostgre.Query(SQL)
 	if err != nil {
-		r.Logs.Error(fmt.Sprintf("GetCampaignDetail, SQL : %s, error querying occured : %#v", SQL, err))
+		r.Logs.Error(fmt.Sprintf("SQL : %s, error querying occured : %#v", SQL, err))
 
 		return entity.DataConfig{}, err
 	}
@@ -514,12 +514,12 @@ func (r *BaseModel) GetCampaignDetail(o entity.DataConfig) (entity.DataConfig, e
 
 		if err != nil {
 
-			r.Logs.Error(fmt.Sprintf("GetCampaignDetail, SQL : %s, error scan occured : %#v", SQL, err))
+			r.Logs.Error(fmt.Sprintf("SQL : %s, error scan occured : %#v", SQL, err))
 
 		}
 	}
 
-	r.Logs.Info(fmt.Sprintf("GetCampaignDetail, SQL : %s, row selected occured : %#v", SQL, o))
+	r.Logs.Info(fmt.Sprintf("SQL : %s, row selected occured : %#v", SQL, o))
 	return o, nil
 }
 
@@ -531,7 +531,7 @@ func (r *BaseModel) CounterCappingById(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("CounterCappingById (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -541,7 +541,7 @@ func (r *BaseModel) CounterCappingById(o entity.DataConfig) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("CounterCappingById, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -549,12 +549,12 @@ func (r *BaseModel) CounterCappingById(o entity.DataConfig) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("CounterCappingById, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("CounterCappingById, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -566,7 +566,7 @@ func (r *BaseModel) CounterRatioById(id int) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("CounterRatioById (%s) Error %s when preparing SQL statement", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
 
 		return err
 	}
@@ -576,7 +576,7 @@ func (r *BaseModel) CounterRatioById(id int) error {
 
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("CounterRatioById, SQL : %s, Error %s when update to table", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
 
 		return err
 	}
@@ -584,12 +584,12 @@ func (r *BaseModel) CounterRatioById(id int) error {
 	rows, err := res.RowsAffected()
 	if err != nil {
 
-		r.Logs.Debug(fmt.Sprintf("CounterRatioById, SQL : %s, Error %s when finding rows affected", SQL, err))
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
 
 		return err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("CounterRatioById, SQL : %s, row affected : %d", SQL, rows))
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
 }
 
@@ -782,7 +782,7 @@ func (r *BaseModel) DataClicked(data map[string]string, o entity.DataCounter) in
 	clicked_button_time, _ := strconv.Atoi(data["clicked_button_time"])
 	httpstatus, _ := strconv.Atoi(data["http_status"])
 
-	SQL := fmt.Sprintf(INSERTCLICKED, data["landing_time"], clicked_button_time, httpstatus, o.URLServiceKey, o.CampaignId, o.Country, o.Partner, o.Operator, o.Aggregator, o.Service, o.ShortCode, o.Adnet, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan)
+	SQL := fmt.Sprintf(INSERTCLICKED, data["clicked_time"], clicked_button_time, httpstatus, o.URLServiceKey, o.CampaignId, o.Country, o.Partner, o.Operator, o.Aggregator, o.Service, o.ShortCode, o.Adnet, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 
@@ -820,7 +820,7 @@ func (r *BaseModel) DataRedirect(data map[string]string, o entity.DataCounter) i
 	redirect_added_time, _ := strconv.Atoi(data["redirect_added_time"])
 	httpstatus, _ := strconv.Atoi(data["http_status"])
 
-	SQL := fmt.Sprintf(INSERTREDIRECT, data["landing_time"], redirect_added_time, httpstatus, o.URLServiceKey, o.CampaignId, o.Country, o.Partner, o.Operator, o.Aggregator, o.Service, o.ShortCode, o.Adnet, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan)
+	SQL := fmt.Sprintf(INSERTREDIRECT, data["redirect_time"], redirect_added_time, httpstatus, o.URLServiceKey, o.CampaignId, o.Country, o.Partner, o.Operator, o.Aggregator, o.Service, o.ShortCode, o.Adnet, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 

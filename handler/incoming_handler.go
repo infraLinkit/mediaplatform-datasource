@@ -72,7 +72,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 			c.Cookie(&fiber.Cookie{
 				Name:     p.CookieKey,
 				Value:    "1",
-				Expires:  time.Now().Add(1 * time.Second),
+				Expires:  time.Now().Add(30 * time.Second),
 				HTTPOnly: true,
 				SameSite: "lax",
 			})
@@ -89,14 +89,13 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 				if px.Id < 0 {
 					return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found"})
 				} else {
-					pxData.Id = px.Id
+					/* pxData.Id = px.Id
 					pxData.CampaignDetailId = px.CampaignDetailId
 					pxData.Msisdn = p.Msisdn
-					pxData.TrxId = p.TrxId
-					pxData.IsUsed = true
-					pxData.PixelUsedDate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+					pxData.TrxId = p.TrxId */
+					px.PixelUsedDate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
 
-					bodyReq, _ := json.Marshal(pxData)
+					bodyReq, _ := json.Marshal(px)
 
 					corId := "RTO" + helper.GetUniqId(h.Config.TZ)
 

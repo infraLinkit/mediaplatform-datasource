@@ -28,6 +28,7 @@ const (
 	UPDATESTATUSCOUNTER           = "UPDATE campaign_detail SET counter_mo_capping = %d, status_capping = %t, counter_mo_ratio = %d, status_ratio = %t, last_update = '%s'::timestamp(0), last_update_capping = CASE WHEN counter_mo_capping+1 >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d"
 	GETCAMPAIGNDETAILBYSTATUS     = "SELECT * FROM campaign_detail WHERE is_active = %t;"
 	GETCAMPAIGNDETAILALL          = "SELECT * FROM campaign_detail;"
+	UPDATECPAREPORT               = "UPDATE campaign_detail SET cost_per_conversion = '%s', agency_fee = '%s' WHERE urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s' AND campaign_id = '%s'"
 )
 
 func (r *BaseModel) GetLastCampaignId(tbl string) int {
@@ -569,7 +570,7 @@ func (r *BaseModel) GetCampaignDetailByStatus(obj entity.DataConfig, useStatus b
 
 		var o entity.DataConfig
 
-		if err = rows.Scan(&o.Id, &o.URLServiceKey, &o.CampaignId, &o.Country, &o.Operator, &o.Partner, &o.Aggregator, &o.Adnet, &o.Service, &o.Keyword, &o.SubKeyword, &o.IsBillable, &o.Plan, &o.PO, &o.Cost, &o.PubId, &o.ShortCode, &o.DeviceType, &o.OS, &o.URLType, &o.ClickType, &o.ClickDelay, &o.ClientType, &o.TrafficSource, &o.UniqueClick, &o.URLBanner, &o.URLLanding, &o.URLWarpLanding, &o.URLService, &o.URLTFCSmartlink, &o.GlobPost, &o.URLGlobPost, &o.CustomIntegration, &o.IPAddress, &o.IsActive, &o.MOCapping, &o.CounterMOCapping, &o.StatusCapping, &o.KPIUpperLimitCapping, &o.IsMachineLearningCapping, &o.RatioSend, &o.RatioReceive, &o.CounterMORatio, &o.StatusRatio, &o.KPIUpperLimitRatioSend, &o.KPIUpperLimitRatioReceive, &o.IsMachineLearningRatio, &o.APIURL, &o.LastUpdate, &o.LastUpdateCapping); err != nil {
+		if err = rows.Scan(&o.Id, &o.URLServiceKey, &o.CampaignId, &o.Country, &o.Operator, &o.Partner, &o.Aggregator, &o.Adnet, &o.Service, &o.Keyword, &o.SubKeyword, &o.IsBillable, &o.Plan, &o.PO, &o.Cost, &o.PubId, &o.ShortCode, &o.DeviceType, &o.OS, &o.URLType, &o.ClickType, &o.ClickDelay, &o.ClientType, &o.TrafficSource, &o.UniqueClick, &o.URLBanner, &o.URLLanding, &o.URLWarpLanding, &o.URLService, &o.URLTFCSmartlink, &o.GlobPost, &o.URLGlobPost, &o.CustomIntegration, &o.IPAddress, &o.IsActive, &o.MOCapping, &o.CounterMOCapping, &o.StatusCapping, &o.KPIUpperLimitCapping, &o.IsMachineLearningCapping, &o.RatioSend, &o.RatioReceive, &o.CounterMORatio, &o.StatusRatio, &o.KPIUpperLimitRatioSend, &o.KPIUpperLimitRatioReceive, &o.IsMachineLearningRatio, &o.APIURL, &o.LastUpdate, &o.LastUpdateCapping, &o.CPCR, &o.AgencyFee); err != nil {
 
 			r.Logs.Error(fmt.Sprintf("SQL : %s, error scan occured : %#v", SQL, err))
 
@@ -582,4 +583,39 @@ func (r *BaseModel) GetCampaignDetailByStatus(obj entity.DataConfig, useStatus b
 	r.Logs.Info(fmt.Sprintf("SQL : %s, row selected occured : %#v", SQL, len(oo)))
 
 	return oo, nil
+}
+
+func (r *BaseModel) UpdateCPAReport(o entity.DataConfig) error {
+
+	SQL := fmt.Sprintf(UPDATECPAREPORT, o.CPCR, o.AgencyFee, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId)
+
+	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
+
+	if err != nil {
+
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
+
+		return err
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(context.Background())
+
+	if err != nil {
+
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
+
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
+
+		return err
+	}
+
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
+	return nil
 }

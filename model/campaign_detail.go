@@ -15,6 +15,7 @@ const (
 	NEWCAMPAIGN                   = "INSERT INTO campaign (id, campaign_id, name, campaign_objective, country, advertiser) VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%s')"
 	GETCAMPAIGNBYCAMPAIGNID       = "SELECT * FROM campaign WHERE campaign_id = '%s'"
 	NEWCAMPAIGNDETAIL             = "INSERT INTO campaign_detail (id, urlservicekey, campaign_id, country, operator, partner, aggregator, adnet, service, keyword, subkeyword, is_billable, plan, po, cost, pubid, short_code, device_type, os, url_type, click_type, click_delay, client_type, traffic_source, unique_click, url_banner, url_landing, url_warp_landing, url_service, url_tfc_or_smartlink, glob_post, url_globpost, custom_integration, ip_address, is_active, mo_capping, counter_mo_capping, status_capping, kpi_upper_limit_capping, is_machine_learning_capping, ratio_send, ratio_receive, counter_mo_ratio, status_ratio, kpi_upper_limit_ratio_send, kpi_upper_limit_ratio_receive, is_machine_learning_ratio, api_url, last_update, last_update_capping) VALUES (DEFAULT, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %t, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, %d, '%s', %t, %t, '%s', '%s', '%s', '%s', '%s', %t, '%s', '%s', '%s', %t, %d, %d, %t, %d, %t, %d, %d, %d, %t, %d, %d, %t, '%s', '%s', '%s')"
+	RESETCAPPINGCAMPAIGN          = "UPDATE campaign_detail SET counter_mo_ratio = 0, status_capping = false WHERE is_active = %t"
 	GETCAMPAIGNBYCAMPAIGNDETAILID = "SELECT * FROM campaign_detail WHERE urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s'"
 	UPDATECAMPAIGN                = "UPDATE campaign SET name = '%s', campaign_objective = '%s', country = '%s', advertiser = '%s' WHERE campaign_id = '%s'"
 	UPDATECAMPAIGNDETAIL          = "UPDATE campaign_detail SET campaign_id = '%s', country = '%s', operator = '%s', partner = '%s', aggregator = '%s', adnet = '%s', service = '%s', keyword = '%s', subkeyword = '%s', is_billable = %t, plan = '%s', po = '%s', cost = '%s', pubid = '%s', short_code = '%s', device_type = '%s', os = '%s', url_type = '%s', click_type = %d, click_delay = %d, client_type = '%s', traffic_source = %t, unique_click = %t, url_banner = '%s', url_landing = '%s', url_warp_landing = '%s', url_service = '%s', url_tfc_or_smartlink = '%s', glob_post = %t, url_globpost = '%s', custom_integration = '%s', ip_address = '%s', is_active = %t, mo_capping = %d, counter_mo_capping = %d, status_capping = %t, kpi_upper_limit_capping = %d, is_machine_learning_capping = %t, ratio_send = %d, ratio_receive = %d, counter_mo_ratio = %d, status_ratio = %t, kpi_upper_limit_ratio_send = %d, kpi_upper_limit_ratio_receive = %d, is_machine_learning_ratio = %t, api_url = '%s', last_update = '%s', last_update_capping = '%s' WHERE id = %d"
@@ -62,6 +63,41 @@ func (r *BaseModel) GetLastCampaignId(tbl string) int {
 func (r *BaseModel) NewCampaign(o entity.DataCampaignAction) int {
 
 	SQL := fmt.Sprintf(NEWCAMPAIGN, o.CampaignId, o.CampaignName, o.Objective, o.Country, o.Advertiser)
+
+	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
+
+	if err != nil {
+
+		r.Logs.Debug(fmt.Sprintf("(%s) Error %s when preparing SQL statement", SQL, err))
+
+		return 0
+	}
+	defer stmt.Close()
+
+	res, err := stmt.ExecContext(context.Background())
+
+	if err != nil {
+
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when update to table", SQL, err))
+
+		return 0
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+
+		r.Logs.Debug(fmt.Sprintf("SQL : %s, Error %s when finding rows affected", SQL, err))
+
+		return 0
+	}
+
+	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
+	return int(rows)
+}
+
+func (r *BaseModel) ResetCappingCampaign(o entity.DataConfig) int {
+
+	SQL := fmt.Sprintf(RESETCAPPINGCAMPAIGN, o.IsActive)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 

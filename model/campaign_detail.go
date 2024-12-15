@@ -21,11 +21,11 @@ const (
 	UPDATECAMPAIGNDETAIL          = "UPDATE campaign_detail SET campaign_id = '%s', country = '%s', operator = '%s', partner = '%s', aggregator = '%s', adnet = '%s', service = '%s', keyword = '%s', subkeyword = '%s', is_billable = %t, plan = '%s', po = '%s', cost = '%s', pubid = '%s', short_code = '%s', device_type = '%s', os = '%s', url_type = '%s', click_type = %d, click_delay = %d, client_type = '%s', traffic_source = %t, unique_click = %t, url_banner = '%s', url_landing = '%s', url_warp_landing = '%s', url_service = '%s', url_tfc_or_smartlink = '%s', glob_post = %t, url_globpost = '%s', custom_integration = '%s', ip_address = '%s', is_active = %t, mo_capping = %d, counter_mo_capping = %d, status_capping = %t, kpi_upper_limit_capping = %d, is_machine_learning_capping = %t, ratio_send = %d, ratio_receive = %d, counter_mo_ratio = %d, status_ratio = %t, kpi_upper_limit_ratio_send = %d, kpi_upper_limit_ratio_receive = %d, is_machine_learning_ratio = %t, api_url = '%s', last_update = '%s', last_update_capping = '%s' WHERE id = %d"
 	DELCAMPAIGN                   = "DELETE FROM campaign WHERE campaign_id = '%s'"
 	DELCAMPAIGNDETAIL             = "DELETE FROM campaign_detail WHERE urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s' AND campaign_id = '%s'"
-	DELSUMMARYCAMPAIGN            = "DELETE FROM summary_campaign WHERE id = %d"
+	DELSUMMARYCAMPAIGN            = "DELETE FROM summary_campaign WHERE DATE(summary_date) = '%s' AND urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s' AND campaign_id = '%s'"
 	EDITSETTINGCAMPAIGNDETAIL     = "UPDATE campaign_detail SET po = '%s', mo_capping = %d, ratio_send = %d, ratio_receive = %d, last_update = '%s' WHERE urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s' AND campaign_id = '%s'"
-	EDITSETTINGSUMMARYCAMPAIGN    = "UPDATE summary_campaign SET po = '%s', mo_capping = %d, ratio_send = %d, ratio_receive = %d, last_update = '%s' WHERE id = %d"
+	EDITSETTINGSUMMARYCAMPAIGN    = "UPDATE summary_campaign SET po = '%s', mo_capping = %d, ratio_send = %d, ratio_receive = %d, last_update = '%s' WHERE DATE(summary_date) = '%s' AND urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s' AND campaign_id = '%s'"
 	UPDATESTATUSCAMPAIGNDETAIL    = "UPDATE campaign_detail SET is_active = %t WHERE urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s' AND campaign_id = '%s'"
-	UPDATESUMMARYCAMPAIGN         = "UPDATE summary_campaign SET status = %t WHERE id = %d'"
+	UPDATESUMMARYCAMPAIGN         = "UPDATE summary_campaign SET status = %t WHERE DATE(summary_date) = '%s' AND urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND adnet = '%s' AND service = '%s' AND campaign_id = '%s'"
 	GETCAMPAIGNDETAIL             = "SELECT id, urlservicekey, is_active, counter_mo_capping, mo_capping, status_capping, counter_mo_ratio, ratio_send, ratio_receive, status_ratio, api_url, pubid, cost, po FROM campaign_detail WHERE id = %d;"
 	COUNTERCAPPING                = "UPDATE campaign_detail SET counter_mo_capping = counter_mo_capping+1, last_update_capping = CASE WHEN counter_mo_capping >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d;"
 	COUNTERRATIO                  = "UPDATE campaign_detail SET counter_mo_ratio = counter_mo_ratio+1 WHERE id = %d;"
@@ -358,9 +358,9 @@ func (r *BaseModel) DelCampaignDetail(o entity.DataConfig) error {
 	return nil
 }
 
-func (r *BaseModel) DelSummaryCampaign(o entity.DataConfig) error {
+func (r *BaseModel) DelSummaryCampaign(summary_date string, o entity.DataConfig) error {
 
-	SQL := fmt.Sprintf(DELSUMMARYCAMPAIGN, o.Id)
+	SQL := fmt.Sprintf(DELSUMMARYCAMPAIGN, summary_date, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 
@@ -428,9 +428,9 @@ func (r *BaseModel) EditSettingCampaignDetail(o entity.DataConfig) error {
 	return nil
 }
 
-func (r *BaseModel) EditSettingSummaryCampaign(o entity.DataConfig) error {
+func (r *BaseModel) EditSettingSummaryCampaign(summary_date string, o entity.DataConfig) error {
 
-	SQL := fmt.Sprintf(EDITSETTINGSUMMARYCAMPAIGN, o.PO, o.MOCapping, o.RatioSend, o.RatioReceive, o.LastUpdate, o.Id)
+	SQL := fmt.Sprintf(EDITSETTINGSUMMARYCAMPAIGN, o.PO, o.MOCapping, o.RatioSend, o.RatioReceive, o.LastUpdate, summary_date, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 
@@ -498,9 +498,9 @@ func (r *BaseModel) UpdateStatusCampaignDetail(o entity.DataConfig) error {
 	return nil
 }
 
-func (r *BaseModel) UpdateSummaryCampaign(o entity.DataConfig) error {
+func (r *BaseModel) UpdateSummaryCampaign(summary_date string, o entity.DataConfig) error {
 
-	SQL := fmt.Sprintf(UPDATESUMMARYCAMPAIGN, o.IsActive, o.Id)
+	SQL := fmt.Sprintf(UPDATESUMMARYCAMPAIGN, o.IsActive, summary_date, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 

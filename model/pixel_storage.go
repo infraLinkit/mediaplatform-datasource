@@ -17,7 +17,7 @@ const (
 
 func (r *BaseModel) NewPixel(o entity.PixelStorage) error {
 
-	SQL := fmt.Sprintf(NEWPX, o.CampaignDetailId, o.PxDate, o.URLServiceKey, o.CampaignId, o.Country, o.Partner, o.Operator, o.Aggregator, o.Service, o.ShortCode, o.Adnet, o.Keyword, o.Subkeyword, o.IsBillable, o.Plan, o.URL.String, o.URLType, o.Pixel, o.TrxId, o.Token, o.Msisdn, o.IsUsed, o.Browser, o.OS, o.IP, o.ISP, o.ReferralURL.String, o.PubId, o.UserAgent, o.TrafficSource, o.TrafficSourceData, o.UserRejected, o.UserDuplicated, o.Handset, o.HandsetCode, o.HandsetType, o.URLLanding.String, o.URLWarpLanding.String, o.URLService.String, o.URLTFCSmartlink.String, o.PO, o.Cost)
+	SQL := fmt.Sprintf(NEWPX, o.CampaignDetailId, o.PxDate, o.URLServiceKey, o.CampaignId, o.Country, o.Partner, o.Operator, o.Aggregator, o.Service, o.ShortCode, o.Adnet, o.Keyword, o.Subkeyword, o.IsBillable, o.Plan, o.URL, o.URLType, o.Pixel, o.TrxId, o.Token, o.Msisdn, o.IsUsed, o.Browser, o.OS, o.IP, o.ISP, o.ReferralURL, o.PubId, o.UserAgent, o.TrafficSource, o.TrafficSourceData, o.UserRejected, o.UserDuplicated, o.Handset, o.HandsetCode, o.HandsetType, o.URLLanding, o.URLWarpLanding, o.URLService, o.URLTFCSmartlink, o.PO, o.Cost)
 
 	//L.Write(L.LogName, "debug", fmt.Sprintf("NewSubs (%s)", SQL))
 
@@ -81,7 +81,7 @@ func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, error) {
 
 func (r *BaseModel) UpdatePixelById(o entity.PixelStorage) error {
 
-	SQL := fmt.Sprintf(UPDATEPX, o.Msisdn, o.TrxId, o.IsUsed, o.PixelUsedDate, o.StatusPostback, o.IsUnique, o.URLPostback.String, o.StatusURLPostback, o.ReasonURLPostback, o.Id)
+	SQL := fmt.Sprintf(UPDATEPX, o.Msisdn, o.TrxId, o.IsUsed, o.PixelUsedDate, o.StatusPostback, o.IsUnique, o.URLPostback, o.StatusURLPostback, o.ReasonURLPostback, o.Id)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 

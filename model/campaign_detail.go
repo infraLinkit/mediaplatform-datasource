@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 
@@ -142,7 +143,7 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) int {
 
 		ips = "{"
 		for _, v := range o.IPAddress {
-			ips = ips + v.String
+			ips = ips + strconv.Itoa(int(v))
 		}
 		ips = ips + "}"
 	}
@@ -238,7 +239,7 @@ func (r *BaseModel) UpdateCampaignDetail(o entity.DataConfig) error {
 
 		ips = "{"
 		for _, v := range o.IPAddress {
-			ips = ips + v.String
+			ips = ips + strconv.Itoa(int(v))
 		}
 		ips = ips + "}"
 	}

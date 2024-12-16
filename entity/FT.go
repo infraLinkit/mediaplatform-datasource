@@ -14,6 +14,8 @@ type (
 		Country      string       `json:"country"`
 		Advertiser   string       `json:"advertiser"`
 		IsDelCamp    bool         `json:"is_del_camp"`
+		CPCR         string       `json:"cost_per_conversion"`
+		AgencyFee    string       `json:"agency_fee"`
 		DataConfig   []DataConfig `json:"data"`
 	}
 

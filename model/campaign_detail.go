@@ -142,7 +142,7 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) int {
 
 		ips = "{"
 		for _, v := range o.IPAddress {
-			ips = ips + v
+			ips = ips + v.String
 		}
 		ips = ips + "}"
 	}
@@ -238,7 +238,7 @@ func (r *BaseModel) UpdateCampaignDetail(o entity.DataConfig) error {
 
 		ips = "{"
 		for _, v := range o.IPAddress {
-			ips = ips + v
+			ips = ips + v.String
 		}
 		ips = ips + "}"
 	}

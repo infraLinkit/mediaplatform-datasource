@@ -1,13 +1,13 @@
 module github.com/infraLinkit/mediaplatform-datasource
 
-go 1.22.2
+go 1.23.3
 
 require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/gofiber/storage/rueidis v1.2.3
 	github.com/lib/pq v1.10.9
-	github.com/redis/rueidis v1.0.49
+	github.com/redis/rueidis v1.0.51
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/wiliehidayat87/rmqp v1.1.2
@@ -26,7 +26,6 @@ require (
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/streadway/amqp v1.1.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.51.0 // indirect
 	github.com/valyala/tcplisten v1.0.0 // indirect

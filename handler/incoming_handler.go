@@ -173,12 +173,15 @@ func (h *IncomingHandler) SetData(c *fiber.Ctx) error {
 			if target_daily_budget != tdb {
 				tdb = target_daily_budget
 			}
-
-			bodyReq, _ := json.Marshal(entity.DataConfig{
+			var dc []entity.DataConfig
+			dc = append(dc, entity.DataConfig{
 				TargetDailyBudget: tdb,
 				Country:           country,
 				Operator:          operator,
 			})
+
+			bodyReq, _ := json.Marshal(entity.DataCampaignAction{
+				Action: "UPDATE_CAMP_MONITOR_BUDGET", DataConfig: dc})
 
 			corId := "CMN" + helper.GetUniqId(h.Config.TZ)
 

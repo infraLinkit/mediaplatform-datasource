@@ -33,7 +33,7 @@ func (h *BaseModel) GetDataConfig(key string, path string) (*entity.DataConfig, 
 			h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))
 			return dcfg, err
 		} else {
-			h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, dcfg))
+			h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, tempCfg))
 			dcfg = tempCfg[0][0]
 			return dcfg, nil
 		}

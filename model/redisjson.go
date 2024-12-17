@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
@@ -27,9 +28,15 @@ func (h *BaseModel) GetDataConfig(key string, path string) (*entity.DataConfig, 
 
 	} else {
 
-		dcfg = tempCfg[0][0]
-		h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, dcfg))
-		return dcfg, nil
+		if len(tempCfg) < 1 {
+			err = errors.New("key is empty or not found")
+			h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))
+			return dcfg, err
+		} else {
+			h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, dcfg))
+			dcfg = tempCfg[0][0]
+			return dcfg, nil
+		}
 
 	}
 
@@ -53,9 +60,15 @@ func (h *BaseModel) GetDataConfigCounter(key string, path string) (*entity.DataC
 
 	} else {
 
-		dcfg = tempCfg[0][0]
-		h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data counter: %#v ...\n", key, dcfg))
-		return dcfg, nil
+		if len(tempCfg) < 1 {
+			err = errors.New("key is empty or not found")
+			h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))
+			return dcfg, err
+		} else {
+			h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, dcfg))
+			dcfg = tempCfg[0][0]
+			return dcfg, nil
+		}
 
 	}
 

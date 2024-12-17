@@ -3,6 +3,12 @@ package entity
 type (
 	//"[{\"id\":1,\"urlservicekey\":\"idtelgempastelmbv\",\"campaign_id\":\"ID01\",\"name\":\"ID Pass Telesat Gazy\",\"objective\":\"cpa\",\"country\":\"ID\",\"advertiser\":\"PT\",\"operator\":\"telkomsel\",\"partner\":\"pass\",\"aggregator\":\"telesat\",\"adnet\":\"mbv\",\"service\":\"gazy\",\"keyword\":\"gazy\",\"subkeyword\":\"\",\"is_billable\":false,\"plan\":\"\",\"short_code\":\"1234\",\"device_type\":\"all\",\"os\":\"linux\",\"url_type\":\"click2sms\",\"click_type\":2,\"click_delay\":0,\"client_type\":\"internal\",\"traffic_source\":false,\"unique_click\":true,\"url_banner\":\"http://\",\"url_landing\":\"http://\",\"url_warp_landing\":\"http://\",\"url_service\":\"http://\",\"url_tfc_or_smartlink\":\"http://\",\"custom_integration\":\"\",\"ip_address\":\"\",\"is_active\":true,\"mo_capping\":0,\"counter_mo_capping\":0,\"status_capping\":false,\"kpi_upper_limit_capping\":500,\"is_machine_learning_capping\":false,\"ratio_send\":1,\"ratio_receive\":1,\"status_ratio\":true,\"kpi_upper_limit_ratio_send\":1,\"kpi_upper_limit_ratio_receive\":2,\"is_machine_learning_ratio\":false,\"api_url\":\"http://\",\"last_update\":\"\",\"last_update_capping\":\"\"}]"
 
+	GlobalSetting struct {
+		CostPerConversion string `json:"cost_per_conversion"`
+		AgencyFee         string `json:"agency_fee"`
+		TargetDailyBudget string `json:"target_daily_budget"`
+	}
+
 	DataCampaignAction struct {
 		Action       string       `json:"action"`
 		Id           int          `json:"id"`
@@ -74,6 +80,8 @@ type (
 		LastUpdateCapping         string  `json:"last_update_capping"`
 		CPCR                      string  `json:"cost_per_conversion"`
 		AgencyFee                 string  `json:"agency_fee"`
+		TargetDailyBudget         string  `json:"target_daily_budget"`
+		BudgetUsage               string  `json:"budget_usage"`
 	}
 
 	//'{"id":1,"urlservicekey":"idtelgempastelmbv","campaign_id":"ID01","country":"ID","partner":"pass","operator":"telkomsel","aggregator":"telesat","service":"gazy","short_code":"1234","adnet":"mbv","keyword":"gazy","subkeyword":"","is_billable":false,"plan":"","traffic":0,"landing":0,"click":0,"redirect":0,"traffic_data":[],"landing_data":[],"click_data":[],"redirect_data":[]}'

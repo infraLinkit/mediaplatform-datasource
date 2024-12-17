@@ -39,6 +39,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	// Landing Page
 	f.Get("/v1/postback/", h.Postback).Name("Postback from messaging")
 	f.Get("/v1/report/", h.Report).Name("Report API")
+	f.Put("/v1/int/setdata/:v/", h.SetData).Name("SetTargetDailyBudget")
 
 	return f
 }

@@ -56,6 +56,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 	// Parse Postback Data
 	//country=[COUNTRY]&operator=[OPERATOR]&partner=[PARTNER]&serv_id=[SERV_ID]&keyword=[KEYWORD]&subkeyword=[SUBKEYWORD]&msisdn=[MSISDN]&px=[PIXEL]&trxid=[TRXID]
 	p := entity.NewDataPostback(c)
+	p.URLServiceKey = c.Params("urlservicekey")
 
 	// Validate Parameters
 	if v := p.ValidateParams(h.Logs); v.Code == fiber.StatusBadRequest {
@@ -78,8 +79,10 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 				SameSite: "lax",
 			})
 
+			dc, _ := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$")
+
 			pxData := entity.PixelStorage{
-				Country: p.Country, Operator: p.Operator, Partner: p.Partner, Service: p.ServiceId, Keyword: p.Keyword, IsBillable: p.IsBillable, Pixel: p.Px}
+				Country: dc.Country, Operator: dc.Operator, Partner: dc.Partner, Service: p.ServiceId, Keyword: p.Keyword, IsBillable: p.IsBillable, Pixel: p.Px}
 
 			if px, err := h.DS.GetPx(pxData); err != nil {
 

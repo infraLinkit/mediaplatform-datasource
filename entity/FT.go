@@ -185,4 +185,14 @@ type (
 		PO                string `json:"po"`
 		Cost              string `json:"cost"`
 	}
+
+	AlertData struct {
+		Platform string     `json:"platform"`
+		DataUser []DataUser `json:"data"`
+	}
+
+	DataUser struct {
+		Name   string `json:"name"`
+		UserId int    `json:"user_id"`
+	}
 )

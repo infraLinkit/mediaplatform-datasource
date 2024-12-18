@@ -183,3 +183,35 @@ func (h *BaseModel) DelData(key string, path string) {
 	}
 
 }
+
+func (h *BaseModel) GetAlertData(key string, path string) (*entity.AlertData, error) {
+
+	// Get Config Data Landing
+	ctx := context.Background()
+
+	var (
+		dcfg    *entity.AlertData
+		tempCfg [][]*entity.AlertData // or []User is also scannable
+		err     error
+	)
+
+	if err = rueidis.DecodeSliceOfJSON(h.R.Conn().Do(ctx, h.R.Conn().B().JsonMget().Key(key).Path(path).Build()), &tempCfg); err != nil {
+
+		h.Logs.Warn(fmt.Sprintf("Cannot find data counter key (%s) or error: %#v ...\n", key, err))
+		return nil, err
+
+	} else {
+
+		if len(tempCfg) > 0 && tempCfg != nil {
+			h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, tempCfg))
+			dcfg = tempCfg[0][0]
+			return dcfg, nil
+		} else {
+			err = errors.New("key is empty or not found")
+			h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))
+			return dcfg, err
+		}
+
+	}
+
+}

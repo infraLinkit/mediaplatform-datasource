@@ -30,6 +30,7 @@ const (
 type (
 	Cfg struct {
 		AppHost                                string
+		AppApi                                 string
 		RedisHost                              string
 		RedisPort                              int
 		RedisPwd                               string
@@ -55,6 +56,8 @@ type (
 		RabbitMQPostbackAdnetQueueName         string
 		RabbitMQCampaignManagementExchangeName string
 		RabbitMQCampaignManagementQueueName    string
+		RabbitMQAlertManagementExchangeName    string
+		RabbitMQAlertManagementQueueName       string
 		LogEnv                                 string
 		LogPath                                string
 		LogLevel                               string
@@ -84,6 +87,7 @@ func InitCfg() *Cfg {
 
 	cfg := &Cfg{
 		AppHost:                                os.Getenv("APPHOST"),
+		AppApi:                                 os.Getenv("APPAPI"),
 		RedisHost:                              os.Getenv("REDISHOST"),
 		RedisPort:                              redis_port,
 		RedisPwd:                               os.Getenv("REDISPASSWORD"),
@@ -109,6 +113,8 @@ func InitCfg() *Cfg {
 		RabbitMQPostbackAdnetQueueName:         os.Getenv("RABBITMQPOSTBACKADNETQUEUENAME"),
 		RabbitMQCampaignManagementExchangeName: os.Getenv("RABBITMQCAMPAIGNMANAGEMENTEXCHANGENAME"),
 		RabbitMQCampaignManagementQueueName:    os.Getenv("RABBITMQCAMPAIGNMANAGEMENTQUEUENAME"),
+		RabbitMQAlertManagementExchangeName:    os.Getenv("RABBITMQALERTMANAGEMENTEXCHANGENAME"),
+		RabbitMQAlertManagementQueueName:       os.Getenv("RABBITMQALERTMANAGEMENTQUEUENAME"),
 		LogEnv:                                 os.Getenv("LOGENV"),
 		LogPath:                                os.Getenv("LOGPATH"),
 		LogLevel:                               os.Getenv("LOGLEVEL"),

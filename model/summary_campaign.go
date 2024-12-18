@@ -356,7 +356,7 @@ func (r *BaseModel) UpdateCPAReportSummaryCampaign(summary_date string, o entity
 
 func (r *BaseModel) UpdateReportSummaryCampaignMonitoringBudget(summary_date string, o entity.DataConfig) error {
 
-	SQL := fmt.Sprintf(UPDATEREPORTSUMMARYCAMPAIGNMONITORINGBUDGET, summary_date, o.TargetDailyBudget, o.Country, o.Operator)
+	SQL := fmt.Sprintf(UPDATEREPORTSUMMARYCAMPAIGNMONITORINGBUDGET, o.TargetDailyBudget, summary_date, o.Country, o.Operator)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 

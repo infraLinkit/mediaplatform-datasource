@@ -56,10 +56,6 @@ func (p *Postback) ValidateParams(Logs *logrus.Logger) GlobalResponse {
 
 		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "serv_id empty"}
 
-	} else if p.Keyword == "" {
-
-		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "keyword empty"}
-
 	} else if p.Msisdn == "" {
 
 		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "msisdn empty"}

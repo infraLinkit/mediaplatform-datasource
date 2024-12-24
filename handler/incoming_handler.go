@@ -84,8 +84,18 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 			pxData := entity.PixelStorage{
 				Country: dc.Country, Operator: dc.Operator, Partner: dc.Partner, Service: p.ServiceId, Keyword: p.Keyword, IsBillable: p.IsBillable, Pixel: p.Px}
 
-			if px, err := h.DS.GetPx(pxData); err != nil {
+			var (
+				px  entity.PixelStorage
+				err error
+			)
 
+			if dc.Partner == "TELKOMSEL-DIRECT" {
+				px, err = h.DS.GetToken(pxData)
+			} else {
+				px, err = h.DS.GetPx(pxData)
+			}
+
+			if err != nil {
 				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found"})
 
 			} else {

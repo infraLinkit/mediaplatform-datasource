@@ -54,7 +54,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 	h.Logs.Debug(fmt.Sprintf("Receive request postback %#v ...\n", c.AllParams()))
 
 	// Parse Postback Data
-	//country=[COUNTRY]&operator=[OPERATOR]&partner=[PARTNER]&serv_id=[SERV_ID]&keyword=[KEYWORD]&subkeyword=[SUBKEYWORD]&msisdn=[MSISDN]&px=[PIXEL]&trxid=[TRXID]
+	//serv_id=[SERV_ID]&msisdn=[MSISDN]&px=[PIXEL]&trxid=[TRXID]
 	p := entity.NewDataPostback(c)
 	p.URLServiceKey = c.Params("urlservicekey")
 
@@ -74,7 +74,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 			c.Cookie(&fiber.Cookie{
 				Name:     p.CookieKey,
 				Value:    "1",
-				Expires:  time.Now().Add(30 * time.Second),
+				Expires:  time.Now().Add(1 * time.Minute),
 				HTTPOnly: true,
 				SameSite: "lax",
 			})
@@ -82,14 +82,16 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 			dc, _ := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$")
 
 			pxData := entity.PixelStorage{
-				Country: dc.Country, Operator: dc.Operator, Partner: dc.Partner, Service: p.ServiceId, Keyword: p.Keyword, IsBillable: p.IsBillable, Pixel: p.Px}
+				URLServiceKey: p.URLServiceKey, Pixel: p.Px}
 
 			var (
 				px  entity.PixelStorage
 				err error
 			)
 
-			if dc.Partner == "TELKOMSEL-DIRECT" {
+			if dc.PostbackMethod == "ADNETCODE" {
+				px, err = h.DS.GetByAdnetCode(pxData)
+			} else if dc.PostbackMethod == "TOKEN" {
 				px, err = h.DS.GetToken(pxData)
 			} else {
 				px, err = h.DS.GetPx(pxData)
@@ -107,15 +109,14 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 					if px.IsUsed {
 
 						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
-							Adnet:         px.Adnet,
-							IsBillable:    px.IsBillable,
-							Pixel:         px.Pixel,
+							Adnet:         dc.Adnet,
+							IsBillable:    dc.IsBillable,
+							Pixel:         p.Px,
 							TrxId:         p.TrxId,
 							Msisdn:        p.Msisdn,
-							Browser:       px.Browser,
-							OS:            px.OS,
-							PubId:         px.PubId,
-							Handset:       px.Handset,
+							Browser:       dc.DeviceType,
+							OS:            dc.OS,
+							PubId:         dc.PubId,
 							PixelUsedDate: px.PixelUsedDate,
 						}})
 
@@ -149,16 +150,15 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 						}
 
 						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
-							Adnet:         px.Adnet,
-							IsBillable:    px.IsBillable,
-							Pixel:         px.Pixel,
+							Adnet:         dc.Adnet,
+							IsBillable:    dc.IsBillable,
+							Pixel:         p.Px,
 							TrxId:         p.TrxId,
 							Msisdn:        p.Msisdn,
 							Browser:       px.Browser,
 							OS:            px.OS,
-							PubId:         px.PubId,
-							Handset:       px.Handset,
-							PixelUsedDate: pxData.PixelUsedDate,
+							PubId:         dc.PubId,
+							PixelUsedDate: helper.GetFormatTime(h.Config.TZ, time.RFC3339),
 						}})
 					}
 				}

@@ -122,10 +122,9 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 						}})
 
 					} else {
-						/* pxData.Id = px.Id
-						pxData.CampaignDetailId = px.CampaignDetailId
-						pxData.Msisdn = p.Msisdn
-						pxData.TrxId = p.TrxId */
+
+						px.Msisdn = p.Msisdn
+						px.TrxId = p.TrxId
 						px.PixelUsedDate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
 
 						bodyReq, _ := json.Marshal(px)

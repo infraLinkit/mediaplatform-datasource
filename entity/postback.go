@@ -1,8 +1,6 @@
 package entity
 
 import (
-	"strconv"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
 	"github.com/sirupsen/logrus"
@@ -30,19 +28,15 @@ func NewDataPostback(c *fiber.Ctx) *Postback {
 
 	m := c.Queries()
 
-	isBillable, _ := strconv.ParseBool(m["is_billable"])
-
-	CookieKey := helper.Concat("-", helper.GetIpAddress(c), m["urlservicekey"], m["serv_id"], m["keyword"], m["msisdn"], m["trxid"], m["px"], m["is_billable"])
+	CookieKey := helper.Concat("-", helper.GetIpAddress(c), m["urlservicekey"], m["serv_id"], m["msisdn"], m["px"], m["trxid"])
 
 	return &Postback{
 		CookieKey:     CookieKey,
 		URLServiceKey: m["urlservicekey"],
 		ServiceId:     m["serv_id"],
-		Keyword:       m["keyword"],
 		Msisdn:        m["msisdn"],
 		Px:            m["px"],
 		TrxId:         m["trxid"],
-		IsBillable:    isBillable,
 	}
 }
 

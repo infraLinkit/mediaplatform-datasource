@@ -114,9 +114,10 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 							Pixel:         p.Px,
 							TrxId:         p.TrxId,
 							Msisdn:        p.Msisdn,
-							Browser:       dc.DeviceType,
-							OS:            dc.OS,
-							PubId:         dc.PubId,
+							Browser:       px.Browser,
+							OS:            px.OS,
+							Handset:       px.UserAgent,
+							PubId:         px.PubId,
 							PixelUsedDate: px.PixelUsedDate,
 						}})
 
@@ -157,7 +158,8 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 							Msisdn:        p.Msisdn,
 							Browser:       px.Browser,
 							OS:            px.OS,
-							PubId:         dc.PubId,
+							Handset:       px.UserAgent,
+							PubId:         px.PubId,
 							PixelUsedDate: helper.GetFormatTime(h.Config.TZ, time.RFC3339),
 						}})
 					}

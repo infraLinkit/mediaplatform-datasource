@@ -132,9 +132,9 @@ func (r *BaseModel) UpdateSummaryCampaign(summary_date string, o entity.DataConf
 	return nil
 }
 
-func (r *BaseModel) SummaryCampaign(data map[string]string, o entity.DataConfig, o2 entity.DataCounter) int {
+func (r *BaseModel) SummaryCampaign(d entity.Summary) int {
 
-	SQL := fmt.Sprintf(SUMMARYCAMPAIGN, o.IsActive, data["summary_date"], o.CampaignId, o.CampaignName, o.Country, o.Partner, o.Operator, o.URLServiceKey, o.Aggregator, o.Service, o.Adnet, o.ShortCode, o2.Traffic, o2.Landing, o2.MOReceived, data["cr_mo"], data["cr_postback"], o2.Postback, o2.TotalFP, data["success_fp"], data["billrate"], o.PO, data["sbaf"], data["saaf"], data["cpa"], data["revenue"], o.URLWarpLanding, o.URLLanding, o.MOCapping, o.RatioSend, o.RatioReceive, o.ClientType, data["cost_per_conversion"], data["agency_fee"], data["total_waki_agency_fee"], data["target_daily_budget"], data["budget_usage"], o2.Traffic, o2.Landing, o2.MOReceived, data["cr_mo"], data["cr_postback"], o2.Postback, o2.TotalFP, data["success_fp"], data["billrate"], o.PO, data["sbaf"], data["saaf"], data["cpa"], data["revenue"], o.URLWarpLanding, o.URLLanding, o.MOCapping, o.RatioSend, o.RatioReceive, o.ClientType, data["cost_per_conversion"], data["agency_fee"], data["total_waki_agency_fee"], data["target_daily_budget"], data["budget_usage"])
+	SQL := fmt.Sprintf(SUMMARYCAMPAIGN, d.IsActive, d.SummaryDate, d.CampaignId, d.CampaignName, d.Country, d.Partner, d.Operator, d.URLServiceKey, d.Aggregator, d.Service, d.Adnet, d.ShortCode, d.TotalTraffic, d.TotalLanding, d.TotalMOReceived, d.CRMO, d.CRPostback, d.TotalPostback, d.TotalFP, d.SuccessFP, d.BillRate, d.PO, d.SBAF, d.SAAF, d.CPA, d.Revenue, d.URLWarpLanding, d.URLLanding, d.MOCapping, d.RatioSend, d.RatioReceive, d.ClientType, d.CPCR, d.AgencyFee, d.TotalWakiAgencyFee, d.TDB, d.BudgetUsage, d.TotalTraffic, d.TotalLanding, d.TotalMOReceived, d.CRMO, d.CRPostback, d.TotalPostback, d.TotalFP, d.SuccessFP, d.BillRate, d.PO, d.SBAF, d.SAAF, d.CPA, d.Revenue, d.URLWarpLanding, d.URLLanding, d.MOCapping, d.RatioSend, d.RatioReceive, d.ClientType, d.CPCR, d.AgencyFee, d.TotalWakiAgencyFee, d.TDB, d.BudgetUsage)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 

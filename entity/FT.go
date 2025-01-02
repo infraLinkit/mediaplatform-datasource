@@ -207,6 +207,12 @@ type (
 		SAAF               string `json:"saaf"`
 		CPA                string `json:"cpa"`
 		Revenue            string `json:"revenue"`
+		URLWarpLanding     string `json:"url_warp_landing"`
+		URLLanding         string `json:"url_landing"`
+		MOCapping          int    `json:"mo_capping"`
+		RatioSend          int    `json:"ratio_send"`
+		RatioReceive       int    `json:"ratio_receive"`
+		ClientType         string `json:"client_type"`
 		CPCR               string `json:"cost_per_conversion"`
 		AgencyFee          string `json:"agency_fee"`
 		TotalWakiAgencyFee string `json:"total_waki_agency_fee"`

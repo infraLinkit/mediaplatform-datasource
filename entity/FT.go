@@ -196,4 +196,61 @@ type (
 		Name   string `json:"name"`
 		UserId int    `json:"user_id"`
 	}
+
+	Summary struct {
+		SummaryDate        string `json:"summary_date"`
+		CRMO               string `json:"cr_mo"`
+		CRPostback         string `json:"cr_postback"`
+		SuccessFP          string `json:"success_fp"`
+		BillRate           string `json:"billrate"`
+		SBAF               string `json:"sbaf"`
+		SAAF               string `json:"saaf"`
+		CPA                string `json:"cpa"`
+		Revenue            string `json:"revenue"`
+		CPCR               string `json:"cost_per_conversion"`
+		AgencyFee          string `json:"agency_fee"`
+		TotalWakiAgencyFee string `json:"total_waki_agency_fee"`
+		TDB                string `json:"target_daily_budget"`
+		BudgetUsage        string `json:"budget_usage"`
+		IsActive           bool   `json:"is_active"`
+		CampaignId         string `json:"campaign_id"`
+		CampaignName       string `json:"campaign_name"`
+		Country            string `json:"country"`
+		Partner            string `json:"partner"`
+		Operator           string `json:"operator"`
+		URLServiceKey      string `json:"urlservicekey"`
+		Aggregator         string `json:"aggregator"`
+		Service            string `json:"service"`
+		Adnet              string `json:"adnet"`
+		ShortCode          string `json:"shortcode"`
+		PO                 string `json:"po"`
+		TotalTraffic       int    `json:"total_traffic"`
+		TotalLanding       int    `json:"total_landing"`
+		TotalClicked       int    `json:"total_clicked"`
+		TotalRedirect      int    `json:"total_redirect"`
+		TotalMOReceived    int    `json:"total_moreceived"`
+		TotalPostback      int    `json:"total_postback"`
+		TotalFP            int    `json:"total_fp"`
+		TotalROI           int    `json:"total_roi"`
+		DataReserved1      string `json:"data_reserved1"`
+		DataReserved2      string `json:"data_reserved2"`
+		DataReserved3      string `json:"data_reserved3"`
+		DataReserved4      string `json:"data_reserved4"`
+		DataReserved5      string `json:"data_reserved5"`
+		DataReserved6      string `json:"data_reserved6"`
+		DataReserved7      string `json:"data_reserved7"`
+		DataReserved8      string `json:"data_reserved8"`
+		DataReserved9      string `json:"data_reserved9"`
+		DataReserved10     string `json:"data_reserved10"`
+		TotalReserved1     int    `json:"total_reserved1"`
+		TotalReserved2     int    `json:"total_reserved2"`
+		TotalReserved3     int    `json:"total_reserved3"`
+		TotalReserved4     int    `json:"total_reserved4"`
+		TotalReserved5     int    `json:"total_reserved5"`
+		TotalReserved6     int    `json:"total_reserved6"`
+		TotalReserved7     int    `json:"total_reserved7"`
+		TotalReserved8     int    `json:"total_reserved8"`
+		TotalReserved9     int    `json:"total_reserved9"`
+		TotalReserved10    int    `json:"total_reserved10"`
+	}
 )

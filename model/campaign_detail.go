@@ -27,7 +27,7 @@ const (
 	COUNTERCAPPING                 = "UPDATE campaign_detail SET counter_mo_capping = counter_mo_capping+1, last_update_capping = CASE WHEN counter_mo_capping >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d;"
 	COUNTERRATIO                   = "UPDATE campaign_detail SET counter_mo_ratio = counter_mo_ratio+1 WHERE id = %d;"
 	UPDATESTATUSCOUNTER            = "UPDATE campaign_detail SET counter_mo_capping = %d, status_capping = %t, counter_mo_ratio = %d, status_ratio = %t, last_update = '%s'::timestamp(0), last_update_capping = CASE WHEN counter_mo_capping+1 >= mo_capping THEN '%s'::timestamp(0) END WHERE id = %d"
-	GETCAMPAIGNDETAILBYSTATUS      = "SELECT c.name, c.campaign_objective, c.advertiser, cd.* FROM campaign_detail cd INNER JOIN campaign c ON cd.campaign_id  = c.campaign_id WHERE is_active = %t;"
+	GETCAMPAIGNDETAILBYSTATUS      = "SELECT c.name, c.campaign_objective, c.advertiser, cd.id, cd.urlservicekey, cd.campaign_id, cd.country, cd.operator, cd.partner, cd.aggregator, cd.adnet, cd.service, cd.keyword, cd.subkeyword, cd.is_billable, cd.plan, cd.po, cd.cost, cd.pubid, cd.short_code, cd.device_type, cd.os, cd.url_type, cd.click_type, cd.click_delay, cd.client_type, cd.traffic_source, cd.unique_click, cd.url_banner, cd.url_landing, cd.url_warp_landing, cd.url_service, cd.url_tfc_or_smartlink, cd.glob_post, cd.url_globpost, cd.custom_integration, cd.ip_address, cd.is_active, cd.mo_capping, cd.counter_mo_capping, cd.status_capping, cd.kpi_upper_limit_capping, cd.is_machine_learning_capping, cd.ratio_send, cd.ratio_receive, cd.counter_mo_ratio, cd.status_ratio, cd.kpi_upper_limit_ratio_send, cd.kpi_upper_limit_ratio_receive, cd.is_machine_learning_ratio, cd.api_url, cd.last_update, cd.cost_per_conversion, cd.agency_fee, cd.target_daily_budget, cd.url_postback FROM campaign_detail cd INNER JOIN campaign c ON cd.campaign_id  = c.campaign_id WHERE is_active = %t;"
 	GETCAMPAIGNDETAILALL           = "SELECT * FROM campaign_detail;"
 	UPDATECPAREPORT                = "UPDATE campaign_detail SET cost_per_conversion = '%s', agency_fee = '%s' WHERE urlservicekey = '%s' AND country = '%s' AND operator = '%s' AND partner = '%s' AND service = '%s' AND adnet = '%s' AND campaign_id = '%s'"
 	UPDATECAMPAIGNMONITORINGBUDGET = "UPDATE campaign_detail SET target_daily_budget = '%s' WHERE country = '%s' AND operator = '%s'"
@@ -149,7 +149,7 @@ func (r *BaseModel) NewCampaignDetail(o entity.DataConfig) int {
 		ips = ips + "}"
 	}
 
-	SQL := fmt.Sprintf(NEWCAMPAIGNDETAIL, o.Id, o.URLServiceKey, o.CampaignId, o.Country, o.Operator, o.Partner, o.Aggregator, o.Adnet, o.Service, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan, o.PO, o.Cost, o.PubId, o.ShortCode, o.DeviceType, o.OS, o.URLType, o.ClickType, o.ClickDelay, o.ClientType, o.TrafficSource, o.UniqueClick, o.URLBanner, o.URLLanding, o.URLWarpLanding, o.URLService, o.URLTFCSmartlink, o.GlobPost, o.URLGlobPost, o.CustomIntegration, ips, o.IsActive, o.MOCapping, o.CounterMOCapping, o.StatusCapping, o.KPIUpperLimitCapping, o.IsMachineLearningCapping, o.RatioSend, o.RatioReceive, o.CounterMORatio, o.StatusRatio, o.KPIUpperLimitRatioSend, o.KPIUpperLimitRatioReceive, o.IsMachineLearningRatio, o.APIURL, o.LastUpdate, o.LastUpdateCapping.String, o.CPCR, o.AgencyFee, o.TargetDailyBudget, o.URLPostback)
+	SQL := fmt.Sprintf(NEWCAMPAIGNDETAIL, o.Id, o.URLServiceKey, o.CampaignId, o.Country, o.Operator, o.Partner, o.Aggregator, o.Adnet, o.Service, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan, o.PO, o.Cost, o.PubId, o.ShortCode, o.DeviceType, o.OS, o.URLType, o.ClickType, o.ClickDelay, o.ClientType, o.TrafficSource, o.UniqueClick, o.URLBanner, o.URLLanding, o.URLWarpLanding, o.URLService, o.URLTFCSmartlink, o.GlobPost, o.URLGlobPost, o.CustomIntegration, ips, o.IsActive, o.MOCapping, o.CounterMOCapping, o.StatusCapping, o.KPIUpperLimitCapping, o.IsMachineLearningCapping, o.RatioSend, o.RatioReceive, o.CounterMORatio, o.StatusRatio, o.KPIUpperLimitRatioSend, o.KPIUpperLimitRatioReceive, o.IsMachineLearningRatio, o.APIURL, o.LastUpdate, o.LastUpdateCapping, o.CPCR, o.AgencyFee, o.TargetDailyBudget, o.URLPostback)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 
@@ -245,7 +245,7 @@ func (r *BaseModel) UpdateCampaignDetail(o entity.DataConfig) error {
 		ips = ips + "}"
 	}
 
-	SQL := fmt.Sprintf(UPDATECAMPAIGNDETAIL, o.CampaignId, o.Country, o.Operator, o.Partner, o.Aggregator, o.Adnet, o.Service, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan, o.PO, o.Cost, o.PubId, o.ShortCode, o.DeviceType, o.OS, o.URLType, o.ClickType, o.ClickDelay, o.ClientType, o.TrafficSource, o.UniqueClick, o.URLBanner, o.URLLanding, o.URLWarpLanding, o.URLService, o.URLTFCSmartlink, o.GlobPost, o.URLGlobPost, o.CustomIntegration, ips, o.IsActive, o.MOCapping, o.CounterMOCapping, o.StatusCapping, o.KPIUpperLimitCapping, o.IsMachineLearningCapping, o.RatioSend, o.RatioReceive, o.CounterMORatio, o.StatusRatio, o.KPIUpperLimitRatioSend, o.KPIUpperLimitRatioReceive, o.IsMachineLearningRatio, o.APIURL, o.LastUpdate, o.LastUpdateCapping.String, o.CPCR, o.AgencyFee, o.TargetDailyBudget, o.URLPostback, o.Id)
+	SQL := fmt.Sprintf(UPDATECAMPAIGNDETAIL, o.CampaignId, o.Country, o.Operator, o.Partner, o.Aggregator, o.Adnet, o.Service, o.Keyword, o.SubKeyword, o.IsBillable, o.Plan, o.PO, o.Cost, o.PubId, o.ShortCode, o.DeviceType, o.OS, o.URLType, o.ClickType, o.ClickDelay, o.ClientType, o.TrafficSource, o.UniqueClick, o.URLBanner, o.URLLanding, o.URLWarpLanding, o.URLService, o.URLTFCSmartlink, o.GlobPost, o.URLGlobPost, o.CustomIntegration, ips, o.IsActive, o.MOCapping, o.CounterMOCapping, o.StatusCapping, o.KPIUpperLimitCapping, o.IsMachineLearningCapping, o.RatioSend, o.RatioReceive, o.CounterMORatio, o.StatusRatio, o.KPIUpperLimitRatioSend, o.KPIUpperLimitRatioReceive, o.IsMachineLearningRatio, o.APIURL, o.LastUpdate, o.LastUpdateCapping, o.CPCR, o.AgencyFee, o.TargetDailyBudget, o.URLPostback, o.Id)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 
@@ -446,7 +446,7 @@ func (r *BaseModel) GetCampaignDetail(o entity.DataConfig) (entity.DataConfig, e
 
 func (r *BaseModel) CounterCappingById(o entity.DataConfig) error {
 
-	SQL := fmt.Sprintf(COUNTERCAPPING, o.LastUpdateCapping.String, o.Id)
+	SQL := fmt.Sprintf(COUNTERCAPPING, o.LastUpdateCapping, o.Id)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 
@@ -516,7 +516,7 @@ func (r *BaseModel) CounterRatioById(id int) error {
 
 func (r *BaseModel) UpdateStatusCounterById(o entity.DataConfig) error {
 
-	SQL := fmt.Sprintf(UPDATESTATUSCOUNTER, o.CounterMOCapping, o.StatusCapping, o.CounterMORatio, o.StatusRatio, o.LastUpdate, o.LastUpdateCapping.String, o.Id)
+	SQL := fmt.Sprintf(UPDATESTATUSCOUNTER, o.CounterMOCapping, o.StatusCapping, o.CounterMORatio, o.StatusRatio, o.LastUpdate, o.LastUpdateCapping, o.Id)
 
 	stmt, err := r.DBPostgre.PrepareContext(context.Background(), SQL)
 
@@ -572,7 +572,7 @@ func (r *BaseModel) GetCampaignDetailByStatus(obj entity.DataConfig, useStatus b
 
 		var o entity.DataConfig
 
-		if err = rows.Scan(&o.CampaignName, &o.Objective, &o.Advertiser, &o.Id, &o.URLServiceKey, &o.CampaignId, &o.Country, &o.Operator, &o.Partner, &o.Aggregator, &o.Adnet, &o.Service, &o.Keyword, &o.SubKeyword, &o.IsBillable, &o.Plan, &o.PO, &o.Cost, &o.PubId, &o.ShortCode, &o.DeviceType, &o.OS, &o.URLType, &o.ClickType, &o.ClickDelay, &o.ClientType, &o.TrafficSource, &o.UniqueClick, &o.URLBanner, &o.URLLanding, &o.URLWarpLanding, &o.URLService, &o.URLTFCSmartlink, &o.GlobPost, &o.URLGlobPost, &o.CustomIntegration, &o.IPAddress, &o.IsActive, &o.MOCapping, &o.CounterMOCapping, &o.StatusCapping, &o.KPIUpperLimitCapping, &o.IsMachineLearningCapping, &o.RatioSend, &o.RatioReceive, &o.CounterMORatio, &o.StatusRatio, &o.KPIUpperLimitRatioSend, &o.KPIUpperLimitRatioReceive, &o.IsMachineLearningRatio, &o.APIURL, &o.LastUpdate, &o.LastUpdateCapping, &o.CPCR, &o.AgencyFee, &o.TargetDailyBudget, &o.URLPostback); err != nil {
+		if err = rows.Scan(&o.CampaignName, &o.Objective, &o.Advertiser, &o.Id, &o.URLServiceKey, &o.CampaignId, &o.Country, &o.Operator, &o.Partner, &o.Aggregator, &o.Adnet, &o.Service, &o.Keyword, &o.SubKeyword, &o.IsBillable, &o.Plan, &o.PO, &o.Cost, &o.PubId, &o.ShortCode, &o.DeviceType, &o.OS, &o.URLType, &o.ClickType, &o.ClickDelay, &o.ClientType, &o.TrafficSource, &o.UniqueClick, &o.URLBanner, &o.URLLanding, &o.URLWarpLanding, &o.URLService, &o.URLTFCSmartlink, &o.GlobPost, &o.URLGlobPost, &o.CustomIntegration, &o.IPAddress, &o.IsActive, &o.MOCapping, &o.CounterMOCapping, &o.StatusCapping, &o.KPIUpperLimitCapping, &o.IsMachineLearningCapping, &o.RatioSend, &o.RatioReceive, &o.CounterMORatio, &o.StatusRatio, &o.KPIUpperLimitRatioSend, &o.KPIUpperLimitRatioReceive, &o.IsMachineLearningRatio, &o.APIURL, &o.LastUpdate, &o.CPCR, &o.AgencyFee, &o.TargetDailyBudget, &o.URLPostback); err != nil {
 
 			r.Logs.Error(fmt.Sprintf("SQL : %s, error scan occured : %#v", SQL, err))
 

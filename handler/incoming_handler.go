@@ -82,7 +82,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 			dc, _ := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$")
 
 			pxData := entity.PixelStorage{
-				URLServiceKey: p.URLServiceKey, Pixel: p.Px}
+				URLServiceKey: p.URLServiceKey, Pixel: p.AffSub}
 
 			var (
 				px  entity.PixelStorage
@@ -111,9 +111,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
 							Adnet:         dc.Adnet,
 							IsBillable:    dc.IsBillable,
-							Pixel:         p.Px,
-							TrxId:         p.TrxId,
-							Msisdn:        p.Msisdn,
+							Pixel:         p.AffSub,
 							Browser:       px.Browser,
 							OS:            px.OS,
 							Handset:       px.UserAgent,
@@ -123,8 +121,6 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 
 					} else {
 
-						px.Msisdn = p.Msisdn
-						px.TrxId = p.TrxId
 						px.PixelUsedDate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
 
 						bodyReq, _ := json.Marshal(px)
@@ -152,9 +148,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
 							Adnet:         dc.Adnet,
 							IsBillable:    dc.IsBillable,
-							Pixel:         p.Px,
-							TrxId:         p.TrxId,
-							Msisdn:        p.Msisdn,
+							Pixel:         p.AffSub,
 							Browser:       px.Browser,
 							OS:            px.OS,
 							Handset:       px.UserAgent,

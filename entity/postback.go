@@ -9,13 +9,8 @@ import (
 type (
 	Postback struct {
 		CookieKey     string
-		URLServiceKey string `json:"country"`
-		ServiceId     string `json:"serv_id"`
-		Keyword       string `json:"keyword"`
-		TrxId         string `json:"trxid"`
-		Msisdn        string `json:"msisdn"`
-		Px            string `json:"px"`
-		IsBillable    bool   `json:"is_billable"`
+		URLServiceKey string `json:"urlservicekey"`
+		AffSub        string `json:"aff_sub"`
 	}
 
 	PostbackData struct {
@@ -28,15 +23,12 @@ func NewDataPostback(c *fiber.Ctx) *Postback {
 
 	m := c.Queries()
 
-	CookieKey := helper.Concat("-", helper.GetIpAddress(c), m["urlservicekey"], m["serv_id"], m["msisdn"], m["px"], m["trxid"])
+	CookieKey := helper.Concat("-", helper.GetIpAddress(c), m["urlservicekey"], m["aff_sub"])
 
 	return &Postback{
 		CookieKey:     CookieKey,
 		URLServiceKey: m["urlservicekey"],
-		ServiceId:     m["serv_id"],
-		Msisdn:        m["msisdn"],
-		Px:            m["px"],
-		TrxId:         m["trxid"],
+		AffSub:        m["aff_sub"],
 	}
 }
 
@@ -46,15 +38,7 @@ func (p *Postback) ValidateParams(Logs *logrus.Logger) GlobalResponse {
 
 		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "urlservicekey empty or not found"}
 
-	} else if p.ServiceId == "" {
-
-		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "serv_id empty"}
-
-	} else if p.Msisdn == "" {
-
-		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "msisdn empty"}
-
-	} else if p.Px == "" {
+	} else if p.AffSub == "" {
 
 		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "pixel empty"}
 

@@ -16,8 +16,6 @@ type (
 		Adnet         string `json:"adnet"`
 		IsBillable    bool   `json:"is_billable"`
 		Pixel         string `json:"pixel"`
-		TrxId         string `json:"trx_id"`
-		Msisdn        string `json:"msisdn"`
 		Browser       string `json:"browser"`
 		OS            string `json:"os"`
 		PubId         string `json:"pubid"`

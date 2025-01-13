@@ -20,9 +20,6 @@ type (
 	DataTraffic struct {
 		URLServiceKey string `form:"urlservicekey" json:"urlservicekey" xml:"urlservicekey"`
 		Aff_Sub       string `form:"aff_sub" json:"aff_sub" xml:"aff_sub"`
-		Partner       string `form:"p" json:"p" xml:"p"`
-		Service       string `form:"srv" json:"srv" xml:"srv"`
-		Adnet         string `form:"ad" json:"ad" xml:"ad"`
 		PubId         string `form:"pubid" json:"pubid" xml:"pubid"`
 	}
 )
@@ -50,18 +47,6 @@ func (t *Traffic) ValidateParams(Logs *logrus.Logger, traffic *Traffic) GlobalRe
 		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "parameters is not complete"}
 	} else if traffic.DataTraffic.Aff_Sub == "" {
 		Logs.Debug("Receive traffic aff_sub param is empty ...\n")
-
-		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "parameters is not complete"}
-	} else if traffic.DataTraffic.Adnet == "" {
-		Logs.Debug("Receive traffic adnet param is empty ...\n")
-
-		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "parameters is not complete"}
-	} else if traffic.DataTraffic.Partner == "" {
-		Logs.Debug("Receive traffic partner param is empty ...\n")
-
-		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "parameters is not complete"}
-	} else if traffic.DataTraffic.Service == "" {
-		Logs.Debug("Receive traffic service param is empty ...\n")
 
 		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "parameters is not complete"}
 	} else {

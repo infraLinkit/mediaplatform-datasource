@@ -3,14 +3,13 @@ package entity
 import (
 	"time"
 
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
 type (
 	Campaign struct {
 		gorm.Model
-		ID                uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		ID                int    `gorm:"primaryKey;autoIncrement" json:"id"`
 		CampaignId        string `gorm:"index:idx_campid_unique;not null;size:50" json:"campaign_id"`
 		Name              string `gorm:"not null;size:50" json:"name"`
 		CampaignObjective string `gorm:"not null;size:50" json:"campaign_objective"`
@@ -22,60 +21,60 @@ type (
 
 	CampaignDetail struct {
 		gorm.Model
-		ID                        int             `gorm:"primaryKey;autoIncrement" json:"id"`
-		URLServiceKey             string          `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
-		CampaignId                string          `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
-		Country                   string          `gorm:"not null;size:50" json:"country"`
-		Operator                  string          `gorm:"not null;size:50" json:"operator"`
-		Partner                   string          `gorm:"not null;size:50" json:"partner"`
-		Aggregator                string          `gorm:"not null;size:50" json:"aggregator"`
-		Adnet                     string          `gorm:"not null;size:50" json:"adnet"`
-		Service                   string          `gorm:"not null;size:50" json:"service"`
-		Keyword                   string          `gorm:"not null;size:50" json:"keyword"`
-		Subkeyword                string          `gorm:"not null;size:50" json:"subkeyword"`
-		IsBillable                bool            `gorm:"not null;size:50" json:"is_billable"`
-		Plan                      string          `gorm:"not null;size:50" json:"plan"`
-		PO                        string          `gorm:"size:50" json:"po"`
-		Cost                      string          `gorm:"not null;size:50" json:"cost"`
-		PubId                     string          `gorm:"not null;size:50" json:"pubid"`
-		ShortCode                 string          `gorm:"not null;size:50" json:"short_code"`
-		DeviceType                string          `gorm:"not null;size:50" json:"device_type"`
-		OS                        string          `gorm:"not null;size:50" json:"os"`
-		URLType                   string          `gorm:"not null;size:50;default:wap" json:"url_type"`
-		ClickType                 int             `gorm:"not null;length:1;default:1" json:"click_type"`
-		ClickDelay                int             `gorm:"not null;length:1;default:1" json:"click_delay"`
-		ClientType                string          `gorm:"not null;size:50" json:"client_type"`
-		TrafficSource             bool            `gorm:"not null;default:false" json:"traffic_source"`
-		UniqueClick               bool            `gorm:"not null;default:false" json:"unique_click"`
-		URLBanner                 string          `gorm:"size:255;default:NA" json:"url_banner"`
-		URLLanding                string          `gorm:"size:255;default:NA" json:"url_landing"`
-		URLWarpLanding            string          `gorm:"size:255;default:NA" json:"url_warp_landing"`
-		URLService                string          `gorm:"size:255;default:NA" json:"url_service"`
-		URLTFCORSmartlink         string          `gorm:"size:255;default:NA" json:"url_tfc_or_smartlink"`
-		GlobPost                  bool            `gorm:"not null;default:false" json:"glob_post"`
-		URLGlobPost               string          `gorm:"size:255;default:NA" json:"url_glob_post"`
-		CustomIntegration         string          `gorm:"size:30;default:NA" json:"custom_integration"`
-		IpAddress                 pq.StringArray  `gorm:"type:text[]"`
-		IsActive                  bool            `gorm:"not null;default:true" json:"is_active"`
-		MOCapping                 int             `gorm:"not null;length:10;default:0" json:"mo_capping"`
-		CounterMOCapping          int             `gorm:"not null;length:10;default:0" json:"counter_mo_capping"`
-		StatusCapping             bool            `gorm:"not null;default:false" json:"status_capping"`
-		KPIUpperLimitCapping      int             `gorm:"not null;length:20;default:1" json:"kpi_upper_limit_capping"`
-		IsMachineLearningCapping  bool            `gorm:"not null;default:false" json:"is_machine_learning_capping"`
-		RatioSend                 int             `gorm:"not null;length:10;default:1" json:"ratio_send"`
-		RatioReceive              int             `gorm:"not null;length:10;default:4" json:"ratio_receive"`
-		CounterMORatio            int             `gorm:"not null;length:10;default:0" json:"counter_mo_ratio"`
-		StatusRatio               bool            `gorm:"not null;default:false" json:"status_ratio"`
-		KPIUpperLimitRatioSend    int             `gorm:"not null;length:10;default:1" json:"kpi_upper_limit_ratio_send"`
-		KPIUpperLimitRatioReceive int             `gorm:"not null;length:10;default:4" json:"kpi_upper_limit_ratio_receive"`
-		IsMachineLearningRatio    bool            `gorm:"not null;default:false" json:"is_machine_learning_ratio"`
-		APIURL                    string          `gorm:"size:255;default:NA" json:"api_url"`
-		LastUpdate                time.Time       `json:"last_update"`
-		LastUpdateCapping         time.Time       `json:"last_update_capping"`
-		CostPerConversion         pq.Float64Array `gorm:"type:double precision" json:"cost_per_conversion"`
-		AgencyFee                 pq.Float64Array `gorm:"type:double precision" json:"agency_fee"`
-		TargetDailyBudget         pq.Float64Array `gorm:"type:double precision" json:"target_daily_budget"`
-		URLPostback               string          `gorm:"size:255;default:NA" json:"url_postback"`
+		ID                        int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		URLServiceKey             string    `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
+		CampaignId                string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
+		Country                   string    `gorm:"not null;size:50" json:"country"`
+		Operator                  string    `gorm:"not null;size:50" json:"operator"`
+		Partner                   string    `gorm:"not null;size:50" json:"partner"`
+		Aggregator                string    `gorm:"not null;size:50" json:"aggregator"`
+		Adnet                     string    `gorm:"not null;size:50" json:"adnet"`
+		Service                   string    `gorm:"not null;size:50" json:"service"`
+		Keyword                   string    `gorm:"not null;size:50" json:"keyword"`
+		Subkeyword                string    `gorm:"not null;size:50" json:"subkeyword"`
+		IsBillable                bool      `gorm:"not null;size:50" json:"is_billable"`
+		Plan                      string    `gorm:"not null;size:50" json:"plan"`
+		PO                        string    `gorm:"size:50" json:"po"`
+		Cost                      string    `gorm:"not null;size:50" json:"cost"`
+		PubId                     string    `gorm:"not null;size:50" json:"pubid"`
+		ShortCode                 string    `gorm:"not null;size:50" json:"short_code"`
+		DeviceType                string    `gorm:"not null;size:50" json:"device_type"`
+		OS                        string    `gorm:"not null;size:50" json:"os"`
+		URLType                   string    `gorm:"not null;size:50;default:wap" json:"url_type"`
+		ClickType                 int       `gorm:"not null;length:1;default:1" json:"click_type"`
+		ClickDelay                int       `gorm:"not null;length:1;default:1" json:"click_delay"`
+		ClientType                string    `gorm:"not null;size:50" json:"client_type"`
+		TrafficSource             bool      `gorm:"not null;default:false" json:"traffic_source"`
+		UniqueClick               bool      `gorm:"not null;default:false" json:"unique_click"`
+		URLBanner                 string    `gorm:"size:255;default:NA" json:"url_banner"`
+		URLLanding                string    `gorm:"size:255;default:NA" json:"url_landing"`
+		URLWarpLanding            string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
+		URLService                string    `gorm:"size:255;default:NA" json:"url_service"`
+		URLTFCORSmartlink         string    `gorm:"size:255;default:NA" json:"url_tfc_or_smartlink"`
+		GlobPost                  bool      `gorm:"not null;default:false" json:"glob_post"`
+		URLGlobPost               string    `gorm:"size:255;default:NA" json:"url_glob_post"`
+		CustomIntegration         string    `gorm:"size:30;default:NA" json:"custom_integration"`
+		IpAddress                 []string  `gorm:"type:text[]"`
+		IsActive                  bool      `gorm:"not null;default:true" json:"is_active"`
+		MOCapping                 int       `gorm:"not null;length:10;default:0" json:"mo_capping"`
+		CounterMOCapping          int       `gorm:"not null;length:10;default:0" json:"counter_mo_capping"`
+		StatusCapping             bool      `gorm:"not null;default:false" json:"status_capping"`
+		KPIUpperLimitCapping      int       `gorm:"not null;length:20;default:1" json:"kpi_upper_limit_capping"`
+		IsMachineLearningCapping  bool      `gorm:"not null;default:false" json:"is_machine_learning_capping"`
+		RatioSend                 int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
+		RatioReceive              int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
+		CounterMORatio            int       `gorm:"not null;length:10;default:0" json:"counter_mo_ratio"`
+		StatusRatio               bool      `gorm:"not null;default:false" json:"status_ratio"`
+		KPIUpperLimitRatioSend    int       `gorm:"not null;length:10;default:1" json:"kpi_upper_limit_ratio_send"`
+		KPIUpperLimitRatioReceive int       `gorm:"not null;length:10;default:4" json:"kpi_upper_limit_ratio_receive"`
+		IsMachineLearningRatio    bool      `gorm:"not null;default:false" json:"is_machine_learning_ratio"`
+		APIURL                    string    `gorm:"size:255;default:NA" json:"api_url"`
+		LastUpdate                time.Time `json:"last_update"`
+		LastUpdateCapping         time.Time `json:"last_update_capping"`
+		CostPerConversion         float64   `gorm:"type:double precision" json:"cost_per_conversion"`
+		AgencyFee                 float64   `gorm:"type:double precision" json:"agency_fee"`
+		TargetDailyBudget         float64   `gorm:"type:double precision" json:"target_daily_budget"`
+		URLPostback               string    `gorm:"size:255;default:NA" json:"url_postback"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}
@@ -117,7 +116,7 @@ type (
 		GlobPost                  bool
 		URLGlobPost               string
 		CustomIntegration         string
-		IpAddress                 pq.StringArray
+		IpAddress                 []string
 		IsActive                  bool
 		MOCapping                 int
 		CounterMOCapping          int
@@ -134,9 +133,9 @@ type (
 		APIURL                    string
 		LastUpdate                time.Time
 		LastUpdateCapping         time.Time
-		CostPerConversion         pq.Float64Array
-		AgencyFee                 pq.Float64Array
-		TargetDailyBudget         pq.Float64Array
+		CostPerConversion         float64
+		AgencyFee                 float64
+		TargetDailyBudget         float64
 		URLPostback               string
 	}
 
@@ -337,48 +336,48 @@ type (
 
 	SummaryCampaign struct {
 		gorm.Model
-		ID                       int             `gorm:"primaryKey;autoIncrement" json:"id"`
-		Status                   bool            `gorm:"not null;size:50" json:"status"`
-		SummaryDate              time.Time       `json:"summary_date"`
-		URLServiceKey            string          `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
-		CampaignId               string          `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
-		CampaignName             string          `gorm:"not null;size:100" json:"campaign_name"`
-		Country                  string          `gorm:"not null;size:50" json:"country"`
-		Operator                 string          `gorm:"not null;size:50" json:"operator"`
-		Partner                  string          `gorm:"not null;size:50" json:"partner"`
-		Aggregator               string          `gorm:"not null;size:50" json:"aggregator"`
-		Adnet                    string          `gorm:"not null;size:50" json:"adnet"`
-		Service                  string          `gorm:"not null;size:50" json:"service"`
-		ShortCode                string          `gorm:"not null;size:50" json:"short_code"`
-		Traffic                  int             `gorm:"not null;length:20;default:0" json:"traffic"`
-		Landing                  int             `gorm:"not null;length:20;default:0" json:"landing"`
-		MoReceived               int             `gorm:"not null;length:20;default:0" json:"mo_received"`
-		CR                       pq.Float64Array `gorm:"type:double precision" json:"cr"`
-		Postback                 int             `gorm:"not null;length:20;default:0" json:"postback"`
-		TotalFP                  int             `gorm:"not null;length:20;default:0" json:"total_fp"`
-		SuccessFP                int             `gorm:"not null;length:20;default:0" json:"success_fp"`
-		Billrate                 pq.Float64Array `gorm:"type:double precision" json:"billrate"`
-		PO                       pq.Float64Array `gorm:"type:double precision" json:"po"`
-		Cost                     int             `gorm:"not null;length:20;default:0" json:"cost"`
-		SBAF                     int             `gorm:"not null;length:20;default:0" json:"sbaf"`
-		SAAF                     int             `gorm:"not null;length:20;default:0" json:"saaf"`
-		CPA                      pq.Float64Array `gorm:"type:double precision" json:"cpa"`
-		Revenue                  int             `gorm:"not null;length:20;default:0" json:"revenue"`
-		URLAfter                 string          `gorm:"size:255;default:NA" json:"url_after"`
-		URLBefore                string          `gorm:"size:255;default:NA" json:"url_before"`
-		MOLimit                  int             `gorm:"not null;length:10;default:0" json:"mo_limit"`
-		RatioSend                int             `gorm:"not null;length:10;default:1" json:"ratio_send"`
-		RatioReceive             int             `gorm:"not null;length:10;default:4" json:"ratio_receive"`
-		Company                  string          `gorm:"size:255;default:NA" json:"company"`
-		ClientType               string          `gorm:"size:30;default:NA" json:"client_type"`
-		CostPerConversion        pq.Float64Array `gorm:"type:double precision" json:"cost_per_conversion"`
-		AgencyFee                pq.Float64Array `gorm:"type:double precision" json:"agency_fee"`
-		TargetDailyBudget        pq.Float64Array `gorm:"type:double precision" json:"target_daily_budget"`
-		CrMO                     pq.Float64Array `gorm:"type:double precision" json:"cr_mo"`
-		CrPostback               pq.Float64Array `gorm:"type:double precision" json:"cr_postback"`
-		TotalWakiAgencyFee       pq.Float64Array `gorm:"type:double precision" json:"total_waki_agency_fee"`
-		BudgetUsage              pq.Float64Array `gorm:"type:double precision" json:"budget_usage"`
-		TargetDailyBudgetChanges int             `gorm:"not null;length:12;default:0" json:"target_daily_budget_changes"`
+		ID                       int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		Status                   bool      `gorm:"not null;size:50" json:"status"`
+		SummaryDate              time.Time `json:"summary_date"`
+		URLServiceKey            string    `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
+		CampaignId               string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
+		CampaignName             string    `gorm:"not null;size:100" json:"campaign_name"`
+		Country                  string    `gorm:"not null;size:50" json:"country"`
+		Operator                 string    `gorm:"not null;size:50" json:"operator"`
+		Partner                  string    `gorm:"not null;size:50" json:"partner"`
+		Aggregator               string    `gorm:"not null;size:50" json:"aggregator"`
+		Adnet                    string    `gorm:"not null;size:50" json:"adnet"`
+		Service                  string    `gorm:"not null;size:50" json:"service"`
+		ShortCode                string    `gorm:"not null;size:50" json:"short_code"`
+		Traffic                  int       `gorm:"not null;length:20;default:0" json:"traffic"`
+		Landing                  int       `gorm:"not null;length:20;default:0" json:"landing"`
+		MoReceived               int       `gorm:"not null;length:20;default:0" json:"mo_received"`
+		CR                       float64   `gorm:"type:double precision" json:"cr"`
+		Postback                 int       `gorm:"not null;length:20;default:0" json:"postback"`
+		TotalFP                  int       `gorm:"not null;length:20;default:0" json:"total_fp"`
+		SuccessFP                int       `gorm:"not null;length:20;default:0" json:"success_fp"`
+		Billrate                 float64   `gorm:"type:double precision" json:"billrate"`
+		PO                       float64   `gorm:"type:double precision" json:"po"`
+		Cost                     int       `gorm:"not null;length:20;default:0" json:"cost"`
+		SBAF                     int       `gorm:"not null;length:20;default:0" json:"sbaf"`
+		SAAF                     int       `gorm:"not null;length:20;default:0" json:"saaf"`
+		CPA                      float64   `gorm:"type:double precision" json:"cpa"`
+		Revenue                  int       `gorm:"not null;length:20;default:0" json:"revenue"`
+		URLAfter                 string    `gorm:"size:255;default:NA" json:"url_after"`
+		URLBefore                string    `gorm:"size:255;default:NA" json:"url_before"`
+		MOLimit                  int       `gorm:"not null;length:10;default:0" json:"mo_limit"`
+		RatioSend                int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
+		RatioReceive             int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
+		Company                  string    `gorm:"size:255;default:NA" json:"company"`
+		ClientType               string    `gorm:"size:30;default:NA" json:"client_type"`
+		CostPerConversion        float64   `gorm:"type:double precision" json:"cost_per_conversion"`
+		AgencyFee                float64   `gorm:"type:double precision" json:"agency_fee"`
+		TargetDailyBudget        float64   `gorm:"type:double precision" json:"target_daily_budget"`
+		CrMO                     float64   `gorm:"type:double precision" json:"cr_mo"`
+		CrPostback               float64   `gorm:"type:double precision" json:"cr_postback"`
+		TotalWakiAgencyFee       float64   `gorm:"type:double precision" json:"total_waki_agency_fee"`
+		BudgetUsage              float64   `gorm:"type:double precision" json:"budget_usage"`
+		TargetDailyBudgetChanges int       `gorm:"not null;length:12;default:0" json:"target_daily_budget_changes"`
 		CreatedAt                time.Time
 		UpdatedAt                time.Time
 	}

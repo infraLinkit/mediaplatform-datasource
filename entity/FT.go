@@ -134,7 +134,7 @@ type (
 		Status bool   `json:"status"`
 	}
 
-	PixelStorage struct {
+	/* PixelStorage struct {
 		Id                int    `json:"id"`
 		CampaignDetailId  int    `json:"campaign_detail_id"`
 		PxDate            string `json:"pxdate"`
@@ -185,7 +185,7 @@ type (
 		ReasonURLPostback string `json:"reason_url_postback"`
 		PO                string `json:"po"`
 		Cost              string `json:"cost"`
-	}
+	} */
 
 	AlertData struct {
 		Platform string     `json:"platform"`

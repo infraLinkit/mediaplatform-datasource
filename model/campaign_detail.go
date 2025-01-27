@@ -1,6 +1,226 @@
 package model
 
 import (
+	"database/sql"
+	"errors"
+	"fmt"
+
+	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"gorm.io/gorm"
+)
+
+func (r *BaseModel) GetLastCampaignId(tbl string) int {
+
+	var result int
+	row := r.DB.Table(tbl).
+		Select("COALESCE(MAX(id), 0) + 0").Row()
+	row.Scan(&result)
+
+	return result
+}
+
+func (r *BaseModel) GetCampaignByCampaignId(o entity.Campaign) (entity.Campaign, bool) {
+
+	result := r.DB.Model(&o).
+		Where("campaign_id = ?", o.CampaignId).
+		First(&o)
+
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b {
+		return o, false
+	} else {
+		r.Logs.Warn(fmt.Sprintf("Campaign id not found %#v", o))
+		return o, true
+	}
+}
+
+func (r *BaseModel) NewCampaign(o entity.Campaign) int {
+
+	result := r.DB.Create(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return int(o.ID)
+}
+
+func (r *BaseModel) ResetCappingCampaign(o entity.CampaignDetail) error {
+
+	result := r.DB.Model(&o).
+		Where("is_active = ?", o.IsActive).
+		Updates(entity.CampaignDetail{CounterMORatio: 0, StatusCapping: false})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) GetCampaignByCampaignDetailId(o entity.CampaignDetail) (entity.CampaignDetail, bool) {
+
+	result := r.DB.Model(&o).
+		Where("urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ?", o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet).
+		First(&o)
+
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b {
+		return o, false
+	} else {
+		r.Logs.Warn(fmt.Sprintf("Campaign existed or data found %#v", o))
+		return o, true
+	}
+}
+
+func (r *BaseModel) UpdateCampaign(o entity.Campaign) error {
+
+	result := r.DB.Model(&o).
+		Where("campaign_id = ?", o.CampaignId).
+		Updates(entity.Campaign{Name: o.Name, CampaignObjective: o.CampaignObjective, Country: o.Country, Advertiser: o.Advertiser})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) UpdateCampaignDetail(o entity.CampaignDetail) error {
+
+	result := r.DB.Save(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) DelCampaign(o entity.Campaign) error {
+
+	result := r.DB.
+		Where("campaign_id = ?", o.CampaignId).
+		Delete(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) DelCampaignDetail(o entity.CampaignDetail) error {
+
+	result := r.DB.
+		Where("urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Delete(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) EditSettingCampaignDetail(o entity.CampaignDetail) error {
+
+	result := r.DB.Model(&o).
+		Where("urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Updates(entity.CampaignDetail{PO: o.PO, MOCapping: o.MOCapping, RatioSend: o.RatioSend, RatioReceive: o.RatioReceive, LastUpdate: o.LastUpdate})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) UpdateStatusCampaignDetail(o entity.CampaignDetail) error {
+
+	result := r.DB.Model(&o).Where("urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).Updates(entity.CampaignDetail{IsActive: o.IsActive})
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) GetCampaignDetail(o entity.CampaignDetail) (entity.CampaignDetail, bool) {
+
+	result := r.DB.Model(&o).First(&o)
+
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b {
+		return o, false
+	} else {
+		r.Logs.Warn(fmt.Sprintf("Campaign detail existed or data found %#v", o))
+		return o, true
+	}
+}
+
+func (r *BaseModel) CounterCappingById(o entity.CampaignDetail) error {
+
+	result := r.DB.Exec("UPDATE campaign_detail SET counter_mo_capping = counter_mo_capping+1, last_update_capping = CASE WHEN counter_mo_capping >= mo_capping THEN ? END WHERE id = ?", o.LastUpdateCapping, o.ID)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) CounterRatioById(o entity.CampaignDetail) error {
+
+	result := r.DB.Exec("UPDATE campaign_detail SET counter_mo_ratio = counter_mo_ratio+1 WHERE id = ?", o.ID)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) UpdateStatusCounterById(o entity.CampaignDetail) error {
+
+	result := r.DB.Exec("UPDATE campaign_detail SET counter_mo_capping = ?, status_capping = ?, counter_mo_ratio = ?, status_ratio = ?, last_update = ?, last_update_capping = CASE WHEN counter_mo_capping+1 >= mo_capping THEN ? END WHERE id = ?", o.CounterMOCapping, o.StatusCapping, o.CounterMORatio, o.StatusRatio, o.LastUpdate, o.LastUpdateCapping, o.ID)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) GetCampaignDetailByStatus(o entity.CampaignDetail, useStatus bool) ([]entity.ResultCampaign, error) {
+
+	var rows *sql.Rows
+
+	if useStatus {
+		rows, _ = r.DB.Model(&entity.CampaignDetail{}).Select("campaign.name, campaign.campaign_objective, campaign.advertiser, campaign_detail.id, campaign_detail.urlservicekey, campaign_detail.campaign_id, campaign_detail.country, campaign_detail.operator, campaign_detail.partner, campaign_detail.aggregator, campaign_detail.adnet, campaign_detail.service, campaign_detail.keyword, campaign_detail.subkeyword, campaign_detail.is_billable, campaign_detail.plan, campaign_detail.po, campaign_detail.cost, campaign_detail.pubid, campaign_detail.short_code, campaign_detail.device_type, campaign_detail.os, campaign_detail.url_type, campaign_detail.click_type, campaign_detail.click_delay, campaign_detail.client_type, campaign_detail.traffic_source, campaign_detail.unique_click, campaign_detail.url_banner, campaign_detail.url_landing, campaign_detail.url_warp_landing, campaign_detail.url_service, campaign_detail.url_tfc_or_smartlink, campaign_detail.glob_post, campaign_detail.url_globpost, campaign_detail.custom_integration, campaign_detail.ip_address, campaign_detail.is_active, campaign_detail.mo_capping, campaign_detail.counter_mo_capping, campaign_detail.status_capping, campaign_detail.kpi_upper_limit_capping, campaign_detail.is_machine_learning_capping, campaign_detail.ratio_send, campaign_detail.ratio_receive, campaign_detail.counter_mo_ratio, campaign_detail.status_ratio, campaign_detail.kpi_upper_limit_ratio_send, campaign_detail.kpi_upper_limit_ratio_receive, campaign_detail.is_machine_learning_ratio, campaign_detail.api_url, campaign_detail.last_update, campaign_detail.cost_per_conversion, campaign_detail.agency_fee, campaign_detail.target_daily_budget, campaign_detail.url_postback").Joins("JOIN campaign ON campaign.campaign_id = campaign_detail.campaign_id").Where("campaign_detail.is_active = ?", o.IsActive).Rows()
+	} else {
+		rows, _ = r.DB.Model(&entity.CampaignDetail{}).Rows()
+	}
+
+	defer rows.Close()
+
+	var (
+		ss []entity.ResultCampaign
+	)
+
+	for rows.Next() {
+
+		var s entity.ResultCampaign
+
+		// ScanRows scans a row into a struct
+		r.DB.ScanRows(rows, &s)
+
+		ss = append(ss, s)
+	}
+
+	return ss, rows.Err()
+}
+
+func (r *BaseModel) UpdateCPAReport(o entity.CampaignDetail) error {
+
+	result := r.DB.Model(&o).Where("urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).Updates(entity.CampaignDetail{CostPerConversion: o.CostPerConversion, AgencyFee: o.AgencyFee})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) UpdateCampaignMonitoringBudget(o entity.CampaignDetail) error {
+
+	result := r.DB.Model(&o).Where("country = ? AND operator = ?", o.Country, o.Operator).Updates(entity.CampaignDetail{TargetDailyBudget: o.TargetDailyBudget})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+/* import (
 	"context"
 	"fmt"
 	"strconv"
@@ -655,4 +875,4 @@ func (r *BaseModel) UpdateCampaignMonitoringBudget(o entity.DataConfig) error {
 
 	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
-}
+} */

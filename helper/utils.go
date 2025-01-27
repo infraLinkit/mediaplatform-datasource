@@ -2,9 +2,13 @@ package helper
 
 import (
 	"bytes"
+	"compress/gzip"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"io"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -54,6 +58,46 @@ func GetFormatTime(loc *time.Location, layout string) string {
 	return f
 }
 
+func GetCurrentTime(loc *time.Location) time.Time {
+
+	now := time.Now()
+	t, _ := time.Parse(time.RFC3339, now.In(loc).Format(time.RFC3339))
+	return t
+}
+
+func GetYesterday(loc *time.Location, day time.Duration, layout string) time.Time {
+
+	now := time.Now()
+	t, _ := time.Parse(layout, now.In(loc).Format(layout))
+	return t.In(loc).Add((-24 * day) * time.Hour)
+}
+
+func GetTomorrow(loc *time.Location, day time.Duration, layout string) time.Time {
+
+	now := time.Now()
+	t, _ := time.Parse(layout, now.In(loc).Format(layout))
+	return t.In(loc).Add((24 * day) * time.Hour)
+}
+
+func CounterZeroNumber(length int) string {
+
+	var wordNumbers string
+
+	for w := 0; w < length; w++ {
+		wordNumbers += "0"
+	}
+
+	return wordNumbers
+}
+
+func ReduceWords(words string, start int, length int) string {
+
+	runes := []rune(words)
+	inputFmt := string(runes[start:length])
+
+	return inputFmt
+}
+
 func GetUniqId(loc *time.Location) string {
 
 	t := time.Now()
@@ -61,6 +105,14 @@ func GetUniqId(loc *time.Location) string {
 	uniqId := strings.Replace(formatId, ".", "", -1)
 
 	return uniqId
+}
+
+func GetTrxID(loc *time.Location) string {
+
+	t := time.Now()
+	var formatId = t.In(loc).Format("20060102150405")
+
+	return ReduceWords(strings.Replace(formatId, ".", "", -1)+strconv.Itoa(int(t.In(loc).UnixNano())), 0, 32)
 }
 
 func GetIpAddress(c *fiber.Ctx) string {
@@ -181,21 +233,35 @@ func Decrypt(ciphertext string) string {
 	return string(plaintext)
 }
 
-func CounterZeroNumber(length int) string {
+func CompressGzip(f string) string {
 
-	var wordNumbers string
+	// Open the original file
+	originalFile, err := os.Open(f)
+	if err != nil {
+		panic(err)
+	}
+	defer originalFile.Close()
 
-	for w := 0; w < length; w++ {
-		wordNumbers += "0"
+	gzf := f + ".gz"
+	// Create a new gzipped file
+	gzippedFile, err := os.Create(gzf)
+	if err != nil {
+		panic(err)
+	}
+	defer gzippedFile.Close()
+
+	// Create a new gzip writer
+	gzipWriter := gzip.NewWriter(gzippedFile)
+	defer gzipWriter.Close()
+
+	// Copy the contents of the original file to the gzip writer
+	_, err = io.Copy(gzipWriter, originalFile)
+	if err != nil {
+		panic(err)
 	}
 
-	return wordNumbers
-}
+	// Flush the gzip writer to ensure all data is written
+	gzipWriter.Flush()
 
-func ReduceWords(words string, start int, length int) string {
-
-	runes := []rune(words)
-	inputFmt := string(runes[start:length])
-
-	return inputFmt
+	return gzf
 }

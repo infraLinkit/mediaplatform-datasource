@@ -1,6 +1,53 @@
 package model
 
 import (
+	"fmt"
+
+	"github.com/infraLinkit/mediaplatform-datasource/entity"
+)
+
+func (r *BaseModel) NewPixel(o entity.PixelStorage) int {
+
+	result := r.DB.Create(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return int(o.ID)
+}
+
+func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, error) {
+
+	result := r.DB.Exec("SELECT * FROM (SELECT id, campaign_detail_id, pxdate, urlservicekey, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pubid, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfc_or_smartlink, po, cost, is_unique FROM pixel_storage WHERE urlservicekey = ? AND pixel = ?) AS px ORDER by px.pxdate DESC", o.URLServiceKey, o.Pixel).Scan(&o)
+
+	return o, result.Error
+}
+
+func (r *BaseModel) GetToken(o entity.PixelStorage) (entity.PixelStorage, error) {
+
+	result := r.DB.Exec("SELECT * FROM (SELECT id, campaign_detail_id, pxdate, urlservicekey, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pubid, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfc_or_smartlink, po, cost, is_unique FROM pixel_storage WHERE urlservicekey = ? AND token = ?) AS px ORDER BY px.pxdate DESC", o.URLServiceKey, o.IsUsed).Scan(&o)
+
+	return o, result.Error
+}
+
+func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, error) {
+
+	result := r.DB.Exec("SELECT * FROM (SELECT id, campaign_detail_id, pxdate, urlservicekey, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pubid, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfc_or_smartlink, po, cost, is_unique FROM pixel_storage WHERE urlservicekey = ? AND is_used = ?) AS px ORDER BY px.pxdate ASC", o.URLServiceKey, o.IsUsed).Scan(&o)
+
+	return o, result.Error
+}
+
+func (r *BaseModel) UpdatePixelById(o entity.PixelStorage) error {
+
+	result := r.DB.Model(&o).Select("msisdn = ?, trx_id = ?, is_used = ?, pixel_used_date = ?, status_postback = ?, is_unique = ?, url_postback = ?, status_url_postback = ?, reason_url_postback = ?", o.Msisdn, o.TrxId, o.IsUsed, o.PixelUsedDate, o.StatusPostback, o.IsUnique, o.URLPostback, o.StatusURLPostback, o.ReasonURLPostback)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+/* package model
+
+import (
 	"context"
 	"fmt"
 
@@ -168,4 +215,4 @@ func (r *BaseModel) UpdatePixelById(o entity.PixelStorage) error {
 
 	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
-}
+} */

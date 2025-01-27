@@ -9,9 +9,12 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/gofiber/storage/rueidis"
+	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var APP_PATH = "/Users/wiliewahyuhidayat/Documents/GO/mediaplatform/cores/" // local
@@ -30,7 +33,9 @@ const (
 type (
 	Cfg struct {
 		AppHost                                string
+		AppHostPort                            string
 		AppApi                                 string
+		AppApiPort                             string
 		RedisHost                              string
 		RedisPort                              int
 		RedisPwd                               string
@@ -68,7 +73,7 @@ type (
 		Config *Cfg
 		Logs   *logrus.Logger
 		R      *rueidis.Storage
-		DB     *sql.DB
+		DB     *gorm.DB
 		Rmqp   rmqp.AMQP
 	}
 )
@@ -87,7 +92,9 @@ func InitCfg() *Cfg {
 
 	cfg := &Cfg{
 		AppHost:                                os.Getenv("APPHOST"),
+		AppHostPort:                            os.Getenv("APPHOSTPORT"),
 		AppApi:                                 os.Getenv("APPAPI"),
+		AppApiPort:                             os.Getenv("APPAPIPORT"),
 		RedisHost:                              os.Getenv("REDISHOST"),
 		RedisPort:                              redis_port,
 		RedisPwd:                               os.Getenv("REDISPASSWORD"),
@@ -135,7 +142,7 @@ func (c *Cfg) Initiate(logname string) *Setup {
 		Config: c,
 		Logs:   l,
 		R:      c.InitRedisJSON(l, 0),
-		DB:     c.InitPsql(l),
+		DB:     c.InitGormPgx(l),
 		Rmqp:   c.InitMessageBroker(),
 	}
 
@@ -196,6 +203,45 @@ func (c *Cfg) InitPsql(l *logrus.Logger) *sql.DB {
 	} else {
 
 		l.Info("[v] Database successful established\n")
+	}
+
+	return db
+}
+
+func (c *Cfg) InitGormPgx(l *logrus.Logger) *gorm.DB {
+
+	/* dsn := "host=" + c.PSQLHost + " user=" + c.PSQLUsername + " password=" + c.PSQLPassword + " dbname=" + c.PSQLDB + " port=" + c.PSQLPort + " sslmode=disable TimeZone=" + c.TZ.String()
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{}) */
+
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  "host=" + c.PSQLHost + " user=" + c.PSQLUsername + " password=" + c.PSQLPassword + " dbname=" + c.PSQLDB + " port=" + c.PSQLPort + " sslmode=disable TimeZone=" + c.TZ.String(),
+		PreferSimpleProtocol: true, // disables implicit prepared statement usage
+	}), &gorm.Config{})
+
+	if err != nil {
+
+		// panic the function then hard exit
+		l.Info(fmt.Sprintf("[x] An Error occured when establishing of the database : %#v\n", err))
+
+		panic(err)
+
+	} else {
+
+		l.Info("[v] Database GORM successful established\n")
+
+		sqlDB, _ := db.DB()
+
+		// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+		sqlDB.SetMaxIdleConns(10)
+
+		// SetMaxOpenConns sets the maximum number of open connections to the database.
+		sqlDB.SetMaxOpenConns(100)
+
+		// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+		sqlDB.SetConnMaxLifetime(time.Hour)
+
+		// Migrate table
+		db.AutoMigrate(&entity.Campaign{}, &entity.CampaignDetail{}, &entity.MO{}, &entity.PixelStorage{}, &entity.Postback{}, &entity.SummaryCampaign{}, &entity.DataClicked{}, &entity.DataLanding{}, &entity.DataRedirect{}, &entity.DataTraffic{})
 	}
 
 	return db

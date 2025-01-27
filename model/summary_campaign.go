@@ -1,6 +1,153 @@
 package model
 
 import (
+	"fmt"
+
+	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"gorm.io/gorm/clause"
+)
+
+func (r *BaseModel) DelSummaryCampaign(o entity.SummaryCampaign) error {
+
+	result := r.DB.
+		Where("summary_date = ? AND urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Delete(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) EditSettingSummaryCampaign(o entity.SummaryCampaign) error {
+
+	result := r.DB.Model(&o).
+		Where("summary_date = ? AND urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Updates(entity.SummaryCampaign{PO: o.PO, MOLimit: o.MOLimit, RatioSend: o.RatioSend, RatioReceive: o.RatioReceive})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) UpdateSummaryCampaign(o entity.SummaryCampaign) error {
+
+	result := r.DB.Model(&o).
+		Where("summary_date = ? AND urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Updates(entity.SummaryCampaign{Status: o.Status})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) SummaryCampaign(o entity.SummaryCampaign) int {
+
+	result := r.DB.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "summary_date"},
+			{Name: "campaign_id"},
+			{Name: "country"},
+			{Name: "partner"},
+			{Name: "operator"},
+			{Name: "urlservicekey"},
+			{Name: "service"},
+			{Name: "adnet"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"traffic":               o.Traffic,
+			"landing":               o.Landing,
+			"mo_received":           o.MoReceived,
+			"cr_mo":                 o.CrMO,
+			"cr_postback":           o.CrPostback,
+			"postback":              o.Postback,
+			"total_fp":              o.TotalFP,
+			"success_fp":            o.SuccessFP,
+			"billrate":              o.Billrate,
+			"po":                    o.PO,
+			"sbaf":                  o.SBAF,
+			"saaf":                  o.SAAF,
+			"cpa":                   o.CPA,
+			"revenue":               o.Revenue,
+			"url_after":             o.URLAfter,
+			"url_before":            o.URLBefore,
+			"mo_limit":              o.MOLimit,
+			"ratio_send":            o.RatioSend,
+			"ratio_receive":         o.RatioReceive,
+			"client_type":           o.ClientType,
+			"cost_per_conversion":   o.CostPerConversion,
+			"agency_fee":            o.AgencyFee,
+			"total_waki_agency_fee": o.TotalWakiAgencyFee,
+			"target_daily_budget":   o.TargetDailyBudget,
+			"budget_usage":          o.BudgetUsage,
+			"campaign_name":         o.CampaignName}),
+	}).Create(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return o.ID
+}
+
+func (r *BaseModel) DataTraffic(o entity.DataTraffic) int {
+
+	result := r.DB.Create(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return int(o.ID)
+}
+
+func (r *BaseModel) DataLanding(o entity.DataLanding) int {
+
+	result := r.DB.Create(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return int(o.ID)
+}
+
+func (r *BaseModel) DataClicked(o entity.DataClicked) int {
+
+	result := r.DB.Create(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return int(o.ID)
+}
+
+func (r *BaseModel) DataRedirect(o entity.DataRedirect) int {
+
+	result := r.DB.Create(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return int(o.ID)
+}
+
+func (r *BaseModel) UpdateCPAReportSummaryCampaign(o entity.SummaryCampaign) error {
+
+	result := r.DB.Model(&o).
+		Where("summary_date = ? AND urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Updates(entity.SummaryCampaign{CostPerConversion: o.CostPerConversion, AgencyFee: o.AgencyFee})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+
+}
+
+func (r *BaseModel) UpdateReportSummaryCampaignMonitoringBudget(o entity.SummaryCampaign) error {
+
+	result := r.DB.Model(&o).
+		Where("summary_date = ? AND country = ? AND operator = ?", o.SummaryDate, o.Country, o.Operator).
+		Updates(entity.SummaryCampaign{TargetDailyBudget: o.TargetDailyBudget})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+/* package model
+
+import (
 	"context"
 	"fmt"
 	"strconv"
@@ -388,4 +535,4 @@ func (r *BaseModel) UpdateReportSummaryCampaignMonitoringBudget(summary_date str
 
 	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
-}
+} */

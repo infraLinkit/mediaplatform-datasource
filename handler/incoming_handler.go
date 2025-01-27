@@ -123,7 +123,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 
 					} else {
 
-						px.PixelUsedDate = helper.GetCurrentTime(h.Config.TZ)
+						px.PixelUsedDate = helper.GetCurrentTime(h.Config.TZ, time.RFC3339)
 
 						bodyReq, _ := json.Marshal(px)
 

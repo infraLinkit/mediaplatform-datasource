@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	Postback struct {
+	PostbackReceive struct {
 		CookieKey     string
 		URLServiceKey string `json:"urlservicekey"`
 		AffSub        string `json:"aff_sub"`
@@ -19,20 +19,20 @@ type (
 	}
 )
 
-func NewDataPostback(c *fiber.Ctx) *Postback {
+func NewDataPostback(c *fiber.Ctx) *PostbackReceive {
 
 	m := c.Queries()
 
 	CookieKey := helper.Concat("-", helper.GetIpAddress(c), m["urlservicekey"], m["aff_sub"])
 
-	return &Postback{
+	return &PostbackReceive{
 		CookieKey:     CookieKey,
 		URLServiceKey: m["urlservicekey"],
 		AffSub:        m["aff_sub"],
 	}
 }
 
-func (p *Postback) ValidateParams(Logs *logrus.Logger) GlobalResponse {
+func (p *PostbackReceive) ValidateParams(Logs *logrus.Logger) GlobalResponse {
 
 	if p.URLServiceKey == "" {
 

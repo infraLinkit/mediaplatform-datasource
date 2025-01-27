@@ -1,7 +1,6 @@
 package app
 
 import (
-	"database/sql"
 	"encoding/json"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,12 +10,13 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
+	"gorm.io/gorm"
 )
 
 type App3rdParty struct {
 	Config *config.Cfg
 	Logs   *logrus.Logger
-	PS     *sql.DB
+	DB     *gorm.DB
 	R      *rueidis.Storage
 	Rmqp   rmqp.AMQP
 }
@@ -32,7 +32,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 		Config: obj.Config,
 		Logs:   obj.Logs,
 		R:      obj.R,
-		PS:     obj.PS,
+		DB:     obj.DB,
 		Rmqp:   obj.Rmqp,
 	})
 

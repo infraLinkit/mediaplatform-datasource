@@ -24,11 +24,11 @@ var serverCmd = &cobra.Command{
 		router := app.MapUrls(app.App3rdParty{
 			Config: cfg,
 			Logs:   c.Logs,
-			PS:     c.DB,
+			DB:     c.DB,
 			R:      c.R,
 			Rmqp:   c.Rmqp,
 		})
 
-		log.Fatal(router.Listen(":81"))
+		log.Fatal(router.Listen(":" + c.Config.AppApiPort))
 	},
 }

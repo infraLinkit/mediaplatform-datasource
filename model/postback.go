@@ -1,6 +1,23 @@
 package model
 
 import (
+	"fmt"
+
+	"github.com/infraLinkit/mediaplatform-datasource/entity"
+)
+
+func (r *BaseModel) NewPostback(o entity.Postback) int {
+
+	result := r.DB.Create(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return int(o.ID)
+}
+
+/* package model
+
+import (
 	"context"
 	"fmt"
 
@@ -44,4 +61,4 @@ func (r *BaseModel) NewPostback(o entity.PixelStorage, cd entity.DataConfig) err
 
 	r.Logs.Debug(fmt.Sprintf("SQL : %s, row affected : %d", SQL, rows))
 	return nil
-}
+} */

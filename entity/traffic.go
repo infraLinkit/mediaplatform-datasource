@@ -1,12 +1,5 @@
 package entity
 
-import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/infraLinkit/mediaplatform-datasource/config"
-	"github.com/infraLinkit/mediaplatform-datasource/helper"
-	"github.com/sirupsen/logrus"
-)
-
 type (
 	Traffic struct {
 		Date          string
@@ -17,14 +10,14 @@ type (
 		DataTraffic   DataTraffic
 	}
 
-	DataTraffic struct {
+	ReceiveTraffic struct {
 		URLServiceKey string `form:"urlservicekey" json:"urlservicekey" xml:"urlservicekey"`
 		Aff_Sub       string `form:"aff_sub" json:"aff_sub" xml:"aff_sub"`
 		PubId         string `form:"pubid" json:"pubid" xml:"pubid"`
 	}
 )
 
-func NewInstanceTraffic(cfg *config.Cfg, o DataTraffic) *Traffic {
+/* func NewInstanceTraffic(cfg *config.Cfg, o DataTraffic) *Traffic {
 
 	date := helper.GetFormatTime(cfg.TZ, "20060102")
 	//key := helper.Concat("-", o.URLServiceKey)
@@ -54,4 +47,4 @@ func (t *Traffic) ValidateParams(Logs *logrus.Logger, traffic *Traffic) GlobalRe
 
 		return GlobalResponse{Code: fiber.StatusOK, Message: ""}
 	}
-}
+} */

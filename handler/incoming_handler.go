@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -15,30 +14,33 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/model"
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
+	"gorm.io/gorm"
 )
 
-type IncomingHandler struct {
-	Config *config.Cfg
-	Logs   *logrus.Logger
-	PS     *sql.DB
-	Rmqp   rmqp.AMQP
-	R      *rueidis.Storage
-	DS     *model.BaseModel
-}
+type (
+	IncomingHandler struct {
+		Config *config.Cfg
+		Logs   *logrus.Logger
+		DB     *gorm.DB
+		Rmqp   rmqp.AMQP
+		R      *rueidis.Storage
+		DS     *model.BaseModel
+	}
+)
 
 func NewIncomingHandler(obj IncomingHandler) *IncomingHandler {
 
 	b := model.NewBaseModel(model.BaseModel{
-		Config:    obj.Config,
-		Logs:      obj.Logs,
-		DBPostgre: obj.PS,
-		R:         obj.R,
+		Config: obj.Config,
+		Logs:   obj.Logs,
+		DB:     obj.DB,
+		R:      obj.R,
 	})
 
 	return &IncomingHandler{
 		Config: obj.Config,
 		Logs:   obj.Logs,
-		PS:     obj.PS,
+		DB:     obj.DB,
 		R:      obj.R,
 		Rmqp:   obj.Rmqp,
 		DS:     b,
@@ -102,7 +104,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 
 			} else {
 
-				if px.Id < 0 {
+				if px.ID < 0 {
 					return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found"})
 				} else {
 
@@ -116,12 +118,12 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 							OS:            px.OS,
 							Handset:       px.UserAgent,
 							PubId:         px.PubId,
-							PixelUsedDate: px.PixelUsedDate,
+							PixelUsedDate: px.PixelUsedDate.Format(time.RFC3339),
 						}})
 
 					} else {
 
-						px.PixelUsedDate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+						px.PixelUsedDate = helper.GetCurrentTime(h.Config.TZ)
 
 						bodyReq, _ := json.Marshal(px)
 

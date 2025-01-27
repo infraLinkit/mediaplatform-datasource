@@ -58,10 +58,10 @@ func GetFormatTime(loc *time.Location, layout string) string {
 	return f
 }
 
-func GetCurrentTime(loc *time.Location) time.Time {
+func GetCurrentTime(loc *time.Location, val string) time.Time {
 
 	now := time.Now()
-	t, _ := time.Parse(time.RFC3339, now.In(loc).Format(time.RFC3339))
+	t, _ := time.Parse(val, now.In(loc).Format(time.RFC3339))
 	return t
 }
 

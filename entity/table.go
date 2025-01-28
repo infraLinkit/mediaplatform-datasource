@@ -357,6 +357,7 @@ type (
 		TotalFP                  int       `gorm:"not null;length:20;default:0" json:"total_fp"`
 		SuccessFP                int       `gorm:"not null;length:20;default:0" json:"success_fp"`
 		Billrate                 float64   `gorm:"type:double precision" json:"billrate"`
+		ROI                      float64   `gorm:"type:double precision" json:"roi"`
 		PO                       float64   `gorm:"type:double precision" json:"po"`
 		Cost                     int       `gorm:"not null;length:20;default:0" json:"cost"`
 		SBAF                     int       `gorm:"not null;length:20;default:0" json:"sbaf"`

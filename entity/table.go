@@ -363,7 +363,7 @@ type (
 		SBAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
 		SAAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
 		CPA                      float64   `gorm:"type:double precision" json:"cpa"`
-		Revenue                  int       `gorm:"not null;length:20;default:0" json:"revenue"`
+		Revenue                  float64   `gorm:"type:double precision;not null;length:20;default:0" json:"revenue"`
 		URLAfter                 string    `gorm:"size:255;default:NA" json:"url_after"`
 		URLBefore                string    `gorm:"size:255;default:NA" json:"url_before"`
 		MOLimit                  int       `gorm:"not null;length:10;default:0" json:"mo_limit"`

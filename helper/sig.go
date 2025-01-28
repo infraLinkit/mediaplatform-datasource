@@ -1,21 +1,21 @@
 package helper
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"syscall"
 
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
+	"gorm.io/gorm"
 )
 
 type SigCH struct {
-	Logs         *logrus.Logger
-	Sigch        chan os.Signal
-	Forever      chan bool
-	DBPostgreSQL *sql.DB
-	Rabbit       rmqp.AMQP
+	Logs    *logrus.Logger
+	Sigch   chan os.Signal
+	Forever chan bool
+	DB      *gorm.DB
+	Rabbit  rmqp.AMQP
 }
 
 func SigHandler(obj SigCH) {
@@ -58,9 +58,10 @@ func SigHandler(obj SigCH) {
 	}
 
 	// Cleanup
-	defer obj.DBPostgreSQL.Close()
+	sqlDB, _ := obj.DB.DB()
+	defer sqlDB.Close()
 
-	obj.Logs.Info(fmt.Sprintf("Database Postgre (%#v connection) stopped successfully", obj.DBPostgreSQL.Stats().InUse))
+	obj.Logs.Info(fmt.Sprintf("Database Postgre (%#v connection) stopped successfully", sqlDB.Stats().InUse))
 
 	defer obj.Rabbit.Channel.Close()
 

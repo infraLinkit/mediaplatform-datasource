@@ -44,6 +44,15 @@ func (r *BaseModel) NewCampaign(o entity.Campaign) int {
 	return int(o.ID)
 }
 
+func (r *BaseModel) NewCampaignDetail(o entity.CampaignDetail) int {
+
+	result := r.DB.Create(&o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return int(o.ID)
+}
+
 func (r *BaseModel) ResetCappingCampaign(o entity.CampaignDetail) error {
 
 	result := r.DB.Model(&o).

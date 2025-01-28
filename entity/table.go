@@ -359,9 +359,9 @@ type (
 		Billrate                 float64   `gorm:"type:double precision" json:"billrate"`
 		ROI                      float64   `gorm:"type:double precision" json:"roi"`
 		PO                       float64   `gorm:"type:double precision" json:"po"`
-		Cost                     int       `gorm:"not null;length:20;default:0" json:"cost"`
-		SBAF                     int       `gorm:"not null;length:20;default:0" json:"sbaf"`
-		SAAF                     int       `gorm:"not null;length:20;default:0" json:"saaf"`
+		Cost                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cost"`
+		SBAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
+		SAAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
 		CPA                      float64   `gorm:"type:double precision" json:"cpa"`
 		Revenue                  int       `gorm:"not null;length:20;default:0" json:"revenue"`
 		URLAfter                 string    `gorm:"size:255;default:NA" json:"url_after"`

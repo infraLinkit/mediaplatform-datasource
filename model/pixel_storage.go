@@ -17,21 +17,21 @@ func (r *BaseModel) NewPixel(o entity.PixelStorage) int {
 
 func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, error) {
 
-	result := r.DB.Exec("SELECT * FROM (SELECT id, campaign_detail_id, pxdate, urlservicekey, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pubid, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfc_or_smartlink, po, cost, is_unique FROM pixel_storage WHERE urlservicekey = ? AND pixel = ?) AS px ORDER by px.pxdate DESC", o.URLServiceKey, o.Pixel).Scan(&o)
+	result := r.DB.Exec("SELECT * FROM (SELECT id, campaign_detail_id, pxdate, url_service_key, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pub_id, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfcor_smartlink, po, cost, is_unique FROM pixel_storages WHERE url_service_key = ? AND pixel = ?) AS px ORDER by px.pxdate DESC", o.URLServiceKey, o.Pixel).Scan(&o)
 
 	return o, result.Error
 }
 
 func (r *BaseModel) GetToken(o entity.PixelStorage) (entity.PixelStorage, error) {
 
-	result := r.DB.Exec("SELECT * FROM (SELECT id, campaign_detail_id, pxdate, urlservicekey, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pubid, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfc_or_smartlink, po, cost, is_unique FROM pixel_storage WHERE urlservicekey = ? AND token = ?) AS px ORDER BY px.pxdate DESC", o.URLServiceKey, o.IsUsed).Scan(&o)
+	result := r.DB.Exec("SELECT * FROM (SELECT id, campaign_detail_id, pxdate, url_service_key, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pub_id, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfcor_smartlink, po, cost, is_unique FROM pixel_storages WHERE url_service_key = ? AND token = ?) AS px ORDER BY px.pxdate DESC", o.URLServiceKey, o.IsUsed).Scan(&o)
 
 	return o, result.Error
 }
 
 func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, error) {
 
-	result := r.DB.Exec("SELECT * FROM (SELECT id, campaign_detail_id, pxdate, urlservicekey, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pubid, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfc_or_smartlink, po, cost, is_unique FROM pixel_storage WHERE urlservicekey = ? AND is_used = ?) AS px ORDER BY px.pxdate ASC", o.URLServiceKey, o.IsUsed).Scan(&o)
+	result := r.DB.Exec("SELECT * FROM (SELECT id, campaign_detail_id, pxdate, url_service_key, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pub_id, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfcor_smartlink, po, cost, is_unique FROM pixel_storages WHERE url_service_key = ? AND is_used = ?) AS px ORDER BY px.pxdate ASC", o.URLServiceKey, o.IsUsed).Scan(&o)
 
 	return o, result.Error
 }

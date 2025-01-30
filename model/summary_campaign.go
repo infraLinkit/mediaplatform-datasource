@@ -10,7 +10,7 @@ import (
 func (r *BaseModel) DelSummaryCampaign(o entity.SummaryCampaign) error {
 
 	result := r.DB.
-		Where("summary_date = ? AND urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Where("summary_date = ? AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
 		Delete(&o)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
@@ -21,7 +21,7 @@ func (r *BaseModel) DelSummaryCampaign(o entity.SummaryCampaign) error {
 func (r *BaseModel) EditSettingSummaryCampaign(o entity.SummaryCampaign) error {
 
 	result := r.DB.Model(&o).
-		Where("summary_date = ? AND urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Where("summary_date = ? AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
 		Updates(entity.SummaryCampaign{PO: o.PO, MOLimit: o.MOLimit, RatioSend: o.RatioSend, RatioReceive: o.RatioReceive})
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
@@ -32,7 +32,7 @@ func (r *BaseModel) EditSettingSummaryCampaign(o entity.SummaryCampaign) error {
 func (r *BaseModel) UpdateSummaryCampaign(o entity.SummaryCampaign) error {
 
 	result := r.DB.Model(&o).
-		Where("summary_date = ? AND urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Where("summary_date = ? AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
 		Updates(entity.SummaryCampaign{Status: o.Status})
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
@@ -49,7 +49,7 @@ func (r *BaseModel) SummaryCampaign(o entity.SummaryCampaign) int {
 			{Name: "country"},
 			{Name: "partner"},
 			{Name: "operator"},
-			{Name: "urlservicekey"},
+			{Name: "url_service_key"},
 			{Name: "service"},
 			{Name: "adnet"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{
@@ -125,7 +125,7 @@ func (r *BaseModel) DataRedirect(o entity.DataRedirect) int {
 func (r *BaseModel) UpdateCPAReportSummaryCampaign(o entity.SummaryCampaign) error {
 
 	result := r.DB.Model(&o).
-		Where("summary_date = ? AND urlservicekey = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Where("summary_date = ? AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
 		Updates(entity.SummaryCampaign{CostPerConversion: o.CostPerConversion, AgencyFee: o.AgencyFee})
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))

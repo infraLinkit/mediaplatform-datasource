@@ -36,10 +36,26 @@ func MapUrls(obj App3rdParty) *fiber.App {
 		Rmqp:   obj.Rmqp,
 	})
 
-	// Landing Page
-	f.Get("/v1/postback/:urlservicekey/", h.Postback).Name("Postback from messaging")
-	f.Get("/v1/report/", h.Report).Name("Report API")
-	f.Put("/v1/int/setdata/:v/", h.SetData).Name("SetTargetDailyBudget")
+	// V1
+	v1 := f.Group("/v1") // v1
+
+	// Postback
+	v1.Get("/postback/:urlservicekey/", h.Postback)
+
+	// Report
+	rpt := v1.Group("/report") // Report
+	//rpt.Get("/report/", h.Report).Name("Report API")
+	rpt.Get("/report/pinreport", h.DisplayPinReport).Name("Pin Report Summary FE")
+	rpt.Get("/report/datasentapiperformance", h.DisplayPinPerformanceReport).Name("Pin Performance Api Report Summary FE")
+
+	// API Internal
+	internal := v1.Group("/int") // Internal API
+	internal.Put("/setdata/:v/", h.SetData).Name("SetTargetDailyBudget")
+	internal.Get("/pinreport/", h.TrxPinReport).Name("Receive Pin Report Transactional")
+	internal.Get("/datasentapiperformance/", h.TrxPerformancePinReport).Name("Receive Pin API Performance Report Transactional")
+
+	// API External
+	v1.Group("/ext") // External API
 
 	return f
 }

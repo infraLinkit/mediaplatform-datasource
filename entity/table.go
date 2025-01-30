@@ -338,7 +338,7 @@ type (
 		gorm.Model
 		ID                       int       `gorm:"primaryKey;autoIncrement" json:"id"`
 		Status                   bool      `gorm:"not null;size:50" json:"status"`
-		SummaryDate              time.Time `json:"summary_date"`
+		SummaryDate              time.Time `gorm:"type:date" json:"summary_date"`
 		URLServiceKey            string    `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
 		CampaignId               string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
 		CampaignName             string    `gorm:"not null;size:100" json:"campaign_name"`
@@ -473,5 +473,58 @@ type (
 		Plan             string    `gorm:"size:50;default:NA" json:"plan"`
 		CreatedAt        time.Time
 		UpdatedAt        time.Time
+	}
+
+	ApiPinReport struct {
+		gorm.Model
+		ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		DateSend      time.Time `gorm:"type:date" json:"date_send"`
+		Country       string    `gorm:"not null;size:50" json:"country"`
+		Company       string    `gorm:"not null;size:50" json:"company"`
+		Adnet         string    `gorm:"not null;size:50" json:"adnet"`
+		Operator      string    `gorm:"not null;size:50" json:"operator"`
+		Service       string    `gorm:"not null;size:50" json:"service"`
+		PayoutAdn     string    `gorm:"size:50" json:"payout_adn"`
+		PayoutAF      string    `gorm:"size:50" json:"payout_af"`
+		TotalMO       int       `gorm:"length:20;default:0" json:"total_mo"`
+		TotalPostback int       `gorm:"length:20;default:0" json:"total_postback"`
+		SBAF          float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
+		SAAF          float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
+		PricePerMO    float64   `gorm:"type:double precision;not null;length:20;default:0" json:"price_per_mo"`
+		WakiRevenue   float64   `gorm:"type:double precision;not null;length:20;default:0" json:"waki_revenue"`
+		CreatedAt     time.Time
+		UpdatedAt     time.Time
+	}
+
+	ApiPinPerformance struct {
+		gorm.Model
+		ID                  int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		DateSend            time.Time `gorm:"type:date" json:"date_send"`
+		Country             string    `gorm:"not null;size:50" json:"country"`
+		Company             string    `gorm:"not null;size:50" json:"company"`
+		Adnet               string    `gorm:"not null;size:50" json:"adnet"`
+		Operator            string    `gorm:"not null;size:50" json:"operator"`
+		Service             string    `gorm:"not null;size:50" json:"service"`
+		PinRequest          int       `gorm:"length:20;default:0" json:"pin_request"`
+		UniquePinRequest    int       `gorm:"length:20;default:0" json:"unique_pin_request"`
+		PinSent             int       `gorm:"length:20;default:0" json:"pin_sent"`
+		PinFailed           int       `gorm:"length:20;default:0" json:"pin_failed"`
+		VerifyRequest       int       `gorm:"length:20;default:0" json:"verify_request"`
+		VerifyRequestUnique int       `gorm:"length:20;default:0" json:"verify_request_unique"`
+		PinOK               int       `gorm:"length:20;default:0" json:"pin_ok"`
+		PinNotOK            int       `gorm:"length:20;default:0" json:"pin_not_ok"`
+		PinOkSendAdnet      int       `gorm:"length:20;default:0" json:"pin_ok_send_adnet"`
+		CPA                 float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cpa"`
+		CPAWaki             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cpa_waki"`
+		EstimatedARPU       float64   `gorm:"type:double precision;not null;length:20;default:0" json:"estimated_arpu"`
+		SBAF                float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
+		SAAF                float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
+		ChargedMO           float64   `gorm:"type:double precision;not null;length:20;default:0" json:"charged_mo"`
+		SubsCR              float64   `gorm:"type:double precision;not null;length:20;default:0" json:"subs_cr"`
+		AdnetCR             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"adnet_cr"`
+		CAC                 float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cac"`
+		PaidCAC             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"paid_cac"`
+		CreatedAt           time.Time
+		UpdatedAt           time.Time
 	}
 )

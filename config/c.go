@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/gofiber/storage/rueidis"
-	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
@@ -239,9 +238,6 @@ func (c *Cfg) InitGormPgx(l *logrus.Logger) *gorm.DB {
 
 		// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 		sqlDB.SetConnMaxLifetime(time.Hour)
-
-		// Migrate table
-		db.AutoMigrate(&entity.Campaign{}, &entity.CampaignDetail{}, &entity.MO{}, &entity.PixelStorage{}, &entity.Postback{}, &entity.SummaryCampaign{}, &entity.DataClicked{}, &entity.DataLanding{}, &entity.DataRedirect{}, &entity.DataTraffic{})
 	}
 
 	return db

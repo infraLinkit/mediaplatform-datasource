@@ -51,6 +51,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	// API Internal
 	internal := v1.Group("/int") // Internal API
 	internal.Put("/setdata/:v/", h.SetData).Name("SetTargetDailyBudget")
+	internal.Put("/updatedata/:v/", h.UpdateAgencyFeeAndCostConversion).Name("UpdateAgencyFeeAndCostConversion")
 	internal.Get("/pinreport/", h.TrxPinReport).Name("Receive Pin Report Transactional")
 	internal.Get("/datasentapiperformance/", h.TrxPerformancePinReport).Name("Receive Pin API Performance Report Transactional")
 

@@ -477,7 +477,7 @@ type (
 
 	ApiPinReport struct {
 		gorm.Model
-		ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		ID            int       `gorm:"primaryKey;autoIncrement" json:"ID"`
 		DateSend      time.Time `gorm:"type:date" json:"date_send"`
 		Country       string    `gorm:"not null;size:50" json:"country"`
 		Company       string    `gorm:"not null;size:50" json:"company"`
@@ -498,7 +498,7 @@ type (
 
 	ApiPinPerformance struct {
 		gorm.Model
-		ID                  int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		ID                  int       `gorm:"primaryKey;autoIncrement" json:"ID"`
 		DateSend            time.Time `gorm:"type:date" json:"date_send"`
 		Country             string    `gorm:"not null;size:50" json:"country"`
 		Company             string    `gorm:"not null;size:50" json:"company"`

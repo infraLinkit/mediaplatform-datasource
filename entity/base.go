@@ -7,9 +7,9 @@ type (
 	}
 
 	GlobalResponseWithData struct {
-		Code    int             `json:"code" xml:"code"`
-		Message string          `json:"message" xml:"message"`
-		Data    PixelStorageRsp `json:"data" xml:"data"`
+		Code    int         `json:"code" xml:"code"`
+		Message string      `json:"message" xml:"message"`
+		Data    interface{} `json:"data" xml:"data"`
 	}
 
 	PixelStorageRsp struct {

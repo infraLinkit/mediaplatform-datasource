@@ -138,6 +138,16 @@ func (h *BaseModel) IndexRedis(key string, field string) {
 
 }
 
+func (h *BaseModel) GetData(i []interface{}, key string, path string) []interface{} {
+
+	// Get Config Data Landing
+	ctx := context.Background()
+
+	rueidis.DecodeSliceOfJSON(h.R.Conn().Do(ctx, h.R.Conn().B().JsonGet().Key(key).Path(path).Build()), &i)
+
+	return i
+}
+
 func (h *BaseModel) SetData(key string, path string, val string) {
 
 	// Get Config Data Landing
@@ -151,10 +161,10 @@ func (h *BaseModel) SetData(key string, path string, val string) {
 
 }
 
-func (h *BaseModel) SetExpireData(key string) {
+func (h *BaseModel) SetExpireData(key string, expr int64) {
 
 	//Set key expire and delete automatically
-	result := h.R.Conn().Do(context.Background(), h.R.Conn().B().Expire().Key(key).Seconds(h.Config.RedisKeyExpiration).Build())
+	result := h.R.Conn().Do(context.Background(), h.R.Conn().B().Expire().Key(key).Seconds(expr).Build())
 
 	isExpiredCreated, err := result.AsBool()
 
@@ -246,4 +256,33 @@ func (h *BaseModel) GetDataSummary(key string, path string) (*entity.Summary, er
 
 	}
 
+}
+
+func (h *BaseModel) RGetApiPinReport(key string, path string) ([]entity.ApiPinReport, bool) {
+
+	var (
+		isEmpty bool
+		p       []entity.ApiPinReport
+	)
+
+	// Get Config Data Landing
+	ctx := context.Background()
+
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
+
+	for _, v := range data {
+		var pinreport [][]entity.ApiPinReport
+		v.DecodeJSON(&pinreport)
+
+		if len(pinreport) > 0 {
+			isEmpty = false
+			p = pinreport[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isEmpty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
+
+	return p, isEmpty
 }

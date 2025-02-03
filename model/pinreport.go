@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
-	"gorm.io/gorm"
 )
 
 func (r *BaseModel) PinReport(o entity.ApiPinReport) int {
@@ -21,47 +20,45 @@ func (r *BaseModel) PinReport(o entity.ApiPinReport) int {
 func (r *BaseModel) GetApiPinReport(o entity.DisplayPinReport) ([]entity.ApiPinReport, error) {
 
 	var (
-		q    string
 		rows *sql.Rows
 	)
 
+	query := r.DB.Model(&entity.ApiPinReport{})
+
 	if o.Action == "Search" {
 		if o.Country != "" {
-			q = q + gorm.Expr("country = ?", o.Country).SQL
+			query = query.Where("country = ?", o.Country)
 		}
 		if o.Operator != "" {
-			q = q + gorm.Expr(" AND operator = ?", o.Operator).SQL
+			query = query.Where("operator = ?", o.Operator)
 		}
 		if o.Service != "" {
-			q = q + gorm.Expr(" AND service = ?", o.Service).SQL
+			query = query.Where("service = ?", o.Service)
 		}
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
-				q = q + " AND date_send = CURRENT_DATE"
+				query = query.Where("date_send = CURRENT_DATE")
 			case "YESTERDAY":
-				q = q + gorm.Expr(" AND date_send BETWEEN CURRENT_DATE - INTERVAL ?", "1 DAY").SQL
+				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
 			case "LAST7DAY":
-				q = q + gorm.Expr(" AND date_send = CURRENT_DATE - INTERVAL ?", "7 DAY").SQL
+				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 			case "LAST30DAY":
-				q = q + gorm.Expr(" AND date_send = CURRENT_DATE - INTERVAL ?", "30 DAY").SQL
+				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
 			case "THISMONTH":
-				q = q + gorm.Expr(" AND date_send BETWEEN CURRENT_DATE - INTERVAL ? AND CURRENT_DATE", "30 DAY").SQL
+				query = query.Where("date_send >= DATE_TRUNC('month', CURRENT_DATE)")
 			case "LASTMONTH":
-				q = q + gorm.Expr(" AND date_send BETWEEN CURRENT_DATE - INTERVAL ? AND CURRENT_DATE - INTERVAL ?", "60 DAY", "30 DAY").SQL
+				query = query.Where("date_send BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
-				q = q + gorm.Expr(" AND date_send BETWEEN ? AND ?", o.DateBefore, o.DateAfter).SQL
+				query = query.Where("date_send BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
 			default:
-				q = q + gorm.Expr(" AND date_send = ?", o.DateRange).SQL
+				query = query.Where("date_send = ?", o.DateRange)
 			}
 		}
 
-		q = strings.TrimLeft(q, " AND")
-		rows, _ = r.DB.Model(&entity.ApiPinReport{}).Where(q).Order("date_send").Rows()
-
+		rows, _ = query.Order("date_send").Rows()
 	} else {
-
-		rows, _ = r.DB.Model(&entity.ApiPinReport{}).Rows()
+		rows, _ = query.Rows()
 	}
 
 	defer rows.Close()
@@ -92,4 +89,69 @@ func (r *BaseModel) PinPerformanceReport(o entity.ApiPinPerformance) int {
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
 	return int(o.ID)
+}
+
+func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceReport) ([]entity.ApiPinPerformance, error) {
+
+	var (
+		rows *sql.Rows
+	)
+
+	query := r.DB.Model(&entity.ApiPinPerformance{})
+
+	if o.Action == "Search" {
+		if o.Country != "" {
+			query = query.Where("country = ?", o.Country)
+		}
+		if o.Operator != "" {
+			query = query.Where("operator = ?", o.Operator)
+		}
+		if o.Service != "" {
+			query = query.Where("service = ?", o.Service)
+		}
+		if o.DateRange != "" {
+			switch strings.ToUpper(o.DateRange) {
+			case "TODAY":
+				query = query.Where("date_send = CURRENT_DATE")
+			case "YESTERDAY":
+				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
+			case "LAST7DAY":
+				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+			case "LAST30DAY":
+				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+			case "THISMONTH":
+				query = query.Where("date_send >= DATE_TRUNC('month', CURRENT_DATE)")
+			case "LASTMONTH":
+				query = query.Where("date_send BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+			case "CUSTOMRANGE":
+				query = query.Where("date_send BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
+			default:
+				query = query.Where("date_send = ?", o.DateRange)
+			}
+		}
+
+		rows, _ = query.Order("date_send").Rows()
+	} else {
+		rows, _ = query.Rows()
+	}
+
+	defer rows.Close()
+
+	var (
+		ss []entity.ApiPinPerformance
+	)
+
+	for rows.Next() {
+
+		var s entity.ApiPinPerformance
+
+		// ScanRows scans a row into a struct
+		r.DB.ScanRows(rows, &s)
+
+		ss = append(ss, s)
+	}
+
+	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(ss)))
+
+	return ss, rows.Err()
 }

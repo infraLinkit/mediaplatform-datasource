@@ -33,6 +33,8 @@ type (
 		DateBefore string `form:"date_before" json:"date_before"`
 		DateAfter  string `form:"date_after" json:"date_after"`
 		Action     string `form:"action" json:"action"`
+		Draw       int    `form:"draw" json:"draw"`
+		PageSize   int    `form:"page_size" json:"page_size"`
 	}
 )
 

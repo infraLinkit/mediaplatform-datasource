@@ -117,6 +117,12 @@ func (h *IncomingHandler) DisplayPinPerformanceReport(c *fiber.Ctx) error {
 	m := c.Queries()
 
 	page, _ := strconv.Atoi(m["page"])
+	pageSize, err := strconv.Atoi(m["page_size"])
+	if err != nil {
+		pageSize = 10
+	}
+
+	draw, _ := strconv.Atoi(m["draw"])
 	fe := entity.DisplayPinPerformanceReport{
 		Adnet:      m["adnet"],
 		Country:    m["country"],
@@ -127,6 +133,8 @@ func (h *IncomingHandler) DisplayPinPerformanceReport(c *fiber.Ctx) error {
 		DateAfter:  m["date_after"],
 		Page:       page,
 		Action:     m["action"],
+		Draw:       draw,
+		PageSize:   pageSize,
 	}
 
 	r := h.DisplayPinPerformanceReportExtra(c, fe)
@@ -138,56 +146,38 @@ func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe enti
 	key := "temp_key_api_pin_performance_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err              error
-		x                int
-		isempty          bool
-		pinperformancereport        []entity.ApiPinPerformance
-		displaypinperformancereport []entity.ApiPinPerformance
+		err                  error
+		total_data           int64
+		isempty              bool
+		pinperformancereport []entity.ApiPinPerformance
 	)
 
 	if fe.Action != "" {
-		pinperformancereport, err = h.DS.GetApiPinPerformanceReport(fe)
+		pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
 	} else {
 		if pinperformancereport, isempty = h.DS.RGetApiPinPerformanceReport(key, "$"); isempty {
 
-			pinperformancereport, err = h.DS.GetApiPinPerformanceReport(fe)
+			pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
 
 			s, _ := json.Marshal(pinperformancereport)
 
 			h.DS.SetData(key, "$", string(s))
 			h.DS.SetExpireData(key, 60)
+
 		}
 	}
 
 	if err == nil {
 
-		pagesize := PAGESIZE
-		if fe.Page >= 2 {
-			x = PAGESIZE * (fe.Page - 1)
-		} else if fe.Page == 1 {
-			x = 0
-			pagesize = pagesize - 1
-		} else {
-			x = 0
-			pagesize = pagesize - 1
-		}
-
-		for i := x; i < len(pinperformancereport); i++ {
-
-			//h.Logs.Debug(fmt.Sprintf("incr : %d, ID : %d", i, pinreport[i].ID))
-
-			displaypinperformancereport = append(displaypinperformancereport, pinperformancereport[i])
-			if i == pagesize {
-				break
-			}
-		}
-
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
-			Rsp: entity.GlobalResponseWithData{
-				Code:    fiber.StatusOK,
-				Message: config.OK_DESC,
-				Data:    displaypinperformancereport,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            pinperformancereport,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
 			},
 		}
 

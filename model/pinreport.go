@@ -91,14 +91,15 @@ func (r *BaseModel) PinPerformanceReport(o entity.ApiPinPerformance) int {
 	return int(o.ID)
 }
 
-func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceReport) ([]entity.ApiPinPerformance, error) {
+func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceReport) ([]entity.ApiPinPerformance, int64, error) {
 
 	var (
-		rows *sql.Rows
+		rows       *sql.Rows
+		total_rows int64
 	)
 
+	// Apply filters, minus the pagination constraints
 	query := r.DB.Model(&entity.ApiPinPerformance{})
-
 	if o.Action == "Search" {
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
@@ -129,29 +130,27 @@ func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceRep
 				query = query.Where("date_send = ?", o.DateRange)
 			}
 		}
-
-		rows, _ = query.Order("date_send").Rows()
-	} else {
-		rows, _ = query.Rows()
 	}
 
+	// Get the total count after applying filters
+	query.Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	}
+
+	rows, _ = query_limit.Order("date_send").Rows()
 	defer rows.Close()
 
-	var (
-		ss []entity.ApiPinPerformance
-	)
-
+	var ss []entity.ApiPinPerformance
 	for rows.Next() {
-
 		var s entity.ApiPinPerformance
-
-		// ScanRows scans a row into a struct
 		r.DB.ScanRows(rows, &s)
-
 		ss = append(ss, s)
 	}
 
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(ss)))
 
-	return ss, rows.Err()
+	return ss, total_rows, rows.Err()
 }

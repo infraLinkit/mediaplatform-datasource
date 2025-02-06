@@ -163,7 +163,6 @@ func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe enti
 
 			h.DS.SetData(key, "$", string(s))
 			h.DS.SetExpireData(key, 60)
-
 		}
 	}
 
@@ -175,6 +174,58 @@ func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe enti
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
 				Data:            pinperformancereport,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	} else {
+
+		return entity.ReturnResponse{
+			HttpStatus: fiber.StatusNotFound,
+			Rsp: entity.GlobalResponse{
+				Code:    fiber.StatusNotFound,
+				Message: "empty",
+			},
+		}
+	}
+}
+
+func (h *IncomingHandler) DisplayConversionLog(c *fiber.Ctx, fe entity.DisplayConversionLog) entity.ReturnResponse {
+
+	// key := "temp_key_api_conversion_log_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	var (
+		err        error
+		total_data int64
+		// isempty               bool
+		conversion_log_report []entity.PixelStorage
+	)
+
+	// if fe.Action != "" {
+	conversion_log_report, total_data, err = h.DS.GetConversionLog(fe)
+	// } else {
+	// 	if conversion_log_report, isempty = h.DS.RGetApiPinPerformanceReport(key, "$"); isempty {
+
+	// 		pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
+
+	// 		s, _ := json.Marshal(pinperformancereport)
+
+	// 		h.DS.SetData(key, "$", string(s))
+	// 		h.DS.SetExpireData(key, 60)
+
+	// 	}
+	// }
+
+	if err == nil {
+
+		return entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            conversion_log_report,
 				Draw:            fe.Draw,
 				RecordsTotal:    int(total_data),
 				RecordsFiltered: int(total_data),

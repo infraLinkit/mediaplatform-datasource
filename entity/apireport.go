@@ -36,6 +36,20 @@ type (
 		Draw       int    `form:"draw" json:"draw"`
 		PageSize   int    `form:"page_size" json:"page_size"`
 	}
+
+	DisplayConversionLog struct {
+		Country    string `form:"country" json:"country"`
+		Adnet      string `form:"adnet" json:"adnet"`
+		Operator   string `form:"operator" json:"operator"`
+		Pixel      string `form:"pixel" json:"pixel"`
+		Page       int    `form:"page" json:"page"`
+		DateRange  string `form:"date_range" json:"date_range"`
+		DateBefore string `form:"date_before" json:"date_before"`
+		DateAfter  string `form:"date_after" json:"date_after"`
+		Action     string `form:"action" json:"action"`
+		Draw       int    `form:"draw" json:"draw"`
+		PageSize   int    `form:"page_size" json:"page_size"`
+	}
 )
 
 func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {

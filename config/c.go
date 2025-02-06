@@ -73,7 +73,8 @@ type (
 	Setup struct {
 		Config *Cfg
 		Logs   *logrus.Logger
-		R      *rueidis.Storage
+		R0     *rueidis.Storage
+		R1     *rueidis.Storage
 		DB     *gorm.DB
 		Rmqp   rmqp.AMQP
 	}
@@ -147,7 +148,8 @@ func (c *Cfg) Initiate(logname string) *Setup {
 	return &Setup{
 		Config: c,
 		Logs:   l,
-		R:      c.InitRedisJSON(l, 0),
+		R0:     c.InitRedisJSON(l, 0),
+		R1:     c.InitRedisJSON(l, 1),
 		DB:     c.InitGormPgx(l),
 		Rmqp:   c.InitMessageBroker(),
 	}

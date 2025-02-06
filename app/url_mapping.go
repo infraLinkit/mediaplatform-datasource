@@ -17,7 +17,8 @@ type App3rdParty struct {
 	Config *config.Cfg
 	Logs   *logrus.Logger
 	DB     *gorm.DB
-	R      *rueidis.Storage
+	R0     *rueidis.Storage
+	R1     *rueidis.Storage
 	Rmqp   rmqp.AMQP
 }
 
@@ -31,7 +32,8 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	h := handler.NewIncomingHandler(handler.IncomingHandler{
 		Config: obj.Config,
 		Logs:   obj.Logs,
-		R:      obj.R,
+		R0:     obj.R0,
+		R1:     obj.R1,
 		DB:     obj.DB,
 		Rmqp:   obj.Rmqp,
 	})

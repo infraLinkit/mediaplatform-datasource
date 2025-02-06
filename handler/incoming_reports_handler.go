@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
@@ -138,9 +139,9 @@ func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe enti
 	key := "temp_key_api_pin_performance_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err              error
-		x                int
-		isempty          bool
+		err                         error
+		x                           int
+		isempty                     bool
 		pinperformancereport        []entity.ApiPinPerformance
 		displaypinperformancereport []entity.ApiPinPerformance
 	)
@@ -188,6 +189,139 @@ func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe enti
 				Code:    fiber.StatusOK,
 				Message: config.OK_DESC,
 				Data:    displaypinperformancereport,
+			},
+		}
+
+	} else {
+
+		return entity.ReturnResponse{
+			HttpStatus: fiber.StatusNotFound,
+			Rsp: entity.GlobalResponse{
+				Code:    fiber.StatusNotFound,
+				Message: "empty",
+			},
+		}
+	}
+}
+
+func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error { //dev-cpa
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	fe := entity.DisplayCPAReport{
+		SummaryDate:              time.Time{},
+		URLServiceKey:            m["urlservicekey"],
+		CampaignId:               m["campaign_id"],
+		CampaignName:             m["campaign_name"],
+		Country:                  m["country"],
+		Operator:                 m["operator"],
+		Partner:                  m["partner"],
+		Aggregator:               m["aggregator"],
+		Adnet:                    m["adnet"],
+		Service:                  m["service"],
+		ShortCode:                m["short_code"],
+		Traffic:                  0,
+		Landing:                  0,
+		MoReceived:               0,
+		CR:                       0,
+		Postback:                 0,
+		TotalFP:                  0,
+		SuccessFP:                0,
+		Billrate:                 0,
+		ROI:                      0,
+		PO:                       0,
+		Cost:                     0,
+		SBAF:                     0,
+		SAAF:                     0,
+		CPA:                      0,
+		Revenue:                  0,
+		URLAfter:                 "NA",
+		URLBefore:                "NA",
+		MOLimit:                  0,
+		RatioSend:                1,
+		RatioReceive:             4,
+		Company:                  "NA",
+		ClientType:               "NA",
+		CostPerConversion:        0,
+		AgencyFee:                0,
+		TargetDailyBudget:        0,
+		CrMO:                     0,
+		CrPostback:               0,
+		TotalWakiAgencyFee:       0,
+		BudgetUsage:              0,
+		TargetDailyBudgetChanges: 0,
+		Page:                     page,
+		Action:                   m["action"],
+		DateRange:                m["date_range"],
+		DateBefore:               m["date_before"],
+		DateAfter:                m["date_after"],
+	}
+
+	r := h.DisplayCPAReportExtra(c, fe)
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
+func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport) entity.ReturnResponse {
+	// key := "temp_key_api_cpa_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	var (
+		err error
+		x   int
+		// isempty          bool
+		cpareport        []entity.SummaryCampaign
+		displaycpareport []entity.SummaryCampaign
+	)
+
+	// if fe.Action != "" {
+	cpareport, err = h.DS.GetDisplayCPAReport(fe)
+	// }
+	// else {
+
+	// if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
+
+	// 	cpareport, err = h.DS.RGetDisplayCPAReport(fe)
+
+	// 	s, _ := json.Marshal(cpareport)
+
+	// 	h.DS.SetData(key, "$", string(s))
+	// 	h.DS.SetExpireData(key, 60)
+	// }
+	// }
+
+	if err == nil {
+
+		pagesize := PAGESIZE
+		if fe.Page >= 2 {
+			x = PAGESIZE * (fe.Page - 1)
+		} else if fe.Page == 1 {
+			x = 0
+			pagesize = pagesize - 1
+		} else {
+			x = 0
+			pagesize = pagesize - 1
+		}
+
+		for i := x; i < len(cpareport); i++ {
+
+			// h.Logs.Debug(fmt.Sprintf("incr : %d, ID : %d", i, cpareport[i].ID))
+
+			displaycpareport = append(displaycpareport, cpareport[i])
+			if i == pagesize {
+				break
+			}
+		}
+
+		return entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithData{
+				Code:    fiber.StatusOK,
+				Message: config.OK_DESC,
+				Data:    displaycpareport,
 			},
 		}
 

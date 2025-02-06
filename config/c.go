@@ -14,6 +14,8 @@ import (
 	"github.com/wiliehidayat87/rmqp"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"github.com/joho/godotenv" //local-f
+	"log"  //local-f
 )
 
 var APP_PATH = "/Users/wiliewahyuhidayat/Documents/GO/mediaplatform/cores/" // local
@@ -78,6 +80,11 @@ type (
 )
 
 func InitCfg() *Cfg {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	} //local-f
 
 	if os.Getenv("APPPATH") != "" {
 		APP_PATH = os.Getenv("APPPATH")

@@ -15,7 +15,8 @@ type (
 		Logs   *logrus.Logger
 		DB     *gorm.DB
 		Rmqp   rmqp.AMQP
-		R      *rueidis.Storage
+		R0     *rueidis.Storage
+		R1     *rueidis.Storage
 		DS     *model.BaseModel
 	}
 )
@@ -26,14 +27,16 @@ func NewIncomingHandler(obj IncomingHandler) *IncomingHandler {
 		Config: obj.Config,
 		Logs:   obj.Logs,
 		DB:     obj.DB,
-		R:      obj.R,
+		R0:     obj.R0,
+		R1:     obj.R1,
 	})
 
 	return &IncomingHandler{
 		Config: obj.Config,
 		Logs:   obj.Logs,
 		DB:     obj.DB,
-		R:      obj.R,
+		R0:     obj.R0,
+		R1:     obj.R1,
 		Rmqp:   obj.Rmqp,
 		DS:     b,
 	}

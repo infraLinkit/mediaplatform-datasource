@@ -155,7 +155,7 @@ func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceRep
 	return ss, total_rows, rows.Err()
 }
 
-func (r *BaseModel) GetConversionLog(o entity.DisplayConversionLog) ([]entity.PixelStorage, int64, error) {
+func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) ([]entity.PixelStorage, int64, error) {
 
 	var (
 		rows       *sql.Rows
@@ -172,39 +172,42 @@ func (r *BaseModel) GetConversionLog(o entity.DisplayConversionLog) ([]entity.Pi
 			query = query.Where("operator = ?", o.Operator)
 		}
 		if o.Pixel != "" {
-			query = query.Where("service = ?", o.Pixel)
+			query = query.Where("pixel = ?", o.Pixel)
+		}
+		if o.CampaignId != "" {
+			query = query.Where("campaign_id = ?", o.CampaignId)
 		}
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
-				query = query.Where("date_send = CURRENT_DATE")
+				query = query.Where("pxdate = CURRENT_DATE")
 			case "YESTERDAY":
-				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
+				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
 			case "LAST7DAY":
-				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 			case "LAST30DAY":
-				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
 			case "THISMONTH":
-				query = query.Where("date_send >= DATE_TRUNC('month', CURRENT_DATE)")
+				query = query.Where("pxdate >= DATE_TRUNC('month', CURRENT_DATE)")
 			case "LASTMONTH":
-				query = query.Where("date_send BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+				query = query.Where("pxdate BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
-				query = query.Where("date_send BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
+				query = query.Where("pxdate BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
 			default:
-				query = query.Where("date_send = ?", o.DateRange)
+				query = query.Where("pxdate = ?", o.DateRange)
 			}
 		}
 	}
 
 	// Get the total count after applying filters
-	query.Count(&total_rows)
+	query.Unscoped().Count(&total_rows)
 
 	query_limit := query.Limit(o.PageSize)
 	if o.Page > 0 {
 		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
 	}
 
-	rows, _ = query_limit.Order("date_send").Rows()
+	rows, _ = query_limit.Order("pxdate").Rows()
 	defer rows.Close()
 
 	var ss []entity.PixelStorage

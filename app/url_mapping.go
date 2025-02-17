@@ -68,6 +68,21 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	internal.Get("/exportcost/", h.ExportCostButton).Name("Export Cost-Report Button")
 	internal.Get("/exportcostdetail/", h.ExportCostDetailButton).Name("Export Cost-Report-Detail Button")
 
+	// Management
+	management := v1.Group("/management") // Management
+	// Campaign
+	campaign := management.Group("/campaign") // Campaign
+	campaign.Get("/", h.DisplayCampaignManagement).Name("Campaign Management FE")
+	campaign.Get("/:v", h.DisplayCampaignManagement).Name("Campaign Management Detail FE")
+	campaign.Post("/send", h.SendCampaignHandler).Name("Campaign Management Send FE")
+	// Menu
+	menu := management.Group("/menu") // Menu
+	menu.Post("/", h.CreateMenu).Name("Menu Management Create FE")
+	menu.Get("/", h.GetAllMenus).Name("Menu Management FE")
+	menu.Get("/:id", h.GetMenuByID).Name("Menu Management Edit FE")
+	menu.Put("/:id", h.UpdateMenu).Name("Menu Management Update FE")
+	menu.Delete("/:id", h.DeleteMenu).Name("Menu Management Delete FE")
+
 	// API External
 	v1.Group("/ext") // External API
 

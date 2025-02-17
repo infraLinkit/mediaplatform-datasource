@@ -527,4 +527,18 @@ type (
 		CreatedAt           time.Time
 		UpdatedAt           time.Time
 	}
+
+	Menu struct {
+		ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name          string    `gorm:"type:varchar(255);not null" json:"name"`
+		Code          string    `gorm:"type:varchar(255);not null" json:"code"`
+		Url           string    `gorm:"type:varchar(255);not null" json:"url"`
+		Icon          string    `gorm:"type:varchar(255)" json:"icon"`
+		Parent        int       `gorm:"type:int" json:"parent"`
+		Sort          string    `gorm:"type:varchar(255)" json:"sort"`
+		ShowOnSidebar bool      `gorm:"type:bool;default:true" json:"show_on_sidebar"`
+		CreatedAt     time.Time `gorm:"type:timestamp" json:"created_at"`
+		UpdatedAt     time.Time `gorm:"type:timestamp" json:"updated_at"`
+		Permission    string    `gorm:"type:varchar(255)" json:"permission"`
+	}
 )

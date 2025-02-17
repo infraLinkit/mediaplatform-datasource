@@ -84,11 +84,12 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithDataTable{
-				Code:    fiber.StatusOK,
-				Message: config.OK_DESC,
-				Data:    displaypinreport,
-				Page:    fe.Page,
-				Total:   len(pinreport),
+				Draw:            fe.Page,
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            displaypinreport,
+				RecordsTotal:    len(pinreport),
+				RecordsFiltered: len(pinreport),
 			},
 		}
 

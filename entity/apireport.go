@@ -51,6 +51,85 @@ type (
 		Draw       int    `form:"draw" json:"draw"`
 		PageSize   int    `form:"page_size" json:"page_size"`
 	}
+
+	DisplayCPAReport struct { // cpa
+		ID                       int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		Status                   bool      `gorm:"not null;size:50" json:"status"`
+		SummaryDate              time.Time `gorm:"type:date" json:"summary_date"`
+		URLServiceKey            string    `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
+		CampaignId               string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
+		CampaignName             string    `gorm:"not null;size:100" json:"campaign_name"`
+		Country                  string    `gorm:"not null;size:50" json:"country"`
+		Operator                 string    `gorm:"not null;size:50" json:"operator"`
+		Partner                  string    `gorm:"not null;size:50" json:"partner"`
+		Aggregator               string    `gorm:"not null;size:50" json:"aggregator"`
+		Adnet                    string    `gorm:"not null;size:50" json:"adnet"`
+		Service                  string    `gorm:"not null;size:50" json:"service"`
+		ShortCode                string    `gorm:"not null;size:50" json:"short_code"`
+		Traffic                  int       `gorm:"not null;length:20;default:0" json:"traffic"`
+		Landing                  int       `gorm:"not null;length:20;default:0" json:"landing"`
+		MoReceived               int       `gorm:"not null;length:20;default:0" json:"mo_received"`
+		CR                       float64   `gorm:"type:double precision" json:"cr"`
+		Postback                 int       `gorm:"not null;length:20;default:0" json:"postback"`
+		TotalFP                  int       `gorm:"not null;length:20;default:0" json:"total_fp"`
+		SuccessFP                int       `gorm:"not null;length:20;default:0" json:"success_fp"`
+		Billrate                 float64   `gorm:"type:double precision" json:"billrate"`
+		ROI                      float64   `gorm:"type:double precision" json:"roi"`
+		PO                       float64   `gorm:"type:double precision" json:"po"`
+		Cost                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cost"`
+		SBAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
+		SAAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
+		CPA                      float64   `gorm:"type:double precision" json:"cpa"`
+		Revenue                  float64   `gorm:"type:double precision;not null;length:20;default:0" json:"revenue"`
+		URLAfter                 string    `gorm:"size:255;default:NA" json:"url_after"`
+		URLBefore                string    `gorm:"size:255;default:NA" json:"url_before"`
+		MOLimit                  int       `gorm:"not null;length:10;default:0" json:"mo_limit"`
+		RatioSend                int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
+		RatioReceive             int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
+		Company                  string    `gorm:"size:255;default:NA" json:"company"`
+		ClientType               string    `gorm:"size:30;default:NA" json:"client_type"`
+		CostPerConversion        float64   `gorm:"type:double precision" json:"cost_per_conversion"`
+		AgencyFee                float64   `gorm:"type:double precision" json:"agency_fee"`
+		TargetDailyBudget        float64   `gorm:"type:double precision" json:"target_daily_budget"`
+		CrMO                     float64   `gorm:"type:double precision" json:"cr_mo"`
+		CrPostback               float64   `gorm:"type:double precision" json:"cr_postback"`
+		TotalWakiAgencyFee       float64   `gorm:"type:double precision" json:"total_waki_agency_fee"`
+		BudgetUsage              float64   `gorm:"type:double precision" json:"budget_usage"`
+		TargetDailyBudgetChanges int       `gorm:"not null;length:12;default:0" json:"target_daily_budget_changes"`
+		Page                     int       `form:"page" json:"page"`
+		Action                   string    `form:"action" json:"action"`
+		DateRange                string    `form:"date_range" json:"date_range"`
+		DateBefore               string    `form:"date_before" json:"date_before"`
+		DateAfter                string    `form:"date_after" json:"date_after"`
+		Draw                     int       `form:"draw" json:"draw"`
+	}
+
+	CostReport struct {
+		Adnet       string  `json:"adnet"`
+		Country     string  `json:"country"`
+		Operator    string  `json:"operator"`
+		Conversion1 float64 `json:"conversion1"`
+		Cost1       float64 `json:"cost1"`
+		Conversion2 float64 `json:"conversion2"`
+		Cost2       float64 `json:"cost2"`
+	}
+
+	DisplayCostReport struct {
+		Adnet       string   `json:"adnet"`
+		Country     string   `json:"country"`
+		Operator    string   `json:"operator"`
+		Conversion1 *float64 `json:"conversion1"`
+		Conversion2 *float64 `json:"conversion2"`
+		Cost1       *float64 `json:"revenue1"`
+		Cost2       *float64 `json:"revenue2"`
+		Action      string   `json:"action"`
+		DateRange   string   `json:"date_range"`
+		DateBefore  string   `json:"date_before"`
+		DateAfter   string   `json:"date_after"`
+		Page        int      `json:"page"`
+		Draw        int      `json:"draw"`
+		DataBasedOn string   `json:"data_based_on"`
+	}
 )
 
 func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {

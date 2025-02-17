@@ -49,15 +49,24 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	//rpt.Get("/report/", h.Report).Name("Report API")
 	rpt.Get("/pinreport", h.DisplayPinReport).Name("Pin Report Summary FE")
 	rpt.Get("/datasentapiperformance", h.DisplayPinPerformanceReport).Name("Pin Performance Api Report Summary FE")
+	rpt.Get("/cpareportlist", h.DisplayCPAReport).Name("Receive Pin CPA Report Transactional")
+	rpt.Get("/costreport/:v", h.DisplayCostReport).Name("Receive Pin Cost Report / detail Transactional")
 	rpt.Get("/conversionlog", h.DisplayConversionLogReport).Name("Conversion Log Report")
 	rpt.Get("/campaign-monitoring-summary", h.DisplayCampaignSummary).Name("Campaign Summary")
+
 
 	// API Internal
 	internal := v1.Group("/int") // Internal API
 	internal.Put("/setdata/:v/", h.SetData).Name("SetTargetDailyBudget")
 	internal.Put("/updatedata/:v/", h.UpdateAgencyFeeAndCostConversion).Name("UpdateAgencyFeeAndCostConversion")
+	internal.Put("/updateratio/:v/", h.UpdateRatio).Name("Update Ratio Transactional")
+	internal.Put("/updatepostback/:v/", h.UpdatePostback).Name("Update Postback Transactional")
+	internal.Put("/updateagencycost/:v", h.UpdateAgencyCost).Name("Update Agency fee and cost per conversion in db")
 	internal.Get("/pinreport/", h.TrxPinReport).Name("Receive Pin Report Transactional")
 	internal.Get("/datasentapiperformance/", h.TrxPerformancePinReport).Name("Receive Pin API Performance Report Transactional")
+	internal.Get("/exportcpa/", h.ExportCpaButton).Name("Export CPA-Report Button")
+	internal.Get("/exportcost/", h.ExportCostButton).Name("Export Cost-Report Button")
+	internal.Get("/exportcostdetail/", h.ExportCostDetailButton).Name("Export Cost-Report-Detail Button")
 
 	// API External
 	v1.Group("/ext") // External API

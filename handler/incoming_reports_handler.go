@@ -383,8 +383,8 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
 				Data:            displaycpareport,
-				RecordsTotal:    int64(len(cpareport)),
-				RecordsFiltered: int64(len(cpareport)),
+				RecordsTotal:    len(cpareport),
+				RecordsFiltered: len(cpareport),
 			},
 		}
 

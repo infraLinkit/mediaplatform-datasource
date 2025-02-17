@@ -316,7 +316,6 @@ func (h *BaseModel) RGetApiPinPerformanceReport(key string, path string) ([]enti
 	return p, isEmpty
 }
 
-
 func (h *BaseModel) RGetDisplayCPAReport(key string, path string) ([]entity.SummaryCampaign, bool) {
 
 	var (
@@ -335,6 +334,15 @@ func (h *BaseModel) RGetDisplayCPAReport(key string, path string) ([]entity.Summ
 		if len(displaycpareport) > 0 {
 			isEmpty = false
 			p = displaycpareport[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isEmpty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
+
+	return p, isEmpty
+}
 
 func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.PixelStorage, bool) {
 

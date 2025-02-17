@@ -159,3 +159,238 @@ func (h *IncomingHandler) TrxPerformancePinReport(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
+
+func (h *IncomingHandler) UpdateRatio(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+	v := c.Params("v")
+
+	if v == "update_ratio" {
+		ratioSend := m["ratio_send"]
+		ratioReceived := m["ratio_received"]
+		ID := m["id"]
+
+		h.Logs.Debug(fmt.Sprintf("Received ratio_send: %s, ratio_received: %s", ratioSend, ratioReceived))
+
+		if ratioSend == "" || ratioReceived == "" {
+			h.Logs.Error("Missing required fields")
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "Missing Required Fields",
+			})
+		}
+
+		ratioSendInt, err := strconv.Atoi(ratioSend)
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to parse ratio_send: %v", err))
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "Invalid ratio_send value",
+			})
+		}
+
+		ratioReceivedInt, err := strconv.Atoi(ratioReceived)
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to parse ratio_received: %v", err))
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "Invalid ratio_received value",
+			})
+		}
+
+		id, err := strconv.Atoi(ID)
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to parse id: %v", err))
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "Invalid id value",
+			})
+		}
+
+		_, errFind := h.DS.FindSummaryCampaign(id)
+
+		if errFind != nil {
+			h.Logs.Error(fmt.Sprintf("Data Not Found: %v", errFind))
+			return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusNotFound,
+				Message: "Data Not Found",
+			})
+		}
+
+		err = h.DS.UpdateRatioModel(entity.SummaryCampaign{
+			RatioSend:    ratioSendInt,
+			RatioReceive: ratioReceivedInt,
+		}, id)
+		h.Logs.Info("Successfully updated ratio in the database.")
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to update ratio: %v", err))
+			return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to update ratio",
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusOK,
+			Message: "Ratio updated successfully",
+		})
+	}
+
+	return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+		Code:    fiber.StatusBadRequest,
+		Message: "Invalid request parameter",
+	})
+}
+
+func (h *IncomingHandler) UpdatePostback(c *fiber.Ctx) error {
+	c.Set("content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+	v := c.Params("v")
+
+	if v == "update_postback" {
+		Postback := m["postback"]
+		ID := m["id"]
+
+		h.Logs.Debug(fmt.Sprintf("Received postback: %s", Postback))
+
+		if Postback == "" {
+			h.Logs.Error("Postback is empty")
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "Postback is empty",
+			})
+		}
+
+		postbackInt, err := strconv.Atoi(Postback)
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to parse postback: %v", err))
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "Invalid postback value",
+			})
+		}
+
+		id, err := strconv.Atoi(ID)
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to parse id: %v", err))
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "Invalid id value",
+			})
+		}
+
+		_, errFind := h.DS.FindSummaryCampaign(id)
+
+		if errFind != nil {
+			h.Logs.Error(fmt.Sprintf("Data Not Found: %v", errFind))
+			return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusNotFound,
+				Message: "Data Not Found",
+			})
+		}
+
+		err = h.DS.UpdatePostbackModel(entity.SummaryCampaign{
+			Postback: postbackInt,
+		}, id)
+		h.Logs.Info("Successfully updated postback in the database.")
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to update postback: %v", err))
+			return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to update postback",
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusOK,
+			Message: "Postback updated successfully",
+		})
+	}
+
+	return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+		Code:    fiber.StatusBadRequest,
+		Message: "Invalid request parameter",
+	})
+}
+
+func (h *IncomingHandler) UpdateAgencyCost(c *fiber.Ctx) error {
+	c.Set("content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("otf-8", "iso-8859-1")
+
+	m := c.Queries()
+	v := c.Params("v")
+
+	if v == "update_agency_cost" {
+		AgencyFee := m["agency_fee"]
+		CostPerConversion := m["cost_per_conversion"]
+
+		h.Logs.Debug(fmt.Sprintf("Received agency_fee: %s, cost_per_conversion: %s", AgencyFee, CostPerConversion))
+
+		if AgencyFee == "" && CostPerConversion == "" {
+			h.Logs.Error("Missing required fields")
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "Missing required fields",
+			})
+		}
+
+		var agencyFee float64
+		var err error
+		if AgencyFee != "" {
+			agencyFee, err = strconv.ParseFloat(AgencyFee, 64)
+			if err != nil {
+				h.Logs.Error(fmt.Sprintf("Failed to parse float: %v", err))
+				return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+					Code:    fiber.StatusBadRequest,
+					Message: "Invalid agency_fee value",
+				})
+			}
+		}
+
+		var costPerConversion float64
+		if CostPerConversion != "" {
+			costPerConversion, err = strconv.ParseFloat(CostPerConversion, 64)
+			if err != nil {
+				h.Logs.Error(fmt.Sprintf("Failed to parse float : %v", err))
+				return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+					Code:    fiber.StatusBadRequest,
+					Message: "Invalid cost_per_conversion value",
+				})
+			}
+		}
+
+		err = h.DS.UpdateAgencyCostModel(entity.SummaryCampaign{
+			AgencyFee:         agencyFee,
+			CostPerConversion: costPerConversion,
+		})
+
+		h.Logs.Info("Successfully updated agency cost and/or cost per conversion in database.")
+
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to update: %v", err))
+			return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusInternalServerError,
+				Message: "Failed to update",
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusOK,
+			Message: "Successfully updated agency_fee & cost_per_conversion",
+		})
+
+	}
+
+	return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+		Code:    fiber.StatusBadRequest,
+		Message: "Invalid request parameter",
+	})
+
+}

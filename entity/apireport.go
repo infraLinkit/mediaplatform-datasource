@@ -84,6 +84,34 @@ type (
 		DateRange                string    `form:"date_range" json:"date_range"`
 		DateBefore               string    `form:"date_before" json:"date_before"`
 		DateAfter                string    `form:"date_after" json:"date_after"`
+		Draw                     int       `form:"draw" json:"draw"`
+	}
+
+	CostReport struct {
+		Adnet       string  `json:"adnet"`
+		Country     string  `json:"country"`
+		Operator    string  `json:"operator"`
+		Conversion1 float64 `json:"conversion1"`
+		Cost1       float64 `json:"cost1"`
+		Conversion2 float64 `json:"conversion2"`
+		Cost2       float64 `json:"cost2"`
+	}
+
+	DisplayCostReport struct {
+		Adnet       string   `json:"adnet"`
+		Country     string   `json:"country"`
+		Operator    string   `json:"operator"`
+		Conversion1 *float64 `json:"conversion1"`
+		Conversion2 *float64 `json:"conversion2"`
+		Cost1       *float64 `json:"revenue1"`
+		Cost2       *float64 `json:"revenue2"`
+		Action      string   `json:"action"`
+		DateRange   string   `json:"date_range"`
+		DateBefore  string   `json:"date_before"`
+		DateAfter   string   `json:"date_after"`
+		Page        int      `json:"page"`
+		Draw        int      `json:"draw"`
+		DataBasedOn string   `json:"data_based_on"`
 	}
 )
 

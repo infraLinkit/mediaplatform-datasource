@@ -27,4 +27,21 @@ type (
 		HttpStatus int
 		Rsp        interface{}
 	}
+
+	GlobalResponseWithDataTable struct {
+		Code    int         `json:"code" xml:"code"`
+		Message string      `json:"message" xml:"message"`
+		Data    interface{} `json:"data" xml:"data"`
+		Page    int         `json:"page" xml:"page"`
+		Total   int         `json:"total" xml:"total"`
+	}
+
+	GlobalResponseWithTable struct {
+		Code            int         `json:"code" xml:"code"`
+		Message         string      `json:"message" xml:"message"`
+		Data            interface{} `json:"data" xml:"data"`
+		Draw            int         `json:"draw" xml:"draw"`
+		RecordsTotal    int         `json:"recordsTotal" xml:"recordsTotal"`
+		RecordsFiltered int         `json:"recordsFiltered" xml:"recordsFiltered"`
+	}
 )

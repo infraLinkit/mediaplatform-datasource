@@ -45,6 +45,8 @@ func (r *BaseModel) UpdatePixelById(o entity.PixelStorage) error {
 	return result.Error
 }
 
+
+
 /* package model
 
 import (

@@ -113,6 +113,12 @@ func (h *IncomingHandler) DisplayPinPerformanceReport(c *fiber.Ctx) error {
 	m := c.Queries()
 
 	page, _ := strconv.Atoi(m["page"])
+	pageSize, err := strconv.Atoi(m["page_size"])
+	if err != nil {
+		pageSize = 10
+	}
+
+	draw, _ := strconv.Atoi(m["draw"])
 	fe := entity.DisplayPinPerformanceReport{
 		Adnet:      m["adnet"],
 		Country:    m["country"],
@@ -123,6 +129,8 @@ func (h *IncomingHandler) DisplayPinPerformanceReport(c *fiber.Ctx) error {
 		DateAfter:  m["date_after"],
 		Page:       page,
 		Action:     m["action"],
+		Draw:       draw,
+		PageSize:   pageSize,
 	}
 
 	r := h.DisplayPinPerformanceReportExtra(c, fe)
@@ -134,19 +142,18 @@ func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe enti
 	key := "temp_key_api_pin_performance_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err                         error
-		x                           int
-		isempty                     bool
-		pinperformancereport        []entity.ApiPinPerformance
-		displaypinperformancereport []entity.ApiPinPerformance
+		err                  error
+		total_data           int64
+		isempty              bool
+		pinperformancereport []entity.ApiPinPerformance
 	)
 
 	if fe.Action != "" {
-		pinperformancereport, err = h.DS.GetApiPinPerformanceReport(fe)
+		pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
 	} else {
 		if pinperformancereport, isempty = h.DS.RGetApiPinPerformanceReport(key, "$"); isempty {
 
-			pinperformancereport, err = h.DS.GetApiPinPerformanceReport(fe)
+			pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
 
 			s, _ := json.Marshal(pinperformancereport)
 
@@ -157,33 +164,100 @@ func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe enti
 
 	if err == nil {
 
-		pagesize := PAGESIZE
-		if fe.Page >= 2 {
-			x = PAGESIZE * (fe.Page - 1)
-		} else if fe.Page == 1 {
-			x = 0
-			pagesize = pagesize - 1
-		} else {
-			x = 0
-			pagesize = pagesize - 1
+		return entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            pinperformancereport,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
 		}
 
-		for i := x; i < len(pinperformancereport); i++ {
+	} else {
 
-			//h.Logs.Debug(fmt.Sprintf("incr : %d, ID : %d", i, pinreport[i].ID))
-
-			displaypinperformancereport = append(displaypinperformancereport, pinperformancereport[i])
-			if i == pagesize {
-				break
-			}
+		return entity.ReturnResponse{
+			HttpStatus: fiber.StatusNotFound,
+			Rsp: entity.GlobalResponse{
+				Code:    fiber.StatusNotFound,
+				Message: "empty",
+			},
 		}
+	}
+}
+
+func (h *IncomingHandler) DisplayConversionLogReport(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, err := strconv.Atoi(m["page_size"])
+	if err != nil {
+		pageSize = 10
+	}
+
+	draw, _ := strconv.Atoi(m["draw"])
+	fe := entity.DisplayConversionLogReport{
+		Adnet:      m["adnet"],
+		Country:    m["country"],
+		Operator:   m["operator"],
+		Pixel:      m["pixel"],
+		CampaignId: m["campaign_id"],
+		DateRange:  m["date_range"],
+		DateBefore: m["date_before"],
+		DateAfter:  m["date_after"],
+		Page:       page,
+		Action:     m["action"],
+		Draw:       draw,
+		PageSize:   pageSize,
+	}
+
+	r := h.DisplayConversionLogReportExtra(c, fe)
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
+func (h *IncomingHandler) DisplayConversionLogReportExtra(c *fiber.Ctx, fe entity.DisplayConversionLogReport) entity.ReturnResponse {
+
+	key := "temp_key_api_conversion_log_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	var (
+		err                   error
+		total_data            int64
+		isempty               bool
+		conversion_log_report []entity.PixelStorage
+	)
+
+	if fe.Action != "" {
+		conversion_log_report, total_data, err = h.DS.GetConversionLogReport(fe)
+	} else {
+		if conversion_log_report, isempty = h.DS.RGetConversionLogReport(key, "$"); isempty {
+
+			conversion_log_report, total_data, err = h.DS.GetConversionLogReport(fe)
+
+			s, _ := json.Marshal(conversion_log_report)
+
+			h.DS.SetData(key, "$", string(s))
+			h.DS.SetExpireData(key, 60)
+		}
+	}
+
+	if err == nil {
 
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
-			Rsp: entity.GlobalResponseWithData{
-				Code:    fiber.StatusOK,
-				Message: config.OK_DESC,
-				Data:    displaypinperformancereport,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            conversion_log_report,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
 			},
 		}
 

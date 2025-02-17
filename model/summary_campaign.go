@@ -1,7 +1,10 @@
 package model
 
 import (
+	"database/sql"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"gorm.io/gorm/clause"
@@ -143,6 +146,160 @@ func (r *BaseModel) UpdateReportSummaryCampaignMonitoringBudget(o entity.Summary
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
 	return result.Error
+}
+
+func (r *BaseModel) GetSummaryCampaignMonitoring(filter entity.DisplayCampaignSummary) ([]entity.CampaignSummaryMonitoring, time.Time, time.Time, error) {
+	var (
+		rows *sql.Rows
+	)
+	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
+
+	// Apply Indicator Selection
+	selectedFields := []string{"summary_date", "country", "partner", "operator", "service", "adnet"}
+	formattedIndicators := formatQueryIndicators(filter.DataIndicators, filter.DataType)
+	selectedFields = append(selectedFields, formattedIndicators...)
+
+	query.Select(selectedFields)
+
+	// Set default values
+	if filter.DateRange == "" {
+		filter.DateRange = "this_month"
+		query.Where("EXTRACT(MONTH FROM summary_date) = ?", int(time.Now().Month())).
+			Where("EXTRACT(YEAR FROM summary_date) = ?", time.Now().Year())
+	}
+	if filter.DataType == "" {
+		filter.DataType = "daily_report"
+	}
+
+	// Apply filters
+	if filter.Country != "" {
+		query.Where("country = ?", filter.Country)
+	}
+	if filter.Operator != "" {
+		query.Where("operator = ?", filter.Operator)
+	}
+	if filter.Adnet != "" {
+		query.Where("adnet = ?", filter.Adnet)
+	}
+	if filter.PartnerName != "" {
+		query.Where("partner = ?", filter.PartnerName)
+	}
+	if filter.Service != "" {
+		query.Where("service = ?", filter.Service)
+	}
+
+	// Handle Date Range
+	var startDate, endDate time.Time
+	now := time.Now()
+
+	switch strings.ToLower(filter.DateRange) {
+	case "today":
+		startDate, endDate = now, now
+	case "yesterday":
+		startDate, endDate = now.AddDate(0, 0, -1), now.AddDate(0, 0, -1)
+	case "last_7_days":
+		startDate, endDate = now.AddDate(0, 0, -6), now
+	case "last_30_days":
+		startDate, endDate = now.AddDate(0, 0, -30), now
+	case "this_month":
+		startDate = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+		endDate = time.Date(now.Year(), now.Month()+1, 0, 23, 59, 59, 999999999, now.Location())
+	case "last_month":
+		startDate = time.Date(now.Year(), now.Month()-1, 1, 0, 0, 0, 0, now.Location())
+		endDate = time.Date(now.Year(), now.Month(), 0, 23, 59, 59, 999999999, now.Location())
+	case "custom_range":
+		if filter.CustomRange != "" {
+			dates := strings.Split(filter.CustomRange, " - ")
+			if len(dates) == 2 {
+				startDate, _ = time.Parse("01/02/2006", strings.TrimSpace(dates[0]))
+				endDate, _ = time.Parse("01/02/2006", strings.TrimSpace(dates[1]))
+			}
+		}
+	}
+
+	// Ensure end date is not in the future
+	if endDate.After(now) {
+		endDate = now
+	}
+
+	// Apply date range filter
+	query.Where("summary_date BETWEEN ? AND ?", startDate, endDate)
+
+	// Grouping for monthly reports
+	if filter.DataType == "monthly_report" {
+		query.Group("EXTRACT(YEAR FROM summary_date), EXTRACT(MONTH FROM summary_date), country, partner, operator, service, adnet")
+	}
+
+	rows, _ = query.Unscoped().Rows()
+
+	defer rows.Close()
+
+	var (
+		ss []entity.CampaignSummaryMonitoring
+	)
+
+	for rows.Next() {
+
+		var s entity.CampaignSummaryMonitoring
+
+		// ScanRows scans a row into a struct
+		r.DB.ScanRows(rows, &s)
+
+		ss = append(ss, s)
+	}
+	return ss, startDate, endDate, rows.Err()
+
+}
+
+// helper
+func formatQueryIndicators(selects []string, dataType string) []string {
+	var formattedSelects []string
+
+	for _, value := range selects {
+		var formattedValue string
+
+		if dataType == "monthly_report" {
+			switch value {
+			case "waki_revenue":
+				formattedValue = "SUM(saaf - sbaf) AS waki_revenue"
+			case "budget_usage":
+				formattedValue = "SUM(CASE WHEN target_daily_budget = 0 THEN 0 ELSE (sbaf / target_daily_budget * 100) END) AS budget_usage"
+			case "spending_to_adnets", "total_spending":
+				formattedValue = fmt.Sprintf("SUM(%s) AS %s", value, value)
+			case "fp":
+				formattedValue = "SUM(first_push) AS fp"
+			case "mo_sent":
+				formattedValue = "SUM(postback) AS mo_sent"
+			case "traffic":
+				formattedValue = "SUM(landing) AS traffic"
+			default:
+				formattedValue = fmt.Sprintf("SUM(%s) AS %s", value, value)
+			}
+		} else { // Daily Report
+			switch value {
+			case "waki_revenue":
+				formattedValue = "saaf - sbaf AS waki_revenue"
+			case "budget_usage":
+				formattedValue = "CASE WHEN target_daily_budget = 0 THEN NULL ELSE (sbaf / target_daily_budget * 100) END AS budget_usage, sbaf AS sbaf_t, target_daily_budget AS target_daily_budget_t"
+			case "fp":
+				formattedValue = "first_push AS fp"
+			case "mo_sent":
+				formattedValue = "postback AS mo_sent"
+			case "spending_to_adnets":
+				formattedValue = "sbaf AS spending_to_adnets"
+			case "total_spending":
+				formattedValue = "saaf AS total_spending"
+			case "traffic":
+				formattedValue = "landing AS traffic"
+			default:
+				formattedValue = fmt.Sprintf("%s AS %s", value, value)
+			}
+		}
+
+		formattedSelects = append(formattedSelects, formattedValue)
+	}
+
+	return formattedSelects
 }
 
 /* package model

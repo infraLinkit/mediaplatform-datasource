@@ -51,6 +51,9 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/datasentapiperformance", h.DisplayPinPerformanceReport).Name("Pin Performance Api Report Summary FE")
 	rpt.Get("/cpareportlist", h.DisplayCPAReport).Name("Receive Pin CPA Report Transactional")
 	rpt.Get("/costreport/:v", h.DisplayCostReport).Name("Receive Pin Cost Report / detail Transactional")
+	rpt.Get("/conversionlog", h.DisplayConversionLogReport).Name("Conversion Log Report")
+	rpt.Get("/campaign-monitoring-summary", h.DisplayCampaignSummary).Name("Campaign Summary")
+
 
 	// API Internal
 	internal := v1.Group("/int") // Internal API

@@ -12,6 +12,15 @@ type (
 		Data    interface{} `json:"data" xml:"data"`
 	}
 
+	GlobalResponseWithDataTable struct {
+		Draw            int         `json:"draw" xml:"draw"`
+		Code            int         `json:"code" xml:"code"`
+		Message         string      `json:"message" xml:"message"`
+		Data            interface{} `json:"data" xml:"data"`
+		RecordsTotal    int         `json:"recordsTotal" xml:"recordsTotal"`
+		RecordsFiltered int         `json:"recordsFiltered" xml:"recordsFiltered"`
+	}
+
 	PixelStorageRsp struct {
 		Adnet         string `json:"adnet"`
 		IsBillable    bool   `json:"is_billable"`

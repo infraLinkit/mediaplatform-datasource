@@ -354,7 +354,7 @@ func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.P
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
+	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
 		var conversionLogReport [][]entity.PixelStorage
@@ -398,6 +398,7 @@ func (h *BaseModel) RGetDisplayCostReport(key string, path string) ([]entity.Cos
 	}
 	return p, isEmpty
 }
+
 func (h *BaseModel) RGetDisplayCostReportDetail(key string, path string) ([]entity.CostReport, bool) {
 	var (
 		isEmpty bool
@@ -414,6 +415,64 @@ func (h *BaseModel) RGetDisplayCostReportDetail(key string, path string) ([]enti
 		if len(displaycostreport) > 0 {
 			isEmpty = false
 			p = displaycostreport[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isEmpty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
+
+	return p, isEmpty
+}
+
+func (h *BaseModel) RGetCampaignManagement(key string, path string) ([]entity.CampaignManagementData, bool) {
+
+	var (
+		isEmpty bool
+		p       []entity.CampaignManagementData
+	)
+
+	// Get Config Data Landing
+	ctx := context.Background()
+
+	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+
+	for _, v := range data {
+		var campaignmanagement [][]entity.CampaignManagementData
+		v.DecodeJSON(&campaignmanagement)
+
+		if len(campaignmanagement) > 0 {
+			isEmpty = false
+			p = campaignmanagement[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isEmpty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
+
+	return p, isEmpty
+}
+
+func (h *BaseModel) RGetMenu(key string, path string) ([]entity.Menu, bool) {
+
+	var (
+		isEmpty bool
+		p       []entity.Menu
+	)
+
+	// Get Config Data Landing
+	ctx := context.Background()
+
+	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+
+	for _, v := range data {
+		var menu [][]entity.Menu
+		v.DecodeJSON(&menu)
+
+		if len(menu) > 0 {
+			isEmpty = false
+			p = menu[0]
 			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
 		} else {
 			isEmpty = true

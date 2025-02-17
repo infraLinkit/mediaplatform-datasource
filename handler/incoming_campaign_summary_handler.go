@@ -109,16 +109,16 @@ func formatData(cmsData []entity.CampaignSummaryMonitoring, reportType string, d
 	return formattedData
 }
 
-func sortData(data []map[string]interface{}, basedOn, indicator string) {
-	sort.Slice(data, func(i, j int) bool {
-		totalI := data[i]["summary"].(ReportSummary).Total[indicator]
-		totalJ := data[j]["summary"].(ReportSummary).Total[indicator]
-		if basedOn == "highest" {
-			return totalI > totalJ
-		}
-		return totalI < totalJ
-	})
-}
+// func sortData(data []map[string]interface{}, basedOn, indicator string) {
+// 	sort.Slice(data, func(i, j int) bool {
+// 		totalI := data[i]["summary"].(ReportSummary).Total[indicator]
+// 		totalJ := data[j]["summary"].(ReportSummary).Total[indicator]
+// 		if basedOn == "highest" {
+// 			return totalI > totalJ
+// 		}
+// 		return totalI < totalJ
+// 	})
+// }
 
 func generateOperator(cmsData []entity.CampaignSummaryMonitoring, filters map[string]string, dataIndicators []string, startDate, endDate time.Time) []interface{} {
 	filteredData := applyFilters(cmsData, filters)
@@ -310,7 +310,7 @@ func generateSummary(cmsData []entity.CampaignSummaryMonitoring, filters map[str
 	collectedData := map[string]interface{}{
 		"data_indicators": dataIndicators,
 		"total":           totals,
-		"avg":             countAverage(totals, len(days), startDate, endDate),
+		"avg":             countAverage(totals, startDate, endDate),
 		"t_mo_end":        tmoEnd,
 	}
 	mergedData := mergeDays(collectedData, days)

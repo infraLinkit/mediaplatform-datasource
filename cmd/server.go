@@ -19,7 +19,7 @@ var serverCmd = &cobra.Command{
 		c := cfg.Initiate("api")
 
 		// Migrate table
-		c.DB.AutoMigrate(&entity.Campaign{}, &entity.CampaignDetail{}, &entity.MO{}, &entity.PixelStorage{}, &entity.Postback{}, &entity.SummaryCampaign{}, &entity.DataClicked{}, &entity.DataLanding{}, &entity.DataRedirect{}, &entity.DataTraffic{}, &entity.ApiPinReport{}, &entity.ApiPinPerformance{})
+		c.DB.AutoMigrate(&entity.Campaign{}, &entity.CampaignDetail{}, &entity.MO{}, &entity.PixelStorage{}, &entity.Postback{}, &entity.SummaryCampaign{}, &entity.DataClicked{}, &entity.DataLanding{}, &entity.DataRedirect{}, &entity.DataTraffic{}, &entity.ApiPinReport{}, &entity.ApiPinPerformance{}, &entity.Menu{})
 
 		c.Rmqp.SetUpChannel("direct", true, cfg.RabbitMQPixelStorageExchangeName, true, cfg.RabbitMQPixelStorageQueueName)
 		c.Rmqp.SetUpChannel("direct", true, cfg.RabbitMQRatioExchangeName, true, cfg.RabbitMQRatioQueueName)

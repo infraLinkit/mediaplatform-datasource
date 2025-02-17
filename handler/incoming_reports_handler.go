@@ -84,11 +84,12 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithDataTable{
-				Code:    fiber.StatusOK,
-				Message: config.OK_DESC,
-				Data:    displaypinreport,
-				Page:    fe.Page,
-				Total:   len(pinreport),
+				Draw:            fe.Page,
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            displaypinreport,
+				RecordsTotal:    len(pinreport),
+				RecordsFiltered: len(pinreport),
 			},
 		}
 
@@ -372,17 +373,18 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 
 		for i := x; i < len(cpareport) && i < x+pagesize; i++ {
 
-			// h.Logs.Debug(fmt.Sprintf("incr : %d, ID : %d", i, cpareport[i].ID))
-
 			displaycpareport = append(displaycpareport, cpareport[i])
 		}
 
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
-			Rsp: entity.GlobalResponseWithData{
-				Code:    fiber.StatusOK,
-				Message: config.OK_DESC,
-				Data:    displaycpareport,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Draw:            fe.Draw,
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            displaycpareport,
+				RecordsTotal:    int64(len(cpareport)),
+				RecordsFiltered: int64(len(cpareport)),
 			},
 		}
 
@@ -408,52 +410,52 @@ func (h *IncomingHandler) ExportCpaButton(c *fiber.Ctx) error {
 
 	page, _ := strconv.Atoi(m["page"])
 	fe := entity.DisplayCPAReport{
-		SummaryDate:              time.Time{},
-		URLServiceKey:            m["urlservicekey"],
-		CampaignId:               m["campaign_id"],
-		CampaignName:             m["campaign_name"],
-		Country:                  m["country"],
-		Operator:                 m["operator"],
-		Partner:                  m["partner"],
-		Aggregator:               m["aggregator"],
-		Adnet:                    m["adnet"],
-		Service:                  m["service"],
-		ShortCode:                m["short_code"],
-		Traffic:                  0,
-		Landing:                  0,
-		MoReceived:               0,
-		CR:                       0,
-		Postback:                 0,
-		TotalFP:                  0,
-		SuccessFP:                0,
-		Billrate:                 0,
-		ROI:                      0,
-		PO:                       0,
-		Cost:                     0,
-		SBAF:                     0,
-		SAAF:                     0,
-		CPA:                      0,
-		Revenue:                  0,
-		URLAfter:                 "NA",
-		URLBefore:                "NA",
-		MOLimit:                  0,
-		RatioSend:                1,
-		RatioReceive:             4,
-		Company:                  "NA",
-		ClientType:               "NA",
-		CostPerConversion:        0,
-		AgencyFee:                0,
-		TargetDailyBudget:        0,
-		CrMO:                     0,
-		CrPostback:               0,
-		TotalWakiAgencyFee:       0,
-		BudgetUsage:              0,
-		TargetDailyBudgetChanges: 0,
-		Page:                     page,
-		Action:                   m["action"],
-		DateRange:                m["date_range"],
-		DateBefore:               m["date_before"],
-		DateAfter:                m["date_after"],
+		SummaryDate:   time.Time{},
+		URLServiceKey: m["urlservicekey"],
+		CampaignId:    m["campaign_id"],
+		CampaignName:  m["campaign_name"],
+		Country:       m["country"],
+		Operator:      m["operator"],
+		Partner:       m["partner"],
+		Aggregator:    m["aggregator"],
+		Adnet:         m["adnet"],
+		Service:       m["service"],
+		ShortCode:     m["short_code"],
+		// Traffic:                  0,
+		// Landing:                  0,
+		// MoReceived:               0,
+		// CR:                       0,
+		// Postback:                 0,
+		// TotalFP:                  0,
+		// SuccessFP:                0,
+		// Billrate:                 0,
+		// ROI:                      0,
+		// PO:                       0,
+		// Cost:                     0,
+		// SBAF:                     0,
+		// SAAF:                     0,
+		// CPA:                      0,
+		// Revenue:                  0,
+		// URLAfter:                 "NA",
+		// URLBefore:                "NA",
+		// MOLimit:                  0,
+		// RatioSend:                1,
+		// RatioReceive:             4,
+		// Company:                  "NA",
+		// ClientType:               "NA",
+		// CostPerConversion:        0,
+		// AgencyFee:                0,
+		// TargetDailyBudget:        0,
+		// CrMO:                     0,
+		// CrPostback:               0,
+		// TotalWakiAgencyFee:       0,
+		// BudgetUsage:              0,
+		// TargetDailyBudgetChanges: 0,
+		Page:       page,
+		Action:     m["action"],
+		DateRange:  m["date_range"],
+		DateBefore: m["date_before"],
+		DateAfter:  m["date_after"],
 	}
 
 	export_cpa := m["export_cpa"]
@@ -595,11 +597,11 @@ func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.Display
 
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
-			Rsp: entity.GlobalResponseWithTable{
+			Rsp: entity.GlobalResponseWithDataTable{
+				Draw:            fe.Draw,
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
 				Data:            displaycostreport,
-				Draw:            fe.Draw,
 				RecordsTotal:    len(costreport),
 				RecordsFiltered: len(costreport),
 			},

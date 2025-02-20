@@ -477,7 +477,7 @@ type (
 
 	ApiPinReport struct {
 		gorm.Model
-		ID            int       `gorm:"primaryKey;autoIncrement" json:"ID"`
+		ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
 		DateSend      time.Time `gorm:"type:date" json:"date_send"`
 		Country       string    `gorm:"not null;size:50" json:"country"`
 		Company       string    `gorm:"not null;size:50" json:"company"`
@@ -498,7 +498,7 @@ type (
 
 	ApiPinPerformance struct {
 		gorm.Model
-		ID                  int       `gorm:"primaryKey;autoIncrement" json:"ID"`
+		ID                  int       `gorm:"primaryKey;autoIncrement" json:"id"`
 		DateSend            time.Time `gorm:"type:date" json:"date_send"`
 		Country             string    `gorm:"not null;size:50" json:"country"`
 		Company             string    `gorm:"not null;size:50" json:"company"`
@@ -529,16 +529,33 @@ type (
 	}
 
 	Menu struct {
-		ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+		ID            int      `gorm:"primaryKey;autoIncrement" json:"id"`
 		Name          string    `gorm:"type:varchar(255);not null" json:"name"`
 		Code          string    `gorm:"type:varchar(255);not null" json:"code"`
 		Url           string    `gorm:"type:varchar(255);not null" json:"url"`
 		Icon          string    `gorm:"type:varchar(255)" json:"icon"`
 		Parent        int       `gorm:"type:int" json:"parent"`
 		Sort          string    `gorm:"type:varchar(255)" json:"sort"`
-		ShowOnSidebar bool      `gorm:"type:bool;default:true" json:"show_on_sidebar"`
-		CreatedAt     time.Time `gorm:"type:timestamp" json:"created_at"`
-		UpdatedAt     time.Time `gorm:"type:timestamp" json:"updated_at"`
+		ShowOnSidebar bool      `gorm:"type:bool;default:false" json:"show_on_sidebar"`
 		Permission    string    `gorm:"type:varchar(255)" json:"permission"`
+		CreatedAt     time.Time 
+		UpdatedAt     time.Time 
+	}
+
+	Role struct {
+		ID            int      `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name          string    `gorm:"type:varchar(255);not null" json:"name"`
+		Code          string    `gorm:"type:varchar(255);not null" json:"code"`
+		CreatedAt     time.Time
+		UpdatedAt     time.Time
+	}
+
+	Permission struct {
+		ID            int      `gorm:"primaryKey;autoIncrement" json:"id"`
+		RoleID        int    	`gorm:"type:int" json:"role_id"`
+		MenuID        int    	`gorm:"type:int" json:"menu_id"`
+		Status 		  bool      `gorm:"type:bool;" json:"status"`
+		CreatedAt     time.Time
+		UpdatedAt     time.Time
 	}
 )

@@ -82,6 +82,12 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	menu.Get("/:id", h.GetMenuByID).Name("Menu Management Edit FE")
 	menu.Put("/:id", h.UpdateMenu).Name("Menu Management Update FE")
 	menu.Delete("/:id", h.DeleteMenu).Name("Menu Management Delete FE")
+	// role
+	role := management.Group("/role") // role
+	role.Post("/", h.CreateRole).Name("Role Management Create FE")
+	role.Get("/", h.GetRoleTable).Name("Role Management FE")
+	role.Put("/:id", h.UpdateRole).Name("Role Management Update FE")
+	role.Delete("/:id", h.DeleteRole).Name("Role Management Delete FE")
 
 	// API External
 	v1.Group("/ext") // External API

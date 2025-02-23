@@ -88,6 +88,17 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	role.Get("/", h.GetRoleTable).Name("Role Management FE")
 	role.Put("/:id", h.UpdateRole).Name("Role Management Update FE")
 	role.Delete("/:id", h.DeleteRole).Name("Role Management Delete FE")
+	// user
+	user := management.Group("/user") // uset
+	user.Post("/", h.CreateUser).Name("User Management Create FE")
+	user.Get("/", h.GetUserTable).Name("User Management FE")
+	user.Get("/usercounts", h.GetUserCounts).Name("User Management User Counts FE")
+	user.Put("/:id", h.UpdateUser).Name("User Management Update FE")
+	user.Put("/assignservice/:id", h.AssignService).Name("User Management Assign Service & Adnet FE")
+	user.Put("/updatestatus/:id", h.UpdateUserStatus).Name("User Management Update Status FE")
+	user.Delete("/:id", h.DeleteUser).Name("User Management Delete FE")
+	user.Get("/approvalrequest", h.GetUserApplovalRequestTable).Name("User Management Approval Request FE")
+	user.Put("/approveuser/:id", h.ApproveUser).Name("User Management Approve USer FE")
 
 	// API External
 	v1.Group("/ext") // External API

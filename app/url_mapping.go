@@ -17,8 +17,7 @@ type App3rdParty struct {
 	Config *config.Cfg
 	Logs   *logrus.Logger
 	DB     *gorm.DB
-	R0     *rueidis.Storage
-	R1     *rueidis.Storage
+	R      *rueidis.Storage
 	Rmqp   rmqp.AMQP
 }
 
@@ -32,8 +31,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	h := handler.NewIncomingHandler(handler.IncomingHandler{
 		Config: obj.Config,
 		Logs:   obj.Logs,
-		R0:     obj.R0,
-		R1:     obj.R1,
+		R:      obj.R,
 		DB:     obj.DB,
 		Rmqp:   obj.Rmqp,
 	})
@@ -53,7 +51,6 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/costreport/:v", h.DisplayCostReport).Name("Receive Pin Cost Report / detail Transactional")
 	rpt.Get("/conversionlog", h.DisplayConversionLogReport).Name("Conversion Log Report")
 	rpt.Get("/campaign-monitoring-summary", h.DisplayCampaignSummary).Name("Campaign Summary")
-
 
 	// API Internal
 	internal := v1.Group("/int") // Internal API

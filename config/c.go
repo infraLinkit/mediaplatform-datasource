@@ -37,6 +37,7 @@ type (
 		AppApiPort                             string
 		RedisHost                              string
 		RedisPort                              int
+		RedisDBIndex                           int
 		RedisPwd                               string
 		RedisKeyExpiration                     int64
 		PSQLHost                               string
@@ -71,8 +72,7 @@ type (
 	Setup struct {
 		Config *Cfg
 		Logs   *logrus.Logger
-		R0     *rueidis.Storage
-		R1     *rueidis.Storage
+		R      *rueidis.Storage
 		DB     *gorm.DB
 		Rmqp   rmqp.AMQP
 	}
@@ -87,6 +87,7 @@ func InitCfg() *Cfg {
 	loc, _ := time.LoadLocation(os.Getenv("TZ"))
 
 	rabbitmq_port, _ := strconv.Atoi(os.Getenv("RABBITMQPORT"))
+	redis_dbindex, _ := strconv.Atoi(os.Getenv("REDISDBINDEX"))
 	redis_port, _ := strconv.Atoi(os.Getenv("REDISPORT"))
 	redis_exp, _ := strconv.Atoi(os.Getenv("REDISKEYEXPIRE"))
 
@@ -97,6 +98,7 @@ func InitCfg() *Cfg {
 		AppApiPort:                             os.Getenv("APPAPIPORT"),
 		RedisHost:                              os.Getenv("REDISHOST"),
 		RedisPort:                              redis_port,
+		RedisDBIndex:                           redis_dbindex,
 		RedisPwd:                               os.Getenv("REDISPASSWORD"),
 		RedisKeyExpiration:                     int64(redis_exp),
 		PSQLHost:                               os.Getenv("DB_HOST"),
@@ -141,8 +143,7 @@ func (c *Cfg) Initiate(logname string) *Setup {
 	return &Setup{
 		Config: c,
 		Logs:   l,
-		R0:     c.InitRedisJSON(l, 0),
-		R1:     c.InitRedisJSON(l, 1),
+		R:      c.InitRedisJSON(l, c.RedisDBIndex),
 		DB:     c.InitGormPgx(l),
 		Rmqp:   c.InitMessageBroker(),
 	}

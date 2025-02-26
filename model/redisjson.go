@@ -482,3 +482,27 @@ func (h *BaseModel) RGetMenu(key string, path string) ([]entity.Menu, bool) {
 
 	return p, isEmpty
 }
+
+func (h *BaseModel) RGetAlertReportAll(key string, path string) ([]entity.SummaryAll, bool) {
+	var (
+		isEmpty bool
+		p       []entity.SummaryAll
+	)
+
+	ctx := context.Background()
+	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+
+	for _, v := range data {
+		var summaryMo [][]entity.SummaryAll
+		v.DecodeJSON(&summaryMo)
+		if len(summaryMo) > 0 {
+			isEmpty = false
+			p = summaryMo[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isEmpty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
+	return p, isEmpty
+}

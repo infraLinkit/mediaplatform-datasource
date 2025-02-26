@@ -29,8 +29,7 @@ var serverCmd = &cobra.Command{
 			Config: cfg,
 			Logs:   c.Logs,
 			DB:     c.DB,
-			R0:     c.R0,
-			R1:     c.R1,
+			R:      c.R,
 			Rmqp:   c.Rmqp,
 		})
 

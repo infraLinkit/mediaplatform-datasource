@@ -23,6 +23,11 @@ func (h *IncomingHandler) DisplayPinReport(c *fiber.Ctx) error {
 	m := c.Queries()
 
 	page, _ := strconv.Atoi(m["page"])
+	pageSize, err := strconv.Atoi(m["page_size"])
+	if err != nil {
+		pageSize = PAGESIZE
+	}
+	draw, _ := strconv.Atoi(m["draw"])
 	fe := entity.DisplayPinReport{
 		Adnet:      m["adnet"],
 		Country:    m["country"],
@@ -31,7 +36,9 @@ func (h *IncomingHandler) DisplayPinReport(c *fiber.Ctx) error {
 		DateRange:  m["date_range"],
 		DateBefore: m["date_before"],
 		DateAfter:  m["date_after"],
+		Draw:       draw,
 		Page:       page,
+		PageSize:   pageSize,
 		Action:     m["action"],
 	}
 
@@ -67,7 +74,10 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 
 	if err == nil {
 
-		pagesize := PAGESIZE
+		pagesize := fe.PageSize
+		if pagesize == 0 {
+			pagesize = PAGESIZE
+		}
 		if fe.Page >= 2 {
 			x = pagesize * (fe.Page - 1)
 		} else {
@@ -84,7 +94,7 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithDataTable{
-				Draw:            fe.Page,
+				Draw:            fe.Draw,
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
 				Data:            displaypinreport,
@@ -283,53 +293,30 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error { //dev-cpa
 	m := c.Queries()
 
 	page, _ := strconv.Atoi(m["page"])
+	pageSize, err := strconv.Atoi(m["page_size"])
+	if err != nil {
+		pageSize = PAGESIZE
+	}
+	draw, _ := strconv.Atoi(m["draw"])
 	fe := entity.DisplayCPAReport{
-		SummaryDate:   time.Time{},
-		URLServiceKey: m["urlservicekey"],
-		CampaignId:    m["campaign_id"],
-		CampaignName:  m["campaign_name"],
-		Country:       m["country"],
-		Operator:      m["operator"],
-		Partner:       m["partner"],
-		Aggregator:    m["aggregator"],
-		Adnet:         m["adnet"],
-		Service:       m["service"],
-		ShortCode:     m["short_code"],
-		// Traffic:                  0,
-		// Landing:                  0,
-		// MoReceived:               0,
-		// CR:                       0,
-		// Postback:                 0,
-		// TotalFP:                  0,
-		// SuccessFP:                0,
-		// Billrate:                 0,
-		// ROI:                      0,
-		// PO:                       0,
-		// Cost:                     0,
-		// SBAF:                     0,
-		// SAAF:                     0,
-		// CPA:                      0,
-		// Revenue:                  0,
-		// URLAfter:                 "NA",
-		// URLBefore:                "NA",
-		// MOLimit:                  0,
-		// RatioSend:                1,
-		// RatioReceive:             4,
-		// Company:                  "NA",
-		// ClientType:               "NA",
-		// CostPerConversion:        0,
-		// AgencyFee:                0,
-		// TargetDailyBudget:        0,
-		// CrMO:                     0,
-		// CrPostback:               0,
-		// TotalWakiAgencyFee:       0,
-		// BudgetUsage:              0,
-		// TargetDailyBudgetChanges: 0,
-		Page:       page,
-		Action:     m["action"],
-		DateRange:  m["date_range"],
-		DateBefore: m["date_before"],
-		DateAfter:  m["date_after"],
+		SummaryDate:  time.Time{},
+		CampaignId:   m["campaign_id"],
+		CampaignName: m["campaign_name"],
+		Country:      m["country"],
+		ClientType:   m["client_type"],
+		Company:      m["company"],
+		Operator:     m["operator"],
+		Partner:      m["partner"],
+		Aggregator:   m["aggregator"],
+		Adnet:        m["adnet"],
+		Service:      m["service"],
+		Draw:         draw,
+		Page:         page,
+		PageSize:     pageSize,
+		Action:       m["action"],
+		DateRange:    m["date_range"],
+		DateBefore:   m["date_before"],
+		DateAfter:    m["date_after"],
 	}
 
 	r := h.DisplayCPAReportExtra(c, fe)
@@ -364,7 +351,10 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 
 	if err == nil {
 
-		pagesize := PAGESIZE
+		pagesize := fe.PageSize
+		if pagesize == 0 {
+			pagesize = PAGESIZE
+		}
 		if fe.Page >= 2 {
 			x = pagesize * (fe.Page - 1)
 		} else {
@@ -374,6 +364,19 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 		for i := x; i < len(cpareport) && i < x+pagesize; i++ {
 
 			displaycpareport = append(displaycpareport, cpareport[i])
+		}
+		if displaycpareport == nil {
+			return entity.ReturnResponse{
+				HttpStatus: fiber.StatusOK,
+				Rsp: entity.GlobalResponseWithDataTable{
+					Draw:            fe.Draw,
+					Code:            fiber.StatusOK,
+					Message:         config.OK_DESC,
+					Data:            []entity.SummaryCampaign{},
+					RecordsTotal:    len(cpareport),
+					RecordsFiltered: len(cpareport),
+				},
+			}
 		}
 
 		return entity.ReturnResponse{
@@ -410,52 +413,20 @@ func (h *IncomingHandler) ExportCpaButton(c *fiber.Ctx) error {
 
 	page, _ := strconv.Atoi(m["page"])
 	fe := entity.DisplayCPAReport{
-		SummaryDate:   time.Time{},
-		URLServiceKey: m["urlservicekey"],
-		CampaignId:    m["campaign_id"],
-		CampaignName:  m["campaign_name"],
-		Country:       m["country"],
-		Operator:      m["operator"],
-		Partner:       m["partner"],
-		Aggregator:    m["aggregator"],
-		Adnet:         m["adnet"],
-		Service:       m["service"],
-		ShortCode:     m["short_code"],
-		// Traffic:                  0,
-		// Landing:                  0,
-		// MoReceived:               0,
-		// CR:                       0,
-		// Postback:                 0,
-		// TotalFP:                  0,
-		// SuccessFP:                0,
-		// Billrate:                 0,
-		// ROI:                      0,
-		// PO:                       0,
-		// Cost:                     0,
-		// SBAF:                     0,
-		// SAAF:                     0,
-		// CPA:                      0,
-		// Revenue:                  0,
-		// URLAfter:                 "NA",
-		// URLBefore:                "NA",
-		// MOLimit:                  0,
-		// RatioSend:                1,
-		// RatioReceive:             4,
-		// Company:                  "NA",
-		// ClientType:               "NA",
-		// CostPerConversion:        0,
-		// AgencyFee:                0,
-		// TargetDailyBudget:        0,
-		// CrMO:                     0,
-		// CrPostback:               0,
-		// TotalWakiAgencyFee:       0,
-		// BudgetUsage:              0,
-		// TargetDailyBudgetChanges: 0,
-		Page:       page,
-		Action:     m["action"],
-		DateRange:  m["date_range"],
-		DateBefore: m["date_before"],
-		DateAfter:  m["date_after"],
+		SummaryDate:  time.Time{},
+		CampaignId:   m["campaign_id"],
+		CampaignName: m["campaign_name"],
+		Country:      m["country"],
+		Operator:     m["operator"],
+		Partner:      m["partner"],
+		Aggregator:   m["aggregator"],
+		Adnet:        m["adnet"],
+		Service:      m["service"],
+		Page:         page,
+		Action:       m["action"],
+		DateRange:    m["date_range"],
+		DateBefore:   m["date_before"],
+		DateAfter:    m["date_after"],
 	}
 
 	export_cpa := m["export_cpa"]

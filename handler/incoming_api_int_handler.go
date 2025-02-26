@@ -77,7 +77,7 @@ func (h *IncomingHandler) UpdateAgencyFeeAndCostConversion(c *fiber.Ctx) error {
 
 		h.Logs.Debug(fmt.Sprintf("Received agency_fee: %s, cost_per_conversion: %s", agencyFee, costPerConversion))
 
-		if agencyFee == "" || costPerConversion == "" {
+		if agencyFee == "" && costPerConversion == "" {
 			h.Logs.Error("Missing required fields")
 			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
 				Code:    fiber.StatusBadRequest,

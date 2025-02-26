@@ -15,8 +15,7 @@ type (
 		Config *config.Cfg
 		Logs   *logrus.Logger
 		DB     *gorm.DB
-		R0     *rueidis.Storage
-		R1     *rueidis.Storage
+		R      *rueidis.Storage
 	}
 )
 
@@ -26,7 +25,6 @@ func NewBaseModel(obj BaseModel) *BaseModel {
 		Config: obj.Config,
 		Logs:   obj.Logs,
 		DB:     obj.DB,
-		R0:     obj.R0,
-		R1:     obj.R1,
+		R:      obj.R,
 	}
 }

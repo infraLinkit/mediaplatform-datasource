@@ -583,20 +583,11 @@ type (
 	}
 
 	Service struct {
-		ID             uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-		Country        string `gorm:"type:varchar(10)" json:"country"`
-		Name           string `gorm:"type:varchar(30)" json:"name"`
-		Operator       string `gorm:"type:varchar(50)" json:"operator"`
-		Client         string `gorm:"type:varchar(50)" json:"client"`
-		ClientType     string `gorm:"type:varchar(50)" json:"client_type"`
-		Company        string `gorm:"type:varchar(75)" json:"company"`
-		UrlPostback    string `gorm:"type:varchar(50)" json:"url_postback" form:"url_postback"`
-		Postback       string `gorm:"type:varchar(50)" json:"postback"`
-		IsActive       string `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
-		IsBillable     string `gorm:"type:bool;default:false" json:"is_billable" form:"is_billable"`
-		Lastupdate     string `gorm:"type:timestamp" json:"lastupdate"`
-		Aggregator     string `gorm:"type:varchar(255)" json:"aggregator"`
-		PostbackMethod string `gorm:"type:varchar(10)" json:"postback_method" form:"postback_method"`
+		ID       uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Service  string `gorm:"type:varchar(55)" json:"service"`
+		Adn      string `gorm:"type:varchar(20)" json:"adn"`
+		Country  string `gorm:"type:varchar(50)" json:"client"`
+		Operator string `gorm:"type:varchar(50)" json:"operator"`
 	}
 
 	AdnetList struct {

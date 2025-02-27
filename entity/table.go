@@ -653,6 +653,7 @@ type (
 		Company     string    `gorm:"type:varchar(75)" json:"company"`
 		UrlPostback string    `gorm:"type:text" json:"url_postback"`
 		Postback    string    `gorm:"type:varchar(50)" json:"postback"`
+		Aggregator  string    `gorm:"type:varchar(50)" json:"aggregator"`
 		IsActive    string    `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
 		IsBillable  string    `gorm:"type:bool;default:false" json:"is_billable" form:"is_billable"`
 		Lastupdate  time.Time `gorm:"type:timestamp" json:"lastupdate"`

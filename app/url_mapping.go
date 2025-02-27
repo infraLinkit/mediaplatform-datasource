@@ -82,6 +82,11 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	menu.Put("/:id", h.UpdateMenu).Name("Menu Management Update FE")
 	menu.Delete("/:id", h.DeleteMenu).Name("Menu Management Delete FE")
 
+	// User Log
+	userlog := management.Group("/userlog")
+	userlog.Get("/", h.DisplayUserLogList).Name(" Display User Log List")
+	userlog.Get("/:id", h.DisplayUserLogHistory).Name(" Display User Log History")
+
 	//  Country and Service Management
 	countryService := management.Group("/country-service")
 	countryService.Get("/country", h.DisplayCountry).Name("Create Country")

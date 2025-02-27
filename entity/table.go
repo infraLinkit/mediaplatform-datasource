@@ -477,7 +477,7 @@ type (
 
 	ApiPinReport struct {
 		gorm.Model
-		ID            int       `gorm:"primaryKey;autoIncrement" json:"ID"`
+		ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
 		DateSend      time.Time `gorm:"type:date" json:"date_send"`
 		Country       string    `gorm:"not null;size:50" json:"country"`
 		Company       string    `gorm:"not null;size:50" json:"company"`
@@ -498,7 +498,7 @@ type (
 
 	ApiPinPerformance struct {
 		gorm.Model
-		ID                  int       `gorm:"primaryKey;autoIncrement" json:"ID"`
+		ID                  int       `gorm:"primaryKey;autoIncrement" json:"id"`
 		DateSend            time.Time `gorm:"type:date" json:"date_send"`
 		Country             string    `gorm:"not null;size:50" json:"country"`
 		Company             string    `gorm:"not null;size:50" json:"company"`
@@ -529,17 +529,93 @@ type (
 	}
 
 	Menu struct {
-		ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-		Name          string    `gorm:"type:varchar(255);not null" json:"name"`
-		Code          string    `gorm:"type:varchar(255);not null" json:"code"`
-		Url           string    `gorm:"type:varchar(255);not null" json:"url"`
-		Icon          string    `gorm:"type:varchar(255)" json:"icon"`
-		Parent        int       `gorm:"type:int" json:"parent"`
-		Sort          string    `gorm:"type:varchar(255)" json:"sort"`
-		ShowOnSidebar bool      `gorm:"type:bool;default:true" json:"show_on_sidebar"`
-		CreatedAt     time.Time `gorm:"type:timestamp" json:"created_at"`
-		UpdatedAt     time.Time `gorm:"type:timestamp" json:"updated_at"`
-		Permission    string    `gorm:"type:varchar(255)" json:"permission"`
+		ID            int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name          string `gorm:"type:varchar(255);not null" json:"name"`
+		Code          string `gorm:"type:varchar(255);not null" json:"code"`
+		Url           string `gorm:"type:varchar(255);not null" json:"url"`
+		Icon          string `gorm:"type:varchar(255)" json:"icon"`
+		Parent        int    `gorm:"type:int" json:"parent"`
+		Sort          string `gorm:"type:varchar(255)" json:"sort"`
+		ShowOnSidebar bool   `gorm:"type:bool;default:false" json:"show_on_sidebar"`
+		Permission    string `gorm:"type:varchar(255)" json:"permission"`
+		CreatedAt     time.Time
+		UpdatedAt     time.Time
+	}
+
+	Role struct {
+		ID        int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name      string `gorm:"type:varchar(255);not null" json:"name"`
+		Code      string `gorm:"type:varchar(255);not null" json:"code"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
+		Users     []User `gorm:"foreignKey:RoleID;references:ID"`
+	}
+
+	Permission struct {
+		ID        int  `gorm:"primaryKey;autoIncrement" json:"id"`
+		RoleID    int  `gorm:"type:int" json:"role_id"`
+		MenuID    int  `gorm:"type:int" json:"menu_id"`
+		Status    bool `gorm:"type:bool;" json:"status"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
+
+		// Relations
+		Role Role `gorm:"foreignKey:RoleID;references:ID"`
+		Menu Menu `gorm:"foreignKey:MenuID;references:ID"`
+	}
+
+	User struct {
+		ID              int            `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name            string         `gorm:"type:varchar(255);not null" json:"name"`
+		Username        string         `gorm:"type:varchar(255);unique;not null" json:"username"`
+		Email           string         `gorm:"type:varchar(255);unique;not null" json:"email"`
+		EmailVerifiedAt *time.Time     `json:"email_verified_at,omitempty"`
+		Password        string         `gorm:"type:varchar(255);not null" json:"-"`
+		RoleID          int            `json:"role_id"`
+		LastLogin       *time.Time     `json:"last_login,omitempty"`
+		IPAddress       string         `gorm:"type:varchar(255)" json:"ip_address,omitempty"`
+		Handset         string         `gorm:"type:varchar(255)" json:"handset,omitempty"`
+		Status          bool           `gorm:"default:true" json:"status"`
+		TypeUser        string         `gorm:"type:varchar(255)" json:"type_user,omitempty"`
+		IsVerify        bool           `gorm:"type:bool" json:"is_verify,omitempty"`
+		VerifyBy        string         `gorm:"type:varchar(255)" json:"verify_by,omitempty"`
+		VerifyAt        *time.Time     `json:"verify_at,omitempty"`
+		CreatedBy       string         `gorm:"type:varchar(255)" json:"created_by,omitempty"`
+		UpdatedBy       string         `gorm:"type:varchar(255)" json:"updated_by,omitempty"`
+		DeletedAt       gorm.DeletedAt `gorm:"index"`
+		CreatedAt       time.Time
+		UpdatedAt       time.Time
+
+		// Relations
+		Role       Role         `gorm:"foreignKey:RoleID;references:ID"`
+		DetailUser []DetailUser `gorm:"foreignKey:UserID;references:ID"`
+		UserAdnet  []UserAdnet  `gorm:"foreignKey:UserID;references:ID"`
+	}
+
+	DetailUser struct {
+		ID         int  `gorm:"primaryKey" json:"id"`
+		UserID     int  `json:"user_id"`
+		CountryID  int  `json:"country_id"`
+		OperatorID int  `json:"operator_id"`
+		ServiceID  int  `json:"service_id"`
+		Status     bool `json:"status"`
+		CreatedAt  time.Time
+		UpdatedAt  time.Time
+
+		// Relations
+		User User `gorm:"foreignKey:UserID;references:ID"`
+	}
+
+	UserAdnet struct {
+		ID        int  `gorm:"primaryKey" json:"id"`
+		UserID    int  `json:"user_id"`
+		AdnetID   int  `json:"adnet_id"`
+		Status    bool `json:"status"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
+
+		// Relations
+		User User `gorm:"foreignKey:UserID;references:ID"`
 	}
 
 	Country struct {

@@ -7,21 +7,22 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
-func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([]entity.CampaignManagementData, error) {
+func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([]entity.CampaignManagementData, entity.CampaignCounts, error) {
 	var rows *sql.Rows
 	query := r.DB.Model(&entity.CampaignDetail{}).
 		Select(`
+			campaigns.campaign_id AS campaign_id,
 			campaigns.name AS campaign_name, 
 			campaign_details.country, 
 			campaign_details.partner, 
 			COUNT(DISTINCT campaign_details.operator) AS total_operator, 
-			campaign_details.service AS service, 
+			COUNT(DISTINCT campaign_details.service) AS service, 
 			COUNT(DISTINCT campaign_details.adnet) AS total_adnet, 
 			campaign_details.short_code, 
 			campaign_details.is_active
 		`).
 		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
-		Group("campaigns.name, campaign_details.country, campaign_details.partner, campaign_details.service, campaign_details.short_code, campaign_details.is_active")
+		Group("campaigns.campaign_id, campaigns.name, campaign_details.country, campaign_details.partner, campaign_details.short_code, campaign_details.is_active")
 
 	if o.Action == "Search" {
 		if o.Country != "" {
@@ -49,27 +50,54 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 
 	rows, err := query.Rows()
 	if err != nil {
-		return nil, err
+		return nil, entity.CampaignCounts{}, err
 	}
 	defer rows.Close()
 
 	var campaigns []entity.CampaignManagementData
+	var total, active, nonActive int
 
 	for rows.Next() {
 		var campaign entity.CampaignManagementData
+		var campaignIDs []int // Slice to store all IDs for a campaign
+
 		r.DB.ScanRows(rows, &campaign)
+
+		// Fetch all campaign IDs associated with this campaign
+		err := r.DB.Table("campaign_details").
+			Where("campaign_id = ?", campaign.CampaignID).
+			Pluck("id", &campaignIDs).Error
+
+		if err != nil {
+			return nil, entity.CampaignCounts{}, err
+		}
+
+		campaign.ID = campaignIDs // Assign campaign IDs
 		campaigns = append(campaigns, campaign)
+
+		// Count total campaigns
+		total++
+		if campaign.IsActive {
+			active++
+		} else {
+			nonActive++
+		}
 	}
 
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(campaigns)))
-	
 
-	return campaigns, rows.Err()
+	return campaigns, entity.CampaignCounts{
+		TotalCampaigns:          total,
+		TotalActiveCampaigns:    active,
+		TotalNonActiveCampaigns: nonActive,
+	}, nil
 }
 
 func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManagement) ([]entity.CampaignManagementDataDetail, error) {
-    query := r.DB.Model(&entity.CampaignDetail{}).
-        Select(`
+	query := r.DB.Model(&entity.CampaignDetail{}).
+		Select(`
+			campaign_details.id,
+			campaign_details.campaign_id,
             campaign_details.operator, 
             campaign_details.service, 
             campaigns.name AS campaign_name, 
@@ -86,57 +114,58 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
             campaign_details.url_landing, 
             campaign_details.url_warp_landing, 
             campaign_details.api_url, 
-            campaign_details.is_active
+            campaign_details.is_active,
+			campaign_details.url_service_key
         `).
-        Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
-        Where("campaigns.campaign_id = ?", o.CampaignId).
-        Where("campaign_details.is_active = ?", o.Status).
-        Order("campaign_details.operator, campaign_details.service")
+		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
+		Where("campaigns.campaign_id = ?", o.CampaignId).
+		Where("campaign_details.is_active = ?", o.Status).
+		Order("campaign_details.operator, campaign_details.service")
 
-    rows, err := query.Rows()
-    
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	rows, err := query.Rows()
 
-    campaignMap := make(map[string]map[string]*entity.CampaignManagementDataDetail)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    for rows.Next() {
-        var detail entity.CampaignManagementDetail
-        if err := rows.Scan(
-            &detail.Operator, &detail.Service, &detail.CampaignName, &detail.Country,
-            &detail.Partner, &detail.Adnet, &detail.ShortCode, &detail.MOLimit, &detail.Payout,
-            &detail.RatioSend, &detail.RatioReceive, &detail.URLPostback, &detail.URLService,
-            &detail.URLanding, &detail.URLWarpLanding, &detail.APIURL, &detail.IsActive,
-        ); err != nil {
-            return nil, err
-        }
+	campaignMap := make(map[string]map[string]*entity.CampaignManagementDataDetail)
 
-        if _, exists := campaignMap[detail.Operator]; !exists {
-            campaignMap[detail.Operator] = make(map[string]*entity.CampaignManagementDataDetail)
-        }
+	for rows.Next() {
+		var detail entity.CampaignManagementDetail
+		if err := rows.Scan(
+			&detail.ID, &detail.CampaignID, &detail.Operator, &detail.Service, &detail.CampaignName, &detail.Country,
+			&detail.Partner, &detail.Adnet, &detail.ShortCode, &detail.MOLimit, &detail.Payout,
+			&detail.RatioSend, &detail.RatioReceive, &detail.URLPostback, &detail.URLService,
+			&detail.URLanding, &detail.URLWarpLanding, &detail.APIURL, &detail.IsActive, &detail.UrlServiceKey,
+		); err != nil {
+			return nil, err
+		}
 
-        if _, exists := campaignMap[detail.Operator][detail.Service]; !exists {
-            campaignMap[detail.Operator][detail.Service] = &entity.CampaignManagementDataDetail{
-                Operator: detail.Operator,
-                Service:  detail.Service,
-                Details:  []entity.CampaignManagementDetail{},
-            }
-        }
+		if _, exists := campaignMap[detail.Operator]; !exists {
+			campaignMap[detail.Operator] = make(map[string]*entity.CampaignManagementDataDetail)
+		}
 
-        campaignMap[detail.Operator][detail.Service].Details = append(
-            campaignMap[detail.Operator][detail.Service].Details, detail,
-        )
-    }
+		if _, exists := campaignMap[detail.Operator][detail.Service]; !exists {
+			campaignMap[detail.Operator][detail.Service] = &entity.CampaignManagementDataDetail{
+				Operator: detail.Operator,
+				Service:  detail.Service,
+				Details:  []entity.CampaignManagementDetail{},
+			}
+		}
 
-    var campaigns []entity.CampaignManagementDataDetail
-    for _, serviceMap := range campaignMap {
-        for _, campaign := range serviceMap {
-            campaigns = append(campaigns, *campaign)
-        }
-    }
+		campaignMap[detail.Operator][detail.Service].Details = append(
+			campaignMap[detail.Operator][detail.Service].Details, detail,
+		)
+	}
 
-    r.Logs.Debug(fmt.Sprintf("Total data: %d ...\n", len(campaigns)))
-    return campaigns, nil
+	var campaigns []entity.CampaignManagementDataDetail
+	for _, serviceMap := range campaignMap {
+		for _, campaign := range serviceMap {
+			campaigns = append(campaigns, *campaign)
+		}
+	}
+
+	r.Logs.Debug(fmt.Sprintf("Total data: %d ...\n", len(campaigns)))
+	return campaigns, nil
 }

@@ -617,4 +617,83 @@ type (
 		// Relations
 		User User `gorm:"foreignKey:UserID;references:ID"`
 	}
+
+	Country struct {
+		ID          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Code        string `gorm:"type:varchar(10)" json:"code" validate:"unique,required,max=10"`
+		Code2       string `gorm:"type:varchar(10)" json:"code2" validate:"unique,required,max=10"`
+		Name        string `gorm:"type:varchar(80)" json:"name"  validate:"unique,drequired,max=80"`
+		NumericCode string `gorm:"type:varchar(10)" json:"numeric_code" form:"numeric_code"  validate:"required,max=10"`
+	}
+
+	Company struct {
+		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name string `gorm:"type:text" json:"name"`
+	}
+
+	Domain struct {
+		ID  uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Url string `gorm:"type:varchar(80)" json:"url"`
+	}
+
+	Operator struct {
+		ID         uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+		Country    string    `gorm:"type:varchar(10)" json:"country"`
+		Name       string    `gorm:"type:varchar(30)" json:"name"`
+		IsActive   string    `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
+		Lastupdate time.Time `gorm:"type:timestamp" json:"lastupdate"`
+	}
+	Partner struct {
+		ID          uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+		Country     string    `gorm:"type:varchar(10)" json:"country"`
+		Name        string    `gorm:"type:varchar(30)" json:"name"`
+		Operator    string    `gorm:"type:varchar(50)" json:"operator"`
+		Client      string    `gorm:"type:varchar(50)" json:"client"`
+		ClientType  string    `gorm:"type:varchar(50)" json:"client_type"`
+		Company     string    `gorm:"type:varchar(75)" json:"company"`
+		UrlPostback string    `gorm:"type:text" json:"url_postback"`
+		Postback    string    `gorm:"type:varchar(50)" json:"postback"`
+		Aggregator  string    `gorm:"type:varchar(50)" json:"aggregator"`
+		IsActive    string    `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
+		IsBillable  string    `gorm:"type:bool;default:false" json:"is_billable" form:"is_billable"`
+		Lastupdate  time.Time `gorm:"type:timestamp" json:"lastupdate"`
+	}
+
+	Service struct {
+		ID       uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Service  string `gorm:"type:varchar(55)" json:"service"`
+		Adn      string `gorm:"type:varchar(20)" json:"adn"`
+		Country  string `gorm:"type:varchar(50)" json:"client"`
+		Operator string `gorm:"type:varchar(50)" json:"operator"`
+	}
+
+	AdnetList struct {
+		ID           uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Code         string `gorm:"type:varchar(30)" json:"code"`
+		Name         string `gorm:"type:varchar(30)" json:"name"`
+		ApiUrl       string `gorm:"type:text" json:"api_url"`
+		ApiUrlDr     string `gorm:"type:text" json:"api_url_dr"`
+		IsActive     string `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
+		IsRemnant    string `gorm:"type:bool;default:false" json:"is_remnant" form:"is_remnant"`
+		Lastupdate   string `gorm:"type:timestamp" json:"lastupdate"`
+		IsDummyPixel string `gorm:"type:bool;default:false" json:"is_dummy_pixel"`
+	}
+
+	Audit struct {
+		ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+		UserType      string    `gorm:"type:varchar(255)" json:"user_type"`
+		UserID        int       `gorm:"type:int8" json:"user_id"`
+		Event         string    `gorm:"type:varchar(255)" json:"event"`
+		AuditableType string    `gorm:"type:varchar(255)" json:"auditable_type"`
+		AuditableID   string    `gorm:"type:varchar(255)" json:"auditable_id"`
+		OldValues     string    `gorm:"type:text" json:"old_values"`
+		NewValues     string    `gorm:"type:text" json:"new_values"`
+		URL           string    `gorm:"type:text" json:"url"`
+		IPAddress     string    `gorm:"type:inet" json:"ip_address"`
+		UserAgent     string    `gorm:"type:varchar(1023)" json:"user_agent"`
+		Tags          string    `gorm:"type:varchar(255)" json:"tags"`
+		CreatedAt     time.Time `gorm:"type:timestamp" json:"created_at"`
+		UpdatedAt     time.Time `gorm:"type:timestamp" json:"updated_at"`
+		ActionName    string    `gorm:"type:varchar(255)" json:"action_name"`
+	}
 )

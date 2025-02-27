@@ -100,6 +100,35 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	user.Get("/approvalrequest", h.GetUserApplovalRequestTable).Name("User Management Approval Request FE")
 	user.Put("/approveuser/:id", h.ApproveUser).Name("User Management Approve User FE")
 
+	// User Log
+	userlog := management.Group("/userlog")
+	userlog.Get("/", h.DisplayUserLogList).Name(" Display User Log List")
+	userlog.Get("/:id", h.DisplayUserLogHistory).Name(" Display User Log History")
+
+	//  Country and Service Management
+	countryService := management.Group("/country-service")
+	countryService.Get("/country", h.DisplayCountry).Name("Create Country")
+	countryService.Post("/country", h.CreateCountry).Name("Create Country")
+	countryService.Put("/country/:id", h.UpdateCountry).Name("Update Country")
+	countryService.Get("/company", h.DisplayCompany).Name("Create Company")
+	countryService.Post("/company", h.CreateCompany).Name("Create Company")
+	countryService.Put("/company/:id", h.UpdateCompany).Name("Update Company")
+	countryService.Get("/domain", h.DisplayDomain).Name("Create Domain")
+	countryService.Post("/domain", h.CreateDomain).Name("Create Domain")
+	countryService.Put("/domain/:id", h.UpdateDomain).Name("Update Domain")
+	countryService.Get("/operator", h.DisplayOperator).Name("Create Operator")
+	countryService.Post("/operator", h.CreateOperator).Name("Create Operator")
+	countryService.Put("/operator/:id", h.UpdateOperator).Name("Update Operator")
+	countryService.Get("/partner", h.DisplayPartner).Name("Create Partner")
+	countryService.Post("/partner", h.CreatePartner).Name("Create Partner")
+	countryService.Put("/partner/:id", h.UpdatePartner).Name("Update Partner")
+	countryService.Get("/service", h.DisplayService).Name("Create Service")
+	countryService.Post("/service", h.CreateService).Name("Create Service")
+	countryService.Put("/service/:id", h.UpdateService).Name("Update Service")
+	countryService.Get("/adnet-list", h.DisplayAdnetList).Name("Create AdnetList")
+	countryService.Post("/adnet-list", h.CreateAdnetList).Name("Create AdnetList")
+	countryService.Put("/adnet-list/:id", h.UpdateAdnetList).Name("Update AdnetList")
+
 	// API External
 	v1.Group("/ext") // External API
 

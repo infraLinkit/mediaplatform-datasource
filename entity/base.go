@@ -45,4 +45,12 @@ type (
 		RecordsTotal    int         `json:"recordsTotal" xml:"recordsTotal"`
 		RecordsFiltered int         `json:"recordsFiltered" xml:"recordsFiltered"`
 	}
+
+	GlobalRequestFromDataTable struct {
+		Page     int    `json:"page" xml:"page"`
+		Action   string `json:"action" xml:"action"`
+		Draw     int    `json:"draw" xml:"draw"`
+		PageSize int    `json:"pageSize" xml:"pageSize"`
+		Search   string `json:"search" xml:"search"`
+	}
 )

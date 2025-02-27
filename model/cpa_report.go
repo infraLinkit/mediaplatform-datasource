@@ -46,15 +46,15 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 				query = query.Where("summary_date = CURRENT_DATE")
 			case "YESTERDAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
-			case "LAST 7 DAY":
+			case "LAST7DAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
-			case "LAST 30 DAY":
+			case "LAST30DAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
-			case "THIS MONTH":
+			case "THISMONTH":
 				query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
-			case "LAST MONTH":
+			case "LASTMONTH":
 				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
-			case "CUSTOM RANGE":
+			case "CUSTOMRANGE":
 				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
 			default:
 				query = query.Where("summary_date = ?", o.DateRange)
@@ -63,12 +63,12 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 
 		rows, err = query.Order("created_at DESC").Order("id DESC").Rows()
 		if err != nil {
-			return nil, err
+			return []entity.SummaryCampaign{}, err
 		}
 	} else {
-		rows, err = query.Order("created_at DESC").Order("id DESC").Rows()
+		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
 		if err != nil {
-			return nil, err
+			return []entity.SummaryCampaign{}, err
 		}
 	}
 

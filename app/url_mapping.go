@@ -17,8 +17,7 @@ type App3rdParty struct {
 	Config *config.Cfg
 	Logs   *logrus.Logger
 	DB     *gorm.DB
-	R0     *rueidis.Storage
-	R1     *rueidis.Storage
+	R      *rueidis.Storage
 	Rmqp   rmqp.AMQP
 }
 
@@ -32,8 +31,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	h := handler.NewIncomingHandler(handler.IncomingHandler{
 		Config: obj.Config,
 		Logs:   obj.Logs,
-		R0:     obj.R0,
-		R1:     obj.R1,
+		R:      obj.R,
 		DB:     obj.DB,
 		Rmqp:   obj.Rmqp,
 	})
@@ -53,6 +51,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/costreport/:v", h.DisplayCostReport).Name("Receive Pin Cost Report / detail Transactional")
 	rpt.Get("/conversionlog", h.DisplayConversionLogReport).Name("Conversion Log Report")
 	rpt.Get("/campaign-monitoring-summary", h.DisplayCampaignSummary).Name("Campaign Summary")
+	rpt.Get("/alertreport/:v", h.DisplayAlertReportAll).Name("All Alert Report list/")
 
 	// API Internal
 	internal := v1.Group("/int") // Internal API
@@ -61,6 +60,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	internal.Put("/updateratio/:v/", h.UpdateRatio).Name("Update Ratio Transactional")
 	internal.Put("/updatepostback/:v/", h.UpdatePostback).Name("Update Postback Transactional")
 	internal.Put("/updateagencycost/:v", h.UpdateAgencyCost).Name("Update Agency fee and cost per conversion in db")
+	internal.Put("/updatestatusalert/:v", h.UpdateStatusAlert).Name("Update Status Alert in db")
 	internal.Get("/pinreport/", h.TrxPinReport).Name("Receive Pin Report Transactional")
 	internal.Get("/datasentapiperformance/", h.TrxPerformancePinReport).Name("Receive Pin API Performance Report Transactional")
 	internal.Get("/exportcpa/", h.ExportCpaButton).Name("Export CPA-Report Button")

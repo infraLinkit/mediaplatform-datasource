@@ -30,7 +30,7 @@ func (h *IncomingHandler) DisplayCampaignManagement(c *fiber.Ctx) error {
 		Partner:      m["partner"],
 		Status:       m["status"],
 		CampaignName: m["campaign_name"],
-		CampaignId: m["campaign_id"],
+		CampaignId:   m["campaign_id"],
 		Page:         page,
 		Action:       m["action"],
 	}
@@ -50,8 +50,8 @@ func (h *IncomingHandler) DisplayCampaignManagementExtra(c *fiber.Ctx, fe entity
 	key := "temp_key_api_campaign_management_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err              error
-		isempty          bool
+		err                       error
+		isempty                   bool
 		campaignmanagement        []entity.CampaignManagementData
 		displaycampaignmanagement []entity.CampaignManagementData
 	)
@@ -104,7 +104,7 @@ func (h *IncomingHandler) DisplayCampaignManagementExtra(c *fiber.Ctx, fe entity
 
 func (h *IncomingHandler) DisplayCampaignManagementDetail(c *fiber.Ctx, fe entity.DisplayCampaignManagement) entity.ReturnResponse {
 	var (
-		err              error
+		err                             error
 		campaignmanagementdetail        []entity.CampaignManagementDataDetail
 		displaycampaignmanagementdetail []entity.CampaignManagementDataDetail
 	)

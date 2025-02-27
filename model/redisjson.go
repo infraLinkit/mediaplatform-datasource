@@ -21,7 +21,7 @@ func (h *BaseModel) GetDataConfig(key string, path string) (*entity.DataConfig, 
 		err     error
 	)
 
-	if err = rueidis.DecodeSliceOfJSON(h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonMget().Key(key).Path(path).Build()), &tempCfg); err != nil {
+	if err = rueidis.DecodeSliceOfJSON(h.R.Conn().Do(ctx, h.R.Conn().B().JsonMget().Key(key).Path(path).Build()), &tempCfg); err != nil {
 
 		h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))
 		return nil, err
@@ -53,7 +53,7 @@ func (h *BaseModel) GetDataConfigCounter(key string, path string) (*entity.DataC
 		err     error
 	)
 
-	if err = rueidis.DecodeSliceOfJSON(h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonMget().Key(key).Path(path).Build()), &tempCfg); err != nil {
+	if err = rueidis.DecodeSliceOfJSON(h.R.Conn().Do(ctx, h.R.Conn().B().JsonMget().Key(key).Path(path).Build()), &tempCfg); err != nil {
 
 		h.Logs.Warn(fmt.Sprintf("Cannot find data counter key (%s) or error: %#v ...\n", key, err))
 		return nil, err
@@ -79,7 +79,7 @@ func (h *BaseModel) IncrCounterData(key string, path string, val float64) {
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	if err := h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonNumincrby().Key(key).Path(path).Value(val).Build()).Error(); err != nil {
+	if err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonNumincrby().Key(key).Path(path).Value(val).Build()).Error(); err != nil {
 		h.Logs.Debug(fmt.Sprintf("Increament error counter key (%s), path (%s), err : %#v ...\n", key, path, err))
 	} else {
 		h.Logs.Debug(fmt.Sprintf("Increament success counter key (%s), path (%s) ...\n", key, path))
@@ -93,7 +93,7 @@ func (h *BaseModel) AppendCounterData(key string, path string, o entity.DataCoun
 	ctx := context.Background()
 
 	b, _ := json.Marshal(o)
-	if err := h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonArrappend().Key(key).Path(path).Value(string(b)).Build()).Error(); err != nil {
+	if err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonArrappend().Key(key).Path(path).Value(string(b)).Build()).Error(); err != nil {
 		h.Logs.Debug(fmt.Sprintf("Append data error key (%s), path (%s), err : %#v ...\n", key, path, err))
 	} else {
 		h.Logs.Debug(fmt.Sprintf("Append data success key (%s), path (%s) ...\n", key, path))
@@ -106,7 +106,7 @@ func (h *BaseModel) SetCounterData(key string, path string, val string) {
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	if err := h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonSet().Key(key).Path(path).Value(val).Build()).Error(); err != nil {
+	if err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonSet().Key(key).Path(path).Value(val).Build()).Error(); err != nil {
 		h.Logs.Debug(fmt.Sprintf("Set data error key (%s), path (%s), err : %#v ...\n", key, path, err))
 	} else {
 		h.Logs.Debug(fmt.Sprintf("Set data success key (%s), path (%s) ...\n", key, path))
@@ -116,12 +116,12 @@ func (h *BaseModel) SetCounterData(key string, path string, val string) {
 
 func (h *BaseModel) IndexRedis(key string, field string) {
 
-	h.R0.Conn().B().FtCreate().Index(key).Prefix(1)
+	h.R.Conn().B().FtCreate().Index(key).Prefix(1)
 
 	//`$.campaign_id AS campaign_id TEXT $.pixel AS pixel TEXT $.user_agent AS user_agent TEXT $.os AS os TEXT $.browser AS browser TEXT $.ips AS ips TEXT $.user_is_rejected AS user_is_rejected TAG $.user_is_duplicated AS user_is_duplicated TAG $.refferal_url AS refferal_url TEXT $.handset_code AS handset_code TEXT $.handset_type AS handset_type TEXT $.pixel_is_used AS pixel_is_used TAG`
 
 	//Create Indexing key
-	result := h.R0.Conn().Do(context.Background(), h.R0.Conn().B().FtCreate().Index(key).OnJson().Schema().FieldName(field).Text().Build())
+	result := h.R.Conn().Do(context.Background(), h.R.Conn().B().FtCreate().Index(key).OnJson().Schema().FieldName(field).Text().Build())
 	isIdxCreated, err := result.AsBool()
 
 	if err != nil {
@@ -143,7 +143,7 @@ func (h *BaseModel) GetData(i []interface{}, key string, path string) []interfac
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	rueidis.DecodeSliceOfJSON(h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonGet().Key(key).Path(path).Build()), &i)
+	rueidis.DecodeSliceOfJSON(h.R.Conn().Do(ctx, h.R.Conn().B().JsonGet().Key(key).Path(path).Build()), &i)
 
 	return i
 }
@@ -153,7 +153,7 @@ func (h *BaseModel) SetData(key string, path string, val string) {
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	if err := h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonSet().Key(key).Path(path).Value(val).Build()).Error(); err != nil {
+	if err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonSet().Key(key).Path(path).Value(val).Build()).Error(); err != nil {
 		h.Logs.Debug(fmt.Sprintf("Set data error key (%s), path (%s), err : %#v ...\n", key, path, err))
 	} else {
 		h.Logs.Debug(fmt.Sprintf("Set data success key (%s), path (%s) ...\n", key, path))
@@ -164,7 +164,7 @@ func (h *BaseModel) SetData(key string, path string, val string) {
 func (h *BaseModel) SetExpireData(key string, expr int64) {
 
 	//Set key expire and delete automatically
-	result := h.R0.Conn().Do(context.Background(), h.R0.Conn().B().Expire().Key(key).Seconds(expr).Build())
+	result := h.R.Conn().Do(context.Background(), h.R.Conn().B().Expire().Key(key).Seconds(expr).Build())
 
 	isExpiredCreated, err := result.AsBool()
 
@@ -186,7 +186,7 @@ func (h *BaseModel) DelData(key string, path string) {
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	if err := h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonDel().Key(key).Path(path).Build()).Error(); err != nil {
+	if err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonDel().Key(key).Path(path).Build()).Error(); err != nil {
 		h.Logs.Debug(fmt.Sprintf("Del data error key (%s), path (%s), err : %#v ...\n", key, path, err))
 	} else {
 		h.Logs.Debug(fmt.Sprintf("Del data success key (%s), path (%s) ...\n", key, path))
@@ -205,7 +205,7 @@ func (h *BaseModel) GetAlertData(key string, path string) (*entity.AlertData, er
 		err     error
 	)
 
-	if err = rueidis.DecodeSliceOfJSON(h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonMget().Key(key).Path(path).Build()), &tempCfg); err != nil {
+	if err = rueidis.DecodeSliceOfJSON(h.R.Conn().Do(ctx, h.R.Conn().B().JsonMget().Key(key).Path(path).Build()), &tempCfg); err != nil {
 
 		h.Logs.Warn(fmt.Sprintf("Cannot find data counter key (%s) or error: %#v ...\n", key, err))
 		return nil, err
@@ -237,7 +237,7 @@ func (h *BaseModel) GetDataSummary(key string, path string) (*entity.Summary, er
 		err     error
 	)
 
-	if err = rueidis.DecodeSliceOfJSON(h.R0.Conn().Do(ctx, h.R0.Conn().B().JsonMget().Key(key).Path(path).Build()), &tempCfg); err != nil {
+	if err = rueidis.DecodeSliceOfJSON(h.R.Conn().Do(ctx, h.R.Conn().B().JsonMget().Key(key).Path(path).Build()), &tempCfg); err != nil {
 
 		h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))
 		return nil, err
@@ -268,7 +268,7 @@ func (h *BaseModel) RGetApiPinReport(key string, path string) ([]entity.ApiPinRe
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
 		var pinreport [][]entity.ApiPinReport
@@ -297,7 +297,7 @@ func (h *BaseModel) RGetApiPinPerformanceReport(key string, path string) ([]enti
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
 		var pinperformancereport [][]entity.ApiPinPerformance
@@ -325,7 +325,7 @@ func (h *BaseModel) RGetDisplayCPAReport(key string, path string) ([]entity.Summ
 
 	ctx := context.Background()
 
-	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
 		var displaycpareport [][]entity.SummaryCampaign
@@ -354,7 +354,7 @@ func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.P
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
 		var conversionLogReport [][]entity.PixelStorage
@@ -381,7 +381,7 @@ func (h *BaseModel) RGetDisplayCostReport(key string, path string) ([]entity.Cos
 	)
 	ctx := context.Background()
 
-	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
 		var costreport [][]entity.CostReport
@@ -406,7 +406,7 @@ func (h *BaseModel) RGetDisplayCostReportDetail(key string, path string) ([]enti
 	)
 	ctx := context.Background()
 
-	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
 		var displaycostreport [][]entity.CostReport
@@ -435,7 +435,7 @@ func (h *BaseModel) RGetCampaignManagement(key string, path string) ([]entity.Ca
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
 		var campaignmanagement [][]entity.CampaignManagementData
@@ -464,7 +464,7 @@ func (h *BaseModel) RGetMenu(key string, path string) ([]entity.Menu, bool) {
 	// Get Config Data Landing
 	ctx := context.Background()
 
-	data, _ := rueidis.JsonMGet(h.R1.Conn(), ctx, []string{key}, "$")
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
 		var menu [][]entity.Menu
@@ -480,5 +480,29 @@ func (h *BaseModel) RGetMenu(key string, path string) ([]entity.Menu, bool) {
 		}
 	}
 
+	return p, isEmpty
+}
+
+func (h *BaseModel) RGetAlertReportAll(key string, path string) ([]entity.SummaryAll, bool) {
+	var (
+		isEmpty bool
+		p       []entity.SummaryAll
+	)
+
+	ctx := context.Background()
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
+
+	for _, v := range data {
+		var summaryMo [][]entity.SummaryAll
+		v.DecodeJSON(&summaryMo)
+		if len(summaryMo) > 0 {
+			isEmpty = false
+			p = summaryMo[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isEmpty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
 	return p, isEmpty
 }

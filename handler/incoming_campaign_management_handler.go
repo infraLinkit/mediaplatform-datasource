@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -30,8 +31,9 @@ func (h *IncomingHandler) DisplayCampaignManagement(c *fiber.Ctx) error {
 		Partner:      m["partner"],
 		Status:       m["status"],
 		CampaignName: m["campaign_name"],
-		CampaignId:   m["campaign_id"],
+		CampaignId: m["campaign_id"],
 		Page:         page,
+		Draw: 		  draw,
 		Action:       m["action"],
 	}
 
@@ -50,17 +52,17 @@ func (h *IncomingHandler) DisplayCampaignManagementExtra(c *fiber.Ctx, fe entity
 	key := "temp_key_api_campaign_management_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err                       error
-		isempty                   bool
+		err              error
+		isempty          bool
 		campaignmanagement        []entity.CampaignManagementData
 		displaycampaignmanagement []entity.CampaignManagementData
 	)
 
 	if fe.Action != "" {
-		campaignmanagement, err = h.DS.GetCampaignManagement(fe)
+		campaignmanagement, _, err = h.DS.GetCampaignManagement(fe)
 	} else {
 		if campaignmanagement, isempty = h.DS.RGetCampaignManagement(key, "$"); isempty {
-			campaignmanagement, err = h.DS.GetCampaignManagement(fe)
+			campaignmanagement, _, err = h.DS.GetCampaignManagement(fe)
 			s, _ := json.Marshal(campaignmanagement)
 			h.DS.SetData(key, "$", string(s))
 			h.DS.SetExpireData(key, 60)
@@ -70,7 +72,11 @@ func (h *IncomingHandler) DisplayCampaignManagementExtra(c *fiber.Ctx, fe entity
 	if err == nil {
 		totalRecords := len(campaignmanagement)
 		pagesize := PAGESIZE
-		start := (fe.Page - 1) * pagesize
+		page := 1 
+		if fe.Page > 0 { 
+			page = fe.Page
+		}
+		start := (page - 1) * pagesize
 		end := start + pagesize
 
 		if start < totalRecords {
@@ -83,7 +89,7 @@ func (h *IncomingHandler) DisplayCampaignManagementExtra(c *fiber.Ctx, fe entity
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithDataTable{
-				Draw:            fe.Page,
+				Draw:            fe.Draw,
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
 				Data:            displaycampaignmanagement,
@@ -104,7 +110,7 @@ func (h *IncomingHandler) DisplayCampaignManagementExtra(c *fiber.Ctx, fe entity
 
 func (h *IncomingHandler) DisplayCampaignManagementDetail(c *fiber.Ctx, fe entity.DisplayCampaignManagement) entity.ReturnResponse {
 	var (
-		err                             error
+		err              error
 		campaignmanagementdetail        []entity.CampaignManagementDataDetail
 		displaycampaignmanagementdetail []entity.CampaignManagementDataDetail
 	)
@@ -115,10 +121,11 @@ func (h *IncomingHandler) DisplayCampaignManagementDetail(c *fiber.Ctx, fe entit
 		displaycampaignmanagementdetail = campaignmanagementdetail
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
-			Rsp: entity.GlobalResponseWithData{
-				Code:    fiber.StatusOK,
-				Message: config.OK_DESC,
-				Data:    displaycampaignmanagementdetail,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Draw:            fe.Draw,
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            displaycampaignmanagementdetail,
 			},
 		}
 	}
@@ -133,14 +140,17 @@ func (h *IncomingHandler) DisplayCampaignManagementDetail(c *fiber.Ctx, fe entit
 }
 
 func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
-	var campaignData entity.DataCampaignAction
+	var campaignData map[string]interface{}
 
 	if err := c.BodyParser(&campaignData); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	bodyReq, err := json.Marshal(campaignData)
-	if err != nil {
+	var bodyReq bytes.Buffer
+	encoder := json.NewEncoder(&bodyReq)
+	encoder.SetEscapeHTML(false) // Prevents encoding & as \u0026
+
+	if err := encoder.Encode(campaignData); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to serialize data"})
 	}
 
@@ -148,15 +158,36 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 		ExchangeName: h.Config.RabbitMQCampaignManagementExchangeName,
 		QueueName:    h.Config.RabbitMQCampaignManagementQueueName,
 		ContentType:  h.Config.RabbitMQDataType,
-		Payload:      string(bodyReq),
+		Payload:      bodyReq.String(), // Send the properly formatted JSON
 		Priority:     0,
 	})
 
 	if !published {
-		h.Logs.Debug(fmt.Sprintf("[x] Failed published: Data: %s ...", string(bodyReq)))
+		h.Logs.Debug(fmt.Sprintf("[x] Failed published: Data: %s ...", bodyReq.String()))
 	} else {
-		h.Logs.Debug(fmt.Sprintf("[v] Published: Data: %s ...", string(bodyReq)))
+		h.Logs.Debug(fmt.Sprintf("[v] Published: Data: %s ...", bodyReq.String()))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Campaign data sent to RabbitMQ"})
+}
+
+
+func (h *IncomingHandler) GetCampaignCounts(c *fiber.Ctx) error {
+	var input entity.DisplayCampaignManagement
+
+	if err := c.QueryParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// Ambil hanya counts dari GetCampaignManagement
+	_, counts, err := h.DS.GetCampaignManagement(input)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"total_campaign":            counts.TotalCampaigns,
+		"total_active_campaign":     counts.TotalActiveCampaigns,
+		"total_inactive_campaign": counts.TotalNonActiveCampaigns,
+	})
 }

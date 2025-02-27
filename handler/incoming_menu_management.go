@@ -133,7 +133,7 @@ func (h *IncomingHandler) UpdateMenu(c *fiber.Ctx) error {
 		})
 	}
 
-	req.ID = uint(id)
+	req.ID = id
 	req.UpdatedAt = time.Now()
 
 	if err := h.DS.UpdateMenu(&req); err != nil {

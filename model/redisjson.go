@@ -506,3 +506,90 @@ func (h *BaseModel) RGetAlertReportAll(key string, path string) ([]entity.Summar
 	}
 	return p, isEmpty
 }
+
+func (h *BaseModel) RGetRole(key string, path string) ([]entity.RoleManagementData, bool) {
+
+	var (
+		isEmpty bool
+		p       []entity.RoleManagementData
+	)
+
+	// Get Config Data Landing
+	ctx := context.Background()
+
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
+
+	for _, v := range data {
+		var role [][]entity.RoleManagementData
+		v.DecodeJSON(&role)
+
+		if len(role) > 0 {
+			isEmpty = false
+			p = role[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isEmpty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
+
+	return p, isEmpty
+}
+
+func (h *BaseModel) RGetUser(key string, path string) ([]entity.UserManagementData, bool) {
+
+	var (
+		isEmpty bool
+		p       []entity.UserManagementData
+	)
+
+	// Get Config Data Landing
+	ctx := context.Background()
+
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
+
+	for _, v := range data {
+		var user [][]entity.UserManagementData
+		v.DecodeJSON(&user)
+
+		if len(user) > 0 {
+			isEmpty = false
+			p = user[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isEmpty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
+
+	return p, isEmpty
+}
+
+func (h *BaseModel) RGetUserApprovalRequest(key string, path string) ([]entity.UserApprovalRequestData, bool) {
+
+	var (
+		isEmpty bool
+		p       []entity.UserApprovalRequestData
+	)
+
+	// Get Config Data Landing
+	ctx := context.Background()
+
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
+
+	for _, v := range data {
+		var user [][]entity.UserApprovalRequestData
+		v.DecodeJSON(&user)
+
+		if len(user) > 0 {
+			isEmpty = false
+			p = user[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isEmpty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
+
+	return p, isEmpty
+}

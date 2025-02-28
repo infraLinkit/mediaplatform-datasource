@@ -203,7 +203,6 @@ func (r *BaseModel) GetPartner(o entity.GlobalRequestFromDataTable) ([]entity.Pa
 			Or("aggregator ILIKE ?", "%"+search_value+"%").
 			Or("country ILIKE ?", "%"+search_value+"%").
 			Or("company ILIKE ?", "%"+search_value+"%").
-			Or("code ILIKE ?", "%"+search_value+"%").
 			Or("client ILIKE ?", "%"+search_value+"%").
 			Or("client_type ILIKE ?", "%"+search_value+"%").
 			Or("url_postback ILIKE ?", "%"+search_value+"%")
@@ -293,6 +292,7 @@ func (r *BaseModel) GetAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.
 
 	// Apply filters, minus the pagination constraints
 	query := r.DB.Model(&entity.AdnetList{})
+	query.Select("*, api_url as api_url_before")
 	if o.Search != "" {
 		search_value := strings.Trim(o.Search, " ")
 		query = query.Where("name ILIKE ?", "%"+search_value+"%").
@@ -309,6 +309,7 @@ func (r *BaseModel) GetAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.
 	}
 
 	rows, _ = query_limit.Order("name").Rows()
+
 	defer rows.Close()
 
 	var ss []entity.AdnetList

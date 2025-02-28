@@ -644,26 +644,27 @@ type (
 		Lastupdate time.Time `gorm:"type:timestamp" json:"lastupdate"`
 	}
 	Partner struct {
-		ID          uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-		Country     string    `gorm:"type:varchar(10)" json:"country"`
-		Name        string    `gorm:"type:varchar(30)" json:"name"`
-		Operator    string    `gorm:"type:varchar(50)" json:"operator"`
-		Client      string    `gorm:"type:varchar(50)" json:"client"`
-		ClientType  string    `gorm:"type:varchar(50)" json:"client_type"`
-		Company     string    `gorm:"type:varchar(75)" json:"company"`
-		UrlPostback string    `gorm:"type:text" json:"url_postback"`
-		Postback    string    `gorm:"type:varchar(50)" json:"postback"`
-		Aggregator  string    `gorm:"type:varchar(50)" json:"aggregator"`
-		IsActive    string    `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
-		IsBillable  string    `gorm:"type:bool;default:false" json:"is_billable" form:"is_billable"`
-		Lastupdate  time.Time `gorm:"type:timestamp" json:"lastupdate"`
+		ID             uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+		Country        string    `gorm:"type:varchar(10)" json:"country"`
+		Name           string    `gorm:"type:varchar(30)" json:"name"`
+		Operator       string    `gorm:"type:varchar(50)" json:"operator"`
+		Client         string    `gorm:"type:varchar(50)" json:"client"`
+		ClientType     string    `gorm:"type:varchar(50)" json:"client_type"`
+		Company        string    `gorm:"type:varchar(75)" json:"company"`
+		UrlPostback    string    `gorm:"type:text" json:"url_postback"`
+		Postback       string    `gorm:"type:varchar(50)" json:"postback"`
+		PostbackMethod string    `gorm:"type:varchar(50)" json:"postback_method"`
+		Aggregator     string    `gorm:"type:varchar(50)" json:"aggregator"`
+		IsActive       string    `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
+		IsBillable     string    `gorm:"type:bool;default:false" json:"is_billable" form:"is_billable"`
+		Lastupdate     time.Time `gorm:"type:timestamp" json:"lastupdate"`
 	}
 
 	Service struct {
 		ID       uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Service  string `gorm:"type:varchar(55)" json:"service"`
 		Adn      string `gorm:"type:varchar(20)" json:"adn"`
-		Country  string `gorm:"type:varchar(50)" json:"client"`
+		Country  string `gorm:"type:varchar(50)" json:"country"`
 		Operator string `gorm:"type:varchar(50)" json:"operator"`
 	}
 
@@ -672,6 +673,7 @@ type (
 		Code         string `gorm:"type:varchar(30)" json:"code"`
 		Name         string `gorm:"type:varchar(30)" json:"name"`
 		ApiUrl       string `gorm:"type:text" json:"api_url"`
+		ApiUrlBefore string `gorm:"column:api_url" json:"api_url_before"`
 		ApiUrlDr     string `gorm:"type:text" json:"api_url_dr"`
 		IsActive     string `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
 		IsRemnant    string `gorm:"type:bool;default:false" json:"is_remnant" form:"is_remnant"`

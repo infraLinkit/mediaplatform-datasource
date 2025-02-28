@@ -624,6 +624,7 @@ type (
 		Code2       string `gorm:"type:varchar(10)" json:"code2" validate:"unique,required,max=10"`
 		Name        string `gorm:"type:varchar(80)" json:"name"  validate:"unique,drequired,max=80"`
 		NumericCode string `gorm:"type:varchar(10)" json:"numeric_code" form:"numeric_code"  validate:"required,max=10"`
+		IsActive    string `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
 	}
 
 	Company struct {

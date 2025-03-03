@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"fmt"
+	"sort"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
@@ -123,7 +124,6 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 		Order("campaign_details.operator, campaign_details.service")
 
 	rows, err := query.Rows()
-
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +165,14 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 			campaigns = append(campaigns, *campaign)
 		}
 	}
+
+	// Sorting berdasarkan Operator dan Service
+	sort.SliceStable(campaigns, func(i, j int) bool {
+		if campaigns[i].Operator == campaigns[j].Operator {
+			return campaigns[i].Service < campaigns[j].Service
+		}
+		return campaigns[i].Operator < campaigns[j].Operator
+	})
 
 	r.Logs.Debug(fmt.Sprintf("Total data: %d ...\n", len(campaigns)))
 	return campaigns, nil

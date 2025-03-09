@@ -359,6 +359,7 @@ type (
 		Billrate                 float64   `gorm:"type:double precision" json:"billrate"`
 		ROI                      float64   `gorm:"type:double precision" json:"roi"`
 		PO                       float64   `gorm:"type:double precision" json:"po"`
+		FirstPush                float64   `gorm:"type:double precision" json:"first_push"`
 		Cost                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cost"`
 		SBAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
 		SAAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`

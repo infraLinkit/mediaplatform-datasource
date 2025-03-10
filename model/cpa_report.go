@@ -108,7 +108,7 @@ func (r *BaseModel) UpdateRatioModel(o entity.SummaryCampaign, id int) error {
 }
 
 func (r *BaseModel) UpdatePostbackModel(o entity.SummaryCampaign, id int) error {
-	result := r.DB.Exec("UPDATE summary_campaigns SET postback = ? WHERE ID = ?", o.Postback, id)
+	result := r.DB.Exec("UPDATE summary_campaigns SET po = ? WHERE ID = ?", o.Postback, id)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 

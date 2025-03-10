@@ -52,6 +52,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/conversionlog", h.DisplayConversionLogReport).Name("Conversion Log Report")
 	rpt.Get("/campaign-monitoring-summary", h.DisplayCampaignSummary).Name("Campaign Summary")
 	rpt.Get("/alertreport/:v", h.DisplayAlertReportAll).Name("All Alert Report list/")
+	rpt.Get("/trafficreport", h.DisplayTrafficReport).Name("Traffic Report list")
 
 	// API Internal
 	internal := v1.Group("/int") // Internal API

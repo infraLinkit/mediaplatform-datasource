@@ -67,6 +67,7 @@ type (
 		LogPath                                string
 		LogLevel                               string
 		TZ                                     *time.Location
+		APIARPU                                string
 	}
 
 	Setup struct {
@@ -128,6 +129,7 @@ func InitCfg() *Cfg {
 		LogPath:                                os.Getenv("LOGPATH"),
 		LogLevel:                               os.Getenv("LOGLEVEL"),
 		TZ:                                     loc,
+		APIARPU:                                os.Getenv("APIARPU"),
 	}
 
 	return cfg

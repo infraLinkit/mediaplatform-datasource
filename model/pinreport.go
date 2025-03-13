@@ -221,3 +221,34 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 
 	return ss, total_rows, rows.Err()
 }
+
+func (r *BaseModel) GetDataDistinctPerformanceReport(o entity.DisplayPinReport) ([]entity.ApiPinPerformance, error) {
+
+	var (
+		rows *sql.Rows
+	)
+
+	query := r.DB.Model(&entity.ApiPinPerformance{})
+
+	rows, _ = query.Distinct("date_send", "country", "operator", "service").Where("date_send = CURRENT_DATE()").Order("date_send").Rows()
+
+	defer rows.Close()
+
+	var (
+		ss []entity.ApiPinPerformance
+	)
+
+	for rows.Next() {
+
+		var s entity.ApiPinPerformance
+
+		// ScanRows scans a row into a struct
+		r.DB.ScanRows(rows, &s)
+
+		ss = append(ss, s)
+	}
+
+	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(ss)))
+
+	return ss, rows.Err()
+}

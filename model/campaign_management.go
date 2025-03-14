@@ -23,7 +23,8 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 			campaign_details.is_active
 		`).
 		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
-		Group("campaigns.campaign_id, campaigns.name, campaign_details.country, campaign_details.partner, campaign_details.short_code, campaign_details.is_active")
+		Group("campaigns.campaign_id, campaigns.name, campaign_details.country, campaign_details.partner, campaign_details.short_code, campaign_details.is_active, campaigns.created_at").
+		Order("campaigns.created_at DESC") 
 
 	if o.Action == "Search" {
 		if o.Country != "" {

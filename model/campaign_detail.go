@@ -103,6 +103,7 @@ func (r *BaseModel) UpdateCampaignDetail(o entity.CampaignDetail) error {
 func (r *BaseModel) DelCampaign(o entity.Campaign) error {
 
 	result := r.DB.
+		Unscoped().
 		Where("campaign_id = ?", o.CampaignId).
 		Delete(&o)
 

@@ -373,6 +373,7 @@ type (
 		Company                  string    `gorm:"size:255;default:NA" json:"company"`
 		ClientType               string    `gorm:"size:30;default:NA" json:"client_type"`
 		CostPerConversion        float64   `gorm:"type:double precision" json:"cost_per_conversion"`
+		TechnicalFee             float64   `gorm:"type:double precision" json:"technical_fee"`
 		AgencyFee                float64   `gorm:"type:double precision" json:"agency_fee"`
 		TargetDailyBudget        float64   `gorm:"type:double precision" json:"target_daily_budget"`
 		CrMO                     float64   `gorm:"type:double precision" json:"cr_mo"`

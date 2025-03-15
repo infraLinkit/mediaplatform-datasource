@@ -330,10 +330,11 @@ func (h *IncomingHandler) UpdateAgencyCost(c *fiber.Ctx) error {
 	if v == "update_agency_cost" {
 		AgencyFee := m["agency_fee"]
 		CostPerConversion := m["cost_per_conversion"]
+		TechnicalFee := m["technical_fee"]
 
-		h.Logs.Debug(fmt.Sprintf("Received agency_fee: %s, cost_per_conversion: %s", AgencyFee, CostPerConversion))
+		h.Logs.Debug(fmt.Sprintf("Received agency_fee: %s, cost_per_conversion: %s , technical_fee: %s", AgencyFee, CostPerConversion, TechnicalFee))
 
-		if AgencyFee == "" && CostPerConversion == "" {
+		if AgencyFee == "" && CostPerConversion == "" && TechnicalFee == "" {
 			h.Logs.Error("Missing required fields")
 			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
 				Code:    fiber.StatusBadRequest,
@@ -366,10 +367,35 @@ func (h *IncomingHandler) UpdateAgencyCost(c *fiber.Ctx) error {
 			}
 		}
 
+		var technicalFee float64
+		if TechnicalFee != "" {
+			technicalFee, err = strconv.ParseFloat(TechnicalFee, 64)
+			if err != nil {
+				h.Logs.Error(fmt.Sprintf("Failed to parse float : %v", err))
+				return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+					Code:    fiber.StatusBadRequest,
+					Message: "Invalid technical_fee value",
+				})
+			}
+		}
+
 		err = h.DS.UpdateAgencyCostModel(entity.SummaryCampaign{
 			AgencyFee:         agencyFee,
 			CostPerConversion: costPerConversion,
+			TechnicalFee:      technicalFee,
 		})
+
+		// gs, _ := h.DS.GetDataConfig("global_setting", "$")
+
+		// if gs == nil {
+		// 	h.Logs.Warn("Global setting not found in Redis, initializing new configuration")
+		// 	gs = &entity.DataConfig{
+		// 		CPCR:              "",
+		// 		AgencyFee:         "",
+		// 		CostPerConversion: "",
+		// 		TechnicalFee:      "",
+		// 	}
+		// }
 
 		h.Logs.Info("Successfully updated agency cost and/or cost per conversion in database.")
 

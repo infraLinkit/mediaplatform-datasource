@@ -49,6 +49,7 @@ func (r *BaseModel) SummaryCampaign(o entity.SummaryCampaign) int {
 		Columns: []clause.Column{
 			{Name: "summary_date"},
 			{Name: "campaign_id"},
+			{Name: "campaign_objective"},
 			{Name: "country"},
 			{Name: "partner"},
 			{Name: "operator"},
@@ -81,7 +82,8 @@ func (r *BaseModel) SummaryCampaign(o entity.SummaryCampaign) int {
 			"total_waki_agency_fee": o.TotalWakiAgencyFee,
 			"target_daily_budget":   o.TargetDailyBudget,
 			"budget_usage":          o.BudgetUsage,
-			"campaign_name":         o.CampaignName}),
+			"campaign_name":         o.CampaignName,
+			"technical_fee":         o.TechnicalFee}),
 	}).Create(&o)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))

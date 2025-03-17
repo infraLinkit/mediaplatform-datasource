@@ -184,6 +184,7 @@ type (
 		ClientType         string `json:"client_type"`
 		CPCR               string `json:"cost_per_conversion"`
 		AgencyFee          string `json:"agency_fee"`
+		TechnicalFee       string `json:"technical_fee"`
 		TotalWakiAgencyFee string `json:"total_waki_agency_fee"`
 		TDB                string `json:"target_daily_budget"`
 		BudgetUsage        string `json:"budget_usage"`

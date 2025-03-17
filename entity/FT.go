@@ -83,6 +83,7 @@ type (
 		AgencyFee                 string  `json:"agency_fee"`
 		TargetDailyBudget         string  `json:"target_daily_budget"`
 		BudgetUsage               string  `json:"budget_usage"`
+		TechnicalFee              string  `json:"technical_fee"`
 		URLPostback               string  `json:"url_postback"`
 		PostbackMethod            string  `json:"postback_method"`
 		MainstreamLpType          string  `json:"mainstream_lp_type"`

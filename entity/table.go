@@ -74,6 +74,7 @@ type (
 		CostPerConversion         float64   `gorm:"type:double precision" json:"cost_per_conversion"`
 		AgencyFee                 float64   `gorm:"type:double precision" json:"agency_fee"`
 		TargetDailyBudget         float64   `gorm:"type:double precision" json:"target_daily_budget"`
+		TechnicalFee              float64   `gorm:"type:double precision" json:"technical_fee"`
 		URLPostback               string    `gorm:"size:255;default:NA" json:"url_postback"`
 		MainstreamLpType          string    `gorm:"size:50;default:NA" json:"mainstream_lp_type"`
 		Title                     string    `gorm:"size:80;default:NA" json:"title"`
@@ -166,6 +167,7 @@ type (
 		CostPerConversion         float64
 		AgencyFee                 float64
 		TargetDailyBudget         float64
+		TechnicalFee              float64
 		URLPostback               string
 		Channel                   string
 	}

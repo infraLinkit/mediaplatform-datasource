@@ -94,6 +94,7 @@ type (
 		PricePageStype            string    `gorm:"size:50;default:NA" json:"price_page_type"`
 		StatusSubmitKeyMainstream bool      `gorm:"not null;default:false" json:"status_submit_key_mainstream"`
 		KeyMainstream             string    `gorm:"size:50;default:NA" json:"key_mainstream"`
+		Channel                   string    `gorm:"size:50;default:NA" json:"channel"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}
@@ -166,6 +167,7 @@ type (
 		AgencyFee                 float64
 		TargetDailyBudget         float64
 		URLPostback               string
+		Channel                   string
 	}
 
 	MO struct {
@@ -230,6 +232,7 @@ type (
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
 		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
 		CampaignObjective string    `gorm:"not null;size:50" json:"campaign_objective"`
+		Channel           string    `gorm:"not null;size:50" json:"channel"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
@@ -296,6 +299,7 @@ type (
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
 		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
 		CampaignObjective string    `gorm:"not null;size:50" json:"campaign_objective"`
+		Channel           string    `gorm:"not null;size:50" json:"channel"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
@@ -361,6 +365,8 @@ type (
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
 		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
+		CampaignObjective string    `gorm:"not null;size:50" json:"campaign_objective"`
+		Channel           string    `gorm:"not null;size:50" json:"channel"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
@@ -413,6 +419,7 @@ type (
 		TargetDailyBudgetChanges int       `gorm:"not null;length:12;default:0" json:"target_daily_budget_changes"`
 		TechnicalFee             float64   `gorm:"type:double precision" json:"technical_fee"`
 		CampaignObjective        string    `gorm:"not null;size:50" json:"campaign_objective"`
+		Channel                  string    `gorm:"not null;size:50" json:"channel"`
 		CreatedAt                time.Time
 		UpdatedAt                time.Time
 	}

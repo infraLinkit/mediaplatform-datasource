@@ -422,6 +422,7 @@ type (
 		TechnicalFee             float64   `gorm:"type:double precision" json:"technical_fee"`
 		CampaignObjective        string    `gorm:"not null;size:50" json:"campaign_objective"`
 		Channel                  string    `gorm:"not null;size:50" json:"channel"`
+		PricePerMO               float64   `gorm:"type:double precision" json:"price_per_mo"`
 		CreatedAt                time.Time
 		UpdatedAt                time.Time
 	}

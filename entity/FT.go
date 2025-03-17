@@ -188,6 +188,7 @@ type (
 		TotalWakiAgencyFee string `json:"total_waki_agency_fee"`
 		TDB                string `json:"target_daily_budget"`
 		BudgetUsage        string `json:"budget_usage"`
+		PricePerMO         string `json:"price_per_mo"`
 		IsActive           bool   `json:"is_active"`
 		CampaignId         string `json:"campaign_id"`
 		CampaignName       string `json:"campaign_name"`

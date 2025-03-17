@@ -75,11 +75,11 @@ type (
 		AgencyFee                 float64   `gorm:"type:double precision" json:"agency_fee"`
 		TargetDailyBudget         float64   `gorm:"type:double precision" json:"target_daily_budget"`
 		URLPostback               string    `gorm:"size:255;default:NA" json:"url_postback"`
-		MainstreamLPType          string    `gorm:"size:50;default:NA" json:"mainstream_lp_type"`
+		MainstreamLpType          string    `gorm:"size:50;default:NA" json:"mainstream_lp_type"`
 		Title                     string    `gorm:"size:80;default:NA" json:"title"`
 		TitleColor                string    `gorm:"size:50;default:NA" json:"title_color"`
 		TitleStyle                string    `gorm:"size:50;default:NA" json:"title_style"`
-		TitlePageStype            string    `gorm:"size:50;default:NA" json:"title_page_type"`
+		TitlePageType             string    `gorm:"size:50;default:NA" json:"title_page_type"`
 		BackgroundURL             string    `gorm:"size:255;default:NA" json:"background_url"`
 		BackgroundColor           string    `gorm:"size:50;default:NA" json:"background_color"`
 		LogoURL                   string    `gorm:"size:255;default:NA" json:"logo_url"`
@@ -87,11 +87,11 @@ type (
 		TnC                       string    `gorm:"size:255;default:NA" json:"tnc"`
 		TncColor                  string    `gorm:"size:50;default:NA" json:"tnc_color"`
 		TncStyle                  string    `gorm:"size:50;default:NA" json:"tnc_style"`
-		TncPageStype              string    `gorm:"size:50;default:NA" json:"tnc_page_type"`
+		TncPageType               string    `gorm:"size:50;default:NA" json:"tnc_page_type"`
 		Price                     string    `gorm:"size:255;default:NA" json:"price"`
 		PriceColor                string    `gorm:"size:50;default:NA" json:"price_color"`
 		PriceStyle                string    `gorm:"size:50;default:NA" json:"price_style"`
-		PricePageStype            string    `gorm:"size:50;default:NA" json:"price_page_type"`
+		PricePageType             string    `gorm:"size:50;default:NA" json:"price_page_type"`
 		StatusSubmitKeyMainstream bool      `gorm:"not null;default:false" json:"status_submit_key_mainstream"`
 		KeyMainstream             string    `gorm:"size:50;default:NA" json:"key_mainstream"`
 		Channel                   string    `gorm:"size:50;default:NA" json:"channel"`

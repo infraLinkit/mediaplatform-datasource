@@ -85,11 +85,11 @@ type (
 		BudgetUsage               string  `json:"budget_usage"`
 		URLPostback               string  `json:"url_postback"`
 		PostbackMethod            string  `json:"postback_method"`
-		MainstreamLPType          string  `json:"mainstream_lp_type"`
+		MainstreamLpType          string  `json:"mainstream_lp_type"`
 		Title                     string  `json:"title"`
 		TitleColor                string  `json:"title_color"`
 		TitleStyle                string  `json:"title_style"`
-		TitlePageStype            string  `json:"title_page_type"`
+		TitlePageType             string  `json:"title_page_type"`
 		BackgroundURL             string  `json:"background_url"`
 		BackgroundColor           string  `json:"background_color"`
 		LogoURL                   string  `json:"logo_url"`
@@ -97,11 +97,11 @@ type (
 		TnC                       string  `json:"tnc"`
 		TncColor                  string  `json:"tnc_color"`
 		TncStyle                  string  `json:"tnc_style"`
-		TncPageStype              string  `json:"tnc_page_type"`
+		TncPageType               string  `json:"tnc_page_type"`
 		Price                     string  `json:"price"`
 		PriceColor                string  `json:"price_color"`
 		PriceStyle                string  `json:"price_style"`
-		PricePageStype            string  `json:"price_page_type"`
+		PricePageType             string  `json:"price_page_type"`
 		StatusSubmitKeyMainstream bool    `json:"status_submit_key_mainstream"`
 		KeyMainstream             string  `json:"key_mainstream"`
 		Channel                   string  `json:"channel"`

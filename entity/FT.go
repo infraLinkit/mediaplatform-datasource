@@ -7,6 +7,7 @@ type (
 		CostPerConversion string `json:"cost_per_conversion"`
 		AgencyFee         string `json:"agency_fee"`
 		TargetDailyBudget string `json:"target_daily_budget"`
+		TechnicalFee      string `json:"technical_fee"`
 	}
 
 	DataCampaignAction struct {
@@ -84,6 +85,25 @@ type (
 		BudgetUsage               string  `json:"budget_usage"`
 		URLPostback               string  `json:"url_postback"`
 		PostbackMethod            string  `json:"postback_method"`
+		MainstreamLPType          string  `json:"mainstream_lp_type"`
+		Title                     string  `json:"title"`
+		TitleColor                string  `json:"title_color"`
+		TitleStyle                string  `json:"title_style"`
+		TitlePageStype            string  `json:"title_page_type"`
+		BackgroundURL             string  `json:"background_url"`
+		BackgroundColor           string  `json:"background_color"`
+		LogoURL                   string  `json:"logo_url"`
+		BannerURL                 string  `json:"banner_url"`
+		TnC                       string  `json:"tnc"`
+		TncColor                  string  `json:"tnc_color"`
+		TncStyle                  string  `json:"tnc_style"`
+		TncPageStype              string  `json:"tnc_page_type"`
+		Price                     string  `json:"price"`
+		PriceColor                string  `json:"price_color"`
+		PriceStyle                string  `json:"price_style"`
+		PricePageStype            string  `json:"price_page_type"`
+		StatusSubmitKeyMainstream bool    `json:"status_submit_key_mainstream"`
+		KeyMainstream             string  `json:"key_mainstream"`
 	}
 
 	//'{"id":1,"urlservicekey":"idtelgempastelmbv","campaign_id":"ID01","country":"ID","partner":"pass","operator":"telkomsel","aggregator":"telesat","service":"gazy","short_code":"1234","adnet":"mbv","keyword":"gazy","subkeyword":"","is_billable":false,"plan":"","traffic":0,"landing":0,"click":0,"redirect":0,"traffic_data":[],"landing_data":[],"click_data":[],"redirect_data":[]}'
@@ -133,59 +153,6 @@ type (
 		Code   string `json:"code"`
 		Status bool   `json:"status"`
 	}
-
-	/* PixelStorage struct {
-		Id                int    `json:"id"`
-		CampaignDetailId  int    `json:"campaign_detail_id"`
-		PxDate            string `json:"pxdate"`
-		URLServiceKey     string `json:"urlservicekey"`
-		CampaignId        string `json:"campaign_id"`
-		Country           string `json:"country"`
-		Partner           string `json:"partner"`
-		Operator          string `json:"operator"`
-		Aggregator        string `json:"aggregator"`
-		Service           string `json:"service"`
-		ShortCode         string `json:"short_code"`
-		Adnet             string `json:"adnet"`
-		Keyword           string `json:"keyword"`
-		Subkeyword        string `json:"subkeyword"`
-		IsBillable        bool   `json:"is_billable"`
-		Plan              string `json:"plan"`
-		URL               string `json:"url"`
-		URLType           string `json:"url_type"`
-		Pixel             string `json:"pixel"`
-		TrxId             string `json:"trx_id"`
-		Token             string `json:"token"`
-		Msisdn            string `json:"msisdn"`
-		IsUsed            bool   `json:"is_used"`
-		Browser           string `json:"browser"`
-		OS                string `json:"os"`
-		IP                string `json:"ip"`
-		ISP               string `json:"isp"`
-		ReferralURL       string `json:"referral_url"`
-		PubId             string `json:"pubid"`
-		UserAgent         string `json:"user_agent"`
-		TrafficSource     bool   `json:"traffic_source"`
-		TrafficSourceData string `json:"traffic_source_data"`
-		UserRejected      bool   `json:"user_rejected"`
-		UniqueClick       bool   `json:"unique_click"`
-		UserDuplicated    bool   `json:"user_duplicated"`
-		Handset           string `json:"handset"`
-		HandsetCode       string `json:"handset_code"`
-		HandsetType       string `json:"handset_type"`
-		URLLanding        string `json:"url_landing"`
-		URLWarpLanding    string `json:"url_warp_landing"`
-		URLService        string `json:"url_service"`
-		URLTFCSmartlink   string `json:"url_tfc_or_smartlink"`
-		PixelUsedDate     string `json:"pixel_used_date"`
-		StatusPostback    bool   `json:"status_postback"`
-		IsUnique          bool   `json:"is_unique"`
-		URLPostback       string `json:"url_postback"`
-		StatusURLPostback string `json:"status_url_postback"`
-		ReasonURLPostback string `json:"reason_url_postback"`
-		PO                string `json:"po"`
-		Cost              string `json:"cost"`
-	} */
 
 	AlertData struct {
 		Platform string     `json:"platform"`
@@ -258,5 +225,6 @@ type (
 		TotalReserved8     int    `json:"total_reserved8"`
 		TotalReserved9     int    `json:"total_reserved9"`
 		TotalReserved10    int    `json:"total_reserved10"`
+		CampaignObjective  string `json:"campaign_objective"`
 	}
 )

@@ -75,8 +75,37 @@ type (
 		AgencyFee                 float64   `gorm:"type:double precision" json:"agency_fee"`
 		TargetDailyBudget         float64   `gorm:"type:double precision" json:"target_daily_budget"`
 		URLPostback               string    `gorm:"size:255;default:NA" json:"url_postback"`
+		MainstreamLPType          string    `gorm:"size:50;default:NA" json:"mainstream_lp_type"`
+		Title                     string    `gorm:"size:80;default:NA" json:"title"`
+		TitleColor                string    `gorm:"size:50;default:NA" json:"title_color"`
+		TitleStyle                string    `gorm:"size:50;default:NA" json:"title_style"`
+		TitlePageStype            string    `gorm:"size:50;default:NA" json:"title_page_type"`
+		BackgroundURL             string    `gorm:"size:255;default:NA" json:"background_url"`
+		BackgroundColor           string    `gorm:"size:50;default:NA" json:"background_color"`
+		LogoURL                   string    `gorm:"size:255;default:NA" json:"logo_url"`
+		BannerURL                 string    `gorm:"size:255;default:NA" json:"banner_url"`
+		TnC                       string    `gorm:"size:255;default:NA" json:"tnc"`
+		TncColor                  string    `gorm:"size:50;default:NA" json:"tnc_color"`
+		TncStyle                  string    `gorm:"size:50;default:NA" json:"tnc_style"`
+		TncPageStype              string    `gorm:"size:50;default:NA" json:"tnc_page_type"`
+		Price                     string    `gorm:"size:255;default:NA" json:"price"`
+		PriceColor                string    `gorm:"size:50;default:NA" json:"price_color"`
+		PriceStyle                string    `gorm:"size:50;default:NA" json:"price_style"`
+		PricePageStype            string    `gorm:"size:50;default:NA" json:"price_page_type"`
+		StatusSubmitKeyMainstream bool      `gorm:"not null;default:false" json:"status_submit_key_mainstream"`
+		KeyMainstream             string    `gorm:"size:50;default:NA" json:"key_mainstream"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
+	}
+
+	LpDesignType struct {
+		gorm.Model
+		ID                int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		MainstreamLPType  string `gorm:"size:50" json:"mainstream_lp_type"`
+		Description       string `gorm:"not null;size:255;default:NA" json:"description"`
+		SampleImageBanner string `gorm:"not null;size:255" json:"sample_image_banner"`
+		CreatedAt         time.Time
+		UpdatedAt         time.Time
 	}
 
 	ResultCampaign struct {
@@ -200,6 +229,7 @@ type (
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
 		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
+		CampaignObjective string    `gorm:"not null;size:50" json:"campaign_objective"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
@@ -265,6 +295,7 @@ type (
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
 		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
+		CampaignObjective string    `gorm:"not null;size:50" json:"campaign_objective"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
@@ -380,6 +411,8 @@ type (
 		TotalWakiAgencyFee       float64   `gorm:"type:double precision" json:"total_waki_agency_fee"`
 		BudgetUsage              float64   `gorm:"type:double precision" json:"budget_usage"`
 		TargetDailyBudgetChanges int       `gorm:"not null;length:12;default:0" json:"target_daily_budget_changes"`
+		TechnicalFee             float64   `gorm:"type:double precision" json:"technical_fee"`
+		CampaignObjective        string    `gorm:"not null;size:50" json:"campaign_objective"`
 		CreatedAt                time.Time
 		UpdatedAt                time.Time
 	}
@@ -645,6 +678,7 @@ type (
 		IsActive   string    `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
 		Lastupdate time.Time `gorm:"type:timestamp" json:"lastupdate"`
 	}
+
 	Partner struct {
 		ID             uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 		Country        string    `gorm:"type:varchar(10)" json:"country"`

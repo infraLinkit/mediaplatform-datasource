@@ -222,7 +222,7 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	return ss, total_rows, rows.Err()
 }
 
-func (r *BaseModel) GetDataDistinctPerformanceReport(o entity.DisplayPinReport) ([]entity.ApiPinPerformance, error) {
+func (r *BaseModel) GetDataDistinctPerformanceReport(o entity.ApiPinPerformance) ([]entity.ApiPinPerformance, error) {
 
 	var (
 		rows *sql.Rows

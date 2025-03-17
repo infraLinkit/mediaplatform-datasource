@@ -292,16 +292,16 @@ type (
 		StatusURLPostback string    `gorm:"size:50" json:"status_url_postback"`
 		ReasonURLPostback string    `gorm:"size:255" json:"reason_url_postback"`
 		IsActive          bool      `gorm:"not null;default:false" json:"is_active"`
-		CounterMOCapping  int       `gorm:"not null;length:10" json:"counter_mo_capping"`
-		MOCapping         int       `gorm:"not null;length:10" json:"mo_capping"`
+		CounterMOCapping  int       `gorm:"length:10;default:0" json:"counter_mo_capping"`
+		MOCapping         int       `gorm:"length:10;default:0" json:"mo_capping"`
 		StatusCapping     bool      `gorm:"not null;default:false" json:"status_capping"`
-		CounterMORatio    int       `gorm:"not null;length:10" json:"counter_mo_ratio"`
+		CounterMORatio    int       `gorm:"not null;length:10;default:0" json:"counter_mo_ratio"`
 		RatioSend         int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
 		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
-		CampaignObjective string    `gorm:"not null;size:50" json:"campaign_objective"`
-		Channel           string    `gorm:"not null;size:50" json:"channel"`
+		CampaignObjective string    `gorm:"size:50;default:NA" json:"campaign_objective"`
+		Channel           string    `gorm:"size:50;default:NA" json:"channel"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
@@ -388,41 +388,41 @@ type (
 		Adnet                    string    `gorm:"not null;size:50" json:"adnet"`
 		Service                  string    `gorm:"not null;size:50" json:"service"`
 		ShortCode                string    `gorm:"not null;size:50" json:"short_code"`
-		Traffic                  int       `gorm:"not null;length:20;default:0" json:"traffic"`
-		Landing                  int       `gorm:"not null;length:20;default:0" json:"landing"`
-		MoReceived               int       `gorm:"not null;length:20;default:0" json:"mo_received"`
-		CR                       float64   `gorm:"type:double precision" json:"cr"`
-		Postback                 int       `gorm:"not null;length:20;default:0" json:"postback"`
-		TotalFP                  int       `gorm:"not null;length:20;default:0" json:"total_fp"`
-		SuccessFP                int       `gorm:"not null;length:20;default:0" json:"success_fp"`
-		Billrate                 float64   `gorm:"type:double precision" json:"billrate"`
-		ROI                      float64   `gorm:"type:double precision" json:"roi"`
-		PO                       float64   `gorm:"type:double precision" json:"po"`
-		FirstPush                float64   `gorm:"type:double precision" json:"first_push"`
-		Cost                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cost"`
-		SBAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
-		SAAF                     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
-		CPA                      float64   `gorm:"type:double precision" json:"cpa"`
-		Revenue                  float64   `gorm:"type:double precision;not null;length:20;default:0" json:"revenue"`
+		Traffic                  int       `gorm:"length:20;default:0" json:"traffic"`
+		Landing                  int       `gorm:"length:20;default:0" json:"landing"`
+		MoReceived               int       `gorm:"length:20;default:0" json:"mo_received"`
+		CR                       float64   `gorm:"type:double precision;default:0" json:"cr"`
+		Postback                 int       `gorm:"length:20;default:0" json:"postback"`
+		TotalFP                  int       `gorm:"length:20;default:0" json:"total_fp"`
+		SuccessFP                int       `gorm:"length:20;default:0" json:"success_fp"`
+		Billrate                 float64   `gorm:"type:double precision;default:0" json:"billrate"`
+		ROI                      float64   `gorm:"type:double precision;default:0" json:"roi"`
+		PO                       float64   `gorm:"type:double precision;default:0" json:"po"`
+		FirstPush                float64   `gorm:"type:double precision;default:0" json:"first_push"`
+		Cost                     float64   `gorm:"type:double precision;length:20;default:0" json:"cost"`
+		SBAF                     float64   `gorm:"type:double precision;length:20;default:0" json:"sbaf"`
+		SAAF                     float64   `gorm:"type:double precision;length:20;default:0" json:"saaf"`
+		CPA                      float64   `gorm:"type:double precision;default:0" json:"cpa"`
+		Revenue                  float64   `gorm:"type:double precision;length:20;default:0" json:"revenue"`
 		URLAfter                 string    `gorm:"size:255;default:NA" json:"url_after"`
 		URLBefore                string    `gorm:"size:255;default:NA" json:"url_before"`
-		MOLimit                  int       `gorm:"not null;length:10;default:0" json:"mo_limit"`
-		RatioSend                int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
-		RatioReceive             int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
+		MOLimit                  int       `gorm:"length:10;default:0" json:"mo_limit"`
+		RatioSend                int       `gorm:"length:10;default:1" json:"ratio_send"`
+		RatioReceive             int       `gorm:"length:10;default:4" json:"ratio_receive"`
 		Company                  string    `gorm:"size:255;default:NA" json:"company"`
 		ClientType               string    `gorm:"size:30;default:NA" json:"client_type"`
-		CostPerConversion        float64   `gorm:"type:double precision" json:"cost_per_conversion"`
-		AgencyFee                float64   `gorm:"type:double precision" json:"agency_fee"`
-		TargetDailyBudget        float64   `gorm:"type:double precision" json:"target_daily_budget"`
-		CrMO                     float64   `gorm:"type:double precision" json:"cr_mo"`
-		CrPostback               float64   `gorm:"type:double precision" json:"cr_postback"`
-		TotalWakiAgencyFee       float64   `gorm:"type:double precision" json:"total_waki_agency_fee"`
-		BudgetUsage              float64   `gorm:"type:double precision" json:"budget_usage"`
-		TargetDailyBudgetChanges int       `gorm:"not null;length:12;default:0" json:"target_daily_budget_changes"`
-		TechnicalFee             float64   `gorm:"type:double precision" json:"technical_fee"`
-		CampaignObjective        string    `gorm:"not null;size:50" json:"campaign_objective"`
-		Channel                  string    `gorm:"not null;size:50" json:"channel"`
-		PricePerMO               float64   `gorm:"type:double precision" json:"price_per_mo"`
+		CostPerConversion        float64   `gorm:"type:double precision;default:0" json:"cost_per_conversion"`
+		AgencyFee                float64   `gorm:"type:double precision;default:0" json:"agency_fee"`
+		TargetDailyBudget        float64   `gorm:"type:double precision;default:0" json:"target_daily_budget"`
+		CrMO                     float64   `gorm:"type:double precision;default:0" json:"cr_mo"`
+		CrPostback               float64   `gorm:"type:double precision;default:0" json:"cr_postback"`
+		TotalWakiAgencyFee       float64   `gorm:"type:double precision;default:0" json:"total_waki_agency_fee"`
+		BudgetUsage              float64   `gorm:"type:double precision;default:0" json:"budget_usage"`
+		TargetDailyBudgetChanges int       `gorm:"length:12;default:0" json:"target_daily_budget_changes"`
+		TechnicalFee             float64   `gorm:"type:double precision;default:0" json:"technical_fee"`
+		CampaignObjective        string    `gorm:"size:50;default:NA" json:"campaign_objective"`
+		Channel                  string    `gorm:"size:50;default:NA" json:"channel"`
+		PricePerMO               float64   `gorm:"type:double precision;default:0" json:"price_per_mo"`
 		CreatedAt                time.Time
 		UpdatedAt                time.Time
 	}

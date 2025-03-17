@@ -227,5 +227,6 @@ type (
 		TotalReserved9     int    `json:"total_reserved9"`
 		TotalReserved10    int    `json:"total_reserved10"`
 		CampaignObjective  string `json:"campaign_objective"`
+		Channel            string `json:"channel"`
 	}
 )

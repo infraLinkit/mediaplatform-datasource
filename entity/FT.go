@@ -7,6 +7,7 @@ type (
 		CostPerConversion string `json:"cost_per_conversion"`
 		AgencyFee         string `json:"agency_fee"`
 		TargetDailyBudget string `json:"target_daily_budget"`
+		TechnicalFee      string `json:"technical_fee"`
 	}
 
 	DataCampaignAction struct {

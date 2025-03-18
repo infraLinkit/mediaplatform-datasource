@@ -341,6 +341,8 @@ func (h *BaseModel) RGetDisplayCPAReport(key string, path string) ([]entity.Summ
 		}
 	}
 
+	fmt.Println("---- Query from Redis / not from DB ----")
+
 	return p, isEmpty
 }
 
@@ -592,4 +594,33 @@ func (h *BaseModel) RGetUserApprovalRequest(key string, path string) ([]entity.U
 	}
 
 	return p, isEmpty
+}
+
+func (h *BaseModel) RGetDisplayMainstreamReport(key string, path string) ([]entity.SummaryCampaign, bool) {
+	var (
+		isempty bool
+		p       []entity.SummaryCampaign
+	)
+
+	ctx := context.Background()
+
+	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
+
+	for _, v := range data {
+		var displaymainstreamreport [][]entity.SummaryCampaign
+		v.DecodeJSON(&displaymainstreamreport)
+
+		if len(displaymainstreamreport) > 0 {
+			isempty = false
+			p = displaymainstreamreport[0]
+			h.Logs.Debug(fmt.Sprintf("Found & success parse json key (%s), total data : %d ...\n", key, len(p)))
+		} else {
+			isempty = true
+			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
+		}
+	}
+
+	fmt.Println("---- Query from redis ----")
+
+	return p, isempty
 }

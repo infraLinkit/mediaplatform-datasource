@@ -89,6 +89,8 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
 
+	fmt.Println("---- Query from DB / Not from Redis ----")
+
 	return ss, rows.Err()
 }
 

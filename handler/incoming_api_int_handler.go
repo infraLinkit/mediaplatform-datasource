@@ -342,62 +342,60 @@ func (h *IncomingHandler) UpdateAgencyCost(c *fiber.Ctx) error {
 			})
 		}
 
-		var agencyFee float64
-		var err error
-		if AgencyFee != "" {
-			agencyFee, err = strconv.ParseFloat(AgencyFee, 64)
-			if err != nil {
-				h.Logs.Error(fmt.Sprintf("Failed to parse float: %v", err))
-				return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
-					Code:    fiber.StatusBadRequest,
-					Message: "Invalid agency_fee value",
-				})
-			}
-		}
-
-		var costPerConversion float64
-		if CostPerConversion != "" {
-			costPerConversion, err = strconv.ParseFloat(CostPerConversion, 64)
-			if err != nil {
-				h.Logs.Error(fmt.Sprintf("Failed to parse float : %v", err))
-				return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
-					Code:    fiber.StatusBadRequest,
-					Message: "Invalid cost_per_conversion value",
-				})
-			}
-		}
-
-		var technicalFee float64
-		if TechnicalFee != "" {
-			technicalFee, err = strconv.ParseFloat(TechnicalFee, 64)
-			if err != nil {
-				h.Logs.Error(fmt.Sprintf("Failed to parse float : %v", err))
-				return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
-					Code:    fiber.StatusBadRequest,
-					Message: "Invalid technical_fee value",
-				})
-			}
-		}
-
-		err = h.DS.UpdateAgencyCostModel(entity.SummaryCampaign{
-			AgencyFee:         agencyFee,
-			CostPerConversion: costPerConversion,
-			TechnicalFee:      technicalFee,
-		})
-
-		// gs, _ := h.DS.GetDataConfig("global_setting", "$")
-
-		// if gs == nil {
-		// 	h.Logs.Warn("Global setting not found in Redis, initializing new configuration")
-		// 	gs = &entity.DataConfig{
-		// 		CPCR:              "",
-		// 		AgencyFee:         "",
-		// 		CostPerConversion: "",
-		// 		TechnicalFee:      "",
+		// var agencyFee float64
+		// var err error
+		// if AgencyFee != "" {
+		// 	if err != nil {
+		// 		h.Logs.Error(fmt.Sprintf("Failed to parse float: %v", err))
+		// 		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+		// 			Code:    fiber.StatusBadRequest,
+		// 			Message: "Invalid agency_fee value",
+		// 		})
 		// 	}
 		// }
+		// agencyFee, err := strconv.ParseFloat(AgencyFee, 64)
 
-		h.Logs.Info("Successfully updated agency cost and/or cost per conversion in database.")
+		// var costPerConversion float64
+		// if CostPerConversion != "" {
+		// 	if err != nil {
+		// 		h.Logs.Error(fmt.Sprintf("Failed to parse float : %v", err))
+		// 		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+		// 			Code:    fiber.StatusBadRequest,
+		// 			Message: "Invalid cost_per_conversion value",
+		// 		})
+		// 	}
+		// }
+		// costPerConversion, err := strconv.ParseFloat(CostPerConversion, 64)
+
+		// var technicalFee float64
+		// if TechnicalFee != "" {
+		// 	if err != nil {
+		// 		h.Logs.Error(fmt.Sprintf("Failed to parse float : %v", err))
+		// 		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+		// 			Code:    fiber.StatusBadRequest,
+		// 			Message: "Invalid technical_fee value",
+		// 		})
+		// 	}
+		// }
+		// technicalFee, err := strconv.ParseFloat(TechnicalFee, 64)
+
+		// err = h.DS.UpdateAgencyCostModel(entity.SummaryCampaign{
+		// 	AgencyFee:         agencyFee,
+		// 	CostPerConversion: costPerConversion,
+		// 	TechnicalFee:      technicalFee,
+		// })
+
+		redisKey := strings.ToLower("global_setting")
+
+		gset, err := json.Marshal(entity.GlobalSetting{
+			AgencyFee:         AgencyFee,
+			CostPerConversion: CostPerConversion,
+			TechnicalFee:      TechnicalFee,
+		})
+
+		h.DS.SetData(redisKey, "$", string(gset))
+
+		h.Logs.Info("Successfully send to Redis AgencyFee & CostPerConversion & TechnicalFee.")
 
 		if err != nil {
 			h.Logs.Error(fmt.Sprintf("Failed to update: %v", err))
@@ -409,7 +407,7 @@ func (h *IncomingHandler) UpdateAgencyCost(c *fiber.Ctx) error {
 
 		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
 			Code:    fiber.StatusOK,
-			Message: "Successfully updated agency_fee & cost_per_conversion",
+			Message: "Successfully updated agency_fee & cost_per_conversion & technical_fee",
 		})
 
 	}

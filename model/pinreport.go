@@ -155,7 +155,7 @@ func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceRep
 	return ss, total_rows, rows.Err()
 }
 
-func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) ([]entity.PixelStorage, int64, error) {
+func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) ([]entity.MO, int64, error) {
 
 	var (
 		rows       *sql.Rows
@@ -163,7 +163,7 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	)
 
 	// Apply filters, minus the pagination constraints
-	query := r.DB.Model(&entity.PixelStorage{})
+	query := r.DB.Model(&entity.MO{})
 	if o.Action == "Search" {
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
@@ -210,9 +210,9 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	rows, _ = query_limit.Order("pxdate").Rows()
 	defer rows.Close()
 
-	var ss []entity.PixelStorage
+	var ss []entity.MO
 	for rows.Next() {
-		var s entity.PixelStorage
+		var s entity.MO
 		r.DB.ScanRows(rows, &s)
 		ss = append(ss, s)
 	}
@@ -222,7 +222,7 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	return ss, total_rows, rows.Err()
 }
 
-func (r *BaseModel) GetDataDistinctPerformanceReport(o entity.DisplayPinReport) ([]entity.ApiPinPerformance, error) {
+func (r *BaseModel) GetDataDistinctPerformanceReport(o entity.ApiPinPerformance) ([]entity.ApiPinPerformance, error) {
 
 	var (
 		rows *sql.Rows

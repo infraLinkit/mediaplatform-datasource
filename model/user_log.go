@@ -6,6 +6,10 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
+func (m *BaseModel) CreateUserLog(userlog *entity.Audit) error {
+	return m.DB.Create(userlog).Error
+}
+
 func (r *BaseModel) GetUserLogList(o entity.GlobalRequestFromDataTable) ([]entity.DisplayUserLogList, int64, error) {
 	var (
 		logs      []entity.DisplayUserLogList

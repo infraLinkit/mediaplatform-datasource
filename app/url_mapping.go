@@ -53,6 +53,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/campaign-monitoring-summary", h.DisplayCampaignSummary).Name("Campaign Summary")
 	rpt.Get("/alertreport/:v", h.DisplayAlertReportAll).Name("All Alert Report list/")
 	rpt.Get("/trafficreport", h.DisplayTrafficReport).Name("Traffic Report list")
+	rpt.Get("/mainstreamreport", h.DisplayMainstreamReport).Name("Mainstream Report list")
 
 	// API Internal
 	internal := v1.Group("/int") // Internal API
@@ -103,6 +104,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 
 	// User Log
 	userlog := management.Group("/userlog")
+	userlog.Post("/", h.CreateUserLog).Name(" Save User Log List")
 	userlog.Get("/", h.DisplayUserLogList).Name(" Display User Log List")
 	userlog.Get("/:id", h.DisplayUserLogHistory).Name(" Display User Log History")
 

@@ -136,3 +136,34 @@ func (h *IncomingHandler) DisplayUserLogHistory(c *fiber.Ctx) error {
 
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
+
+func (h *IncomingHandler) CreateUserLog(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	var audit entity.Audit
+
+	if errForm := c.BodyParser(&audit); errForm != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   errForm.Error(),
+		})
+	}
+
+	if errValidation := validate.Struct(audit); errValidation != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Validation error",
+			"errors":  errValidation.Error(),
+		})
+	}
+
+	if errCreate := h.DS.CreateUserLog(&audit); errCreate != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create log",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+
+}

@@ -91,11 +91,11 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 
 						bodyReq, _ := json.Marshal(px)
 
-						corId := "RTO" + helper.GetUniqId(h.Config.TZ)
+						corId := "POP" + helper.GetUniqId(h.Config.TZ)
 
 						published := h.Rmqp.PublishMsg(rmqp.PublishItems{
-							ExchangeName: h.Config.RabbitMQRatioExchangeName,
-							QueueName:    h.Config.RabbitMQRatioQueueName,
+							ExchangeName: h.Config.RabbitMQPopulatePostbackExchangeName,
+							QueueName:    h.Config.RabbitMQPopulatePostbackQueueName,
 							ContentType:  h.Config.RabbitMQDataType,
 							CorId:        corId,
 							Payload:      string(bodyReq),

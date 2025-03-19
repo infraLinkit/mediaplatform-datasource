@@ -137,7 +137,7 @@ type (
 		ClickData        []DataCounterDetail         `json:"click_data"`
 		RedirectData     []DataCounterDetail         `json:"redirect_data"`
 		MOData           []DataCounterDetailInternal `json:"mo_data"`
-		PostbackData     []DataCounterDetailInternal `json:"postback_data"`
+		PostbackData     []PixelStorage              `json:"postback_data"`
 		FPData           []DataCounterDetailInternal `json:"fp_data"`
 	}
 

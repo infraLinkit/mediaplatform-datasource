@@ -55,6 +55,8 @@ type (
 		RabbitMQPixelStorageQueueName          string
 		RabbitMQRedisCounterExchangeName       string
 		RabbitMQRedisCounterQueueName          string
+		RabbitMQPopulatePostbackExchangeName   string
+		RabbitMQPopulatePostbackQueueName      string
 		RabbitMQRatioExchangeName              string
 		RabbitMQRatioQueueName                 string
 		RabbitMQPostbackAdnetExchangeName      string
@@ -117,6 +119,8 @@ func InitCfg() *Cfg {
 		RabbitMQPixelStorageQueueName:          os.Getenv("RABBITMQPIXELSTORAGEQUEUENAME"),
 		RabbitMQRedisCounterExchangeName:       os.Getenv("RABBITMQREDISCOUNTEREXCHANGENAME"),
 		RabbitMQRedisCounterQueueName:          os.Getenv("RABBITMQREDISCOUNTERQUEUENAME"),
+		RabbitMQPopulatePostbackExchangeName:   os.Getenv("RABBITMQPOPULATEPOSTBACKEXCHANGENAME"),
+		RabbitMQPopulatePostbackQueueName:      os.Getenv("RABBITMQPOPUlATEPOSTBACKQUEUENAME"),
 		RabbitMQRatioExchangeName:              os.Getenv("RABBITMQRATIOEXCHANGENAME"),
 		RabbitMQRatioQueueName:                 os.Getenv("RABBITMQRATIOQUEUENAME"),
 		RabbitMQPostbackAdnetExchangeName:      os.Getenv("RABBITMQPOSTBACKADNETEXCHANGENAME"),

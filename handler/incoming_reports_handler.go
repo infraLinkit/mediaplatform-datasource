@@ -241,7 +241,7 @@ func (h *IncomingHandler) DisplayConversionLogReportExtra(c *fiber.Ctx, fe entit
 		err                   error
 		total_data            int64
 		isempty               bool
-		conversion_log_report []entity.PixelStorage
+		conversion_log_report []entity.MO
 	)
 
 	if fe.Action != "" {

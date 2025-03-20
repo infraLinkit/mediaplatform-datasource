@@ -746,3 +746,11 @@ type (
 		ActionName    string    `gorm:"type:varchar(255)" json:"action_name"`
 	}
 )
+
+// Hook table campaign_details
+func (o *CampaignDetail) AfterUpdate(tx *gorm.DB) (err error) {
+	if o.CounterMOCapping >= o.MOCapping {
+		tx.Model(&CampaignDetail{}).Where("id = ?", o.ID).Update("last_update_capping", o.LastUpdate)
+	}
+	return
+}

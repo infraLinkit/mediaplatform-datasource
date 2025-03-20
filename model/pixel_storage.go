@@ -1,9 +1,11 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"gorm.io/gorm"
 )
 
 func (r *BaseModel) NewPixel(o entity.PixelStorage) int {
@@ -15,25 +17,52 @@ func (r *BaseModel) NewPixel(o entity.PixelStorage) int {
 	return int(o.ID)
 }
 
-func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, error) {
+func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
-	result := r.DB.Exec("SELECT id, campaign_detail_id, pxdate, url_service_key, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pub_id, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfcor_smartlink, po, cost, is_unique, campaign_objective FROM pixel_storages WHERE url_service_key = ? AND pixel = ?", o.URLServiceKey, o.Pixel).Scan(&o)
+	result := r.DB.Model(&o).
+		Where("url_service_key = ? AND pixel = ?", o.URLServiceKey, o.Pixel).
+		First(&o)
 
-	return o, result.Error
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b {
+		return o, false
+	} else {
+		r.Logs.Warn(fmt.Sprintf("pixel not found %#v", o))
+		return o, true
+	}
 }
 
-func (r *BaseModel) GetToken(o entity.PixelStorage) (entity.PixelStorage, error) {
+func (r *BaseModel) GetToken(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
-	result := r.DB.Exec("SELECT id, campaign_detail_id, pxdate, url_service_key, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pub_id, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfcor_smartlink, po, cost, is_unique, campaign_objective FROM pixel_storages WHERE url_service_key = ? AND token = ?", o.URLServiceKey, o.IsUsed).Scan(&o)
+	result := r.DB.Model(&o).
+		Where("url_service_key = ? AND token = ?", o.URLServiceKey, o.Token).
+		First(&o)
 
-	return o, result.Error
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b {
+		return o, false
+	} else {
+		r.Logs.Warn(fmt.Sprintf("pixel not found %#v", o))
+		return o, true
+	}
 }
 
-func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, error) {
+func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
-	result := r.DB.Exec("SELECT id, campaign_detail_id, pxdate, url_service_key, campaign_id, country, partner, operator, aggregator, service, short_code, adnet, keyword, subkeyword, is_billable, plan, url, url_type, pixel, trx_id, token, msisdn, is_used, browser, os, ip, isp, referral_url, pub_id, user_agent, traffic_source, traffic_source_data, user_rejected, user_duplicated, handset, handset_code, handset_type, url_landing, url_warp_landing, url_service, url_tfcor_smartlink, po, cost, is_unique, campaign_objective FROM pixel_storages WHERE url_service_key = ? AND is_used = ?", o.URLServiceKey, o.IsUsed).Scan(&o)
+	result := r.DB.Model(&o).
+		Where("url_service_key = ? AND is_used = false", o.URLServiceKey).
+		First(&o)
 
-	return o, result.Error
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b {
+		return o, false
+	} else {
+		r.Logs.Warn(fmt.Sprintf("pixel not found %#v", o))
+		return o, true
+	}
 }
 
 func (r *BaseModel) UpdatePixelById(o entity.PixelStorage) error {

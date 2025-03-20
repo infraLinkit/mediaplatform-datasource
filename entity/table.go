@@ -84,7 +84,6 @@ type (
 		BackgroundURL             string    `gorm:"size:255;default:NA" json:"background_url"`
 		BackgroundColor           string    `gorm:"size:50;default:NA" json:"background_color"`
 		LogoURL                   string    `gorm:"size:255;default:NA" json:"logo_url"`
-		BannerURL                 string    `gorm:"size:255;default:NA" json:"banner_url"`
 		TnC                       string    `gorm:"size:255;default:NA" json:"tnc"`
 		TncColor                  string    `gorm:"size:50;default:NA" json:"tnc_color"`
 		TncStyle                  string    `gorm:"size:50;default:NA" json:"tnc_style"`

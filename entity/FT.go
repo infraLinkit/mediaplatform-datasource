@@ -94,7 +94,6 @@ type (
 		BackgroundURL             string  `json:"background_url"`
 		BackgroundColor           string  `json:"background_color"`
 		LogoURL                   string  `json:"logo_url"`
-		BannerURL                 string  `json:"banner_url"`
 		TnC                       string  `json:"tnc"`
 		TncColor                  string  `json:"tnc_color"`
 		TncStyle                  string  `json:"tnc_style"`

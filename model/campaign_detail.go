@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"gorm.io/gorm"
@@ -166,7 +167,7 @@ func (r *BaseModel) GetCampaignDetail(o entity.CampaignDetail) (entity.CampaignD
 
 func (r *BaseModel) CounterCappingById(o entity.CampaignDetail) error {
 
-	result := r.DB.Exec("UPDATE campaign_details SET counter_mo_capping = counter_mo_capping+1, last_update_capping = CASE WHEN counter_mo_capping >= mo_capping THEN NOW() END WHERE id = ?", o.ID)
+	result := r.DB.Exec("UPDATE campaign_details SET counter_mo_capping = counter_mo_capping+1, last_update_capping = CASE WHEN counter_mo_capping >= mo_capping THEN "+o.LastUpdateCapping.Format(time.RFC3339)+"::timestamp(0) END WHERE id = ?", o.ID)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
@@ -184,7 +185,7 @@ func (r *BaseModel) CounterRatioById(o entity.CampaignDetail) error {
 
 func (r *BaseModel) UpdateStatusCounterById(o entity.CampaignDetail) error {
 
-	result := r.DB.Exec("UPDATE campaign_details SET counter_mo_capping = ?, status_capping = ?, counter_mo_ratio = ?, status_ratio = ?, last_update = ?, last_update_capping = CASE WHEN counter_mo_capping+1 >= mo_capping THEN NOW() END WHERE id = ?", o.CounterMOCapping, o.StatusCapping, o.CounterMORatio, o.StatusRatio, o.LastUpdate, o.ID)
+	result := r.DB.Exec("UPDATE campaign_details SET counter_mo_capping = ?, status_capping = ?, counter_mo_ratio = ?, status_ratio = ?, last_update = ?, last_update_capping = CASE WHEN counter_mo_capping+1 >= mo_capping THEN "+o.LastUpdateCapping.Format(time.RFC3339)+"::timestamp(0) END WHERE id = ?", o.CounterMOCapping, o.StatusCapping, o.CounterMORatio, o.StatusRatio, o.LastUpdate, o.ID)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 

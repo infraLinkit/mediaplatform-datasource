@@ -36,7 +36,7 @@ func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, bool) {
 func (r *BaseModel) GetToken(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
 	result := r.DB.Model(&o).
-		Where("url_service_key = ? AND token = ?", o.URLServiceKey, o.Token).
+		Where("url_service_key = ? AND token = ?", o.URLServiceKey, o.Pixel).
 		First(&o)
 
 	b := errors.Is(result.Error, gorm.ErrRecordNotFound)

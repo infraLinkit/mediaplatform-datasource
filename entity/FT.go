@@ -88,20 +88,22 @@ type (
 		PostbackMethod            string  `json:"postback_method"`
 		MainstreamLpType          string  `json:"mainstream_lp_type"`
 		Title                     string  `json:"title"`
+		TitleOriginal             string  `json:"title_original"`
 		TitleColor                string  `json:"title_color"`
 		TitleStyle                string  `json:"title_style"`
 		TitlePageType             string  `json:"title_page_type"`
 		BackgroundURL             string  `json:"background_url"`
 		BackgroundColor           string  `json:"background_color"`
 		LogoURL                   string  `json:"logo_url"`
-		TnC                       string  `json:"tnc"`
+		URLBannerOriginal         string  `json:"url_banner_original"`
+		Tnc                       string  `json:"tnc"`
+		TncOriginal               string  `json:"tnc_original"`
 		TncColor                  string  `json:"tnc_color"`
 		TncStyle                  string  `json:"tnc_style"`
 		TncPageType               string  `json:"tnc_page_type"`
-		Price                     string  `json:"price"`
-		PriceColor                string  `json:"price_color"`
-		PriceStyle                string  `json:"price_style"`
-		PricePageType             string  `json:"price_page_type"`
+		ButtonSubscribe           string  `json:"button_subscribe"`
+		ButtonSubscribeOriginal   string  `json:"button_subscribe_original"`
+		ButtonSubscribeColor      string  `json:"button_subscribe_color"`
 		StatusSubmitKeyMainstream bool    `json:"status_submit_key_mainstream"`
 		KeyMainstream             string  `json:"key_mainstream"`
 		Channel                   string  `json:"channel"`

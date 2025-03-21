@@ -139,7 +139,7 @@ func (r *BaseModel) UpdateStatusCampaignDetail(o entity.CampaignDetail) error {
 	result := r.DB.Model(&o).
 		Where("url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?",
 			o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
-		Updates(map[string]interface{}{"is_active": o.IsActive})
+		Updates(entity.CampaignDetail{IsActive: o.IsActive})
 
 	r.Logs.Debug(fmt.Sprintf("Query Affected: %d, Error: %v", result.RowsAffected, result.Error))
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
@@ -31,9 +32,9 @@ func (h *IncomingHandler) DisplayCampaignManagement(c *fiber.Ctx) error {
 		Partner:      m["partner"],
 		Status:       m["status"],
 		CampaignName: m["campaign_name"],
-		CampaignId: m["campaign_id"],
+		CampaignId:   m["campaign_id"],
 		Page:         page,
-		Draw: 		  draw,
+		Draw:         draw,
 		Action:       m["action"],
 	}
 
@@ -52,8 +53,8 @@ func (h *IncomingHandler) DisplayCampaignManagementExtra(c *fiber.Ctx, fe entity
 	key := "temp_key_api_campaign_management_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err              error
-		isempty          bool
+		err                       error
+		isempty                   bool
 		campaignmanagement        []entity.CampaignManagementData
 		displaycampaignmanagement []entity.CampaignManagementData
 	)
@@ -72,8 +73,8 @@ func (h *IncomingHandler) DisplayCampaignManagementExtra(c *fiber.Ctx, fe entity
 	if err == nil {
 		totalRecords := len(campaignmanagement)
 		pagesize := PAGESIZE
-		page := 1 
-		if fe.Page > 0 { 
+		page := 1
+		if fe.Page > 0 {
 			page = fe.Page
 		}
 		start := (page - 1) * pagesize
@@ -110,7 +111,7 @@ func (h *IncomingHandler) DisplayCampaignManagementExtra(c *fiber.Ctx, fe entity
 
 func (h *IncomingHandler) DisplayCampaignManagementDetail(c *fiber.Ctx, fe entity.DisplayCampaignManagement) entity.ReturnResponse {
 	var (
-		err              error
+		err                             error
 		campaignmanagementdetail        []entity.CampaignManagementDataDetail
 		displaycampaignmanagementdetail []entity.CampaignManagementDataDetail
 	)
@@ -122,10 +123,10 @@ func (h *IncomingHandler) DisplayCampaignManagementDetail(c *fiber.Ctx, fe entit
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithDataTable{
-				Draw:            fe.Draw,
-				Code:            fiber.StatusOK,
-				Message:         config.OK_DESC,
-				Data:            displaycampaignmanagementdetail,
+				Draw:    fe.Draw,
+				Code:    fiber.StatusOK,
+				Message: config.OK_DESC,
+				Data:    displaycampaignmanagementdetail,
 			},
 		}
 	}
@@ -171,6 +172,46 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Campaign data sent to RabbitMQ"})
 }
 
+func (h *IncomingHandler) UpdateStatusCampaign(c *fiber.Ctx) error {
+
+	o := new(entity.CampaignDetail)
+
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	} else {
+
+		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+		// Update to redis with key
+		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+		cfgCmp.IsActive = o.IsActive
+
+		cfgDataConfig, _ := json.Marshal(cfgCmp)
+
+		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+
+		// Update to database
+		h.DS.UpdateCampaignDetail(entity.CampaignDetail{
+			ID:       o.ID,
+			IsActive: o.IsActive,
+		})
+
+		h.DS.UpdateSummaryCampaign(entity.SummaryCampaign{
+			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			Status:        o.IsActive,
+			URLServiceKey: o.URLServiceKey,
+			Country:       cfgCmp.Country,
+			Operator:      cfgCmp.Operator,
+			Partner:       cfgCmp.Partner,
+			Adnet:         cfgCmp.Adnet,
+			Service:       cfgCmp.Service,
+			CampaignId:    cfgCmp.CampaignId,
+		})
+
+		return c.Status(fiber.StatusOK).Send([]byte("OK"))
+	}
+}
 
 func (h *IncomingHandler) GetCampaignCounts(c *fiber.Ctx) error {
 	var input entity.DisplayCampaignManagement
@@ -186,8 +227,8 @@ func (h *IncomingHandler) GetCampaignCounts(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"total_campaign":            counts.TotalCampaigns,
-		"total_active_campaign":     counts.TotalActiveCampaigns,
+		"total_campaign":          counts.TotalCampaigns,
+		"total_active_campaign":   counts.TotalActiveCampaigns,
 		"total_inactive_campaign": counts.TotalNonActiveCampaigns,
 	})
 }

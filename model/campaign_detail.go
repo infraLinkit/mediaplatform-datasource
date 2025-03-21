@@ -93,7 +93,7 @@ func (r *BaseModel) UpdateCampaign(o entity.Campaign) error {
 
 func (r *BaseModel) UpdateCampaignDetail(o entity.CampaignDetail) error {
 
-	result := r.DB.Save(&o)
+	result := r.DB.Raw("UPDATE campaign_details SET is_active = ? WHERE id = ?", o.IsActive, o.ID)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 

@@ -16,6 +16,9 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	// fmt.Println(query)
 	if o.Action == "Search" {
+		if o.CampaignId != "" {
+			query = query.Where("campaign_id = ?", o.CampaignId)
+		}
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
 		}

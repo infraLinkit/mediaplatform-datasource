@@ -213,6 +213,122 @@ func (h *IncomingHandler) UpdateStatusCampaign(c *fiber.Ctx) error {
 	}
 }
 
+func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
+
+	o := new(entity.CampaignDetail)
+
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	} else {
+
+		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+		// Update to redis with key
+		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+		cfgCmp.PO = o.PO
+		cfgCmp.RatioSend = o.RatioSend
+		cfgCmp.RatioReceive = o.RatioReceive
+		cfgCmp.MOCapping = o.MOCapping
+		cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+
+		cfgDataConfig, _ := json.Marshal(cfgCmp)
+
+		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+
+		// Update to database
+		h.DS.EditSettingCampaignDetail(entity.CampaignDetail{
+			PO:            o.PO,
+			MOCapping:     o.MOCapping,
+			RatioSend:     o.RatioSend,
+			RatioReceive:  o.RatioReceive,
+			LastUpdate:    helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			URLServiceKey: o.URLServiceKey,
+			Country:       cfgCmp.Country,
+			Operator:      cfgCmp.Operator,
+			Partner:       cfgCmp.Partner,
+			Adnet:         cfgCmp.Adnet,
+			Service:       cfgCmp.Service,
+			CampaignId:    o.CampaignId,
+		})
+
+		pos, _ := strconv.ParseFloat(strings.TrimSpace(o.PO), 64)
+
+		h.DS.EditSettingSummaryCampaign(entity.SummaryCampaign{
+			PO:            pos,
+			MOLimit:       o.MOCapping,
+			RatioSend:     o.RatioSend,
+			RatioReceive:  o.RatioReceive,
+			URLServiceKey: o.URLServiceKey,
+			Country:       cfgCmp.Country,
+			Operator:      cfgCmp.Operator,
+			Partner:       cfgCmp.Partner,
+			Adnet:         cfgCmp.Adnet,
+			Service:       cfgCmp.Service,
+			CampaignId:    o.CampaignId,
+		})
+
+		return c.Status(fiber.StatusOK).Send([]byte("OK"))
+	}
+}
+
+func (h *IncomingHandler) DelCampaign(c *fiber.Ctx) error {
+
+	o := new(entity.CampaignDetail)
+
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	} else {
+
+		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+		// DELETE REDIS KEY
+		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+		h.DS.DelData(cfgRediskey, "$")
+
+		// DROP Index redis
+		h.DS.R.Conn().B().FtDropindex().Index(cfgRediskey).Build()
+
+		ctrRedisKey := helper.Concat("-", o.URLServiceKey, "counterIdx")
+
+		h.DS.DelData(ctrRedisKey, "$")
+
+		// DROP Index redis
+		h.DS.R.Conn().B().FtDropindex().Index(ctrRedisKey).Build()
+
+		sumRedisKey := helper.Concat("-", o.URLServiceKey, "summary")
+
+		h.DS.DelData(sumRedisKey, "$")
+
+		// DROP Index redis
+		h.DS.R.Conn().B().FtDropindex().Index(sumRedisKey).Build()
+
+		h.DS.DelCampaignDetail(entity.CampaignDetail{
+			URLServiceKey: o.URLServiceKey,
+			Country:       cfgCmp.Country,
+			Operator:      cfgCmp.Operator,
+			Partner:       cfgCmp.Partner,
+			Adnet:         cfgCmp.Adnet,
+			Service:       cfgCmp.Service,
+			CampaignId:    o.CampaignId,
+		})
+
+		h.DS.DelSummaryCampaign(entity.SummaryCampaign{
+			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			URLServiceKey: o.URLServiceKey,
+			Country:       cfgCmp.Country,
+			Operator:      cfgCmp.Operator,
+			Partner:       cfgCmp.Partner,
+			Adnet:         cfgCmp.Adnet,
+			Service:       cfgCmp.Service,
+			CampaignId:    o.CampaignId,
+		})
+
+		return c.Status(fiber.StatusOK).Send([]byte("OK"))
+	}
+}
+
 func (h *IncomingHandler) GetCampaignCounts(c *fiber.Ctx) error {
 	var input entity.DisplayCampaignManagement
 

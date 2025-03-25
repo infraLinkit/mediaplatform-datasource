@@ -568,6 +568,20 @@ type (
 		AdnetCR             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"adnet_cr"`
 		CAC                 float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cac"`
 		PaidCAC             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"paid_cac"`
+		CrMO                float64   `gorm:"type:double precision;default:0" json:"cr_mo"`
+		CrPostback          float64   `gorm:"type:double precision;default:0" json:"cr_postback"`
+		Landing             int       `gorm:"length:20;default:0" json:"landing"`
+		ROI                 float64   `gorm:"type:double precision;default:0" json:"roi"`
+		Arpu90              float64   `gorm:"type:double precision;default:0" json:"arpu90"`
+		BillingRateFP       float64   `gorm:"type:double precision;default:0" json:"billing_rate_FP"`
+		Ratio               float64   `gorm:"type:double precision;default:0" json:"ratio"`
+		PricePerPostback    float64   `gorm:"type:double precision;default:0" json:"price_per_postback"`
+		CostPerConversion   float64   `gorm:"type:double precision" json:"cost_per_conversion"`
+		AgencyFee           float64   `gorm:"type:double precision" json:"agency_fee"`
+		TotalWakiAgencyFee  float64   `gorm:"type:double precision;default:0" json:"total_waki_agency_fee"`
+		TotalSpending       float64   `gorm:"type:double precision;default:0" json:"total_spending"`
+		ClientType          string    `gorm:"not null;size:50" json:"client_type"`
+		CampaignName        string    `gorm:"not null;size:249" json:"campaign_name"`
 		CreatedAt           time.Time
 		UpdatedAt           time.Time
 	}
@@ -666,7 +680,7 @@ type (
 		ID          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Code        string `gorm:"type:varchar(10)" json:"code" validate:"unique,required,max=10"`
 		Code2       string `gorm:"type:varchar(10)" json:"code2" validate:"unique,required,max=10"`
-		Name        string `gorm:"type:varchar(80)" json:"name"  validate:"unique,drequired,max=80"`
+		Name        string `gorm:"type:varchar(80)" json:"name"  validate:"unique,required,max=80"`
 		NumericCode string `gorm:"type:varchar(10)" json:"numeric_code" form:"numeric_code"  validate:"required,max=10"`
 		IsActive    string `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
 	}
@@ -726,7 +740,6 @@ type (
 		Lastupdate   string `gorm:"type:timestamp" json:"lastupdate"`
 		IsDummyPixel string `gorm:"type:bool;default:false" json:"is_dummy_pixel"`
 	}
-
 	Audit struct {
 		ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 		UserType      string    `gorm:"type:varchar(255)" json:"user_type"`
@@ -743,5 +756,24 @@ type (
 		CreatedAt     time.Time `gorm:"type:timestamp" json:"created_at"`
 		UpdatedAt     time.Time `gorm:"type:timestamp" json:"updated_at"`
 		ActionName    string    `gorm:"type:varchar(255)" json:"action_name"`
+	}
+
+	Agency struct {
+		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Code string `gorm:"type:varchar(20)" json:"code"`
+		Name string `gorm:"type:varchar(80)" json:"name"`
+	}
+
+	Channel struct {
+		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name string `gorm:"type:varchar(80)" json:"name" `
+	}
+	MainstreamGroup struct {
+		ID           uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name         string `gorm:"type:varchar(254)" json:"name" `
+		Channel      string `gorm:"type:varchar(80)" json:"channel"  `
+		Agency       string `gorm:"type:varchar(80)" json:"agency" `
+		Service      string `gorm:"type:varchar(80)" json:"service" `
+		UniqueDomain string `gorm:"type:varchar(80)" json:"unique_domain"`
 	}
 )

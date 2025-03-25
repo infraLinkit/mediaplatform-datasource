@@ -233,6 +233,73 @@ func (h *IncomingHandler) DisplayConversionLogReport(c *fiber.Ctx) error {
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
+func (h *IncomingHandler) DisplayPerformanceReport(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil {
+		pageSize = 10
+	}
+	draw, _ := strconv.Atoi(m["draw"])
+	params := entity.PerformaceReportParams{
+		Page:         page,
+		Action:       m["action"],
+		Draw:         draw,
+		PageSize:     pageSize,
+		Country:      m["country"],
+		Company:      m["company"],
+		ClientType:   m["client_type"],
+		Operator:     m["opeartor"],
+		CampaignName: m["campaign_name"],
+		CampaignType: m["campaign_type"],
+		Publisher:    m["publisher"],
+		Service:      m["service"],
+	}
+
+	var (
+		errResponse             error
+		total_data              int64
+		performance_report_list []entity.ApiPinPerformance
+	)
+
+	// key := "temp_key_api_company_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	// need to add redis mechanism here
+	performance_report_list, total_data, errResponse = h.DS.GetPeformanceReport(params)
+
+	r := entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
+	}
+
+	if errResponse == nil {
+
+		r = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            performance_report_list,
+				Draw:            params.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	}
+
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
 func (h *IncomingHandler) DisplayConversionLogReportExtra(c *fiber.Ctx, fe entity.DisplayConversionLogReport) entity.ReturnResponse {
 
 	key := "temp_key_api_conversion_log_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")

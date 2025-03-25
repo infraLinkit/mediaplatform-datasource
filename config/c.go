@@ -31,6 +31,7 @@ const (
 
 type (
 	Cfg struct {
+		AppDockerVer                           string
 		AppHost                                string
 		AppHostPort                            string
 		AppApi                                 string
@@ -57,6 +58,7 @@ type (
 		RabbitMQRedisCounterQueueName          string
 		RabbitMQRatioExchangeName              string
 		RabbitMQRatioQueueName                 string
+		RabbitMQRatioQueueThreshold            int
 		RabbitMQPostbackAdnetExchangeName      string
 		RabbitMQPostbackAdnetQueueName         string
 		RabbitMQCampaignManagementExchangeName string
@@ -91,8 +93,10 @@ func InitCfg() *Cfg {
 	redis_dbindex, _ := strconv.Atoi(os.Getenv("REDISDBINDEX"))
 	redis_port, _ := strconv.Atoi(os.Getenv("REDISPORT"))
 	redis_exp, _ := strconv.Atoi(os.Getenv("REDISKEYEXPIRE"))
+	ratio_queue_threshold, _ := strconv.Atoi(os.Getenv("RABBITMQRATIOQUEUETHRESHOLD"))
 
 	cfg := &Cfg{
+		AppDockerVer:                           os.Getenv("APP_DOCKER_VER"),
 		AppHost:                                os.Getenv("APPHOST"),
 		AppHostPort:                            os.Getenv("APPHOSTPORT"),
 		AppApi:                                 os.Getenv("APPAPI"),
@@ -119,6 +123,7 @@ func InitCfg() *Cfg {
 		RabbitMQRedisCounterQueueName:          os.Getenv("RABBITMQREDISCOUNTERQUEUENAME"),
 		RabbitMQRatioExchangeName:              os.Getenv("RABBITMQRATIOEXCHANGENAME"),
 		RabbitMQRatioQueueName:                 os.Getenv("RABBITMQRATIOQUEUENAME"),
+		RabbitMQRatioQueueThreshold:            ratio_queue_threshold,
 		RabbitMQPostbackAdnetExchangeName:      os.Getenv("RABBITMQPOSTBACKADNETEXCHANGENAME"),
 		RabbitMQPostbackAdnetQueueName:         os.Getenv("RABBITMQPOSTBACKADNETQUEUENAME"),
 		RabbitMQCampaignManagementExchangeName: os.Getenv("RABBITMQCAMPAIGNMANAGEMENTEXCHANGENAME"),

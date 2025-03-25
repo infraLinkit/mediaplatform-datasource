@@ -78,6 +78,10 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	campaign.Get("/campaigncounts", h.GetCampaignCounts).Name("Campaign Management Campaign Counts FE")
 	campaign.Get("/:v", h.DisplayCampaignManagement).Name("Campaign Management Detail FE")
 	campaign.Post("/send", h.SendCampaignHandler).Name("Campaign Management Send FE")
+	campaign.Post("/updatestatus", h.UpdateStatusCampaign).Name("Update status campaign on campaign_details")
+	campaign.Post("/editcampaign", h.EditCampaign).Name("Edit capping campaign on campaign_details")
+	campaign.Post("/delcampaign", h.DelCampaign).Name("Edit capping campaign on campaign_details")
+
 	// Menu
 	menu := management.Group("/menu") // Menu
 	menu.Post("/", h.CreateMenu).Name("Menu Management Create FE")

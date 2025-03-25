@@ -78,21 +78,22 @@ type (
 		URLPostback               string    `gorm:"size:255;default:NA" json:"url_postback"`
 		MainstreamLpType          string    `gorm:"size:50;default:NA" json:"mainstream_lp_type"`
 		Title                     string    `gorm:"size:80;default:NA" json:"title"`
+		TitleOriginal             string    `gorm:"size:80;default:NA" json:"title_original"`
 		TitleColor                string    `gorm:"size:50;default:NA" json:"title_color"`
 		TitleStyle                string    `gorm:"size:50;default:NA" json:"title_style"`
 		TitlePageType             string    `gorm:"size:50;default:NA" json:"title_page_type"`
 		BackgroundURL             string    `gorm:"size:255;default:NA" json:"background_url"`
 		BackgroundColor           string    `gorm:"size:50;default:NA" json:"background_color"`
 		LogoURL                   string    `gorm:"size:255;default:NA" json:"logo_url"`
-		BannerURL                 string    `gorm:"size:255;default:NA" json:"banner_url"`
-		TnC                       string    `gorm:"size:255;default:NA" json:"tnc"`
+		URLBannerOriginal         string    `gorm:"size:255;default:NA" json:"url_banner_original"`
+		Tnc                       string    `gorm:"size:255;default:NA" json:"tnc"`
+		TncOriginal               string    `gorm:"size:255;default:NA" json:"tnc_original"`
 		TncColor                  string    `gorm:"size:50;default:NA" json:"tnc_color"`
 		TncStyle                  string    `gorm:"size:50;default:NA" json:"tnc_style"`
 		TncPageType               string    `gorm:"size:50;default:NA" json:"tnc_page_type"`
-		Price                     string    `gorm:"size:255;default:NA" json:"price"`
-		PriceColor                string    `gorm:"size:50;default:NA" json:"price_color"`
-		PriceStyle                string    `gorm:"size:50;default:NA" json:"price_style"`
-		PricePageType             string    `gorm:"size:50;default:NA" json:"price_page_type"`
+		ButtonSubscribe           string    `gorm:"size:100;default:NA" json:"button_subscribe"`
+		ButtonSubscribeOriginal   string    `gorm:"size:100;default:NA" json:"button_subscribe_original"`
+		ButtonSubscribeColor      string    `gorm:"size:100;default:NA" json:"button_subscribe_color"`
 		StatusSubmitKeyMainstream bool      `gorm:"not null;default:false" json:"status_submit_key_mainstream"`
 		KeyMainstream             string    `gorm:"size:50;default:NA" json:"key_mainstream"`
 		Channel                   string    `gorm:"size:50;default:NA" json:"channel"`
@@ -777,3 +778,11 @@ type (
 		UniqueDomain string `gorm:"type:varchar(80)" json:"unique_domain"`
 	}
 )
+
+// Hook table campaign_details
+func (o *CampaignDetail) AfterUpdate(tx *gorm.DB) (err error) {
+	if o.CounterMOCapping >= o.MOCapping {
+		tx.Model(&CampaignDetail{}).Where("id = ?", o.ID).Update("last_update_capping", o.LastUpdate)
+	}
+	return
+}

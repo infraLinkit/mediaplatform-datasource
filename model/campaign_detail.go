@@ -100,6 +100,15 @@ func (r *BaseModel) UpdateCampaignDetail(o entity.CampaignDetail) error {
 	return result.Error
 }
 
+func (r *BaseModel) SaveCampaignDetail(o entity.CampaignDetail) error {
+
+	result := r.DB.Save(o)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
 func (r *BaseModel) DelCampaign(o entity.Campaign) error {
 
 	result := r.DB.

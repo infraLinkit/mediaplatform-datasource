@@ -124,6 +124,25 @@ type (
 		PageSize     int    `json:"page_size"`
 		ExportData   string `json:"export_data"`
 	}
+
+	PerformaceReportParams struct {
+		Country      string `form:"country" json:"country"`
+		Company      string `form:"company" json:"company"`
+		ClientType   string `form:"client_type" json:"client_type"`
+		Operator     string `form:"operator" json:"operator"`
+		CampaignName string `form:"campaign_name" json:"campaign_name"`
+		CampaignType string `form:"campaign_type" json:"campaign_type"`
+		Publisher    string `form:"publisher" json:"publisher"`
+		Service      string `form:"service" json:"service"`
+		CampaignId   string `form:"campaign_id" json:"campaign_id"`
+		Partner      string `form:"partner" json:"partner"`
+		PageSize     int    `form:"page_size" json:"page_size"`
+		Page         int    `form:"page" json:"page"`
+		Action       string `form:"action" json:"action"`
+		DateStart    string `form:"date_before" json:"date_start"`
+		DateEnd      string `form:"date_after" json:"date_end"`
+		Draw         int    `form:"draw" json:"draw"`
+	}
 )
 
 func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
@@ -200,7 +219,6 @@ func NewInstanceTrxPinPerfonrmanceReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinP
 		PinNotOK:            pinNotOK,
 		PinOkSendAdnet:      pinOkSendAdnet,
 	}
-
 	return &pin
 }
 

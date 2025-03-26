@@ -65,7 +65,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 
 			if !isPX {
 
-				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found"})
+				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found or duplicate used, pixel : " + p.AffSub})
 
 			} else {
 

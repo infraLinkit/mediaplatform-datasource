@@ -20,7 +20,7 @@ func (r *BaseModel) NewPixel(o entity.PixelStorage) int {
 func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
 	result := r.DB.Model(&o).
-		Where("url_service_key = ? AND pixel = ?", o.URLServiceKey, o.Pixel).
+		Where("url_service_key = ? AND pixel = ? AND is_used = false", o.URLServiceKey, o.Pixel).
 		First(&o)
 
 	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
@@ -36,7 +36,7 @@ func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, bool) {
 func (r *BaseModel) GetToken(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
 	result := r.DB.Model(&o).
-		Where("url_service_key = ? AND token = ?", o.URLServiceKey, o.Pixel).
+		Where("url_service_key = ? AND token = ? AND is_used = false", o.URLServiceKey, o.Pixel).
 		First(&o)
 
 	b := errors.Is(result.Error, gorm.ErrRecordNotFound)

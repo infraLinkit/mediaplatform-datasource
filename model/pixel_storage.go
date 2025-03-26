@@ -65,9 +65,21 @@ func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, 
 	}
 }
 
+func (r *BaseModel) UpdatePSByPixel(o entity.PixelStorage) error {
+
+	result := r.DB.Model(&o).
+		Where("url_service_key = ? AND pixel = ?",
+			o.URLServiceKey, o.Pixel).
+		Updates(entity.PixelStorage{IsUsed: o.IsUsed, PixelUsedDate: o.PixelUsedDate, StatusPostback: o.StatusPostback, IsUnique: o.IsUnique, URLPostback: o.URLPostback, StatusURLPostback: o.StatusURLPostback, ReasonURLPostback: o.ReasonURLPostback})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
 func (r *BaseModel) UpdatePixelById(o entity.PixelStorage) error {
 
-	result := r.DB.Model(&o).Select("msisdn = ?, trx_id = ?, is_used = ?, pixel_used_date = ?, status_postback = ?, is_unique = ?, url_postback = ?, status_url_postback = ?, reason_url_postback = ?", o.Msisdn, o.TrxId, o.IsUsed, o.PixelUsedDate, o.StatusPostback, o.IsUnique, o.URLPostback, o.StatusURLPostback, o.ReasonURLPostback)
+	result := r.DB.Save(o)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 

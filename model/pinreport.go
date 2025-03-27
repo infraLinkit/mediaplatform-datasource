@@ -156,7 +156,7 @@ func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceRep
 	return ss, total_rows, rows.Err()
 }
 
-func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) ([]entity.MO, int64, error) {
+func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) ([]entity.PixelStorage, int64, error) {
 
 	var (
 		rows       *sql.Rows
@@ -164,7 +164,13 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	)
 
 	// Apply filters, minus the pagination constraints
-	query := r.DB.Model(&entity.MO{})
+	query := r.DB.Model(&entity.PixelStorage{})
+	query = query.Where("is_used = ?", "true")
+	if o.CampaignType == "mainstream" {
+		query = query.Where("campaign_objective = ?", "MAINSTREAM").Where("status_postback = ? ", "true")
+	} else {
+		query = query.Where("campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
+	}
 	if o.Action == "Search" {
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
@@ -177,6 +183,20 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 		}
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
+		}
+		if o.CampaignType == "mainstream" {
+			if o.Agency != "" {
+				//compare to adnet maybe will change in the future
+				query = query.Where("adnet = ?", o.Agency)
+			}
+		}
+		if o.CampaignType == "s2s" {
+			if o.StatusPostback != "" {
+				query = query.Where("status_postback = ?", o.StatusPostback)
+			}
+			if o.Adnet != "" {
+				query = query.Where("adnet = ?", o.Adnet)
+			}
 		}
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
@@ -193,8 +213,8 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 			case "LASTMONTH":
 				query = query.Where("pxdate BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
-				dateAfter, _ := time.Parse("2006-01-02", o.DateAfter)
-				query = query.Where("pxdate BETWEEN ? AND ?", o.DateBefore, dateAfter.AddDate(0, 0, 1))
+				dateEnd, _ := time.Parse("2006-01-02", o.DateEnd)
+				query = query.Where("pxdate BETWEEN ? AND ?", o.DateStart, dateEnd.AddDate(0, 0, 1))
 			default:
 				query = query.Where("pxdate = ?", o.DateRange)
 			}
@@ -212,9 +232,9 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	rows, _ = query_limit.Order("pxdate").Rows()
 	defer rows.Close()
 
-	var ss []entity.MO
+	var ss []entity.PixelStorage
 	for rows.Next() {
-		var s entity.MO
+		var s entity.PixelStorage
 		r.DB.ScanRows(rows, &s)
 		ss = append(ss, s)
 	}
@@ -233,7 +253,7 @@ func (r *BaseModel) GetPerformanceReport(o entity.PerformaceReportParams) ([]ent
 	query := r.DB.Model(&entity.SummaryCampaign{})
 
 	query.Select(`country, company, client_type, campaign_name, operator, service, adnet, SUM(mo_received) AS pixel_received, SUM(postback) as pixel_send, SUM(cr_postback) as cr_postback,
-SUM(cr_mo) as cr_mo, SUM(landing) as landing, SUM(ratio_send) as ratio_send, SUM(ratio_receive) as ratio_receive,SUM(po) as price_per_postback,SUM(cost_per_conversion) as price_per_conversion,
+SUM(cr_mo) as cr_mo, SUM(landing) as landing, SUM(ratio_send) as ratio_send, SUM(ratio_receive) as ratio_receive,SUM(po) as price_per_postback,SUM(cost_per_conversion) as cost_per_conversion,
 SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total_waki_agency_fee), SUM(total_waki_agency_fee + po*postback) as total_spending,sum(cpa) as e_cpa`)
 
 	if o.Action == "Search" {

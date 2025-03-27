@@ -40,18 +40,21 @@ type (
 	}
 
 	DisplayConversionLogReport struct {
-		Country    string `form:"country" json:"country"`
-		Adnet      string `form:"adnet" json:"adnet"`
-		Operator   string `form:"operator" json:"operator"`
-		CampaignId string `form:"campaign_id" json:"campaign_id"`
-		Pixel      string `form:"pixel" json:"pixel"`
-		Page       int    `form:"page" json:"page"`
-		DateRange  string `form:"date_range" json:"date_range"`
-		DateBefore string `form:"date_before" json:"date_before"`
-		DateAfter  string `form:"date_after" json:"date_after"`
-		Action     string `form:"action" json:"action"`
-		Draw       int    `form:"draw" json:"draw"`
-		PageSize   int    `form:"page_size" json:"page_size"`
+		Country        string `form:"country" json:"country"`
+		Adnet          string `form:"adnet" json:"adnet"`
+		Agency         string `form:"agency" json:"agency"`
+		Operator       string `form:"operator" json:"operator"`
+		CampaignType   string `form:"campaign_type" json:"campaign_type"`
+		CampaignId     string `form:"campaign_id" json:"campaign_id"`
+		StatusPostback string `form:"status_postback" json:"status_postback"`
+		Pixel          string `form:"pixel" json:"pixel"`
+		Page           int    `form:"page" json:"page"`
+		DateRange      string `form:"date_range" json:"date_range"`
+		DateStart      string `form:"date_start" json:"date_start"`
+		DateEnd        string `form:"date_end" json:"date_end"`
+		Action         string `form:"action" json:"action"`
+		Draw           int    `form:"draw" json:"draw"`
+		PageSize       int    `form:"page_size" json:"page_size"`
 	}
 
 	DisplayCPAReport struct { // cpa
@@ -142,6 +145,30 @@ type (
 		DateStart    string `form:"date_before" json:"date_start"`
 		DateEnd      string `form:"date_after" json:"date_end"`
 		Draw         int    `form:"draw" json:"draw"`
+	}
+
+	PerformanceReport struct {
+		Country            string  `json:"country"`
+		Company            string  `json:"company"`
+		ClientType         string  `json:"client_type"`
+		CampaignName       string  `json:"campaign_name"`
+		Operator           string  `json:"operator"`
+		Service            string  `json:"service"`
+		Adnet              string  `json:"adnet"`
+		PixelReceived      int     `json:"pixel_received"`
+		PixelSend          int     `json:"pixel_send"`
+		CRPostback         int     `json:"cr_postback"`
+		CRMo               int     `json:"cr_mo"`
+		Landing            int     `json:"landing"`
+		RatioSend          int     `json:"ratio_send"`
+		RatioReceive       int     `json:"ratio_receive"`
+		PricePerPostback   float64 `json:"price_per_postback"`
+		CostPerConversion  float64 `json:"cost_per_conversion"`
+		AgencyFee          float64 `json:"agency_fee"`
+		SpendingToAdnets   float64 `json:"spending_to_adnets"`
+		TotalWakiAgencyFee float64 `json:"total_waki_agency_fee"`
+		TotalSpending      float64 `json:"total_spending"`
+		ECPA               float64 `json:"e_cpa"`
 	}
 )
 

@@ -359,11 +359,11 @@ func (h *BaseModel) RGetDisplayCPAReport(key string, path string) ([]entity.Summ
 	return p, isEmpty
 }
 
-func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.MO, bool) {
+func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.PixelStorage, bool) {
 
 	var (
 		isEmpty bool
-		p       []entity.MO
+		p       []entity.PixelStorage
 	)
 
 	// Get Config Data Landing
@@ -372,7 +372,7 @@ func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.M
 	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
-		var conversionLogReport [][]entity.MO
+		var conversionLogReport [][]entity.PixelStorage
 		v.DecodeJSON(&conversionLogReport)
 
 		if len(conversionLogReport) > 0 {

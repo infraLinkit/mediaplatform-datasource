@@ -215,18 +215,21 @@ func (h *IncomingHandler) DisplayConversionLogReport(c *fiber.Ctx) error {
 
 	draw, _ := strconv.Atoi(m["draw"])
 	fe := entity.DisplayConversionLogReport{
-		Adnet:      m["adnet"],
-		Country:    m["country"],
-		Operator:   m["operator"],
-		Pixel:      m["pixel"],
-		CampaignId: m["campaign_id"],
-		DateRange:  m["date_range"],
-		DateBefore: m["date_before"],
-		DateAfter:  m["date_after"],
-		Page:       page,
-		Action:     m["action"],
-		Draw:       draw,
-		PageSize:   pageSize,
+		Adnet:          m["adnet"],
+		Agency:         m["agency"],
+		Country:        m["country"],
+		Operator:       m["operator"],
+		Pixel:          m["pixel"],
+		CampaignType:   m["campaign_type"],
+		StatusPostback: m["status_postback"],
+		CampaignId:     m["campaign_id"],
+		DateRange:      m["date_range"],
+		DateStart:      m["date_start"],
+		DateEnd:        m["date_end"],
+		Page:           page,
+		Action:         m["action"],
+		Draw:           draw,
+		PageSize:       pageSize,
 	}
 
 	r := h.DisplayConversionLogReportExtra(c, fe)
@@ -265,13 +268,13 @@ func (h *IncomingHandler) DisplayPerformanceReport(c *fiber.Ctx) error {
 	var (
 		errResponse             error
 		total_data              int64
-		performance_report_list []entity.ApiPinPerformance
+		performance_report_list []entity.PerformanceReport
 	)
 
 	// key := "temp_key_api_company_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	// need to add redis mechanism here
-	performance_report_list, total_data, errResponse = h.DS.GetPeformanceReport(params)
+	performance_report_list, total_data, errResponse = h.DS.GetPerformanceReport(params)
 
 	r := entity.ReturnResponse{
 		HttpStatus: fiber.StatusNotFound,
@@ -308,7 +311,7 @@ func (h *IncomingHandler) DisplayConversionLogReportExtra(c *fiber.Ctx, fe entit
 		err                   error
 		total_data            int64
 		isempty               bool
-		conversion_log_report []entity.MO
+		conversion_log_report []entity.PixelStorage
 	)
 
 	if fe.Action != "" {

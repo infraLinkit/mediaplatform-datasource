@@ -156,7 +156,7 @@ func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceRep
 	return ss, total_rows, rows.Err()
 }
 
-func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) ([]entity.MO, int64, error) {
+func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) ([]entity.PixelStorage, int64, error) {
 
 	var (
 		rows       *sql.Rows
@@ -164,7 +164,13 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	)
 
 	// Apply filters, minus the pagination constraints
-	query := r.DB.Model(&entity.MO{})
+	query := r.DB.Model(&entity.PixelStorage{})
+	query = query.Where("is_used = ?", "true")
+	if o.CampaignType == "mainstream" {
+		query = query.Where("campaign_objective = ?", "MAINSTREAM").Where("status_postback = ? ", "true")
+	} else {
+		query = query.Where("campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
+	}
 	if o.Action == "Search" {
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
@@ -177,6 +183,20 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 		}
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
+		}
+		if o.CampaignType == "mainstream" {
+			if o.Agency != "" {
+				//compare to adnet maybe will change in the future
+				query = query.Where("adnet = ?", o.Agency)
+			}
+		}
+		if o.CampaignType == "s2s" {
+			if o.StatusPostback != "" {
+				query = query.Where("status_postback = ?", o.StatusPostback)
+			}
+			if o.Adnet != "" {
+				query = query.Where("adnet = ?", o.Adnet)
+			}
 		}
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
@@ -193,7 +213,8 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 			case "LASTMONTH":
 				query = query.Where("pxdate BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
-				query = query.Where("pxdate BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
+				dateEnd, _ := time.Parse("2006-01-02", o.DateEnd)
+				query = query.Where("pxdate BETWEEN ? AND ?", o.DateStart, dateEnd.AddDate(0, 0, 1))
 			default:
 				query = query.Where("pxdate = ?", o.DateRange)
 			}
@@ -211,19 +232,17 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	rows, _ = query_limit.Order("pxdate").Rows()
 	defer rows.Close()
 
-	var ss []entity.MO
+	var ss []entity.PixelStorage
 	for rows.Next() {
-		var s entity.MO
+		var s entity.PixelStorage
 		r.DB.ScanRows(rows, &s)
 		ss = append(ss, s)
 	}
 
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(ss)))
-
 	return ss, total_rows, rows.Err()
 }
 
-func (r *BaseModel) GetPeformanceReport(o entity.PerformaceReportParams) ([]entity.ApiPinPerformance, int64, error) {
+func (r *BaseModel) GetPerformanceReport(o entity.PerformaceReportParams) ([]entity.PerformanceReport, int64, error) {
 
 	var (
 		rows       *sql.Rows
@@ -231,9 +250,11 @@ func (r *BaseModel) GetPeformanceReport(o entity.PerformaceReportParams) ([]enti
 	)
 
 	// Apply filters, minus the pagination constraints
-	query := r.DB.Model(&entity.ApiPinPerformance{})
+	query := r.DB.Model(&entity.SummaryCampaign{})
 
-	query.Select("country, company, client_type, campaign_name, operator, service, adnet, publisher, date_send, SUM(pin_request) AS pin_request, SUM(unique_pin_request) AS unique_pin_request, SUM(pin_sent) AS pin_sent, SUM(pin_failed) AS pin_failed, SUM(verify_request) AS verify_request, SUM(verify_request_unique) AS verify_request_unique, SUM(pin_ok) AS pin_ok, SUM(pin_not_ok) AS pin_not_ok, SUM(pin_ok_send_adnet) AS pin_ok_send_adnet, SUM(cpa) AS cpa, SUM(cpa_waki) AS cpa_waki, SUM(estimated_arpu) AS estimated_arpu, SUM(sbaf) AS sbaf, SUM(saaf) AS saaf, SUM(charged_mo) AS charged_mo, SUM(subs_cr) AS subs_cr, SUM(adnet_cr) AS adnet_cr, SUM(cac) AS cac, SUM(paid_cac) AS paid_cac, SUM(cr_mo) AS cr_mo, SUM(cr_postback) AS cr_postback, SUM(landing) AS landing, SUM(roi) AS roi, SUM(arpu90) AS arpu90, SUM(billing_rate_fp) AS billing_rate_fp, SUM(ratio) AS ratio, SUM(price_per_postback) AS price_per_postback, SUM(cost_per_conversion) AS cost_per_conversion, SUM(agency_fee) AS agency_fee, SUM(total_waki_agency_fee) AS total_waki_agency_fee, SUM(total_spending) AS total_spending")
+	query.Select(`country, company, client_type, campaign_name, operator, service, adnet, SUM(mo_received) AS pixel_received, SUM(postback) as pixel_send, SUM(cr_postback) as cr_postback,
+SUM(cr_mo) as cr_mo, SUM(landing) as landing, SUM(ratio_send) as ratio_send, SUM(ratio_receive) as ratio_receive,SUM(po) as price_per_postback,SUM(cost_per_conversion) as cost_per_conversion,
+SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total_waki_agency_fee), SUM(total_waki_agency_fee + po*postback) as total_spending,sum(cpa) as e_cpa`)
 
 	if o.Action == "Search" {
 		if o.Country != "" {
@@ -258,7 +279,7 @@ func (r *BaseModel) GetPeformanceReport(o entity.PerformaceReportParams) ([]enti
 			query = query.Where("client_type = ?", o.ClientType)
 		}
 		if o.Publisher != "" {
-			query = query.Where("publisher = ?", o.ClientType)
+			query = query.Where("adnet = ?", o.Publisher)
 		}
 	}
 	now := time.Now()
@@ -271,9 +292,9 @@ func (r *BaseModel) GetPeformanceReport(o entity.PerformaceReportParams) ([]enti
 		dateEnd = now
 	}
 
-	query = query.Where("date_send BETWEEN ? AND ?", dateStart, dateEnd)
+	query = query.Where("summary_date BETWEEN ? AND ?", dateStart, dateEnd)
 
-	query.Group("country, company, client_type, campaign_name, operator, service, adnet, publisher, date_send")
+	query.Group("country, company, client_type, campaign_name, operator, service, adnet")
 
 	// Get the total count after applying filters
 	query.Unscoped().Count(&total_rows)
@@ -283,12 +304,12 @@ func (r *BaseModel) GetPeformanceReport(o entity.PerformaceReportParams) ([]enti
 		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
 	}
 
-	rows, _ = query_limit.Order("date_send").Rows()
+	rows, _ = query_limit.Order("country").Rows()
 	defer rows.Close()
 
-	var ss []entity.ApiPinPerformance
+	var ss []entity.PerformanceReport
 	for rows.Next() {
-		var s entity.ApiPinPerformance
+		var s entity.PerformanceReport
 		r.DB.ScanRows(rows, &s)
 		ss = append(ss, s)
 	}

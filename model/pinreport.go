@@ -266,8 +266,11 @@ SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total
 		if o.Partner != "" {
 			query = query.Where("country = ?", o.Partner)
 		}
+		if o.Company != "" {
+			query = query.Where("company= ?", o.Company)
+		}
 		if o.CampaignType != "" {
-			query = query.Where("campaign_type = ?", o.CampaignType)
+			query = query.Where("campaign_objective = ?", o.CampaignType)
 		}
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
@@ -281,8 +284,13 @@ SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total
 		if o.Publisher != "" {
 			query = query.Where("adnet = ?", o.Publisher)
 		}
+		if o.Service != "" {
+			query = query.Where("service = ?", o.Service)
+		}
 	}
 	now := time.Now()
+	println(o.DateStart)
+	println(o.DateEnd)
 	dateStart, errStart := time.Parse("2006-01-02", o.DateStart)
 	dateEnd, errEnd := time.Parse("2006-01-02", o.DateEnd)
 	if errStart != nil {
@@ -314,38 +322,34 @@ SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total
 		ss = append(ss, s)
 	}
 
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(ss)))
-
 	return ss, total_rows, rows.Err()
 }
 
-func (r *BaseModel) GetDataDistinctPerformanceReport(o entity.ApiPinPerformance) ([]entity.ApiPinPerformance, error) {
+func (r *BaseModel) GetDistinctPerformanceReport(o entity.SummaryCampaign) ([]entity.SummaryCampaign, error) {
 
 	var (
 		rows *sql.Rows
 	)
 
-	query := r.DB.Model(&entity.ApiPinPerformance{})
+	query := r.DB.Model(&entity.SummaryCampaign{})
 
-	rows, _ = query.Distinct("date_send", "country", "operator", "service").Where("date_send = CURRENT_DATE()").Order("date_send").Rows()
+	rows, _ = query.Distinct("summary_date", "country", "operator", "service").Where("date_send = CURRENT_DATE()").Order("summary_date").Rows()
 
 	defer rows.Close()
 
 	var (
-		ss []entity.ApiPinPerformance
+		ss []entity.SummaryCampaign
 	)
 
 	for rows.Next() {
 
-		var s entity.ApiPinPerformance
+		var s entity.SummaryCampaign
 
 		// ScanRows scans a row into a struct
 		r.DB.ScanRows(rows, &s)
 
 		ss = append(ss, s)
 	}
-
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(ss)))
 
 	return ss, rows.Err()
 }

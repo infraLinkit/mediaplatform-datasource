@@ -258,11 +258,13 @@ func (h *IncomingHandler) DisplayPerformanceReport(c *fiber.Ctx) error {
 		Country:      m["country"],
 		Company:      m["company"],
 		ClientType:   m["client_type"],
-		Operator:     m["opeartor"],
+		Operator:     m["operator"],
 		CampaignName: m["campaign_name"],
 		CampaignType: m["campaign_type"],
 		Publisher:    m["publisher"],
 		Service:      m["service"],
+		DateStart:    m["date_start"],
+		DateEnd:      m["date_end"],
 	}
 
 	var (

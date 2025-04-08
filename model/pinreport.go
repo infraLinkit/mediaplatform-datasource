@@ -2,7 +2,12 @@ package model
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -254,7 +259,8 @@ func (r *BaseModel) GetPerformanceReport(o entity.PerformaceReportParams) ([]ent
 
 	query.Select(`country, company, client_type, campaign_name, operator, service, adnet, SUM(mo_received) AS pixel_received, SUM(postback) as pixel_send, SUM(cr_postback) as cr_postback,
 SUM(cr_mo) as cr_mo, SUM(landing) as landing, SUM(ratio_send) as ratio_send, SUM(ratio_receive) as ratio_receive,SUM(po) as price_per_postback,SUM(cost_per_conversion) as cost_per_conversion,
-SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total_waki_agency_fee), SUM(total_waki_agency_fee + po*postback) as total_spending,sum(cpa) as e_cpa`)
+SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total_waki_agency_fee), SUM(total_waki_agency_fee + po*postback) as total_spending,sum(cpa) as e_cpa,
+SUM(total_fp) as total_fp,SUM(success_fp) as success_fp`)
 
 	if o.Action == "Search" {
 		if o.Country != "" {
@@ -289,8 +295,6 @@ SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total
 		}
 	}
 	now := time.Now()
-	println(o.DateStart)
-	println(o.DateEnd)
 	dateStart, errStart := time.Parse("2006-01-02", o.DateStart)
 	dateEnd, errEnd := time.Parse("2006-01-02", o.DateEnd)
 	if errStart != nil {
@@ -319,6 +323,7 @@ SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total
 	for rows.Next() {
 		var s entity.PerformanceReport
 		r.DB.ScanRows(rows, &s)
+		r.GetARPUReport(&s, dateStart, dateEnd)
 		ss = append(ss, s)
 	}
 
@@ -333,7 +338,7 @@ func (r *BaseModel) GetDistinctPerformanceReport(o entity.SummaryCampaign) ([]en
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
 
-	rows, _ = query.Distinct("summary_date", "country", "operator", "service").Where("date_send = CURRENT_DATE()").Order("summary_date").Rows()
+	rows, _ = query.Unscoped().Distinct("summary_date", "country", "operator", "service").Where("summary_date = CURRENT_DATE").Order("summary_date").Rows()
 
 	defer rows.Close()
 
@@ -352,4 +357,88 @@ func (r *BaseModel) GetDistinctPerformanceReport(o entity.SummaryCampaign) ([]en
 	}
 
 	return ss, rows.Err()
+}
+
+func (r *BaseModel) GetARPUReport(s *entity.PerformanceReport, dateStart time.Time, dateEnd time.Time) {
+
+	var apiResponse entity.ARPUResponse
+	var isempty bool
+	key := fmt.Sprintf("%s_%s_%s_%s_%s", s.Country, s.Operator, s.Service, dateStart, dateEnd)
+
+	if apiResponse, isempty = r.RGetArpuReport(key, "$"); isempty {
+		fmt.Println("IS Empty: ", isempty)
+		apiBase := os.Getenv("APIARPU")
+		if apiBase == "" {
+			fmt.Println("Missing APIARPU environment variable")
+			return
+		}
+
+		// Build base URL
+		baseURL, err := url.Parse(apiBase + "/api/v4/arpu/arpu90")
+		if err != nil {
+			fmt.Println("Failed to parse base URL:", err)
+			return
+		}
+
+		// Manually encode all query params
+		query := fmt.Sprintf(
+			"from=%s&to=%s&country=%s&operator=%s&service=%s",
+			url.QueryEscape(dateStart.Format("2006-01-02")),
+			url.QueryEscape(dateEnd.Format("2006-01-02")),
+			url.QueryEscape(s.Country),
+			url.QueryEscape(s.Operator),
+			url.QueryEscape(s.Service), // encodes spaces as %20
+		)
+
+		baseURL.RawQuery = query
+
+		// Make the request
+		req, err := http.NewRequest("GET", baseURL.String(), nil)
+		if err != nil {
+			fmt.Println("Failed to create request:", err)
+			return
+		}
+
+		req.Header.Add("Authorization", "Basic bWlkZGxld2FyZTpsMW5rMXQzNjA=")
+		req.Header.Add("Accept", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Failed to make request:", err)
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Failed to read response:", err)
+			return
+		}
+
+		err = json.Unmarshal(body, &apiResponse)
+		if err != nil {
+			fmt.Println("Failed to parse JSON:", err)
+			return
+		}
+
+		s, _ := json.Marshal(apiResponse)
+
+		r.SetData(key, "$", string(s))
+		r.SetExpireData(key, 60)
+	}
+
+	if apiResponse.Data == nil || len(apiResponse.Data.Data) == 0 {
+		return
+	}
+	for _, item := range apiResponse.Data.Data {
+
+		if item.Adnet == s.Adnet {
+			s.ARPUROI = s.ECPA / (item.Arpu90Net / 3)
+			s.ARPU90 = item.Arpu90Net
+			if s.TotalFP > 0 {
+				s.BillrateFP = s.SuccessFP / s.TotalFP * 100
+			}
+		}
+	}
 }

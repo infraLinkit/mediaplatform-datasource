@@ -168,7 +168,37 @@ type (
 		SpendingToAdnets   float64 `json:"spending_to_adnets"`
 		TotalWakiAgencyFee float64 `json:"total_waki_agency_fee"`
 		TotalSpending      float64 `json:"total_spending"`
+		TotalFP            float64 `json:"total_fp"`
+		SuccessFP          float64 `json:"success_fp"`
 		ECPA               float64 `json:"e_cpa"`
+		ARPUROI            float64 `json:"arpu_roi"`
+		ARPU90             float64 `json:"arpu_90"`
+		BillrateFP         float64 `json:"billrate_fp"`
+	}
+
+	ARPUResponse struct {
+		Status  int          `json:"status"`
+		Message string       `json:"message"`
+		Data    *ARPUDataSet `json:"data"`
+	}
+
+	ARPUDataSet struct {
+		DateHit   string         `json:"date_hit"`
+		Country   string         `json:"country"`
+		Operator  string         `json:"operator"`
+		Service   string         `json:"service"`
+		Keyword   string         `json:"keyword"`
+		Publisher string         `json:"publisher"`
+		Data      []ARPUDataItem `json:"data"`
+	}
+
+	ARPUDataItem struct {
+		Adnet        string  `json:"adnet"`
+		Arpu90       float64 `json:"arpu90"`
+		Arpu90Net    float64 `json:"arpu90_net"`
+		Arpu90USD    float64 `json:"arpu90_usd"`
+		Arpu90USDNet float64 `json:"arpu90_usd_net"`
+		Service      string  `json:"service"`
 	}
 )
 

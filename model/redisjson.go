@@ -389,6 +389,51 @@ func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.P
 	return p, isEmpty
 }
 
+func (h *BaseModel) RGetArpuReport(key string, path string) (entity.ARPUResponse, bool) {
+	var (
+		isEmpty = true
+		p       entity.ARPUResponse
+	)
+
+	ctx := context.Background()
+
+	data, err := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
+	if err != nil {
+		h.Logs.Error(fmt.Sprintf("Failed to get key from Redis: %v", err))
+		return p, true
+	}
+
+	for _, v := range data {
+		raw, err := v.ToString()
+		if err != nil || raw == "" || raw == "null" {
+			h.Logs.Debug(fmt.Sprintf("Redis key (%s) is null or empty", key))
+			continue
+		}
+
+		var arpuArray []entity.ARPUResponse
+		if err := json.Unmarshal([]byte(raw), &arpuArray); err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to decode ARPU array for key (%s): %v", key, err))
+			continue
+		}
+
+		if len(arpuArray) > 0 {
+			p = arpuArray[0]
+			isEmpty = false
+
+			count := 0
+			if p.Data != nil {
+				count = len(p.Data.Data)
+			}
+			h.Logs.Debug(fmt.Sprintf("Parsed JSON key (%s), total items: %d", key, count))
+		}
+	}
+	if !isEmpty {
+		fmt.Println("---- Query from Redis / not from DB ----")
+	}
+
+	return p, isEmpty
+}
+
 func (h *BaseModel) RGetDisplayCostReport(key string, path string) ([]entity.CostReport, bool) {
 	var (
 		isEmpty bool

@@ -276,6 +276,7 @@ func (h *IncomingHandler) DisplayPerformanceReport(c *fiber.Ctx) error {
 	// key := "temp_key_api_company_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	// need to add redis mechanism here
+
 	performance_report_list, total_data, errResponse = h.DS.GetPerformanceReport(params)
 
 	r := entity.ReturnResponse{
@@ -287,7 +288,6 @@ func (h *IncomingHandler) DisplayPerformanceReport(c *fiber.Ctx) error {
 	}
 
 	if errResponse == nil {
-
 		r = entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithDataTable{
@@ -356,7 +356,7 @@ func (h *IncomingHandler) DisplayConversionLogReportExtra(c *fiber.Ctx, fe entit
 	}
 }
 
-func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error { //dev-cpa
+func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")

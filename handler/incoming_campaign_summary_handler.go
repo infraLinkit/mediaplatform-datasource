@@ -3,6 +3,7 @@ package handler
 import (
 	"net/url"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 
@@ -19,19 +20,20 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 	}
 
 	params := entity.ParamsCampaignSummary{
-		DataType:       c.Query("data-type"),
-		ReportType:     c.Query("report-type"),
-		Country:        c.Query("country"),
-		Operator:       c.Query("operator"),
-		PartnerName:    c.Query("partner-name"),
-		Adnet:          c.Query("adnet"),
-		Service:        c.Query("service"),
-		DataIndicators: dataIndicators,
-		DataBasedOn:    c.Query("data-based-on"),
-		DateRange:      c.Query("date-range"),
-		DateStart:      c.Query("date-start"),
-		DateEnd:        c.Query("date-end"),
-		All:            c.Query("all"),
+		DataType:             c.Query("data-type"),
+		ReportType:           c.Query("report-type"),
+		Country:              c.Query("country"),
+		Operator:             c.Query("operator"),
+		PartnerName:          c.Query("partner-name"),
+		Adnet:                c.Query("adnet"),
+		Service:              c.Query("service"),
+		DataIndicators:       dataIndicators,
+		DataBasedOn:          c.Query("data-based-on"),
+		DataBasedOnIndicator: c.Query("data-based-on-indicator"),
+		DateRange:            c.Query("date-range"),
+		DateStart:            c.Query("date-start"),
+		DateEnd:              c.Query("date-end"),
+		All:                  c.Query("all"),
 	}
 
 	r := h.GenerateCampaignSummary(c, params)
@@ -41,6 +43,7 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.ParamsCampaignSummary) entity.ReturnResponse {
 	summaryCampaign, startDate, endDate, err := h.DS.GetSummaryCampaignMonitoring(params)
 	summary := formatSummaryData(summaryCampaign, params, startDate, endDate)
+	sortedSummary := sortData(summary, params.DataBasedOn, params.DataBasedOnIndicator)
 
 	if err == nil {
 		return entity.ReturnResponse{
@@ -48,7 +51,7 @@ func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.Pa
 			Rsp: entity.GlobalResponseWithData{
 				Code:    fiber.StatusOK,
 				Message: config.OK_DESC,
-				Data:    summary,
+				Data:    sortedSummary,
 			},
 		}
 	} else {
@@ -408,4 +411,35 @@ func mergeMaps(map1, map2 map[string]interface{}) map[string]interface{} {
 		mergedMap[key] = value
 	}
 	return mergedMap
+}
+
+func sortData(data []map[string]interface{}, dataBasedOn string, dataBasedOnIndicator string) []map[string]interface{} {
+	// Make a copy of the original slice to avoid modifying it directly
+	sortedData := make([]map[string]interface{}, len(data))
+	copy(sortedData, data)
+
+	// Define the sorting function based on the parameters
+	sort.Slice(sortedData, func(i, j int) bool {
+		// Get the "total" map from each item
+		totalI, okI := sortedData[i]["total"].(map[string]float64)
+		totalJ, okJ := sortedData[j]["total"].(map[string]float64)
+
+		// If either total is missing or doesn't have the indicator, maintain order
+		if !okI || !okJ {
+			return i < j
+		}
+
+		// Get the indicator values
+		valI := totalI[dataBasedOnIndicator]
+		valJ := totalJ[dataBasedOnIndicator]
+
+		// Sort based on the specified direction
+		if dataBasedOn == "highest" {
+			return valI > valJ // Sort descending
+		} else {
+			return valI < valJ // Sort ascending
+		}
+	})
+
+	return sortedData
 }

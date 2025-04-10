@@ -45,80 +45,86 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 				SameSite: "lax",
 			})
 
-			dc, _ := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$")
+			if dc, err := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$"); err == nil {
 
-			pxData := entity.PixelStorage{
-				URLServiceKey: p.URLServiceKey, Pixel: p.AffSub}
+				pxData := entity.PixelStorage{
+					URLServiceKey: p.URLServiceKey, Pixel: p.AffSub}
 
-			var (
-				px   entity.PixelStorage
-				isPX bool
-			)
+				var (
+					px   entity.PixelStorage
+					isPX bool
+				)
 
-			if dc.PostbackMethod == "ADNETCODE" {
-				px, isPX = h.DS.GetByAdnetCode(pxData)
-			} else if dc.PostbackMethod == "TOKEN" {
-				px, isPX = h.DS.GetToken(pxData)
-			} else {
-				px, isPX = h.DS.GetPx(pxData)
-			}
+				if dc.PostbackMethod == "ADNETCODE" {
+					px, isPX = h.DS.GetByAdnetCode(pxData)
+				} else if dc.PostbackMethod == "TOKEN" {
+					px, isPX = h.DS.GetToken(pxData)
+				} else {
+					px, isPX = h.DS.GetPx(pxData)
+				}
 
-			if !isPX {
+				if !isPX {
 
-				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found or duplicate used, pixel : " + p.AffSub})
-
-			} else {
-
-				if px.IsUsed {
-
-					return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
-						Adnet:         dc.Adnet,
-						IsBillable:    dc.IsBillable,
-						Pixel:         p.AffSub,
-						Browser:       px.Browser,
-						OS:            px.OS,
-						Handset:       px.UserAgent,
-						PubId:         px.PubId,
-						PixelUsedDate: px.PixelUsedDate.Format(time.RFC3339),
-					}})
+					return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found or duplicate used, pixel : " + p.AffSub})
 
 				} else {
 
-					px.PixelUsedDate = helper.GetCurrentTime(h.Config.TZ, time.RFC3339)
+					if px.IsUsed {
 
-					bodyReq, _ := json.Marshal(px)
-
-					corId := "RTO" + helper.GetUniqId(h.Config.TZ)
-
-					published := h.Rmqp.PublishMsg(rmqp.PublishItems{
-						ExchangeName: h.Config.RabbitMQRatioExchangeName,
-						QueueName:    h.Config.RabbitMQRatioQueueName,
-						ContentType:  h.Config.RabbitMQDataType,
-						CorId:        corId,
-						Payload:      string(bodyReq),
-						Priority:     0,
-					})
-
-					if !published {
-
-						h.Logs.Debug(fmt.Sprintf("[x] Failed published: %s, Data: %s ...", corId, string(bodyReq)))
+						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
+							Adnet:         dc.Adnet,
+							IsBillable:    dc.IsBillable,
+							Pixel:         p.AffSub,
+							Browser:       px.Browser,
+							OS:            px.OS,
+							Handset:       px.UserAgent,
+							PubId:         px.PubId,
+							PixelUsedDate: px.PixelUsedDate.Format(time.RFC3339),
+						}})
 
 					} else {
 
-						h.Logs.Debug(fmt.Sprintf("[v] Published: %s, Data: %s ...", corId, string(bodyReq)))
-					}
+						px.PixelUsedDate = helper.GetCurrentTime(h.Config.TZ, time.RFC3339)
 
-					return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
-						Adnet:         dc.Adnet,
-						IsBillable:    dc.IsBillable,
-						Pixel:         p.AffSub,
-						Browser:       px.Browser,
-						OS:            px.OS,
-						Handset:       px.UserAgent,
-						PubId:         px.PubId,
-						PixelUsedDate: helper.GetFormatTime(h.Config.TZ, time.RFC3339),
-					}})
+						bodyReq, _ := json.Marshal(px)
+
+						corId := "RTO" + helper.GetUniqId(h.Config.TZ)
+
+						published := h.Rmqp.PublishMsg(rmqp.PublishItems{
+							ExchangeName: h.Config.RabbitMQRatioExchangeName,
+							QueueName:    h.Config.RabbitMQRatioQueueName,
+							ContentType:  h.Config.RabbitMQDataType,
+							CorId:        corId,
+							Payload:      string(bodyReq),
+							Priority:     0,
+						})
+
+						if !published {
+
+							h.Logs.Debug(fmt.Sprintf("[x] Failed published: %s, Data: %s ...", corId, string(bodyReq)))
+
+						} else {
+
+							h.Logs.Debug(fmt.Sprintf("[v] Published: %s, Data: %s ...", corId, string(bodyReq)))
+						}
+
+						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
+							Adnet:         dc.Adnet,
+							IsBillable:    dc.IsBillable,
+							Pixel:         p.AffSub,
+							Browser:       px.Browser,
+							OS:            px.OS,
+							Handset:       px.UserAgent,
+							PubId:         px.PubId,
+							PixelUsedDate: helper.GetFormatTime(h.Config.TZ, time.RFC3339),
+						}})
+					}
 				}
+
+			} else {
+
+				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Campaign ID not found"})
+
 			}
 		}
 	}

@@ -29,9 +29,17 @@ func (h *BaseModel) GetDataConfig(key string, path string) (*entity.DataConfig, 
 	} else {
 
 		if len(tempCfg) > 0 && tempCfg != nil {
-			h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, tempCfg))
-			dcfg = tempCfg[0][0]
-			return dcfg, nil
+
+			if len(tempCfg[0]) > 0 {
+				h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, tempCfg))
+				dcfg = tempCfg[0][0]
+				return dcfg, nil
+			} else {
+				err = errors.New("key is empty or not found")
+				h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))
+				return dcfg, err
+			}
+
 		} else {
 			err = errors.New("key is empty or not found")
 			h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))

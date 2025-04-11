@@ -796,3 +796,339 @@ func (h *IncomingHandler) DisplayAdnetList(c *fiber.Ctx) error {
 
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
+
+func (h *IncomingHandler) CreateAgency(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	var agency entity.Agency
+
+	if errForm := c.BodyParser(&agency); errForm != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	if errValidation := validate.Struct(agency); errValidation != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Validation error",
+			"errors":  errValidation.Error(),
+		})
+	}
+
+	if errCreate := h.DS.CreateAgency(&agency); errCreate != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create agency",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+
+}
+
+func (h *IncomingHandler) UpdateAgency(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var agency entity.Agency
+
+	if formErr := c.BodyParser(&agency); formErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   formErr.Error(),
+		})
+	}
+
+	agency.ID = uint(id)
+
+	if err := h.DS.UpdateAgency(&agency); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update agency",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DisplayAgency(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil {
+		pageSize = 10
+	}
+	draw, _ := strconv.Atoi(m["draw"])
+	fe := entity.GlobalRequestFromDataTable{
+		Page:     page,
+		Action:   m["action"],
+		Draw:     draw,
+		PageSize: pageSize,
+		Search:   m["search[value]"],
+	}
+
+	var (
+		errResponse error
+		total_data  int64
+		agency_list []entity.Agency
+	)
+
+	// key := "temp_key_api_agency_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	// need to add redis mechanism here
+	agency_list, total_data, errResponse = h.DS.GetAgency(fe)
+
+	r := entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
+	}
+
+	if errResponse == nil {
+
+		r = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            agency_list,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	}
+
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
+func (h *IncomingHandler) CreateChannel(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	var channel entity.Channel
+
+	if errForm := c.BodyParser(&channel); errForm != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	if errValidation := validate.Struct(channel); errValidation != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Validation error",
+			"errors":  errValidation.Error(),
+		})
+	}
+
+	if errCreate := h.DS.CreateChannel(&channel); errCreate != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create channel",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+
+}
+
+func (h *IncomingHandler) UpdateChannel(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var channel entity.Channel
+
+	if formErr := c.BodyParser(&channel); formErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   formErr.Error(),
+		})
+	}
+
+	channel.ID = uint(id)
+
+	if err := h.DS.UpdateChannel(&channel); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update channel",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DisplayChannel(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil {
+		pageSize = 10
+	}
+	draw, _ := strconv.Atoi(m["draw"])
+	fe := entity.GlobalRequestFromDataTable{
+		Page:     page,
+		Action:   m["action"],
+		Draw:     draw,
+		PageSize: pageSize,
+		Search:   m["search[value]"],
+	}
+
+	var (
+		errResponse  error
+		total_data   int64
+		channel_list []entity.Channel
+	)
+
+	// key := "temp_key_api_channel_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	// need to add redis mechanism here
+	channel_list, total_data, errResponse = h.DS.GetChannel(fe)
+
+	r := entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
+	}
+
+	if errResponse == nil {
+
+		r = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            channel_list,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	}
+
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
+func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	var mainstreamGroup entity.MainstreamGroup
+
+	if errForm := c.BodyParser(&mainstreamGroup); errForm != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	if errValidation := validate.Struct(mainstreamGroup); errValidation != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Validation error",
+			"errors":  errValidation.Error(),
+		})
+	}
+
+	if errCreate := h.DS.CreateMainstreamGroup(&mainstreamGroup); errCreate != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create mainstreamGroup",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+
+}
+
+func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var mainstreamGroup entity.MainstreamGroup
+
+	if formErr := c.BodyParser(&mainstreamGroup); formErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   formErr.Error(),
+		})
+	}
+
+	mainstreamGroup.ID = uint(id)
+
+	if err := h.DS.UpdateMainstreamGroup(&mainstreamGroup); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update mainstreamGroup",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DisplayMainstreamGroup(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil {
+		pageSize = 10
+	}
+	draw, _ := strconv.Atoi(m["draw"])
+	fe := entity.GlobalRequestFromDataTable{
+		Page:     page,
+		Action:   m["action"],
+		Draw:     draw,
+		PageSize: pageSize,
+		Search:   m["search[value]"],
+	}
+
+	var (
+		errResponse          error
+		total_data           int64
+		mainstreamGroup_list []entity.MainstreamGroup
+	)
+
+	// key := "temp_key_api_mainstreamGroup_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	// need to add redis mechanism here
+	mainstreamGroup_list, total_data, errResponse = h.DS.GetMainstreamGroup(fe)
+
+	r := entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
+	}
+
+	if errResponse == nil {
+
+		r = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            mainstreamGroup_list,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	}
+
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}

@@ -55,6 +55,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/trafficreport", h.DisplayTrafficReport).Name("Traffic Report list")
 	rpt.Get("/mainstreamreport", h.DisplayMainstreamReport).Name("Mainstream Report list")
 	rpt.Get("/budgetmonitoring", h.DisplayBudgetMonitoring).Name("Budget Monitoring list")
+	rpt.Get("/performance-report", h.DisplayPerformanceReport).Name("Performance Report list")
 
 	// API Internal
 	internal := v1.Group("/int") // Internal API
@@ -78,6 +79,11 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	campaign.Get("/campaigncounts", h.GetCampaignCounts).Name("Campaign Management Campaign Counts FE")
 	campaign.Get("/:v", h.DisplayCampaignManagement).Name("Campaign Management Detail FE")
 	campaign.Post("/send", h.SendCampaignHandler).Name("Campaign Management Send FE")
+	campaign.Post("/updatestatus", h.UpdateStatusCampaign).Name("Update status campaign on campaign_details")
+	campaign.Post("/editcampaign", h.EditCampaign).Name("Edit capping campaign on campaign_details")
+	campaign.Post("/delcampaign", h.DelCampaign).Name("Edit capping campaign on campaign_details")
+	campaign.Post("/updatekeymainstream", h.UpdateKeyMainstream).Name("Update key mainstream campaign on campaign_details")
+
 	// Menu
 	menu := management.Group("/menu") // Menu
 	menu.Post("/", h.CreateMenu).Name("Menu Management Create FE")
@@ -132,6 +138,15 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	countryService.Get("/adnet-list", h.DisplayAdnetList).Name("Create AdnetList")
 	countryService.Post("/adnet-list", h.CreateAdnetList).Name("Create AdnetList")
 	countryService.Put("/adnet-list/:id", h.UpdateAdnetList).Name("Update AdnetList")
+	countryService.Get("/agency", h.DisplayAgency).Name("Show Agency")
+	countryService.Post("/agency", h.CreateAgency).Name("Create Agency")
+	countryService.Put("/agency/:id", h.UpdateAgency).Name("Update Agency")
+	countryService.Get("/channel", h.DisplayChannel).Name("Show Channel")
+	countryService.Post("/channel", h.CreateChannel).Name("Create Channel")
+	countryService.Put("/channel/:id", h.UpdateChannel).Name("Update Channel")
+	countryService.Get("/mainstream-group", h.DisplayMainstreamGroup).Name("Show MainStreamGroup")
+	countryService.Post("/mainstream-group", h.CreateMainstreamGroup).Name("Create MainStreamGroup")
+	countryService.Put("/mainstream-group/:id", h.UpdateMainstreamGroup).Name("Update MainStreamGroup")
 
 	// API External
 	v1.Group("/ext") // External API

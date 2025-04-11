@@ -29,9 +29,17 @@ func (h *BaseModel) GetDataConfig(key string, path string) (*entity.DataConfig, 
 	} else {
 
 		if len(tempCfg) > 0 && tempCfg != nil {
-			h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, tempCfg))
-			dcfg = tempCfg[0][0]
-			return dcfg, nil
+
+			if len(tempCfg[0]) > 0 {
+				h.Logs.Debug(fmt.Sprintf("Found & Success parse json key (%s) data config: %#v ...\n", key, tempCfg))
+				dcfg = tempCfg[0][0]
+				return dcfg, nil
+			} else {
+				err = errors.New("key is empty or not found")
+				h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))
+				return dcfg, err
+			}
+
 		} else {
 			err = errors.New("key is empty or not found")
 			h.Logs.Warn(fmt.Sprintf("Cannot find data config key (%s) or error: %#v ...\n", key, err))
@@ -359,11 +367,11 @@ func (h *BaseModel) RGetDisplayCPAReport(key string, path string) ([]entity.Summ
 	return p, isEmpty
 }
 
-func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.MO, bool) {
+func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.PixelStorage, bool) {
 
 	var (
 		isEmpty bool
-		p       []entity.MO
+		p       []entity.PixelStorage
 	)
 
 	// Get Config Data Landing
@@ -372,7 +380,7 @@ func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.M
 	data, _ := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
 
 	for _, v := range data {
-		var conversionLogReport [][]entity.MO
+		var conversionLogReport [][]entity.PixelStorage
 		v.DecodeJSON(&conversionLogReport)
 
 		if len(conversionLogReport) > 0 {
@@ -384,6 +392,51 @@ func (h *BaseModel) RGetConversionLogReport(key string, path string) ([]entity.M
 			isEmpty = true
 			h.Logs.Debug(fmt.Sprintf("Data not found json key (%s) ...\n", key))
 		}
+	}
+
+	return p, isEmpty
+}
+
+func (h *BaseModel) RGetArpuReport(key string, path string) (entity.ARPUResponse, bool) {
+	var (
+		isEmpty = true
+		p       entity.ARPUResponse
+	)
+
+	ctx := context.Background()
+
+	data, err := rueidis.JsonMGet(h.R.Conn(), ctx, []string{key}, "$")
+	if err != nil {
+		h.Logs.Error(fmt.Sprintf("Failed to get key from Redis: %v", err))
+		return p, true
+	}
+
+	for _, v := range data {
+		raw, err := v.ToString()
+		if err != nil || raw == "" || raw == "null" {
+			h.Logs.Debug(fmt.Sprintf("Redis key (%s) is null or empty", key))
+			continue
+		}
+
+		var arpuArray []entity.ARPUResponse
+		if err := json.Unmarshal([]byte(raw), &arpuArray); err != nil {
+			h.Logs.Error(fmt.Sprintf("Failed to decode ARPU array for key (%s): %v", key, err))
+			continue
+		}
+
+		if len(arpuArray) > 0 {
+			p = arpuArray[0]
+			isEmpty = false
+
+			count := 0
+			if p.Data != nil {
+				count = len(p.Data.Data)
+			}
+			h.Logs.Debug(fmt.Sprintf("Parsed JSON key (%s), total items: %d", key, count))
+		}
+	}
+	if !isEmpty {
+		fmt.Println("---- Query from Redis / not from DB ----")
 	}
 
 	return p, isEmpty

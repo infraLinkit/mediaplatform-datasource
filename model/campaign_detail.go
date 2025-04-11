@@ -93,6 +93,15 @@ func (r *BaseModel) UpdateCampaign(o entity.Campaign) error {
 
 func (r *BaseModel) UpdateCampaignDetail(o entity.CampaignDetail) error {
 
+	result := r.DB.Exec("UPDATE campaign_details SET is_active = ? WHERE id = ?", o.IsActive, o.ID)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) SaveCampaignDetail(o entity.CampaignDetail) error {
+
 	result := r.DB.Save(&o)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
@@ -139,7 +148,7 @@ func (r *BaseModel) UpdateStatusCampaignDetail(o entity.CampaignDetail) error {
 	result := r.DB.Model(&o).
 		Where("url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?",
 			o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
-		Updates(map[string]interface{}{"is_active": o.IsActive})
+		Updates(entity.CampaignDetail{IsActive: o.IsActive})
 
 	r.Logs.Debug(fmt.Sprintf("Query Affected: %d, Error: %v", result.RowsAffected, result.Error))
 
@@ -175,9 +184,9 @@ func (r *BaseModel) CounterRatioById(o entity.CampaignDetail) error {
 
 func (r *BaseModel) UpdateStatusCounterById(o entity.CampaignDetail) error {
 
-	result := r.DB.Model(&o).
-		Where("id = ?", o.ID).
-		Updates(entity.CampaignDetail{CounterMOCapping: o.CounterMOCapping, StatusCapping: o.StatusCapping, CounterMORatio: o.CounterMORatio, StatusRatio: o.StatusRatio, LastUpdate: o.LastUpdate})
+	//result := r.DB.Model(&o).Where("id = ?", o.ID).Updates(entity.CampaignDetail{CounterMOCapping: o.CounterMOCapping, StatusCapping: o.StatusCapping, CounterMORatio: o.CounterMORatio, StatusRatio: o.StatusRatio, LastUpdate: o.LastUpdate})
+
+	result := r.DB.Model(&o).Select("counter_mo_capping", "status_capping", "counter_mo_ratio", "status_ratio", "last_update").Updates(o)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
@@ -230,3 +239,18 @@ func (r *BaseModel) UpdateCampaignMonitoringBudget(o entity.CampaignDetail) erro
 
 	return result.Error
 }
+
+func (r *BaseModel) UpdateKeyMainstreamCampaignDetail(o entity.CampaignDetail) error {
+	
+	result := r.DB.Exec(`
+		UPDATE campaign_details 
+		SET status_submit_key_mainstream = ?, key_mainstream = ? 
+		WHERE url_service_key = ? AND campaign_id = ?`,
+		o.StatusSubmitKeyMainstream, o.KeyMainstream, o.URLServiceKey, o.CampaignId,
+	)
+	
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+

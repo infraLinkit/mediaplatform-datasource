@@ -201,20 +201,20 @@ type (
 		TrxId             string    `gorm:"size:255;default:NA" json:"trx_id"`
 		Msisdn            string    `gorm:"size:255;default:NA" json:"msisdn"`
 		IsUsed            bool      `gorm:"not null;default:false" json:"is_used"`
-		Browser           string    `gorm:"size:50;default:NA" json:"browser"`
-		OS                string    `gorm:"size:50;default:NA" json:"os"`
-		Ip                string    `gorm:"size:50;default:NA" json:"ip"`
-		ISP               string    `gorm:"size:50;default:NA" json:"isp"`
+		Browser           string    `gorm:"size:150;default:NA" json:"browser"`
+		OS                string    `gorm:"size:150;default:NA" json:"os"`
+		Ip                string    `gorm:"type:text" json:"ip"`
+		ISP               string    `gorm:"size:150;default:NA" json:"isp"`
 		ReferralURL       string    `gorm:"size:255;default:NA" json:"referral_url"`
-		UserAgent         string    `gorm:"size:255;default:NA" json:"user_agent"`
+		UserAgent         string    `gorm:"type:text" json:"user_agent"`
 		TrafficSource     bool      `gorm:"not null;default:false" json:"traffic_source"`
 		TrafficSourceData string    `gorm:"size:255;default:NA" json:"traffic_source_data"`
 		UserRejected      bool      `gorm:"not null;default:false" json:"user_rejected"`
 		UniqueClick       bool      `gorm:"not null;default:false" json:"unique_click"`
 		UserDuplicated    bool      `gorm:"not null;default:false" json:"user_duplicated"`
-		Handset           string    `gorm:"size:255;default:NA" json:"handset"`
-		HandsetCode       string    `gorm:"size:50;default:NA" json:"handset_code"`
-		HandsetType       string    `gorm:"size:50;default:NA" json:"handset_type"`
+		Handset           string    `gorm:"type:text" json:"handset"`
+		HandsetCode       string    `gorm:"size:150;default:NA" json:"handset_code"`
+		HandsetType       string    `gorm:"size:150;default:NA" json:"handset_type"`
 		URLLanding        string    `gorm:"size:255;default:NA" json:"url_landing"`
 		URLWarpLanding    string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
 		URLService        string    `gorm:"size:255;default:NA" json:"url_service"`
@@ -223,7 +223,7 @@ type (
 		StatusPostback    bool      `gorm:"not null;default:false" json:"status_postback"`
 		IsUnique          bool      `gorm:"not null;default:false" json:"is_unique"`
 		URLPostback       string    `gorm:"size:255;default:NA" json:"url_postback"`
-		StatusURLPostback string    `gorm:"size:50" json:"status_url_postback"`
+		StatusURLPostback string    `gorm:"size:150" json:"status_url_postback"`
 		ReasonURLPostback string    `gorm:"size:255" json:"reason_url_postback"`
 		IsActive          bool      `gorm:"not null;default:false" json:"is_active"`
 		CounterMOCapping  int       `gorm:"not null;length:10" json:"counter_mo_capping"`
@@ -268,20 +268,20 @@ type (
 		TrxId             string    `gorm:"size:255;default:NA" json:"trx_id"`
 		Msisdn            string    `gorm:"size:255;default:NA" json:"msisdn"`
 		IsUsed            bool      `gorm:"not null;default:false" json:"is_used"`
-		Browser           string    `gorm:"size:50;default:NA" json:"browser"`
-		OS                string    `gorm:"size:50;default:NA" json:"os"`
-		Ip                string    `gorm:"size:50;default:NA" json:"ip"`
-		ISP               string    `gorm:"size:50;default:NA" json:"isp"`
+		Browser           string    `gorm:"size:150;default:NA" json:"browser"`
+		OS                string    `gorm:"size:150;default:NA" json:"os"`
+		Ip                string    `gorm:"type:text" json:"ip"`
+		ISP               string    `gorm:"size:150;default:NA" json:"isp"`
 		ReferralURL       string    `gorm:"size:255;default:NA" json:"referral_url"`
-		UserAgent         string    `gorm:"size:255;default:NA" json:"user_agent"`
+		UserAgent         string    `gorm:"type:text" json:"user_agent"`
 		TrafficSource     bool      `gorm:"not null;default:false" json:"traffic_source"`
 		TrafficSourceData string    `gorm:"size:255;default:NA" json:"traffic_source_data"`
 		UserRejected      bool      `gorm:"not null;default:false" json:"user_rejected"`
 		UniqueClick       bool      `gorm:"not null;default:false" json:"unique_click"`
 		UserDuplicated    bool      `gorm:"not null;default:false" json:"user_duplicated"`
-		Handset           string    `gorm:"size:255;default:NA" json:"handset"`
-		HandsetCode       string    `gorm:"size:50;default:NA" json:"handset_code"`
-		HandsetType       string    `gorm:"size:50;default:NA" json:"handset_type"`
+		Handset           string    `gorm:"type:text" json:"handset"`
+		HandsetCode       string    `gorm:"size:150;default:NA" json:"handset_code"`
+		HandsetType       string    `gorm:"size:150;default:NA" json:"handset_type"`
 		URLLanding        string    `gorm:"size:255;default:NA" json:"url_landing"`
 		URLWarpLanding    string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
 		URLService        string    `gorm:"size:255;default:NA" json:"url_service"`
@@ -290,7 +290,7 @@ type (
 		StatusPostback    bool      `gorm:"not null;default:false" json:"status_postback"`
 		IsUnique          bool      `gorm:"not null;default:false" json:"is_unique"`
 		URLPostback       string    `gorm:"size:255;default:NA" json:"url_postback"`
-		StatusURLPostback string    `gorm:"size:50" json:"status_url_postback"`
+		StatusURLPostback string    `gorm:"size:150" json:"status_url_postback"`
 		ReasonURLPostback string    `gorm:"size:255" json:"reason_url_postback"`
 		IsActive          bool      `gorm:"not null;default:false" json:"is_active"`
 		CounterMOCapping  int       `gorm:"length:10;default:0" json:"counter_mo_capping"`
@@ -335,20 +335,20 @@ type (
 		TrxId             string    `gorm:"size:255;default:NA" json:"trx_id"`
 		Msisdn            string    `gorm:"size:255;default:NA" json:"msisdn"`
 		IsUsed            bool      `gorm:"not null;default:false" json:"is_used"`
-		Browser           string    `gorm:"size:50;default:NA" json:"browser"`
-		OS                string    `gorm:"size:50;default:NA" json:"os"`
-		Ip                string    `gorm:"size:50;default:NA" json:"ip"`
-		ISP               string    `gorm:"size:50;default:NA" json:"isp"`
+		Browser           string    `gorm:"size:150;default:NA" json:"browser"`
+		OS                string    `gorm:"size:150;default:NA" json:"os"`
+		Ip                string    `gorm:"size:150;default:NA" json:"ip"`
+		ISP               string    `gorm:"size:150;default:NA" json:"isp"`
 		ReferralURL       string    `gorm:"size:255;default:NA" json:"referral_url"`
-		UserAgent         string    `gorm:"size:255;default:NA" json:"user_agent"`
+		UserAgent         string    `gorm:"type:text" json:"user_agent"`
 		TrafficSource     bool      `gorm:"not null;default:false" json:"traffic_source"`
 		TrafficSourceData string    `gorm:"size:255;default:NA" json:"traffic_source_data"`
 		UserRejected      bool      `gorm:"not null;default:false" json:"user_rejected"`
 		UniqueClick       bool      `gorm:"not null;default:false" json:"unique_click"`
 		UserDuplicated    bool      `gorm:"not null;default:false" json:"user_duplicated"`
-		Handset           string    `gorm:"size:255;default:NA" json:"handset"`
-		HandsetCode       string    `gorm:"size:50;default:NA" json:"handset_code"`
-		HandsetType       string    `gorm:"size:50;default:NA" json:"handset_type"`
+		Handset           string    `gorm:"type:text" json:"handset"`
+		HandsetCode       string    `gorm:"size:150;default:NA" json:"handset_code"`
+		HandsetType       string    `gorm:"size:150;default:NA" json:"handset_type"`
 		URLLanding        string    `gorm:"size:255;default:NA" json:"url_landing"`
 		URLWarpLanding    string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
 		URLService        string    `gorm:"size:255;default:NA" json:"url_service"`
@@ -357,7 +357,7 @@ type (
 		StatusPostback    bool      `gorm:"not null;default:false" json:"status_postback"`
 		IsUnique          bool      `gorm:"not null;default:false" json:"is_unique"`
 		URLPostback       string    `gorm:"size:255;default:NA" json:"url_postback"`
-		StatusURLPostback string    `gorm:"size:50" json:"status_url_postback"`
+		StatusURLPostback string    `gorm:"size:150" json:"status_url_postback"`
 		ReasonURLPostback string    `gorm:"size:255" json:"reason_url_postback"`
 		IsActive          bool      `gorm:"not null;default:false" json:"is_active"`
 		CounterMOCapping  int       `gorm:"not null;length:10" json:"counter_mo_capping"`
@@ -569,6 +569,20 @@ type (
 		AdnetCR             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"adnet_cr"`
 		CAC                 float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cac"`
 		PaidCAC             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"paid_cac"`
+		CrMO                float64   `gorm:"type:double precision;default:0" json:"cr_mo"`
+		CrPostback          float64   `gorm:"type:double precision;default:0" json:"cr_postback"`
+		Landing             int       `gorm:"length:20;default:0" json:"landing"`
+		ROI                 float64   `gorm:"type:double precision;default:0" json:"roi"`
+		Arpu90              float64   `gorm:"type:double precision;default:0" json:"arpu90"`
+		BillingRateFP       float64   `gorm:"type:double precision;default:0" json:"billing_rate_FP"`
+		Ratio               float64   `gorm:"type:double precision;default:0" json:"ratio"`
+		PricePerPostback    float64   `gorm:"type:double precision;default:0" json:"price_per_postback"`
+		CostPerConversion   float64   `gorm:"type:double precision" json:"cost_per_conversion"`
+		AgencyFee           float64   `gorm:"type:double precision" json:"agency_fee"`
+		TotalWakiAgencyFee  float64   `gorm:"type:double precision;default:0" json:"total_waki_agency_fee"`
+		TotalSpending       float64   `gorm:"type:double precision;default:0" json:"total_spending"`
+		ClientType          string    `gorm:"not null;size:50" json:"client_type"`
+		CampaignName        string    `gorm:"not null;size:249" json:"campaign_name"`
 		CreatedAt           time.Time
 		UpdatedAt           time.Time
 	}
@@ -667,7 +681,7 @@ type (
 		ID          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Code        string `gorm:"type:varchar(10)" json:"code" validate:"unique,required,max=10"`
 		Code2       string `gorm:"type:varchar(10)" json:"code2" validate:"unique,required,max=10"`
-		Name        string `gorm:"type:varchar(80)" json:"name"  validate:"unique,drequired,max=80"`
+		Name        string `gorm:"type:varchar(80)" json:"name"  validate:"unique,required,max=80"`
 		NumericCode string `gorm:"type:varchar(10)" json:"numeric_code" form:"numeric_code"  validate:"required,max=10"`
 		IsActive    string `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
 	}
@@ -727,7 +741,6 @@ type (
 		Lastupdate   string `gorm:"type:timestamp" json:"lastupdate"`
 		IsDummyPixel string `gorm:"type:bool;default:false" json:"is_dummy_pixel"`
 	}
-
 	Audit struct {
 		ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 		UserType      string    `gorm:"type:varchar(255)" json:"user_type"`
@@ -744,6 +757,25 @@ type (
 		CreatedAt     time.Time `gorm:"type:timestamp" json:"created_at"`
 		UpdatedAt     time.Time `gorm:"type:timestamp" json:"updated_at"`
 		ActionName    string    `gorm:"type:varchar(255)" json:"action_name"`
+	}
+
+	Agency struct {
+		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Code string `gorm:"type:varchar(20)" json:"code"`
+		Name string `gorm:"type:varchar(80)" json:"name"`
+	}
+
+	Channel struct {
+		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name string `gorm:"type:varchar(80)" json:"name" `
+	}
+	MainstreamGroup struct {
+		ID           uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name         string `gorm:"type:varchar(254)" json:"name" `
+		Channel      string `gorm:"type:varchar(80)" json:"channel"  `
+		Agency       string `gorm:"type:varchar(80)" json:"agency" `
+		Service      string `gorm:"type:varchar(80)" json:"service" `
+		UniqueDomain string `gorm:"type:varchar(80)" json:"unique_domain"`
 	}
 )
 

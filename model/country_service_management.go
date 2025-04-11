@@ -321,3 +321,132 @@ func (r *BaseModel) GetAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.
 
 	return ss, total_rows, rows.Err()
 }
+
+func (r *BaseModel) GetAgency(o entity.GlobalRequestFromDataTable) ([]entity.Agency, int64, error) {
+
+	var (
+		rows       *sql.Rows
+		total_rows int64
+	)
+
+	// Apply filters, minus the pagination constraints
+	query := r.DB.Model(&entity.Agency{})
+	if o.Search != "" {
+		search_value := strings.Trim(o.Search, " ")
+		query = query.Where("name ILIKE ?", "%"+search_value+"%").Or("code ILIKE ?", "%"+search_value+"%")
+	}
+
+	// Get the total count after applying filters
+	query.Unscoped().Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	}
+
+	rows, _ = query_limit.Order("name").Rows()
+	defer rows.Close()
+
+	var ss []entity.Agency
+	for rows.Next() {
+		var s entity.Agency
+		r.DB.ScanRows(rows, &s)
+		ss = append(ss, s)
+	}
+
+	return ss, total_rows, rows.Err()
+}
+
+func (m *BaseModel) CreateAgency(agency *entity.Agency) error {
+	return m.DB.Create(agency).Error
+}
+
+func (m *BaseModel) UpdateAgency(agency *entity.Agency) error {
+	return m.DB.Updates(agency).Error
+}
+
+func (r *BaseModel) GetChannel(o entity.GlobalRequestFromDataTable) ([]entity.Channel, int64, error) {
+
+	var (
+		rows       *sql.Rows
+		total_rows int64
+	)
+
+	// Apply filters, minus the pagination constraints
+	query := r.DB.Model(&entity.Channel{})
+	if o.Search != "" {
+		search_value := strings.Trim(o.Search, " ")
+		query = query.Where("name ILIKE ?", "%"+search_value+"%")
+	}
+
+	// Get the total count after applying filters
+	query.Unscoped().Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	}
+
+	rows, _ = query_limit.Order("name").Rows()
+	defer rows.Close()
+
+	var ss []entity.Channel
+	for rows.Next() {
+		var s entity.Channel
+		r.DB.ScanRows(rows, &s)
+		ss = append(ss, s)
+	}
+
+	return ss, total_rows, rows.Err()
+}
+
+func (m *BaseModel) CreateChannel(channel *entity.Channel) error {
+	return m.DB.Create(channel).Error
+}
+
+func (m *BaseModel) UpdateChannel(channel *entity.Channel) error {
+	return m.DB.Updates(channel).Error
+}
+
+func (r *BaseModel) GetMainstreamGroup(o entity.GlobalRequestFromDataTable) ([]entity.MainstreamGroup, int64, error) {
+
+	var (
+		rows       *sql.Rows
+		total_rows int64
+	)
+
+	// Apply filters, minus the pagination constraints
+	query := r.DB.Model(&entity.MainstreamGroup{})
+	if o.Search != "" {
+		search_value := strings.Trim(o.Search, " ")
+		query = query.Where("name ILIKE ?", "%"+search_value+"%").Or("agency ILIKE ?", "%"+search_value+"%").Or("channel ILIKE ?", "%"+search_value+"%").Or("service ILIKE ?", "%"+search_value+"%").Or("unique_domain ILIKE ?", "%"+search_value+"%")
+	}
+
+	// Get the total count after applying filters
+	query.Unscoped().Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	}
+
+	rows, _ = query_limit.Order("name").Rows()
+	defer rows.Close()
+
+	var ss []entity.MainstreamGroup
+	for rows.Next() {
+		var s entity.MainstreamGroup
+		r.DB.ScanRows(rows, &s)
+		ss = append(ss, s)
+	}
+
+	return ss, total_rows, rows.Err()
+}
+
+func (m *BaseModel) CreateMainstreamGroup(mainstreamGroup *entity.MainstreamGroup) error {
+	return m.DB.Create(mainstreamGroup).Error
+}
+
+func (m *BaseModel) UpdateMainstreamGroup(mainstreamGroup *entity.MainstreamGroup) error {
+	return m.DB.Updates(mainstreamGroup).Error
+}

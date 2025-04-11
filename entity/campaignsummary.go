@@ -8,20 +8,21 @@ import (
 
 type (
 	ParamsCampaignSummary struct {
-		DataType       string   `form:"data-type" json:"data_type"`
-		ReportType     string   `form:"report-type" json:"report_type"`
-		Country        string   `form:"country" json:"country"`
-		Operator       string   `form:"operator" json:"operator"`
-		PartnerName    string   `form:"partner-name" json:"partner-name"`
-		Adnet          string   `form:"adnet" json:"adnet"`
-		Service        string   `form:"service" json:"service"`
-		CampaignName   string   `form:"campaign-name" json:"campaign_name"`
-		DataIndicators []string `form:"data-indicators" json:"data-indicators"`
-		DataBasedOn    string   `form:"data-based-on" json:"data-based-on"`
-		DateRange      string   `form:"date-range" json:"date-range"`
-		DateStart      string   `form:"date-start" json:"date-start"`
-		DateEnd        string   `form:"date-end" json:"date-end"`
-		All            string   `form:"custom-range" json:"all"`
+		DataType             string   `form:"data-type" json:"data_type"`
+		ReportType           string   `form:"report-type" json:"report_type"`
+		Country              string   `form:"country" json:"country"`
+		Operator             string   `form:"operator" json:"operator"`
+		PartnerName          string   `form:"partner-name" json:"partner-name"`
+		Adnet                string   `form:"adnet" json:"adnet"`
+		Service              string   `form:"service" json:"service"`
+		CampaignName         string   `form:"campaign-name" json:"campaign_name"`
+		DataIndicators       []string `form:"data-indicators" json:"data-indicators"`
+		DataBasedOn          string   `form:"data-based-on" json:"data-based-on"`
+		DataBasedOnIndicator string   `form:"data-based-on-indicator" json:"data-based-on-indicator"`
+		DateRange            string   `form:"date-range" json:"date-range"`
+		DateStart            string   `form:"date-start" json:"date-start"`
+		DateEnd              string   `form:"date-end" json:"date-end"`
+		All                  string   `form:"custom-range" json:"all"`
 	}
 
 	DisplayCPASummary struct {

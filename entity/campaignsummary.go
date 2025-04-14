@@ -6,13 +6,13 @@ import (
 
 type (
 	ParamsCampaignSummary struct {
-		DataType             string   `form:"data-type" json:"data_type"`
-		ChartType            string   `form:"chart-type" json:"chart_type"`
-		ReportType           string   `form:"report-type" json:"report_type"`
-		Country              string   `form:"country" json:"country"`
-		Operator             string   `form:"operator" json:"operator"`
-		PartnerName          string   `form:"partner-name" json:"partner-name"`
-		CampaignName         string   `form:"partner-name" json:"campaign-name"`
+		DataType    string `form:"data-type" json:"data_type"`
+		ChartType   string `form:"chart-type" json:"chart_type"`
+		ReportType  string `form:"report-type" json:"report_type"`
+		Country     string `form:"country" json:"country"`
+		Operator    string `form:"operator" json:"operator"`
+		PartnerName string `form:"partner-name" json:"partner-name"`
+		// CampaignName         string   `form:"partner-name" json:"campaign-name"`
 		Adnet                string   `form:"adnet" json:"adnet"`
 		Service              string   `form:"service" json:"service"`
 		CampaignName         string   `form:"campaign-name" json:"campaign_name"`

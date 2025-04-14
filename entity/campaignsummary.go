@@ -2,17 +2,17 @@ package entity
 
 import (
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type (
 	ParamsCampaignSummary struct {
-		DataType             string   `form:"data-type" json:"data_type"`
-		ReportType           string   `form:"report-type" json:"report_type"`
-		Country              string   `form:"country" json:"country"`
-		Operator             string   `form:"operator" json:"operator"`
-		PartnerName          string   `form:"partner-name" json:"partner-name"`
+		DataType    string `form:"data-type" json:"data_type"`
+		ChartType   string `form:"chart-type" json:"chart_type"`
+		ReportType  string `form:"report-type" json:"report_type"`
+		Country     string `form:"country" json:"country"`
+		Operator    string `form:"operator" json:"operator"`
+		PartnerName string `form:"partner-name" json:"partner-name"`
+		// CampaignName         string   `form:"partner-name" json:"campaign-name"`
 		Adnet                string   `form:"adnet" json:"adnet"`
 		Service              string   `form:"service" json:"service"`
 		CampaignName         string   `form:"campaign-name" json:"campaign_name"`
@@ -22,6 +22,7 @@ type (
 		DateRange            string   `form:"date-range" json:"date-range"`
 		DateStart            string   `form:"date-start" json:"date-start"`
 		DateEnd              string   `form:"date-end" json:"date-end"`
+		DateCustomRange      string   `form:"date-custom-range" json:"date-custom-range"`
 		All                  string   `form:"custom-range" json:"all"`
 	}
 
@@ -76,31 +77,40 @@ type (
 	}
 
 	CampaignSummaryMonitoring struct {
-		gorm.Model
-		ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		Status             bool      `gorm:"not null;size:50" json:"status"`
-		SummaryDate        time.Time `gorm:"type:date" json:"summary_date"`
-		CampaignId         string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
-		CampaignName       string    `gorm:"not null;size:100" json:"campaign_name"`
-		Country            string    `gorm:"not null;size:50" json:"country"`
-		Operator           string    `gorm:"not null;size:50" json:"operator"`
-		Partner            string    `gorm:"not null;size:50" json:"partner"`
-		Adnet              string    `gorm:"not null;size:50" json:"adnet"`
-		Service            string    `gorm:"not null;size:50" json:"service"`
-		Traffic            int       `gorm:"not null;length:20;default:0" json:"traffic"`
-		MoReceived         int       `gorm:"not null;length:20;default:0" json:"mo_received"`
-		Cpa                float64   `gorm:"type:double precision" json:"cpa"`
-		AgencyFee          float64   `gorm:"type:double precision" json:"agency_fee"`
-		TargetDailyBudget  float64   `gorm:"type:double precision" json:"target_daily_budget"`
-		CrMO               float64   `gorm:"type:double precision" json:"cr_mo"`
-		CrPostback         float64   `gorm:"type:double precision" json:"cr_postback"`
-		BudgetUsage        float64   `gorm:"type:double precision" json:"budget_usage"`
-		WakiRevenue        float64   `gorm:"type:double precision;not null;length:20;default:0" json:"waki_revenue"`
-		FirstPush          float64   `gorm:"type:double precision;not null;length:20;default:0" json:"fp"`
-		MoSent             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"mo_sent"`
-		SpendingToAdnets   float64   `gorm:"type:double precision;not null;length:20;default:0" json:"spending_to_adnets"`
-		TotalSpending      float64   `gorm:"type:double precision;not null;length:20;default:0" json:"total_spending"`
-		TotalWakiAgencyFee float64   `gorm:"type:double precision" json:"total_waki_agency_fee"`
+		ID                 int       `form:"id" json:"id"`
+		Status             bool      `form:"status" json:"status"`
+		SummaryDate        time.Time `form:"summary-date" json:"summary_date"`
+		CampaignId         string    `form:"campaign-id" json:"campaign_id"`
+		CampaignName       string    `form:"campaign-name" json:"campaign_name"`
+		Country            string    `form:"country" json:"country"`
+		Operator           string    `form:"operator" json:"operator"`
+		Partner            string    `form:"partner" json:"partner"`
+		Adnet              string    `form:"adnet" json:"adnet"`
+		Service            string    `form:"service" json:"service"`
+		Traffic            int       `form:"traffic" json:"traffic"`
+		MoReceived         int       `form:"mo-received" json:"mo_received"`
+		Cpa                float64   `form:"cpa" json:"cpa"`
+		AgencyFee          float64   `form:"agency-fee" json:"agency_fee"`
+		TargetDailyBudget  float64   `form:"target-daily-budget" json:"target_daily_budget"`
+		CrMO               float64   `form:"cr-mo" json:"cr_mo"`
+		CrPostback         float64   `form:"cr-postback" json:"cr_postback"`
+		BudgetUsage        float64   `form:"budget-usage" json:"budget_usage"`
+		WakiRevenue        float64   `form:"waki-revenue" json:"waki_revenue"`
+		FirstPush          float64   `form:"fp" json:"fp"`
+		MoSent             float64   `form:"mo-sent" json:"mo_sent"`
+		SpendingToAdnets   float64   `form:"spending-to-adnets" json:"spending_to_adnets"`
+		TotalSpending      float64   `form:"total-spending" json:"total_spending"`
+		TotalWakiAgencyFee float64   `form:"total-waki-agency-fee" json:"total_waki_agency_fee"`
+		Spending           float64   `form:"spending" json:"spending"`
+		Budget             float64   `form:"budget" json:"budget"`
+		Mo                 float64   `form:"mo" json:"mo"`
+		Cr                 float64   `form:"cr" json:"cr"`
+	}
+	CampaignSummaryChart struct {
+		SummaryDate string  `form:"summary-date" json:"summary_date"`
+		Mo          float64 `form:"mo" json:"mo"`
+		Cr          float64 `form:"cr" json:"cr"`
+		Spending    float64 `form:"spending" json:"spending"`
 	}
 
 	CampaingCPASummary struct {

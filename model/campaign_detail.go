@@ -239,3 +239,18 @@ func (r *BaseModel) UpdateCampaignMonitoringBudget(o entity.CampaignDetail) erro
 
 	return result.Error
 }
+
+func (r *BaseModel) UpdateKeyMainstreamCampaignDetail(o entity.CampaignDetail) error {
+	
+	result := r.DB.Exec(`
+		UPDATE campaign_details 
+		SET status_submit_key_mainstream = ?, key_mainstream = ? 
+		WHERE url_service_key = ? AND campaign_id = ?`,
+		o.StatusSubmitKeyMainstream, o.KeyMainstream, o.URLServiceKey, o.CampaignId,
+	)
+	
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+

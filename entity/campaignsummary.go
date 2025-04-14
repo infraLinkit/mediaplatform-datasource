@@ -15,6 +15,7 @@ type (
 		CampaignName         string   `form:"partner-name" json:"campaign-name"`
 		Adnet                string   `form:"adnet" json:"adnet"`
 		Service              string   `form:"service" json:"service"`
+		CampaignName         string   `form:"campaign-name" json:"campaign_name"`
 		DataIndicators       []string `form:"data-indicators" json:"data-indicators"`
 		DataBasedOn          string   `form:"data-based-on" json:"data-based-on"`
 		DataBasedOnIndicator string   `form:"data-based-on-indicator" json:"data-based-on-indicator"`

@@ -55,6 +55,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/alertreport/:v", h.DisplayAlertReportAll).Name("All Alert Report list/")
 	rpt.Get("/trafficreport", h.DisplayTrafficReport).Name("Traffic Report list")
 	rpt.Get("/mainstreamreport", h.DisplayMainstreamReport).Name("Mainstream Report list")
+	rpt.Get("/budgetmonitoring", h.DisplayBudgetMonitoring).Name("Budget Monitoring list")
 	rpt.Get("/performance-report", h.DisplayPerformanceReport).Name("Performance Report list")
 
 	// API Internal
@@ -82,6 +83,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	campaign.Post("/updatestatus", h.UpdateStatusCampaign).Name("Update status campaign on campaign_details")
 	campaign.Post("/editcampaign", h.EditCampaign).Name("Edit capping campaign on campaign_details")
 	campaign.Post("/delcampaign", h.DelCampaign).Name("Edit capping campaign on campaign_details")
+	campaign.Post("/updatekeymainstream", h.UpdateKeyMainstream).Name("Update key mainstream campaign on campaign_details")
 
 	// Menu
 	menu := management.Group("/menu") // Menu

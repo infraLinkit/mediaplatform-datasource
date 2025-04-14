@@ -234,7 +234,7 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
 	}
 
-	rows, _ = query_limit.Order("pxdate").Rows()
+	rows, _ = query_limit.Order("pxdate desc").Rows()
 	defer rows.Close()
 
 	var ss []entity.PixelStorage

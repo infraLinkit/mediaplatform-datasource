@@ -16,7 +16,13 @@ import (
 func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 	dataIndicators := extractQueryArray(c, "data-indicators[]")
 	if len(dataIndicators) == 0 {
-		dataIndicators = append(dataIndicators, "traffic")
+		switch dataType := c.Query("data-type"); dataType {
+		case "spending":
+			dataIndicators = append(dataIndicators, "spending")
+		default:
+			dataIndicators = append(dataIndicators, "traffic")
+		}
+
 	}
 
 	params := entity.ParamsCampaignSummary{
@@ -33,6 +39,7 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 		DateRange:            c.Query("date-range"),
 		DateStart:            c.Query("date-start"),
 		DateEnd:              c.Query("date-end"),
+		DateCustomRange:      c.Query("date-custom-range"),
 		All:                  c.Query("all"),
 	}
 
@@ -40,7 +47,66 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
+func (h *IncomingHandler) DisplayCampaignSummaryChart(c *fiber.Ctx) error {
+	dataIndicators := extractQueryArray(c, "data-indicators[]")
+	if len(dataIndicators) == 0 {
+		switch dataType := c.Query("data-type"); dataType {
+		case "spending":
+			dataIndicators = append(dataIndicators, "spending")
+		default:
+			dataIndicators = append(dataIndicators, "traffic")
+		}
+
+	}
+
+	params := entity.ParamsCampaignSummary{
+		DataType:             c.Query("data-type"),
+		ChartType:            c.Query("chart-type"),
+		ReportType:           c.Query("report-type"),
+		Country:              c.Query("country"),
+		Operator:             c.Query("operator"),
+		PartnerName:          c.Query("partner-name"),
+		CampaignName:         c.Query("campaign-name"),
+		Adnet:                c.Query("adnet"),
+		Service:              c.Query("service"),
+		DataIndicators:       dataIndicators,
+		DataBasedOn:          c.Query("data-based-on"),
+		DataBasedOnIndicator: c.Query("data-based-on-indicator"),
+		DateRange:            c.Query("date-range"),
+		DateStart:            c.Query("date-start"),
+		DateEnd:              c.Query("date-end"),
+		DateCustomRange:      c.Query("date-custom-range"),
+		All:                  c.Query("all"),
+	}
+
+	summaryChart, _, _, err := h.DS.GetSummaryCampaignChart(params)
+
+	var response entity.ReturnResponse
+	if err == nil {
+		response = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithData{
+				Code:    fiber.StatusOK,
+				Message: config.OK_DESC,
+				Data:    summaryChart,
+			},
+		}
+	} else {
+		response = entity.ReturnResponse{
+			HttpStatus: fiber.StatusNotFound,
+			Rsp: entity.GlobalResponse{
+				Code:    fiber.StatusNotFound,
+				Message: "empty",
+			},
+		}
+	}
+
+	r := response
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
 func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.ParamsCampaignSummary) entity.ReturnResponse {
+
 	summaryCampaign, startDate, endDate, err := h.DS.GetSummaryCampaignMonitoring(params)
 	summary := formatSummaryData(summaryCampaign, params, startDate, endDate)
 	sortedSummary := sortData(summary, params.DataBasedOn, params.DataBasedOnIndicator)
@@ -68,7 +134,7 @@ func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.Pa
 func formatSummaryData(data []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time) []map[string]interface{} {
 	var formattedData []map[string]interface{}
 
-	if params.DataType == "cr" {
+	if params.DataType == "cr" || params.DataType == "spending" {
 		if params.All == "true" {
 			generatedSummary := generateSummary(data, params, startDate, endDate)
 			placeHolder := map[string]any{
@@ -139,7 +205,6 @@ func formatSummaryData(data []entity.CampaignSummaryMonitoring, params entity.Pa
 
 		}
 	}
-
 	return formattedData
 }
 
@@ -251,7 +316,6 @@ func generateSummary(data []entity.CampaignSummaryMonitoring, params entity.Para
 
 		for _, indicator := range params.DataIndicators {
 			indicatorValue := getIndicatorValue(campaign, indicator)
-
 			if days[date][indicator] == nil {
 				days[date][indicator] = map[string]interface{}{
 					"value":      0.0, // Initialize "value" to 0

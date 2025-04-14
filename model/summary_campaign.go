@@ -157,7 +157,13 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
 
 	// Apply Indicator Selection
-	selectedFields := []string{"summary_date", "country", "campaign_id", "campaign_name", "partner", "operator", "service", "adnet"}
+	selectedFields := []string{"country", "campaign_id", "campaign_name", "partner", "operator", "service", "adnet"}
+	if params.DataType == "monthly_report" {
+		selectedFields = append(selectedFields, "DATE_TRUNC('month', summary_date) as summary_date")
+	} else {
+		selectedFields = append(selectedFields, "summary_date")
+	}
+
 	formattedIndicators := formatQueryIndicators(params.DataIndicators, params.DataType)
 	selectedFields = append(selectedFields, formattedIndicators...)
 
@@ -184,51 +190,57 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 	if params.Service != "" {
 		query.Where("service = ?", params.Service)
 	}
+	if params.CampaignName != "" {
+		query.Where("campaign_name = ?", params.CampaignName)
+	}
 
 	// Handle Date Range
-	var startDate, endDate time.Time
+	var dateStart, dateEnd time.Time
 	var errStart, errEnd error
 	today := time.Now()
 
 	switch strings.ToUpper(params.DateRange) {
 	case "TODAY":
-		startDate, endDate = today, today
+		dateStart, dateEnd = today, today
 	case "YESTERDAY":
-		startDate, endDate = today.AddDate(0, 0, -1), today.AddDate(0, 0, -1)
+		dateStart, dateEnd = today.AddDate(0, 0, -1), today.AddDate(0, 0, -1)
 	case "LAST_7_DAY":
-		startDate, endDate = today.AddDate(0, 0, -6), today
+		dateStart, dateEnd = today.AddDate(0, 0, -6), today
 	case "LAST_30_DAY":
-		startDate, endDate = today.AddDate(0, -1, 0), today
+		dateStart, dateEnd = today.AddDate(0, -1, 0), today
 	case "THIS_MONTH":
-		startDate = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
-		endDate = today
+		dateStart = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
+		dateEnd = today
 	case "LAST_MONTH":
 		lastMonth := today.AddDate(0, -1, 0)
-		startDate = time.Date(lastMonth.Year(), lastMonth.Month(), 1, 0, 0, 0, 0, today.Location())
-		endDate = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).AddDate(0, 0, -1)
+		dateStart = time.Date(lastMonth.Year(), lastMonth.Month(), 1, 0, 0, 0, 0, today.Location())
+		dateEnd = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).AddDate(0, 0, -1)
 	case "CUSTOM_RANGE":
-		startDate, errStart = time.Parse("2006-01-02", params.DateStart)
-		endDate, errEnd = time.Parse("2006-01-02", params.DateEnd)
+		fmt.Println("dr", params.DateCustomRange)
+		splitTime := strings.Split(params.DateCustomRange, "to")
+
+		dateStart, errStart = time.Parse("2006-01-02", strings.TrimSpace(splitTime[0]))
+		dateEnd, errEnd = time.Parse("2006-01-02", strings.TrimSpace(splitTime[1]))
 		if errStart != nil {
-			startDate = today
+			dateStart = today
 		}
 		if errEnd != nil {
-			endDate = today
+			dateEnd = today
 		}
 	default:
-		startDate = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
-		endDate = today
+		dateStart = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
+		dateEnd = today
 	}
 
-	if endDate.After(today) {
-		endDate = today
+	if dateEnd.After(today) {
+		dateEnd = today
 	}
 
-	query.Where("summary_date BETWEEN ? AND ?", startDate, endDate)
+	query.Where("summary_date BETWEEN ? AND ?", dateStart, dateEnd)
 
 	// Grouping for monthly reports
 	if params.DataType == "monthly_report" {
-		query.Group("EXTRACT(YEAR FROM summary_date), EXTRACT(MONTH FROM summary_date), country, partner, operator, service, adnet")
+		query.Group("DATE_TRUNC('month', summary_date),country, campaign_name,campaign_id, partner, operator, service, adnet")
 	}
 
 	rows, _ = query.Unscoped().Rows()
@@ -241,13 +253,119 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 
 	for rows.Next() {
 		var s entity.CampaignSummaryMonitoring
-
 		// ScanRows scans a row into a struct
 		r.DB.ScanRows(rows, &s)
 
 		ss = append(ss, s)
 	}
-	return ss, startDate, endDate, rows.Err()
+	return ss, dateStart, dateEnd, rows.Err()
+
+}
+
+func (r *BaseModel) GetSummaryCampaignChart(params entity.ParamsCampaignSummary) ([]entity.CampaignSummaryChart, time.Time, time.Time, error) {
+	var (
+		rows           *sql.Rows
+		selectedFields []string
+	)
+	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
+
+	if params.ChartType == "spending" {
+		selectedFields = []string{"SUM(saaf) as spending,SUM(mo_received) as mo, summary_date"}
+	} else if params.ChartType == "cr" {
+		selectedFields = []string{"SUM(cr) as cr,SUM(mo_received) as mo, summary_date"}
+	} else {
+		selectedFields = []string{"SUM(cr) as cr,SUM(mo_received) as mo, summary_date"}
+	}
+
+	query.Select(selectedFields)
+
+	// Set default values
+	if params.DataType == "" {
+		params.DataType = "daily_report"
+	}
+
+	// Apply paramss
+	if params.Country != "" {
+		query.Where("country = ?", params.Country)
+	}
+	if params.Operator != "" {
+		query.Where("operator = ?", params.Operator)
+	}
+	if params.Adnet != "" {
+		query.Where("adnet = ?", params.Adnet)
+	}
+	if params.PartnerName != "" {
+		query.Where("partner = ?", params.PartnerName)
+	}
+	if params.Service != "" {
+		query.Where("service = ?", params.Service)
+	}
+	if params.CampaignName != "" {
+		query.Where("campaign_name = ?", params.CampaignName)
+	}
+
+	// Handle Date Range
+	var dateStart, dateEnd time.Time
+	var errStart, errEnd error
+	today := time.Now()
+
+	switch strings.ToUpper(params.DateRange) {
+	case "TODAY":
+		dateStart, dateEnd = today, today
+	case "YESTERDAY":
+		dateStart, dateEnd = today.AddDate(0, 0, -1), today.AddDate(0, 0, -1)
+	case "LAST_7_DAY":
+		dateStart, dateEnd = today.AddDate(0, 0, -6), today
+	case "LAST_30_DAY":
+		dateStart, dateEnd = today.AddDate(0, -1, 0), today
+	case "THIS_MONTH":
+		dateStart = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
+		dateEnd = today
+	case "LAST_MONTH":
+		lastMonth := today.AddDate(0, -1, 0)
+		dateStart = time.Date(lastMonth.Year(), lastMonth.Month(), 1, 0, 0, 0, 0, today.Location())
+		dateEnd = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).AddDate(0, 0, -1)
+	case "CUSTOM_RANGE":
+		splitTime := strings.Split(params.DateCustomRange, "to")
+		dateStart, errStart = time.Parse("2006-01-02", strings.TrimSpace(splitTime[0]))
+		dateEnd, errEnd = time.Parse("2006-01-02", strings.TrimSpace(splitTime[1]))
+		if errStart != nil {
+			dateStart = today
+		}
+		if errEnd != nil {
+			dateEnd = today
+		}
+	default:
+		dateStart = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
+		dateEnd = today
+	}
+
+	if dateEnd.After(today) {
+		dateEnd = today
+	}
+
+	query.Where("summary_date BETWEEN ? AND ?", dateStart, dateEnd)
+	query.Group("summary_date")
+
+	rows, _ = query.Unscoped().Rows()
+
+	defer rows.Close()
+
+	var (
+		ss []entity.CampaignSummaryChart
+	)
+
+	for rows.Next() {
+		var s entity.CampaignSummaryChart
+		// ScanRows scans a row into a struct
+		r.DB.ScanRows(rows, &s)
+		sDate, err := time.Parse(time.RFC3339, s.SummaryDate)
+		if err == nil {
+			s.SummaryDate = sDate.Format("2006-01-02")
+		}
+		ss = append(ss, s)
+	}
+	return ss, dateStart, dateEnd, rows.Err()
 
 }
 
@@ -268,12 +386,16 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 				formattedValue = "SUM(sbaf) AS spending_to_adnets"
 			case "total_spending":
 				formattedValue = "SUM(saaf) AS total_spending"
+			case "spending":
+				formattedValue = "SUM(saaf) AS spending"
 			case "fp":
 				formattedValue = "SUM(first_push) AS fp"
 			case "mo_sent":
 				formattedValue = "SUM(postback) AS mo_sent"
 			case "traffic":
 				formattedValue = "SUM(landing) AS traffic"
+			case "budget":
+				formattedValue = "SUM(target_daily_budget) AS budget"
 			default:
 				formattedValue = fmt.Sprintf("SUM(%s) AS %s", value, value)
 			}
@@ -291,8 +413,14 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 				formattedValue = "sbaf AS spending_to_adnets"
 			case "total_spending":
 				formattedValue = "saaf AS total_spending"
+			case "spending":
+				formattedValue = "saaf AS spending"
+			case "budget":
+				formattedValue = "target_daily_budget AS budget"
 			case "traffic":
 				formattedValue = "landing AS traffic"
+			case "mo":
+				formattedValue = "mo_received AS mo"
 			default:
 				formattedValue = fmt.Sprintf("%s AS %s", value, value)
 			}

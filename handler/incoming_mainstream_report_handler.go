@@ -77,7 +77,7 @@ func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.D
 	)
 
 	if mainstreamreport, isempty = h.DS.RGetDisplayMainstreamReport(key, "$"); isempty {
-		mainstreamreport, err = h.DS.GetDisplayCPAReport(fe)
+		mainstreamreport, err = h.DS.GetDisplayMainstreamReport(fe)
 		s, _ := json.Marshal(mainstreamreport)
 
 		h.DS.SetData(key, "$", string(s))

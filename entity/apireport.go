@@ -55,6 +55,7 @@ type (
 		Action         string `form:"action" json:"action"`
 		Draw           int    `form:"draw" json:"draw"`
 		PageSize       int    `form:"page_size" json:"page_size"`
+		Order          string `form:"order" json:"order"`
 	}
 
 	DisplayCPAReport struct { // cpa

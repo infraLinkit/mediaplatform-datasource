@@ -207,10 +207,13 @@ func (h *IncomingHandler) DisplayConversionLogReport(c *fiber.Ctx) error {
 
 	m := c.Queries()
 
-	page, _ := strconv.Atoi(m["page"])
+	page, errPage := strconv.Atoi(m["page"])
 	pageSize, err := strconv.Atoi(m["page_size"])
 	if err != nil {
 		pageSize = 10
+	}
+	if errPage != nil {
+		page = 1
 	}
 
 	draw, _ := strconv.Atoi(m["draw"])
@@ -230,6 +233,7 @@ func (h *IncomingHandler) DisplayConversionLogReport(c *fiber.Ctx) error {
 		Action:         m["action"],
 		Draw:           draw,
 		PageSize:       pageSize,
+		Order:          m["order"],
 	}
 
 	r := h.DisplayConversionLogReportExtra(c, fe)

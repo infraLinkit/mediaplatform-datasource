@@ -7,7 +7,9 @@ import (
 	"github.com/gofiber/storage/rueidis"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/handler"
+	"github.com/infraLinkit/mediaplatform-datasource/helper"
 	_ "github.com/lib/pq"
+	"github.com/mikhail-bigun/fiberlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
 	"gorm.io/gorm"
@@ -27,6 +29,36 @@ func MapUrls(obj App3rdParty) *fiber.App {
 		JSONEncoder: json.Marshal,
 		JSONDecoder: json.Unmarshal,
 	})
+
+	f.Use(
+		fiberlogrus.New(
+			fiberlogrus.Config{
+				Logger: helper.MakeLogger(
+					helper.Setup{
+						Env:     obj.Config.LogEnv,
+						Logname: obj.Config.LogPath + "/access_log",
+						Display: true,
+						Level:   obj.Config.LogLevel,
+					}),
+				Tags: []string{
+					fiberlogrus.TagIP,
+					fiberlogrus.TagIPs,
+					fiberlogrus.TagProtocol,
+					fiberlogrus.TagHost,
+					fiberlogrus.TagPort,
+					fiberlogrus.TagMethod,
+					fiberlogrus.TagPath,
+					fiberlogrus.TagURL,
+					fiberlogrus.TagUA,
+					fiberlogrus.TagBody,
+					fiberlogrus.TagRoute,
+					fiberlogrus.TagQueryStringParams,
+					fiberlogrus.TagStatus,
+					fiberlogrus.TagPid,
+					fiberlogrus.TagReferer,
+					fiberlogrus.TagLatency,
+				},
+			}))
 
 	h := handler.NewIncomingHandler(handler.IncomingHandler{
 		Config: obj.Config,

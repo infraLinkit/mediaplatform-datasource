@@ -234,16 +234,35 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
 	}
 
-	rows, _ = query_limit.Order("pxdate").Rows()
+	var startIndex int
+
+	if o.Order == "asc" {
+		query_limit = query_limit.Order("pxdate asc")
+		startIndex = (o.Page - 1) * o.PageSize
+	} else {
+		query_limit = query_limit.Order("pxdate desc")
+		startIndex = int(total_rows) - ((o.Page - 1) * o.PageSize)
+	}
+
+	rows, _ = query_limit.Rows()
 	defer rows.Close()
 
 	var ss []entity.PixelStorage
+
 	for rows.Next() {
 		var s entity.PixelStorage
 		r.DB.ScanRows(rows, &s)
+
+		if o.Order == "asc" {
+			s.ID = startIndex + 1
+			startIndex++
+		} else {
+			s.ID = startIndex
+			startIndex--
+		}
+
 		ss = append(ss, s)
 	}
-
 	return ss, total_rows, rows.Err()
 }
 

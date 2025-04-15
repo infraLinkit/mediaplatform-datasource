@@ -395,7 +395,7 @@ func (h *IncomingHandler) UpdateAgencyCost(c *fiber.Ctx) error {
 
 		h.DS.SetData(redisKey, "$", string(gset))
 
-		h.Logs.Info("Successfully send to Redis AgencyFee & CostPerConversion & TechnicalFee.")
+		h.Logs.Info(fmt.Sprintf("Successfully send to Redis AgencyFee: %s, CostPerConversion: %s, TechnicalFee: %s", AgencyFee, CostPerConversion, TechnicalFee))
 
 		if err != nil {
 			h.Logs.Error(fmt.Sprintf("Failed to update: %v", err))

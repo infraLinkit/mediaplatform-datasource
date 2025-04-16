@@ -238,10 +238,10 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 
 	if o.Order == "asc" {
 		query_limit = query_limit.Order("pxdate asc")
-		startIndex = (o.Page - 1) * o.PageSize
+		startIndex = int(total_rows) - ((o.Page - 1) * o.PageSize)
 	} else {
 		query_limit = query_limit.Order("pxdate desc")
-		startIndex = int(total_rows) - ((o.Page - 1) * o.PageSize)
+		startIndex = (o.Page - 1) * o.PageSize
 	}
 
 	rows, _ = query_limit.Rows()
@@ -254,11 +254,11 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 		r.DB.ScanRows(rows, &s)
 
 		if o.Order == "asc" {
-			s.ID = startIndex + 1
-			startIndex++
-		} else {
 			s.ID = startIndex
 			startIndex--
+		} else {
+			s.ID = startIndex + 1
+			startIndex++
 		}
 
 		ss = append(ss, s)

@@ -60,7 +60,7 @@ func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, 
 	if b {
 		return o, false
 	} else {
-		r.Logs.Warn(fmt.Sprintf("pixel not found %#v", o))
+		r.Logs.Warn(fmt.Sprintf("pixel found %#v", o))
 		return o, true
 	}
 }

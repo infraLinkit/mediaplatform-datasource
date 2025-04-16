@@ -40,7 +40,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 			c.Cookie(&fiber.Cookie{
 				Name:     p.CookieKey,
 				Value:    "1",
-				Expires:  time.Now().Add(1 * time.Minute),
+				Expires:  time.Now().Add(3 * time.Second),
 				HTTPOnly: true,
 				SameSite: "lax",
 			})
@@ -74,7 +74,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
 							Adnet:         dc.Adnet,
 							IsBillable:    dc.IsBillable,
-							Pixel:         p.AffSub,
+							Pixel:         px.Pixel,
 							Browser:       px.Browser,
 							OS:            px.OS,
 							Handset:       px.UserAgent,
@@ -111,7 +111,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
 							Adnet:         dc.Adnet,
 							IsBillable:    dc.IsBillable,
-							Pixel:         p.AffSub,
+							Pixel:         px.Pixel,
 							Browser:       px.Browser,
 							OS:            px.OS,
 							Handset:       px.UserAgent,

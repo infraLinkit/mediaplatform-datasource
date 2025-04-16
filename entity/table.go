@@ -97,6 +97,8 @@ type (
 		StatusSubmitKeyMainstream bool      `gorm:"not null;default:false" json:"status_submit_key_mainstream"`
 		KeyMainstream             string    `gorm:"size:50;default:NA" json:"key_mainstream"`
 		Channel                   string    `gorm:"size:50;default:NA" json:"channel"`
+		GoogleSheet               string    `gorm:"type:text;default:NA" json:"google_sheet"`
+		Currency                  string    `gorm:"size:10;default:NA" json:"currency"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}

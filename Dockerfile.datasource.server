@@ -1,4 +1,4 @@
-FROM golang:1.24.1-alpine as golang
+FROM golang:1.24.1-alpine AS golang
 
 RUN apk --no-cache add tzdata
 

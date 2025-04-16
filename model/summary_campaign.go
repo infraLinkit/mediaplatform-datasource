@@ -2,28 +2,19 @@ package model
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-func (r *BaseModel) CheckSumDate(o entity.SummaryCampaign) bool {
+func (r *BaseModel) CheckSumDate(o entity.SummaryCampaign) int {
 
-	result := r.DB.Model(&entity.SummaryCampaign{}).Where("summary_date = ? AND url_service_key = ?", o.SummaryDate, o.URLServiceKey)
-
-	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
-
-	if b {
-		return false
-	} else {
-		r.Logs.Warn(fmt.Sprintf("Summary date on url_service_key existed or data found %#v", o))
-		return true
-	}
+	var result int64
+	r.DB.Table("summary_campaigns").Where("summary_date = ? AND url_service_key = ?", o.SummaryDate, o.URLServiceKey).Count(&result)
+	return int(result)
 }
 
 func (r *BaseModel) DelSummaryCampaign(o entity.SummaryCampaign) error {

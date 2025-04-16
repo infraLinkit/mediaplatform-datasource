@@ -2,13 +2,11 @@ package model
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 

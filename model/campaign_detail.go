@@ -254,3 +254,16 @@ func (r *BaseModel) UpdateKeyMainstreamCampaignDetail(o entity.CampaignDetail) e
 	return result.Error
 }
 
+func (r *BaseModel) UpdateGoogleSheetCampaignDetail(o entity.CampaignDetail) error {
+	
+	result := r.DB.Exec(`
+		UPDATE campaign_details 
+		SET google_sheet = ? 
+		WHERE url_service_key = ? AND campaign_id = ?`,
+		o.GoogleSheet, o.URLServiceKey, o.CampaignId,
+	)
+	
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}

@@ -107,6 +107,8 @@ type (
 		StatusSubmitKeyMainstream bool    `json:"status_submit_key_mainstream"`
 		KeyMainstream             string  `json:"key_mainstream"`
 		Channel                   string  `json:"channel"`
+		GoogleSheet               string  `json:"google_sheet"`
+		Currency                  string  `json:"currency"`
 	}
 
 	//'{"id":1,"urlservicekey":"idtelgempastelmbv","campaign_id":"ID01","country":"ID","partner":"pass","operator":"telkomsel","aggregator":"telesat","service":"gazy","short_code":"1234","adnet":"mbv","keyword":"gazy","subkeyword":"","is_billable":false,"plan":"","traffic":0,"landing":0,"click":0,"redirect":0,"traffic_data":[],"landing_data":[],"click_data":[],"redirect_data":[]}'

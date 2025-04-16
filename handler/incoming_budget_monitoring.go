@@ -80,13 +80,13 @@ func formatBudgetMonitoringData(data []entity.CampaignSummaryMonitoring, params 
 			formattedData = append(formattedData, completeSummary)
 		} else {
 			groupedAdnet := goterators.Group(data, func(campaign entity.CampaignSummaryMonitoring) string {
-				return campaign.Adnet
+				return campaign.CampaignId
 			})
 			for _, campaignPerAdnet := range groupedAdnet {
 				generatedSummary := generateBudget(campaignPerAdnet, params, startDate, endDate)
 
 				placeHolder := map[string]interface{}{
-					"level":         "country",
+					"level":         "campaign_id",
 					"campaign_id":   campaignPerAdnet[0].CampaignId,
 					"campaign_name": campaignPerAdnet[0].CampaignName,
 					"country":       campaignPerAdnet[0].Country,
@@ -117,7 +117,7 @@ func formatBudgetMonitoringData(data []entity.CampaignSummaryMonitoring, params 
 		if params.All == "true" {
 			generatedSummary := generateBudget(data, params, startDate, endDate)
 			placeHolder := map[string]interface{}{
-				"level":       "country",
+				"level":       "campaign_id",
 				"country":     "All",
 				"campaign_id": "ALL",
 			}
@@ -126,7 +126,7 @@ func formatBudgetMonitoringData(data []entity.CampaignSummaryMonitoring, params 
 		} else {
 
 			groupedCountry := goterators.Group(data, func(campaign entity.CampaignSummaryMonitoring) string {
-				return campaign.Country
+				return campaign.CampaignId
 			})
 
 			for _, campaignPerCountry := range groupedCountry {
@@ -146,7 +146,7 @@ func formatBudgetMonitoringData(data []entity.CampaignSummaryMonitoring, params 
 				}
 
 				placeHolder := map[string]interface{}{
-					"level":         "country",
+					"level":         "campaign_id",
 					"country":       campaignPerCountry[0].Country,
 					"campaign_name": campaignPerCountry[0].CampaignName,
 					"date":          campaignPerCountry[0].SummaryDate,

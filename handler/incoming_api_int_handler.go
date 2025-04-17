@@ -43,11 +43,11 @@ func (h *IncomingHandler) SetData(c *fiber.Ctx) error {
 
 		h.DS.SetData(redisKey, "$", string(gset))
 
-		h.DS.UpdateCampaignMonitoringBudget(entity.CampaignDetail{
-			TargetDailyBudget: targetDailyBudget,
-			Country:           country,
-			Operator:          operator,
-		})
+		// h.DS.UpdateCampaignMonitoringBudget(entity.CampaignDetail{
+		// 	TargetDailyBudget: targetDailyBudget,
+		// 	Country:           country,
+		// 	Operator:          operator,
+		// })
 
 		h.DS.UpdateReportSummaryCampaignMonitoringBudget(entity.SummaryCampaign{
 			SummaryDate:       helper.GetCurrentTime(h.Config.TZ, time.RFC3339),

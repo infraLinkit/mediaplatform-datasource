@@ -13,7 +13,8 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 	query := r.DB.Model(&entity.CampaignDetail{}).
 		Select(`
 			campaigns.campaign_id AS campaign_id,
-			campaigns.name AS campaign_name, 
+			campaigns.name AS campaign_name,
+			campaigns.campaign_objective AS campaign_objective, 
 			campaign_details.country, 
 			campaign_details.partner, 
 			COUNT(DISTINCT campaign_details.operator) AS total_operator, 
@@ -23,7 +24,7 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 			campaign_details.is_active
 		`).
 		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
-		Group("campaigns.campaign_id, campaigns.name, campaign_details.country, campaign_details.partner, campaign_details.short_code, campaign_details.is_active, campaigns.created_at").
+		Group("campaigns.campaign_id, campaigns.name, campaigns.campaign_objective, campaign_details.country, campaign_details.partner, campaign_details.short_code, campaign_details.is_active, campaigns.created_at").
 		Order("campaigns.created_at DESC") 
 
 	if o.Action == "Search" {
@@ -47,6 +48,13 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 		}
 		if o.CampaignName != "" {
 			query = query.Where("campaigns.name = ?", o.CampaignName)
+		}
+		if o.CampaignType != "" {
+			if o.CampaignType == "mainstream" {
+				query = query.Where("campaigns.campaign_objective = ?", "MAINSTREAM")
+			} else {
+				query = query.Where("campaigns.campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
+			}
 		}
 	}
 
@@ -102,7 +110,8 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 			campaign_details.campaign_id,
             campaign_details.operator, 
             campaign_details.service, 
-            campaigns.name AS campaign_name, 
+            campaigns.name AS campaign_name,
+			campaigns.campaign_objective AS campaign_objective, 
             campaign_details.country, 
             campaign_details.partner,
 			campaign_details.adnet,
@@ -117,7 +126,8 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
             campaign_details.url_warp_landing, 
             campaign_details.api_url, 
             campaign_details.is_active,
-			campaign_details.url_service_key
+			campaign_details.url_service_key,
+			campaign_details.channel
         `).
 		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
 		Where("campaigns.campaign_id = ?", o.CampaignId).
@@ -135,10 +145,10 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 	for rows.Next() {
 		var detail entity.CampaignManagementDetail
 		if err := rows.Scan(
-			&detail.ID, &detail.CampaignID, &detail.Operator, &detail.Service, &detail.CampaignName, &detail.Country,
+			&detail.ID, &detail.CampaignID, &detail.Operator, &detail.Service, &detail.CampaignName, &detail.CampaignObjective, &detail.Country,
 			&detail.Partner, &detail.Adnet, &detail.ShortCode, &detail.MOLimit, &detail.Payout,
 			&detail.RatioSend, &detail.RatioReceive, &detail.URLPostback, &detail.URLService,
-			&detail.URLanding, &detail.URLWarpLanding, &detail.APIURL, &detail.IsActive, &detail.UrlServiceKey,
+			&detail.URLanding, &detail.URLWarpLanding, &detail.APIURL, &detail.IsActive, &detail.UrlServiceKey, &detail.Channel,
 		); err != nil {
 			return nil, err
 		}

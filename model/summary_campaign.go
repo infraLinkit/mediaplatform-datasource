@@ -10,6 +10,13 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+func (r *BaseModel) CheckSumDate(o entity.SummaryCampaign) int {
+
+	var result int64
+	r.DB.Table("summary_campaigns").Where("summary_date = ? AND url_service_key = ?", o.SummaryDate, o.URLServiceKey).Count(&result)
+	return int(result)
+}
+
 func (r *BaseModel) DelSummaryCampaign(o entity.SummaryCampaign) error {
 
 	result := r.DB.

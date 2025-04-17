@@ -9,6 +9,7 @@ type (
 		Status       string `form:"status" json:"status"`
 		Partner      string `form:"partner" json:"partner"`
 		CampaignName string `form:"campaign_name" json:"campaign_name"`
+		CampaignType string `form:"campaign_type" json:"campaign_type"`
 		CampaignId   string `form:"campaign_id" json:"campaign_id"`
 		Page         int    `form:"page" json:"page"`
 		Draw         int    `form:"draw" json:"draw"`
@@ -19,6 +20,7 @@ type (
 		ID            []int  `json:"id"`
 		CampaignID    string `json:"campaign_id"`
 		CampaignName  string `json:"campaign_name"`
+		CampaignObjective string `json:"campaign_objective"`
 		Country       string `json:"country"`
 		Partner       string `json:"partner"`
 		TotalOperator int    `json:"total_operator"`
@@ -32,6 +34,7 @@ type (
 		ID             int    `json:"id"`
 		CampaignID     string `json:"campaign_id"`
 		CampaignName   string `json:"campaign_name"`
+		CampaignObjective   string `json:"campaign_objective"`
 		Country        string `json:"country"`
 		Operator       string `json:"operator"`
 		Service        string `json:"service"`
@@ -49,6 +52,7 @@ type (
 		APIURL         string `json:"api_url"`
 		IsActive       bool   `json:"is_active"`
 		UrlServiceKey  string `json:"url_service_key"`
+		Channel        string `json:"channel"`
 	}
 
 	CampaignManagementDataDetail struct {

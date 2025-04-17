@@ -32,6 +32,7 @@ func (h *IncomingHandler) DisplayCampaignManagement(c *fiber.Ctx) error {
 		Partner:      m["partner"],
 		Status:       m["status"],
 		CampaignName: m["campaign_name"],
+		CampaignType: m["campaign_type"],
 		CampaignId:   m["campaign_id"],
 		Page:         page,
 		Draw:         draw,
@@ -372,6 +373,40 @@ func (h *IncomingHandler) UpdateKeyMainstream(c *fiber.Ctx) error {
 		err = h.DS.UpdateKeyMainstreamCampaignDetail(entity.CampaignDetail{
 			StatusSubmitKeyMainstream: o.StatusSubmitKeyMainstream,
 			KeyMainstream:             o.KeyMainstream,
+			URLServiceKey:             o.URLServiceKey,
+			CampaignId:                o.CampaignId,
+		})
+
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("failed updating db: %v", err))
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed save to db"})
+		}
+
+		return c.Status(fiber.StatusOK).Send([]byte("OK"))
+	}
+}
+
+func (h *IncomingHandler) UpdateGoogleSheet(c *fiber.Ctx) error {
+
+	o := new(entity.CampaignDetail)
+
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	} else {
+
+		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+		// Update to redis with key
+		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+		cfgCmp.GoogleSheet = o.GoogleSheet
+
+		cfgDataConfig, _ := json.Marshal(cfgCmp)
+
+		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+
+		err = h.DS.UpdateGoogleSheetCampaignDetail(entity.CampaignDetail{
+			GoogleSheet:               o.GoogleSheet,
 			URLServiceKey:             o.URLServiceKey,
 			CampaignId:                o.CampaignId,
 		})

@@ -105,6 +105,7 @@ type (
 		Budget             float64   `form:"budget" json:"budget"`
 		Mo                 float64   `form:"mo" json:"mo"`
 		Cr                 float64   `form:"cr" json:"cr"`
+		Revenue            float64   `form:"revenue" json:"revenue"`
 	}
 	CampaignSummaryChart struct {
 		SummaryDate string  `form:"summary-date" json:"summary_date"`
@@ -138,6 +139,74 @@ type (
 		SpendingToAdnets   float64   `gorm:"type:double precision;not null;length:20;default:0" json:"spending_to_adnets"`
 		TotalSpending      float64   `gorm:"type:double precision;not null;length:20;default:0" json:"total_spending"`
 		TotalWakiAgencyFee float64   `gorm:"type:double precision" json:"total_waki_agency_fee"`
+	}
+
+	ParamsRevenueMonitoring struct {
+		DataType    string `form:"data-type" json:"data_type"`
+		ChartType   string `form:"chart-type" json:"chart_type"`
+		ReportType  string `form:"report-type" json:"report_type"`
+		Country     string `form:"country" json:"country"`
+		Operator    string `form:"operator" json:"operator"`
+		PartnerName string `form:"partner-name" json:"partner-name"`
+		// CampaignName         string   `form:"partner-name" json:"campaign-name"`
+		Adnet                string   `form:"adnet" json:"adnet"`
+		Service              string   `form:"service" json:"service"`
+		CampaignName         string   `form:"campaign-name" json:"campaign_name"`
+		CampaignId           string   `form:"campaign-id" json:"campaign_id"`
+		TypeData             string   `form:"type-data" json:"type_data"`
+		DataIndicators       []string `form:"data-indicators" json:"data-indicators"`
+		DataBasedOn          string   `form:"data-based-on" json:"data-based-on"`
+		DataBasedOnIndicator string   `form:"data-based-on-indicator" json:"data-based-on-indicator"`
+		DateRange            string   `form:"date-range" json:"date-range"`
+		DateStart            string   `form:"date-start" json:"date-start"`
+		DateEnd              string   `form:"date-end" json:"date-end"`
+		DateCustomRange      string   `form:"date-custom-range" json:"date-custom-range"`
+		All                  string   `form:"custom-range" json:"all"`
+	}
+
+	RevenueMonitoringMonitoring struct {
+		ID                 int       `form:"id" json:"id"`
+		Status             bool      `form:"status" json:"status"`
+		SummaryDate        time.Time `form:"summary-date" json:"summary_date"`
+		CampaignId         string    `form:"campaign-id" json:"campaign_id"`
+		CampaignName       string    `form:"campaign-name" json:"campaign_name"`
+		Country            string    `form:"country" json:"country"`
+		Operator           string    `form:"operator" json:"operator"`
+		Partner            string    `form:"partner" json:"partner"`
+		Adnet              string    `form:"adnet" json:"adnet"`
+		Service            string    `form:"service" json:"service"`
+		Traffic            int       `form:"traffic" json:"traffic"`
+		MoReceived         int       `form:"mo-received" json:"mo_received"`
+		Cpa                float64   `form:"cpa" json:"cpa"`
+		AgencyFee          float64   `form:"agency-fee" json:"agency_fee"`
+		TargetDailyBudget  float64   `form:"target-daily-budget" json:"target_daily_budget"`
+		CrMO               float64   `form:"cr-mo" json:"cr_mo"`
+		CrPostback         float64   `form:"cr-postback" json:"cr_postback"`
+		BudgetUsage        float64   `form:"budget-usage" json:"budget_usage"`
+		WakiRevenue        float64   `form:"waki-revenue" json:"waki_revenue"`
+		FirstPush          float64   `form:"fp" json:"fp"`
+		MoSent             float64   `form:"mo-sent" json:"mo_sent"`
+		SpendingToAdnets   float64   `form:"spending-to-adnets" json:"spending_to_adnets"`
+		TotalSpending      float64   `form:"total-spending" json:"total_spending"`
+		TotalWakiAgencyFee float64   `form:"total-waki-agency-fee" json:"total_waki_agency_fee"`
+		Spending           float64   `form:"spending" json:"spending"`
+		Budget             float64   `form:"budget" json:"budget"`
+		Mo                 float64   `form:"mo" json:"mo"`
+		Cr                 float64   `form:"cr" json:"cr"`
+	}
+
+	RevenueMonitoringChart struct {
+		SummaryDate string  `form:"summary-date" json:"summary_date"`
+		Mo          float64 `form:"mo" json:"mo"`
+		Revenue     float64 `form:"revenue" json:"revenue"`
+		Spending    float64 `form:"spending" json:"spending"`
+	}
+
+	DataRevenue struct {
+		RevenueMonitoringChart []RevenueMonitoringChart `json:"revenue_monitoring_chart"`
+		TimeRevenue            float64                  `form:"time-revenue" json:"time_revenue"`
+		TimeInternalRevenue    float64                  `form:"time-internal-revenue" json:"time_internal_revenue"`
+		TimeExternalRevenue    float64                  `form:"time-external-revenue" json:"time_external_revenue"`
 	}
 )
 type Tabler interface {

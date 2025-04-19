@@ -9,9 +9,10 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
-func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.SummaryCampaign, error) {
+func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.SummaryCampaign, int64, error) {
 	var rows *sql.Rows
 	var err error
+	var total_rows int64
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	// fmt.Println(query)
@@ -65,20 +66,25 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 			}
 		}
 
-		rows, err = query.Order("created_at DESC").Order("id DESC").Rows()
+		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
 		if err != nil {
-			return []entity.SummaryCampaign{}, err
+			return []entity.SummaryCampaign{}, 0, err
 		}
 	} else {
 		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
 		if err != nil {
-			return []entity.SummaryCampaign{}, err
+			return []entity.SummaryCampaign{}, 0, err
 		}
 	}
 
-	if rows == nil {
-		return []entity.SummaryCampaign{}, nil
+	query.Unscoped().Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
 	}
+
+	rows, _ = query_limit.Rows()
 	defer rows.Close()
 
 	var ss []entity.SummaryCampaign
@@ -93,9 +99,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
 
-	fmt.Println("---- Query from DB / Not from Redis ----")
-
-	return ss, rows.Err()
+	return ss, total_rows, rows.Err()
 }
 
 func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]entity.SummaryCampaign, error) {

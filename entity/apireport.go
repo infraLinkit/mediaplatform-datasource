@@ -85,6 +85,7 @@ type (
 		DateBefore        string    `form:"date_before" json:"date_before"`
 		DateAfter         string    `form:"date_after" json:"date_after"`
 		Draw              int       `form:"draw" json:"draw"`
+		Reload            string    `form:"draw" json:"reload"`
 	}
 
 	CostReport struct {

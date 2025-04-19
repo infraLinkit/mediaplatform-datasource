@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -393,6 +394,7 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 		DateRange:    m["date_range"],
 		DateBefore:   m["date_before"],
 		DateAfter:    m["date_after"],
+		Reload:       m["reload"],
 	}
 
 	r := h.DisplayCPAReportExtra(c, fe)
@@ -403,20 +405,21 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 	key := "temp_key_api_cpa_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err              error
-		x                int
-		isempty          bool
-		cpareport        []entity.SummaryCampaign
-		displaycpareport []entity.SummaryCampaign
+		err        error
+		total_data int64
+		isempty    bool
+		cpareport  []entity.SummaryCampaign
+		// displaycpareport []entity.SummaryCampaign
 	)
 
-	if fe.Action != "" {
-		cpareport, err = h.DS.GetDisplayCPAReport(fe)
+	if fe.Action != "" || fe.Reload == "true" {
+		fmt.Println("-----", fe.Reload, "-----")
+		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe)
 	} else {
 
 		if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
 
-			cpareport, err = h.DS.GetDisplayCPAReport(fe)
+			cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe)
 
 			s, _ := json.Marshal(cpareport)
 
@@ -427,33 +430,33 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 
 	if err == nil {
 
-		pagesize := fe.PageSize
-		if pagesize == 0 {
-			pagesize = PAGESIZE
-		}
-		if fe.Page >= 2 {
-			x = pagesize * (fe.Page - 1)
-		} else {
-			x = 0
-		}
+		// pagesize := fe.PageSize
+		// if pagesize == 0 {
+		// 	pagesize = PAGESIZE
+		// }
+		// if fe.Page >= 2 {
+		// 	x = pagesize * (fe.Page - 1)
+		// } else {
+		// 	x = 0
+		// }
 
-		for i := x; i < len(cpareport) && i < x+pagesize; i++ {
+		// for i := x; i < len(cpareport) && i < x+pagesize; i++ {
 
-			displaycpareport = append(displaycpareport, cpareport[i])
-		}
-		if displaycpareport == nil {
-			return entity.ReturnResponse{
-				HttpStatus: fiber.StatusOK,
-				Rsp: entity.GlobalResponseWithDataTable{
-					Draw:            fe.Draw,
-					Code:            fiber.StatusOK,
-					Message:         config.OK_DESC,
-					Data:            []entity.SummaryCampaign{},
-					RecordsTotal:    len(cpareport),
-					RecordsFiltered: len(cpareport),
-				},
-			}
-		}
+		// 	displaycpareport = append(displaycpareport, cpareport[i])
+		// }
+		// if displaycpareport == nil {
+		// 	return entity.ReturnResponse{
+		// 		HttpStatus: fiber.StatusOK,
+		// 		Rsp: entity.GlobalResponseWithDataTable{
+		// 			Draw:            fe.Draw,
+		// 			Code:            fiber.StatusOK,
+		// 			Message:         config.OK_DESC,
+		// 			Data:            []entity.SummaryCampaign{},
+		// 			RecordsTotal:    len(cpareport),
+		// 			RecordsFiltered: len(cpareport),
+		// 		},
+		// 	}
+		// }
 
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
@@ -461,9 +464,9 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 				Draw:            fe.Draw,
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
-				Data:            displaycpareport,
-				RecordsTotal:    len(cpareport),
-				RecordsFiltered: len(cpareport),
+				Data:            cpareport,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
 			},
 		}
 
@@ -530,12 +533,12 @@ func (h *IncomingHandler) ExportCpaReportExtraNoLimit(c *fiber.Ctx, fe entity.Di
 	)
 
 	if fe.Action != "" {
-		cpareport, err = h.DS.GetDisplayCPAReport(fe)
+		cpareport, _, err = h.DS.GetDisplayCPAReport(fe)
 	} else {
 
 		if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
 
-			cpareport, err = h.DS.GetDisplayCPAReport(fe)
+			cpareport, _, err = h.DS.GetDisplayCPAReport(fe)
 
 			s, _ := json.Marshal(cpareport)
 

@@ -1,7 +1,9 @@
 package config
 
 import (
+	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
@@ -12,6 +14,8 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
+	"google.golang.org/api/option"
+	"google.golang.org/api/sheets/v4"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -70,6 +74,17 @@ type (
 		LogLevel                               string
 		TZ                                     *time.Location
 		APIARPU                                string
+		GSType                                 string
+		GSProjectID                            string
+		GSPrivateKeyID                         string
+		GSPrivateKey                           string
+		GSClientEmail                          string
+		GSClientID                             string
+		GSAuthURI                              string
+		GSTokenURI                             string
+		GSAuthProvider                         string
+		GSClient                               string
+		GSUniversalDomain                      string
 	}
 
 	Setup struct {
@@ -78,6 +93,7 @@ type (
 		R      *rueidis.Storage
 		DB     *gorm.DB
 		Rmqp   rmqp.AMQP
+		GS     *sheets.Service
 	}
 )
 
@@ -135,6 +151,17 @@ func InitCfg() *Cfg {
 		LogLevel:                               os.Getenv("LOGLEVEL"),
 		TZ:                                     loc,
 		APIARPU:                                os.Getenv("APIARPU"),
+		GSType:                                 os.Getenv("TYPE"),
+		GSProjectID:                            os.Getenv("PROJECT_ID"),
+		GSPrivateKeyID:                         os.Getenv("PRIVATE_KEY_ID"),
+		GSPrivateKey:                           os.Getenv("PRIVATE_KEY"),
+		GSClientEmail:                          os.Getenv("CLIENT_EMAIL"),
+		GSClientID:                             os.Getenv("CLIENT_ID"),
+		GSAuthURI:                              os.Getenv("AUTH_URI"),
+		GSTokenURI:                             os.Getenv("TOKEN_URI"),
+		GSAuthProvider:                         os.Getenv("AUTH_PROVIDER"),
+		GSClient:                               os.Getenv("CLIENT"),
+		GSUniversalDomain:                      os.Getenv("UNIVERSAL_DOMAIN"),
 	}
 
 	return cfg
@@ -153,6 +180,7 @@ func (c *Cfg) Initiate(logname string) *Setup {
 		R:      c.InitRedisJSON(l, c.RedisDBIndex),
 		DB:     c.InitGormPgx(l),
 		Rmqp:   c.InitMessageBroker(),
+		GS:     c.InitGoogleSheet(l),
 	}
 
 }
@@ -262,4 +290,50 @@ func (c *Cfg) InitMessageBroker() rmqp.AMQP {
 
 	//rb.SetUpChannel("direct", true, c.RabbitMQExchangeName, true, c.RabbitMQQueueName)
 	return rb
+}
+
+func (c *Cfg) InitGoogleSheet(l *logrus.Logger) *sheets.Service {
+	type KeyGS struct {
+		Type            string `json:"type"`
+		ProjectID       string `json:"project_id"`
+		PrivateKeyID    string `json:"private_key_id"`
+		PrivateKey      string `json:"private_key"`
+		ClientEmail     string `json:"client_email"`
+		ClientID        string `json:"client_id"`
+		AuthURI         string `json:"auth_uri"`
+		TokenURI        string `json:"token_uri"`
+		AuthProvider    string `json:"auth_provider_x509_cert_url"`
+		Client          string `json:"client_x509_cert_url"`
+		UniversalDomain string `json:"universal_domain"`
+	}
+
+	var (
+		sheetKey = KeyGS{
+			Type:            c.GSType,
+			ProjectID:       c.GSProjectID,
+			PrivateKeyID:    c.GSPrivateKeyID,
+			PrivateKey:      c.GSPrivateKey,
+			ClientEmail:     c.GSClientEmail,
+			ClientID:        c.GSClientID,
+			AuthURI:         c.GSAuthURI,
+			TokenURI:        c.GSTokenURI,
+			AuthProvider:    c.GSAuthProvider,
+			Client:          c.GSClient,
+			UniversalDomain: c.GSUniversalDomain,
+		}
+	)
+
+	credential, err := json.Marshal(sheetKey)
+	if err != nil {
+		l.Fatalf("Google Sheet Failed to get key: %v", err)
+	}
+
+	srv, err := sheets.NewService(context.Background(), option.WithCredentialsJSON(credential))
+	if err != nil {
+		l.Fatalf("Unable to retrieve Google Sheets client: %v", err)
+	}
+
+	l.Info("[v] Google sheet connection successful established\n")
+
+	return srv
 }

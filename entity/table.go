@@ -249,6 +249,7 @@ type (
 		Pxdate            time.Time `gorm:"not null" json:"pxdate"`
 		URLServiceKey     string    `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
 		CampaignId        string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
+		CampaignName      string    `gorm:"size:100;deafult:NA" json:"campaign_name"`
 		Country           string    `gorm:"not null;size:50" json:"country"`
 		Operator          string    `gorm:"not null;size:50" json:"operator"`
 		Partner           string    `gorm:"not null;size:50" json:"partner"`
@@ -305,6 +306,8 @@ type (
 		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
 		CampaignObjective string    `gorm:"size:50;default:NA" json:"campaign_objective"`
 		Channel           string    `gorm:"size:50;default:NA" json:"channel"`
+		GoogleSheet       string    `gorm:"type:text;default:NA" json:"google_sheet"`
+		Currency          string    `gorm:"size:10;default:NA" json:"currency"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}

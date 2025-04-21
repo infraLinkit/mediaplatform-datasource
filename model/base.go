@@ -5,6 +5,7 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/sheets/v4"
 	"gorm.io/gorm"
 )
 
@@ -16,6 +17,7 @@ type (
 		Logs   *logrus.Logger
 		DB     *gorm.DB
 		R      *rueidis.Storage
+		GS     *sheets.Service
 	}
 )
 
@@ -26,5 +28,6 @@ func NewBaseModel(obj BaseModel) *BaseModel {
 		Logs:   obj.Logs,
 		DB:     obj.DB,
 		R:      obj.R,
+		GS:     obj.GS,
 	}
 }

@@ -539,6 +539,7 @@ type (
 		SAAF          float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
 		PricePerMO    float64   `gorm:"type:double precision;not null;length:20;default:0" json:"price_per_mo"`
 		WakiRevenue   float64   `gorm:"type:double precision;not null;length:20;default:0" json:"waki_revenue"`
+		CampaignId    string    `gorm:"type:size=50" json:"campaign_id"`
 		CreatedAt     time.Time
 		UpdatedAt     time.Time
 	}

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"gorm.io/gorm"
@@ -217,10 +216,8 @@ func (r *BaseModel) GetCampaignDetailByStatus(o entity.CampaignDetail, useStatus
 		// ScanRows scans a row into a struct
 		r.DB.ScanRows(rows, &s)
 
-		campId, _ := strconv.Atoi(s.CampaignId)
-
 		camp, _ := r.GetCampaignByCampaignId(entity.Campaign{
-			ID: campId,
+			CampaignId: s.CampaignId,
 		})
 
 		ss = append(ss, entity.ResultCampaign{

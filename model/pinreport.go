@@ -277,7 +277,7 @@ func (r *BaseModel) GetPerformanceReport(o entity.PerformaceReportParams) ([]ent
 	query := r.DB.Model(&entity.SummaryCampaign{})
 
 	query.Select(`country, company, client_type, campaign_name, operator, service, adnet, SUM(mo_received) AS pixel_received, SUM(postback) as pixel_send, SUM(cr_postback) as cr_postback,
-SUM(cr_mo) as cr_mo, SUM(landing) as landing, SUM(ratio_send) as ratio_send, SUM(ratio_receive) as ratio_receive,SUM(po) as price_per_postback,SUM(cost_per_conversion) as cost_per_conversion,
+SUM(cr_mo) as cr_mo, SUM(landing) as landing, MAX(ratio_send) as ratio_send, MAX(ratio_receive) as ratio_receive,SUM(po) as price_per_postback,SUM(cost_per_conversion) as cost_per_conversion,
 SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total_waki_agency_fee), SUM(total_waki_agency_fee + po*postback) as total_spending,sum(cpa) as e_cpa,
 SUM(total_fp) as total_fp,SUM(success_fp) as success_fp`)
 

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"gorm.io/gorm"
@@ -197,11 +198,11 @@ func (r *BaseModel) GetCampaignDetailByStatus(o entity.CampaignDetail, useStatus
 
 	var rows *sql.Rows
 
-	if useStatus {
+	/* if useStatus {
 		rows, _ = r.DB.Model(&entity.CampaignDetail{}).Select("campaigns.name, campaigns.campaign_objective, campaigns.advertiser, campaign_details.id, campaign_details.url_service_key, campaign_details.campaign_id, campaign_details.country, campaign_details.operator, campaign_details.partner, campaign_details.aggregator, campaign_details.adnet, campaign_details.service, campaign_details.keyword, campaign_details.subkeyword, campaign_details.is_billable, campaign_details.plan, campaign_details.po, campaign_details.cost, campaign_details.pub_id, campaign_details.short_code, campaign_details.device_type, campaign_details.os, campaign_details.url_type, campaign_details.click_type, campaign_details.click_delay, campaign_details.client_type, campaign_details.traffic_source, campaign_details.unique_click, campaign_details.url_banner, campaign_details.url_landing, campaign_details.url_warp_landing, campaign_details.url_service, campaign_details.url_tfcor_smartlink, campaign_details.glob_post, campaign_details.url_glob_post, campaign_details.custom_integration, campaign_details.ip_address, campaign_details.is_active, campaign_details.mo_capping, campaign_details.counter_mo_capping, campaign_details.status_capping, campaign_details.kpi_upper_limit_capping, campaign_details.is_machine_learning_capping, campaign_details.ratio_send, campaign_details.ratio_receive, campaign_details.counter_mo_ratio, campaign_details.status_ratio, campaign_details.kpi_upper_limit_ratio_send, campaign_details.kpi_upper_limit_ratio_receive, campaign_details.is_machine_learning_ratio, campaign_details.api_url, campaign_details.last_update, campaign_details.cost_per_conversion, campaign_details.agency_fee, campaign_details.target_daily_budget, campaign_details.url_postback").Joins("JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").Where("campaign_details.is_active = ?", o.IsActive).Rows()
-	} else {
-		rows, _ = r.DB.Model(&entity.CampaignDetail{}).Rows()
-	}
+	} else { */
+	rows, _ = r.DB.Model(&entity.CampaignDetail{}).Where("is_active = ?", o.IsActive).Rows()
+	//}
 
 	defer rows.Close()
 
@@ -211,12 +212,78 @@ func (r *BaseModel) GetCampaignDetailByStatus(o entity.CampaignDetail, useStatus
 
 	for rows.Next() {
 
-		var s entity.ResultCampaign
+		var s entity.CampaignDetail
 
 		// ScanRows scans a row into a struct
 		r.DB.ScanRows(rows, &s)
 
-		ss = append(ss, s)
+		campId, _ := strconv.Atoi(s.CampaignId)
+
+		camp, _ := r.GetCampaignByCampaignId(entity.Campaign{
+			ID: campId,
+		})
+
+		ss = append(ss, entity.ResultCampaign{
+			ID:                        s.ID,
+			Name:                      camp.Name,
+			CampaignObjective:         camp.CampaignObjective,
+			Advertiser:                camp.Advertiser,
+			URLServiceKey:             s.URLServiceKey,
+			CampaignId:                s.CampaignId,
+			Country:                   s.Country,
+			Operator:                  s.Operator,
+			Partner:                   s.Partner,
+			Aggregator:                s.Aggregator,
+			Adnet:                     s.Adnet,
+			Service:                   s.Service,
+			Keyword:                   s.Keyword,
+			Subkeyword:                s.Subkeyword,
+			IsBillable:                s.IsBillable,
+			Plan:                      s.Plan,
+			PO:                        s.PO,
+			Cost:                      s.Cost,
+			PubId:                     s.PubId,
+			ShortCode:                 s.ShortCode,
+			DeviceType:                s.DeviceType,
+			OS:                        s.OS,
+			URLType:                   s.URLType,
+			ClickType:                 s.ClickType,
+			ClickDelay:                s.ClickDelay,
+			ClientType:                s.ClientType,
+			TrafficSource:             s.TrafficSource,
+			UniqueClick:               s.UniqueClick,
+			URLBanner:                 s.URLBanner,
+			URLLanding:                s.URLLanding,
+			URLWarpLanding:            s.URLWarpLanding,
+			URLService:                s.URLService,
+			URLTFCORSmartlink:         s.URLTFCORSmartlink,
+			GlobPost:                  s.GlobPost,
+			URLGlobPost:               s.URLGlobPost,
+			CustomIntegration:         s.CustomIntegration,
+			IpAddress:                 s.IpAddress,
+			IsActive:                  s.IsActive,
+			MOCapping:                 s.MOCapping,
+			CounterMOCapping:          s.CounterMOCapping,
+			StatusCapping:             s.StatusCapping,
+			KPIUpperLimitCapping:      s.KPIUpperLimitCapping,
+			IsMachineLearningCapping:  s.IsMachineLearningCapping,
+			RatioSend:                 s.RatioSend,
+			RatioReceive:              s.RatioReceive,
+			CounterMORatio:            s.CounterMORatio,
+			StatusRatio:               s.StatusRatio,
+			KPIUpperLimitRatioSend:    s.KPIUpperLimitRatioSend,
+			KPIUpperLimitRatioReceive: s.KPIUpperLimitRatioReceive,
+			IsMachineLearningRatio:    s.IsMachineLearningRatio,
+			APIURL:                    s.APIURL,
+			LastUpdate:                s.LastUpdate,
+			LastUpdateCapping:         s.LastUpdateCapping,
+			CostPerConversion:         s.CostPerConversion,
+			AgencyFee:                 s.AgencyFee,
+			TargetDailyBudget:         s.TargetDailyBudget,
+			TechnicalFee:              s.TechnicalFee,
+			URLPostback:               s.URLPostback,
+			Channel:                   s.Channel,
+		})
 	}
 
 	return ss, rows.Err()
@@ -241,28 +308,28 @@ func (r *BaseModel) UpdateCampaignMonitoringBudget(o entity.CampaignDetail) erro
 }
 
 func (r *BaseModel) UpdateKeyMainstreamCampaignDetail(o entity.CampaignDetail) error {
-	
+
 	result := r.DB.Exec(`
 		UPDATE campaign_details 
 		SET status_submit_key_mainstream = ?, key_mainstream = ? 
 		WHERE url_service_key = ? AND campaign_id = ?`,
 		o.StatusSubmitKeyMainstream, o.KeyMainstream, o.URLServiceKey, o.CampaignId,
 	)
-	
+
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
 	return result.Error
 }
 
 func (r *BaseModel) UpdateGoogleSheetCampaignDetail(o entity.CampaignDetail) error {
-	
+
 	result := r.DB.Exec(`
 		UPDATE campaign_details 
 		SET google_sheet = ? 
 		WHERE url_service_key = ? AND campaign_id = ?`,
 		o.GoogleSheet, o.URLServiceKey, o.CampaignId,
 	)
-	
+
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
 	return result.Error

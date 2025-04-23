@@ -144,7 +144,7 @@ func formatSummaryDataValue(data []entity.CampaignSummaryMonitoring, params enti
 			formattedData = append(formattedData, completeSummary)
 		} else {
 			groupedAdnet := goterators.Group(data, func(campaign entity.CampaignSummaryMonitoring) string {
-				return campaign.Adnet
+				return campaign.Country + "|" + campaign.Operator + "|" + campaign.Service + "|" + campaign.Adnet
 			})
 			for _, campaignPerAdnet := range groupedAdnet {
 				generatedSummary := generateSummaryValue(campaignPerAdnet, params, startDate, endDate)

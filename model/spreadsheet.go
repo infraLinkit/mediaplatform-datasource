@@ -10,26 +10,51 @@ import (
 
 func (r *BaseModel) UpdateGoogleSheetPixel(ps entity.PixelStorage) {
 	sheetId, err := GetSpreadsheetID(ps.GoogleSheet)
-	if err == nil {
-		values := &sheets.ValueRange{
-			Values: [][]interface{}{{
-				ps.Pixel,
-				ps.CampaignName,
-				ps.PixelUsedDate,
-				1,
-				ps.Currency,
-			}},
-		}
-		_, err := r.GS.Spreadsheets.Values.Append(sheetId, "Sheet1!A:E", values).ValueInputOption("USER_ENTERED").Do()
-
-		if err != nil {
-			r.Logs.Error(fmt.Sprintf("Google sheet input failed error:  %#v\n", err))
-		}
-	} else {
+	if err != nil {
 		r.Logs.Info(fmt.Sprintf("Google sheet link not valid for campaign ID:  %#v\n", ps.CampaignId))
 		r.Logs.Info(fmt.Sprintf("Google sheet link :  %#v ", ps.GoogleSheet))
+		return
 	}
 
+	resp, err := r.GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:E7").Do()
+	if err != nil {
+		r.Logs.Error(fmt.Sprintf("Failed to read sheet: %#v\n", err))
+		return
+	}
+
+	if len(resp.Values) < 7 {
+		header := &sheets.ValueRange{
+			Range: "Sheet1!A1:E7",
+			Values: [][]interface{}{
+				{"#### INSTRUCTIONS ####"},
+				{"# IMPORTANT: Remember to set the TimeZone value in the \"parameters\" row and/or in your Conversion Time column"},
+				{"# For instructions on how to setup your data, visit http://goo.gl/T1C5Ov"},
+				{}, // empty row
+				{"#### TEMPLATE ####"},
+				{"Parameters: TimeZone=+0700"},
+				{"Google Click ID", "Conversion Name", "Conversion Time", "Conversion Value", "Conversion Currency"},
+			},
+		}
+		_, err := r.GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:E7", header).ValueInputOption("RAW").Do()
+		if err != nil {
+			r.Logs.Error(fmt.Sprintf("Failed to insert header: %#v\n", err))
+			return
+		}
+	}
+
+	values := &sheets.ValueRange{
+		Values: [][]interface{}{{
+			ps.Pixel,
+			ps.CampaignName,
+			ps.PixelUsedDate,
+			1,
+			ps.Currency,
+		}},
+	}
+	_, err = r.GS.Spreadsheets.Values.Append(sheetId, "Sheet1!A:E", values).ValueInputOption("USER_ENTERED").Do()
+	if err != nil {
+		r.Logs.Error(fmt.Sprintf("Google sheet input failed error:  %#v\n", err))
+	}
 }
 
 func GetSpreadsheetID(url string) (string, error) {

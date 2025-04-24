@@ -577,21 +577,31 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 
 	m := c.Queries()
 
-	page, _ := strconv.Atoi(m["page"])
+	page, errPage := strconv.Atoi(m["page"])
+	pageSize, err := strconv.Atoi(m["page_size"])
+	if err != nil {
+		pageSize = 10
+	}
+	if errPage != nil {
+		page = 10
+	}
+
 	draw, _ := strconv.Atoi(m["draw"])
 	v := c.Params("v")
 
 	fe := entity.DisplayCostReport{
-		Adnet:       m["adnet"],
-		Country:     m["country"],
-		Operator:    m["operator"],
-		Page:        page,
-		Action:      m["action"],
-		DateRange:   m["date_range"],
-		DateBefore:  m["date_before"],
-		DateAfter:   m["date_after"],
-		DataBasedOn: m["data_based_on"],
-		Draw:        draw,
+		Adnet:        m["adnet"],
+		Country:      m["country"],
+		Operator:     m["operator"],
+		CampaignType: m["campaign_type"],
+		Page:         page,
+		Action:       m["action"],
+		DateRange:    m["date_range"],
+		DateBefore:   m["date_before"],
+		DateAfter:    m["date_after"],
+		DataBasedOn:  m["data_based_on"],
+		PageSize:     pageSize,
+		Draw:         draw,
 	}
 
 	r := h.DisplayCostReportExtra(c, fe, v)
@@ -603,18 +613,18 @@ func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.Display
 	keydetail := "temp_key_api_cost_report_detail_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err               error
-		isempty           bool
-		x                 int
-		costreport        []entity.CostReport
-		displaycostreport []entity.CostReport
+		err        error
+		isempty    bool
+		total_data int64
+		costreport []entity.CostReport
+		// displaycostreport []entity.CostReport
 	)
 	if v == "list" {
 		if fe.Action != "" {
-			costreport, err = h.DS.GetDisplayCostReport(fe)
+			costreport, total_data, err = h.DS.GetDisplayCostReport(fe)
 		} else {
 			if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
-				costreport, err = h.DS.GetDisplayCostReport(fe)
+				costreport, total_data, err = h.DS.GetDisplayCostReport(fe)
 				s, _ := json.Marshal(costreport)
 				h.DS.SetData(key, "$", string(s))
 				h.DS.SetExpireData(key, 60)
@@ -622,10 +632,10 @@ func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.Display
 		}
 	} else if v == "detail" {
 		if fe.Action != "" {
-			costreport, err = h.DS.GetDisplayCostReportDetail(fe)
+			costreport, total_data, err = h.DS.GetDisplayCostReportDetail(fe)
 		} else {
 			if costreport, isempty = h.DS.RGetDisplayCostReportDetail(keydetail, "$"); isempty {
-				costreport, err = h.DS.GetDisplayCostReportDetail(fe)
+				costreport, total_data, err = h.DS.GetDisplayCostReportDetail(fe)
 				s, _ := json.Marshal(costreport)
 				h.DS.SetData(key, "$", string(s))
 				h.DS.SetExpireData(key, 60)
@@ -634,16 +644,16 @@ func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.Display
 	}
 
 	if err == nil {
-		pagesize := PAGESIZE
-		if fe.Page >= 2 {
-			x = pagesize * (fe.Page - 1)
-		} else {
-			x = 0
-		}
+		// pagesize := PAGESIZE
+		// if fe.Page >= 2 {
+		// 	x = pagesize * (fe.Page - 1)
+		// } else {
+		// 	x = 0
+		// }
 
-		for i := x; i < len(costreport) && i < x+pagesize; i++ {
-			displaycostreport = append(displaycostreport, costreport[i])
-		}
+		// for i := x; i < len(costreport) && i < x+pagesize; i++ {
+		// 	displaycostreport = append(displaycostreport, costreport[i])
+		// }
 
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
@@ -651,9 +661,9 @@ func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.Display
 				Draw:            fe.Draw,
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
-				Data:            displaycostreport,
-				RecordsTotal:    len(costreport),
-				RecordsFiltered: len(costreport),
+				Data:            costreport,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
 			},
 		}
 
@@ -709,14 +719,15 @@ func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.D
 		err        error
 		costreport []entity.CostReport
 		isempty    bool
+		total_data int64
 		// displaycpareport []entity.SummaryCampaign
 	)
 
 	if fe.Action != "" {
-		costreport, err = h.DS.GetDisplayCostReport(fe)
+		costreport, total_data, err = h.DS.GetDisplayCostReport(fe)
 	} else {
 		if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
-			costreport, err = h.DS.GetDisplayCostReport(fe)
+			costreport, total_data, err = h.DS.GetDisplayCostReport(fe)
 			s, _ := json.Marshal(costreport)
 			h.DS.SetData(key, "$", string(s))
 			h.DS.SetExpireData(key, 60)
@@ -731,8 +742,8 @@ func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.D
 				Message:         config.OK_DESC,
 				Data:            costreport,
 				Draw:            fe.Draw,
-				RecordsTotal:    len(costreport),
-				RecordsFiltered: len(costreport),
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
 			},
 		}
 	} else {
@@ -786,14 +797,15 @@ func (h *IncomingHandler) ExportCostReportDetailExtraNoLimit(c *fiber.Ctx, fe en
 		err        error
 		costreport []entity.CostReport
 		isempty    bool
+		total_data int64
 		// displaycpareport []entity.SummaryCampaign
 	)
 
 	if fe.Action != "" {
-		costreport, err = h.DS.GetDisplayCostReportDetail(fe)
+		costreport, total_data, err = h.DS.GetDisplayCostReportDetail(fe)
 	} else {
 		if costreport, isempty = h.DS.RGetDisplayCostReportDetail(key, "$"); isempty {
-			costreport, err = h.DS.GetDisplayCostReportDetail(fe)
+			costreport, total_data, err = h.DS.GetDisplayCostReportDetail(fe)
 			s, _ := json.Marshal(costreport)
 			h.DS.SetData(key, "$", string(s))
 			h.DS.SetExpireData(key, 60)
@@ -808,8 +820,8 @@ func (h *IncomingHandler) ExportCostReportDetailExtraNoLimit(c *fiber.Ctx, fe en
 				Message:         config.OK_DESC,
 				Data:            costreport,
 				Draw:            fe.Draw,
-				RecordsTotal:    len(costreport),
-				RecordsFiltered: len(costreport),
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
 			},
 		}
 	} else {

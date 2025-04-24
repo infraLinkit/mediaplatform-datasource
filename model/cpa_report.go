@@ -223,10 +223,11 @@ func (r *BaseModel) UpdateAgencyCostModel(o entity.SummaryCampaign) error {
 
 }
 
-func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport) ([]entity.CostReport, error) {
+func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport) ([]entity.CostReport, int64, error) {
 	var (
-		rows *sql.Rows
-		err  error
+		rows       *sql.Rows
+		err        error
+		total_rows int64
 	)
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
@@ -237,41 +238,19 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport) ([]entity.C
 			query = query.Where("adnet = ?", o.Adnet)
 		}
 
-		if o.DataBasedOn != "" {
-			switch strings.ToUpper(o.DataBasedOn) {
-			case "HIGHEST CONVERSION S2S":
-				query = query.Order("conversion1 DESC")
-			case "LOWEST CONVERSION S2S":
-				query = query.Order("conversion1 ASC")
-			case "HIGHEST CONVERSION API":
-				query = query.Order("conversion2 DESC")
-			case "LOWEST CONVERSION API":
-				query = query.Order("conversion2 ASC")
-			case "HIGHEST COST S2S":
-				query = query.Order("cost1 DESC")
-			case "LOWEST COST S2S":
-				query = query.Order("cost1 ASC")
-			case "HIGHEST COST API":
-				query = query.Order("cost2 DESC")
-			case "LOWEST COST API":
-				query = query.Order("cost2 ASC")
-			default:
-				query = query.Order("conversion1 DESC")
-			}
-		}
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
 				query = query.Where("summary_date = CURRENT_DATE")
 			case "YESTERDAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
-			case "LAST7DAY":
+			case "LAST 7 DAYS":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
-			case "LAST30DAY":
+			case "LAST 30 DAYS":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
-			case "THISMONTH":
+			case "THIS MONTH":
 				query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
-			case "LASTMONTH":
+			case "LAST MONTH":
 				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
 				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
@@ -289,20 +268,57 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport) ([]entity.C
 		`).Group("adnet").
 			Rows()
 
+		if o.DataBasedOn != "" {
+			switch strings.ToUpper(o.DataBasedOn) {
+			case "HIGHEST CONVERSION S2S":
+				query = query.Order("SUM(postback) DESC")
+			case "LOWEST CONVERSION S2S":
+				query = query.Order("SUM(postback) ASC")
+			case "HIGHEST COST S2S":
+				query = query.Order("SUM(sbaf) DESC")
+			case "LOWEST COST S2S":
+				query = query.Order("SUM(sbaf) ASC")
+			default:
+				query = query.Order("SUM(postback) DESC")
+			}
+		}
+
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		if rows == nil {
-			return []entity.CostReport{}, nil
+			return []entity.CostReport{}, 0, nil
 		}
-		defer rows.Close()
+
 	} else {
-		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
+		rows, err = query.Select(`
+			adnet,
+			SUM(postback) as conversion1,
+			SUM(sbaf) as cost1,
+			NULL as conversion2,
+			NULL as cost2
+		`).Group("adnet").
+			Rows()
+
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
+		if rows == nil {
+			return []entity.CostReport{}, 0, nil
+		}
+
 	}
 
+	query.Unscoped().Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	}
+
+	rows, _ = query_limit.Rows()
+
+	defer rows.Close()
 	var results []entity.CostReport
 
 	for rows.Next() {
@@ -316,12 +332,13 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport) ([]entity.C
 
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(results)))
 
-	return results, rows.Err()
+	return results, total_rows, rows.Err()
 }
-func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]entity.CostReport, error) {
+func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]entity.CostReport, int64, error) {
 	var (
-		rows *sql.Rows
-		err  error
+		rows       *sql.Rows
+		err        error
+		total_rows int64
 	)
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
@@ -330,6 +347,23 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 
 		if o.Adnet != "" {
 			query = query.Where("adnet = ?", o.Adnet)
+		}
+
+		if o.Country != "" {
+			query = query.Where("country = ?", o.Country)
+		}
+
+		if o.CampaignType != "" {
+			switch strings.ToUpper(o.CampaignType) {
+			case "S2S":
+				query = query.Where("campaign_objective IN ('CPA', 'CPC', 'CPM')")
+			case "MAINSTREAM":
+				query = query.Where("campaign_objective ? ", "MAINSTREAM")
+			case "API":
+				query = query.Where("campaign_objective ?", "API")
+			default:
+				query = query.Where("campaign_objective = ?", o.CampaignType)
+			}
 		}
 
 		if o.DateRange != "" {
@@ -356,28 +390,76 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 		}
 
 		rows, err = query.Select(`
+			adnet,
+			MAX(summary_date) as summary_date,
 			country,
 			operator,
+			SUM(traffic) as landing,
+			SUM(cr_postback) as cr_postback,
+			short_code,
+			url_after,
 			SUM(postback) as conversion1,
 			SUM(sbaf) as cost1,
 			NULL as conversion2,
 			NULL as cost2
-		`).Group("country, operator").
+		`).Group("adnet, country, operator, short_code, url_after").
+			Rows()
+
+		if o.DataBasedOn != "" {
+			switch strings.ToUpper(o.DataBasedOn) {
+			case "HIGHEST CONVERSION S2S":
+				query = query.Order("SUM(postback) DESC")
+			case "LOWEST CONVERSION S2S":
+				query = query.Order("SUM(postback) ASC")
+			case "HIGHEST COST S2S":
+				query = query.Order("SUM(sbaf) DESC")
+			case "LOWEST COST S2S":
+				query = query.Order("SUM(sbaf) ASC")
+			default:
+				query = query.Order("SUM(postback) DESC")
+			}
+		}
+		if err != nil {
+			return nil, 0, err
+		}
+		if rows == nil {
+			return []entity.CostReport{}, 0, nil
+		}
+
+	} else {
+
+		if o.Adnet != "" {
+			query = query.Where("adnet = ?", o.Adnet)
+		}
+
+		rows, err = query.Select(`
+			adnet,
+			MAX(summary_date) as summary_date,
+			country,
+			operator,
+			SUM(traffic) as landing,
+			SUM(cr_postback) as cr_postback,
+			short_code,
+			url_after,
+			SUM(postback) as conversion1,
+			SUM(sbaf) as cost1,
+			NULL as conversion2,
+			NULL as cost2
+		`).Group("adnet, country, operator, adn, url_after").
 			Rows()
 
 		if err != nil {
-			return nil, err
-		}
-		if rows == nil {
-			return []entity.CostReport{}, nil
-		}
-		defer rows.Close()
-	} else {
-		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
-		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 	}
+
+	query.Unscoped().Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	}
+	rows, _ = query_limit.Rows()
 
 	var results []entity.CostReport
 
@@ -392,5 +474,5 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(results)))
 
-	return results, rows.Err()
+	return results, total_rows, rows.Err()
 }

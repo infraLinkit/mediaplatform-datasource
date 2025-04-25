@@ -185,7 +185,9 @@ func (r *BaseModel) UpdateStatusCounterById(o entity.CampaignDetail) error {
 
 	//result := r.DB.Model(&o).Where("id = ?", o.ID).Updates(entity.CampaignDetail{CounterMOCapping: o.CounterMOCapping, StatusCapping: o.StatusCapping, CounterMORatio: o.CounterMORatio, StatusRatio: o.StatusRatio, LastUpdate: o.LastUpdate})
 
-	result := r.DB.Model(&o).Select("counter_mo_capping", "status_capping", "counter_mo_ratio", "status_ratio", "last_update").Updates(o)
+	//result := r.DB.Model(&o).Select("counter_mo_capping", "status_capping", "counter_mo_ratio", "status_ratio", "last_update").Updates(o)
+
+	result := r.DB.Exec(fmt.Sprintf("UPDATE campaign_details SET counter_mo_capping = %d, status_capping = %t, counter_mo_ratio = %d, status_ratio = %t WHERE id = %d", o.CounterMOCapping, o.StatusCapping, o.CounterMORatio, o.StatusRatio, o.ID))
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 

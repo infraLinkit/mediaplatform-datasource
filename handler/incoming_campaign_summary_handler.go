@@ -316,13 +316,6 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				"percentage": 0.0,
 			}
 		}
-		if containsString(params.DataIndicators, "budget_usage") {
-			days[date]["budget_usage"] = map[string]interface{}{
-				"value":      0.0,
-				"percentage": 0.0,
-			}
-		}
-
 		currentDate = incrementDate(currentDate, params.DataType)
 	}
 
@@ -351,6 +344,11 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 	}
 
 	var results []map[string]interface{}
+
+	// Accumulators for budget_usage correct calculation
+	totalBudgetUsage := 0.0
+	totalBudgetUsageDays := 0
+
 	for country, operators := range groupedData {
 		var countryTotal float64
 		var operatorResults []map[string]interface{}
@@ -407,37 +405,11 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 							operatorTotal += budget
 						}
 					}
-
 					currentDate = incrementDate(currentDate, params.DataType)
 				}
 				operatorData["target_daily_budget"] = operatorTotal
 				totals["target_daily_budget"] += operatorTotal
 				countryTotal += operatorTotal
-			}
-
-			if containsString(params.DataIndicators, "budget_usage") {
-				spending := safeFloat(operatorData, "spending_to_adnets")
-				budget := safeFloat(operatorData, "target_daily_budget")
-				usage := 0.0
-				if budget > 0 {
-					usage = (spending / budget) * 100
-				}
-				operatorData["budget_usage"] = usage
-
-				totals["budget_usage"] += usage
-
-				currentDate := startDate
-				for !currentDate.After(endDate) {
-					date := formatDate(currentDate, params.DataType)
-					dailySpending := safeFloat(days[date]["spending_to_adnets"], "value")
-					dailyBudget := operatorDailyBudgets[operatorKey][date]
-					dailyUsage := 0.0
-					if dailyBudget > 0 {
-						dailyUsage = (dailySpending / dailyBudget) * 100
-					}
-					days[date]["budget_usage"]["value"] = safeFloat(days[date]["budget_usage"], "value") + dailyUsage
-					currentDate = incrementDate(currentDate, params.DataType)
-				}
 			}
 
 			operatorData["operator"] = operator
@@ -454,41 +426,34 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				"total": countryTotal,
 				"avg":   countryTotal / float64(len(countryDailyBudgets[country])),
 			}
-
-			currentDate := startDate
-			for !currentDate.After(endDate) {
-				date := formatDate(currentDate, params.DataType)
-				if budget, exists := countryDailyBudgets[country][date]; exists {
-					days[date]["target_daily_budget"]["value"] = budget
-				}
-				currentDate = incrementDate(currentDate, params.DataType)
-			}
-		}
-
-		if containsString(params.DataIndicators, "budget_usage") {
-			countrySpending := totals["spending_to_adnets"]
-			countryBudget := totals["target_daily_budget"]
-			countryUsage := 0.0
-			if countryBudget > 0 {
-				countryUsage = (countrySpending / countryBudget) * 100
-			}
-			countryData["budget_usage"] = countryUsage
-
-			currentDate := startDate
-			for !currentDate.After(endDate) {
-				date := formatDate(currentDate, params.DataType)
-				dailySpending := safeFloat(days[date]["spending_to_adnets"], "value")
-				dailyBudget := countryDailyBudgets[country][date]
-				dailyUsage := 0.0
-				if dailyBudget > 0 {
-					dailyUsage = (dailySpending / dailyBudget) * 100
-				}
-				days[date]["budget_usage"]["value"] = dailyUsage
-				currentDate = incrementDate(currentDate, params.DataType)
-			}
 		}
 
 		results = append(results, countryData)
+	}
+
+	// Handle budget_usage separately after grouping
+	if containsString(params.DataIndicators, "budget_usage") {
+		currentDate = startDate
+		for !currentDate.After(endDate) {
+			date := formatDate(currentDate, params.DataType)
+			dailySpending := safeFloat(days[date]["spending_to_adnets"], "value")
+			dailyBudget := safeFloat(days[date]["target_daily_budget"], "value")
+			dailyUsage := 0.0
+			if dailyBudget > 0 {
+				dailyUsage = (dailySpending / dailyBudget) * 100
+			}
+			days[date]["budget_usage"]["value"] = dailyUsage
+
+			// accumulate to get average
+			totalBudgetUsage += dailyUsage
+			totalBudgetUsageDays++
+
+			currentDate = incrementDate(currentDate, params.DataType)
+		}
+
+		if totalBudgetUsageDays > 0 {
+			totals["budget_usage"] = totalBudgetUsage
+		}
 	}
 
 	// Calculate percentages
@@ -507,8 +472,14 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 		currentDate = incrementDate(currentDate, params.DataType)
 	}
 
+	// Final calculations
 	tmoEnd := countTmoEndRevenue(totals, startDate, endDate)
 	avg := countAverageRevenue(totals, startDate, endDate)
+
+	// Special fix for budget_usage avg (because it's percentage, not amount)
+	if containsString(params.DataIndicators, "budget_usage") && totalBudgetUsageDays > 0 {
+		avg["budget_usage"] = totalBudgetUsage / float64(totalBudgetUsageDays)
+	}
 
 	return mergeDaysRevenue(map[string]interface{}{
 		"data_indicators": params.DataIndicators,

@@ -420,6 +420,7 @@ type (
 		CostPerConversion        float64   `gorm:"type:double precision;default:0" json:"cost_per_conversion"`
 		AgencyFee                float64   `gorm:"type:double precision;default:0" json:"agency_fee"`
 		TargetDailyBudget        float64   `gorm:"type:double precision;default:0" json:"target_daily_budget"`
+		TargetMonthlyBudget      float64   `gorm:"type:double precision;default:0" json:"target_monthly_budget"`
 		CrMO                     float64   `gorm:"type:double precision;default:0" json:"cr_mo"`
 		CrPostback               float64   `gorm:"type:double precision;default:0" json:"cr_postback"`
 		TotalWakiAgencyFee       float64   `gorm:"type:double precision;default:0" json:"total_waki_agency_fee"`

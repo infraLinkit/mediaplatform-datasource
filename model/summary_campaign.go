@@ -147,10 +147,9 @@ func (r *BaseModel) UpdateCPAReportSummaryCampaign(o entity.SummaryCampaign) err
 }
 
 func (r *BaseModel) UpdateReportSummaryCampaignMonitoringBudget(o entity.SummaryCampaign) error {
-
 	result := r.DB.Model(&o).
-		Where("summary_date = ? AND country = ? AND operator = ?", o.SummaryDate, o.Country, o.Operator).
-		Updates(entity.SummaryCampaign{TargetDailyBudget: o.TargetDailyBudget})
+		Where("EXTRACT(YEAR FROM summary_date) = ? AND EXTRACT(MONTH FROM summary_date) = ? AND country = ? AND operator = ?", o.SummaryDate.Year(), int(o.SummaryDate.Month()), o.Country, o.Operator).
+		Updates(entity.SummaryCampaign{TargetDailyBudget: o.TargetDailyBudget, TargetMonthlyBudget: o.TargetMonthlyBudget})
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
@@ -385,6 +384,8 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 
 		if dataType == "monthly_report" {
 			switch value {
+			case "target_daily_budget":
+				formattedValue = "MAX(target_monthly_budget) as target_daily_budget"
 			case "waki_revenue":
 				formattedValue = "SUM(saaf - sbaf) AS waki_revenue"
 			case "budget_usage":

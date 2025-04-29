@@ -317,3 +317,61 @@ func (t *ApiPinPerformance) ValidateParams(Logs *logrus.Logger) ReturnResponse {
 
 	}
 }
+
+func NewInstancePinPerformance(c *fiber.Ctx, cfg *config.Cfg) *ApiPinPerformance {
+	m := c.Queries()
+
+	toInt := func(key string) int {
+		val, _ := strconv.Atoi(m[key])
+		return val
+	}
+
+	toFloat := func(key string) float64 {
+		val, _ := strconv.ParseFloat(m[key], 64)
+		return val
+	}
+
+	pin := ApiPinPerformance{
+		DateSend:            helper.GetCurrentTime(cfg.TZ, time.RFC3339),
+		Country:             m["country"],
+		Company:             m["company"],
+		Adnet:               m["adnet"],
+		Operator:            m["operator"],
+		Service:             m["service"],
+		PinRequest:          toInt("pin_request"),
+		UniquePinRequest:    toInt("unique_pin_request"),
+		PinSent:             toInt("pin_sent"),
+		PinFailed:           toInt("pin_failed"),
+		VerifyRequest:       toInt("verify_request"),
+		VerifyRequestUnique: toInt("verify_request_unique"),
+		PinOK:               toInt("pin_ok"),
+		PinNotOK:            toInt("pin_not_ok"),
+		PinOkSendAdnet:      toInt("pin_ok_send_adnet"),
+		CPA:                 toFloat("cpa"),
+		CPAWaki:             toFloat("cpa_waki"),
+		EstimatedARPU:       toFloat("estimated_arpu"),
+		SBAF:                toFloat("sbaf"),
+		SAAF:                toFloat("saaf"),
+		ChargedMO:           toFloat("charged_mo"),
+		SubsCR:              toFloat("subs_cr"),
+		AdnetCR:             toFloat("adnet_cr"),
+		CAC:                 toFloat("cac"),
+		PaidCAC:             toFloat("paid_cac"),
+		CrMO:                toFloat("cr_mo"),
+		CrPostback:          toFloat("cr_postback"),
+		Landing:             toInt("landing"),
+		ROI:                 toFloat("roi"),
+		Arpu90:              toFloat("arpu90"),
+		BillingRateFP:       toFloat("billing_rate_fp"),
+		Ratio:               toFloat("ratio"),
+		PricePerPostback:    toFloat("price_per_postback"),
+		CostPerConversion:   toFloat("cost_per_conversion"),
+		AgencyFee:           toFloat("agency_fee"),
+		TotalWakiAgencyFee:  toFloat("total_waki_agency_fee"),
+		TotalSpending:       toFloat("total_spending"),
+		// ClientType:          m["client_type"],
+		// CampaignName: m["campaign_name"],
+	}
+
+	return &pin
+}

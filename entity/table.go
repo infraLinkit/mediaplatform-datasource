@@ -588,10 +588,10 @@ type (
 		AgencyFee           float64   `gorm:"type:double precision" json:"agency_fee"`
 		TotalWakiAgencyFee  float64   `gorm:"type:double precision;default:0" json:"total_waki_agency_fee"`
 		TotalSpending       float64   `gorm:"type:double precision;default:0" json:"total_spending"`
-		ClientType          string    `gorm:"not null;size:50" json:"client_type"`
-		CampaignName        string    `gorm:"not null;size:249" json:"campaign_name"`
-		CreatedAt           time.Time
-		UpdatedAt           time.Time
+		// ClientType          string    `gorm:"not null;size:50" json:"client_type"`
+		// CampaignName string `gorm:"not null;size:249" json:"campaign_name"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
 	}
 
 	Menu struct {

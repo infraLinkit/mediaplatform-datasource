@@ -429,3 +429,18 @@ func (h *IncomingHandler) UpdateAgencyCost(c *fiber.Ctx) error {
 	})
 
 }
+
+func (h *IncomingHandler) PinPerformance(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	pin := entity.NewInstancePinPerformance(c, h.Config)
+	r := pin.ValidateParams(h.Logs)
+	if r.HttpStatus == 200 {
+		h.DS.PinPerformanceReport(*pin)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}

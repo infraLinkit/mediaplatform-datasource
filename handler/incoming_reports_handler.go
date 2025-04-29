@@ -855,6 +855,13 @@ func (h *IncomingHandler) DisplayDefaultInput(c *fiber.Ctx) error {
 	technicalFee, _ := strconv.ParseFloat(gs.TechnicalFee, 64)
 	targetDailyBudget, _ := strconv.ParseFloat(gs.TargetDailyBudget, 64)
 
+	// Validasi jika error, jadi default agency 5, cost 0.06, tech fee 5
+	if err != nil {
+		costPerConversion = 0.06
+		agencyFee = 5
+		technicalFee = 5
+	}
+
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{
 		Code:    fiber.StatusOK,
 		Message: config.OK_DESC,

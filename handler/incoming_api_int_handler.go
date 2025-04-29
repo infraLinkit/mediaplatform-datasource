@@ -19,13 +19,12 @@ func (h *IncomingHandler) SetData(c *fiber.Ctx) error {
 	c.AcceptsCharsets("utf-8", "iso-8859-1")
 
 	v := c.Params("v")
-
 	if v == "set_target_daily_budget" {
 		m := c.Queries()
 		target_daily_budget := m["target_daily_budget"]
+		target_monthly_budget := m["target_monthly_budget"]
 		country := strings.ToUpper(m["country"])
 		operator := strings.ToUpper(m["operator"])
-
 		if target_daily_budget == "" {
 			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "target_daily_budget is empty"})
 		}
@@ -33,6 +32,17 @@ func (h *IncomingHandler) SetData(c *fiber.Ctx) error {
 		targetDailyBudget, err := strconv.ParseFloat(target_daily_budget, 64)
 		if err != nil {
 			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "target_daily_budget is not a valid number"})
+		}
+
+		//
+
+		if target_monthly_budget == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "target_monthly_budget is empty"})
+		}
+
+		targetMonthlyBudget, err := strconv.ParseFloat(target_monthly_budget, 64)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "target_monthly_budget is not a valid number"})
 		}
 
 		redisKey := strings.ToLower(helper.Concat("_", "global_setting_tdb", country[0:2], operator[0:3]))
@@ -50,10 +60,11 @@ func (h *IncomingHandler) SetData(c *fiber.Ctx) error {
 		// })
 
 		h.DS.UpdateReportSummaryCampaignMonitoringBudget(entity.SummaryCampaign{
-			SummaryDate:       helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-			TargetDailyBudget: targetDailyBudget,
-			Country:           country,
-			Operator:          operator,
+			SummaryDate:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			TargetDailyBudget:   targetDailyBudget,
+			TargetMonthlyBudget: targetMonthlyBudget,
+			Country:             country,
+			Operator:            operator,
 		})
 
 		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})

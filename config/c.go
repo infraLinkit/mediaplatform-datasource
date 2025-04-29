@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -352,7 +353,7 @@ func (c *Cfg) InitGoogleSheet(l *logrus.Logger) *sheets.Service {
 			Type:            c.GSType,
 			ProjectID:       c.GSProjectID,
 			PrivateKeyID:    c.GSPrivateKeyID,
-			PrivateKey:      c.GSPrivateKey,
+			PrivateKey:      strings.ReplaceAll(c.GSPrivateKey, `\n`, "\n"),
 			ClientEmail:     c.GSClientEmail,
 			ClientID:        c.GSClientID,
 			AuthURI:         c.GSAuthURI,

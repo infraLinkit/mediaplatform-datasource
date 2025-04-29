@@ -75,6 +75,10 @@ func formatBudgetMonitoringData(data []entity.CampaignSummaryMonitoring, params 
 			placeHolder := map[string]any{
 				"all":         "All Campaign",
 				"campaign_id": "All Campaign",
+				"campaign_name": "ALL",
+				"operator": "ALL",
+				"service": "ALL",
+				"adnet": "ALL",
 			}
 			completeSummary := mergeMapsValue(generatedSummary, placeHolder)
 			formattedData = append(formattedData, completeSummary)
@@ -120,6 +124,10 @@ func formatBudgetMonitoringData(data []entity.CampaignSummaryMonitoring, params 
 				"level":       "campaign_id",
 				"country":     "All",
 				"campaign_id": "ALL",
+				"campaign_name": "ALL",
+				"operator": "ALL",
+				"service": "ALL",
+				"adnet": "ALL",
 			}
 			completeSummary := mergeMapsValue(generatedSummary, placeHolder)
 			formattedData = append(formattedData, completeSummary)

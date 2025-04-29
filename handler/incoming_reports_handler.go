@@ -834,3 +834,35 @@ func (h *IncomingHandler) ExportCostReportDetailExtraNoLimit(c *fiber.Ctx, fe en
 		}
 	}
 }
+
+func (h *IncomingHandler) DisplayDefaultInput(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	gs, err := h.DS.GetDataConfig("global_setting", "$")
+	if err != nil {
+		h.Logs.Error(fmt.Sprintf("Failed to get global settings: %v", err))
+		return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusInternalServerError,
+			Message: "Failed to get global settings",
+		})
+	}
+
+	// Convert string values to float64
+	costPerConversion, _ := strconv.ParseFloat(gs.CPCR, 64)
+	agencyFee, _ := strconv.ParseFloat(gs.AgencyFee, 64)
+	technicalFee, _ := strconv.ParseFloat(gs.TechnicalFee, 64)
+	targetDailyBudget, _ := strconv.ParseFloat(gs.TargetDailyBudget, 64)
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{
+		Code:    fiber.StatusOK,
+		Message: config.OK_DESC,
+		Data: entity.DefaultInput{
+			CostPerConversion: costPerConversion,
+			AgencyFee:         agencyFee,
+			TechnicalFee:      technicalFee,
+			TargetDailyBudget: targetDailyBudget,
+		},
+	})
+}

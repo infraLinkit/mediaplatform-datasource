@@ -208,6 +208,13 @@ type (
 		TimeInternalRevenue    float64                  `form:"time-internal-revenue" json:"time_internal_revenue"`
 		TimeExternalRevenue    float64                  `form:"time-external-revenue" json:"time_external_revenue"`
 	}
+
+	DefaultInput struct {
+		AgencyFee         float64 `form:"agency-fee" json:"agency_fee"`
+		TechnicalFee      float64 `form:"technical-fee" json:"technical_fee"`
+		CostPerConversion float64 `form:"cost-per-conversion" json:"cost_per_conversion"`
+		TargetDailyBudget float64 `form:"target-daily-budget" json:"target_daily_budget"`
+	}
 )
 type Tabler interface {
 	TableName() string

@@ -91,6 +91,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/performance-report", h.DisplayPerformanceReport).Name("Performance Report list")
 	rpt.Get("/revenuemonitoring", h.DisplayRevenueMonitoring).Name("Revenue Monitoring list")
 	rpt.Get("/revenuemonitoring/chart", h.DisplayRevenueMonitoringChart).Name("Revenue Monitoring chart")
+	rpt.Get("/defaultinput/", h.DisplayDefaultInput).Name("Default Input for cpa n mainstream")
 
 	// API Internal
 	internal := v1.Group("/int") // Internal API

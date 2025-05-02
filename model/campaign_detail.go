@@ -262,3 +262,35 @@ func (r *BaseModel) UpdateGoogleSheetCampaignDetail(o entity.CampaignDetail) err
 
 	return result.Error
 }
+
+func (r *BaseModel) GetCampaignDetailByStatusAndCapped(o entity.CampaignDetail, useStatus bool) ([]entity.CampaignDetail, error) {
+
+	rows, _ := r.DB.Model(&entity.CampaignDetail{}).Where("is_active = ? AND status_capping = true", o.IsActive).Rows()
+
+	defer rows.Close()
+
+	var (
+		ss []entity.CampaignDetail
+	)
+
+	for rows.Next() {
+
+		var s entity.CampaignDetail
+
+		// ScanRows scans a row into a struct
+		r.DB.ScanRows(rows, &s)
+
+		ss = append(ss, s)
+	}
+
+	return ss, rows.Err()
+}
+
+func (r *BaseModel) ResetCappingCampaignByCapped(o entity.CampaignDetail) error {
+
+	result := r.DB.Exec(fmt.Sprintf("UPDATE campaign_details SET counter_mo_capping = 0, status_capping = false, counter_mo_ratio = 0, status_ratio = false AND is_active = true WHERE id = %d", o.ID))
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}

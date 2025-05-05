@@ -20,11 +20,11 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 			COUNT(DISTINCT campaign_details.operator) AS total_operator, 
 			COUNT(DISTINCT campaign_details.service) AS service, 
 			COUNT(DISTINCT campaign_details.adnet) AS total_adnet, 
-			campaign_details.short_code, 
+			COUNT(DISTINCT campaign_details.short_code) AS short_code,
 			campaign_details.is_active
 		`).
 		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
-		Group("campaigns.campaign_id, campaigns.name, campaigns.campaign_objective, campaign_details.country, campaign_details.partner, campaign_details.short_code, campaign_details.is_active, campaigns.created_at").
+		Group("campaigns.campaign_id, campaigns.name, campaigns.campaign_objective, campaign_details.country, campaign_details.partner, campaign_details.is_active, campaigns.created_at").
 		Order("campaigns.created_at DESC") 
 
 	if o.Action == "Search" {

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"math"
 	"net/url"
 	"reflect"
 	"sort"
@@ -35,6 +36,7 @@ func (h *IncomingHandler) DisplayRevenueMonitoring(c *fiber.Ctx) error {
 		Adnet:                c.Query("adnet"),
 		TypeData:             c.Query("type-data"),
 		CampaignId:           c.Query("campaign_id"),
+		UrlServiceKey:        c.Query("url_service_key"),
 		DataIndicators:       dataIndicators,
 		DataBasedOn:          c.Query("data-based-on"),
 		DataBasedOnIndicator: c.Query("data-based-on-indicator"),
@@ -70,6 +72,7 @@ func (h *IncomingHandler) DisplayRevenueMonitoringChart(c *fiber.Ctx) error {
 		PartnerName:          c.Query("partner-name"),
 		CampaignName:         c.Query("campaign-name"),
 		CampaignId:           c.Query("campaign_id"),
+		UrlServiceKey:        c.Query("url_service_key"),
 		Adnet:                c.Query("adnet"),
 		Service:              c.Query("service"),
 		DataIndicators:       dataIndicators,
@@ -152,14 +155,14 @@ func formatSummaryDataVal(data []entity.CampaignSummaryMonitoring, params entity
 			formattedData = append(formattedData, completeSummary)
 		} else {
 			groupedAdnet := goterators.Group(data, func(campaign entity.CampaignSummaryMonitoring) string {
-				return campaign.Adnet
+				return campaign.UrlServiceKey
 			})
 			for _, campaignPerAdnet := range groupedAdnet {
 				generatedSummary := generateSummary(campaignPerAdnet, params, startDate, endDate)
 
 				placeHolder := map[string]interface{}{
 					"level":         "country",
-					"campaign_id":   campaignPerAdnet[0].CampaignId,
+					"campaign_id":   campaignPerAdnet[0].UrlServiceKey,
 					"campaign_name": campaignPerAdnet[0].CampaignName,
 					"country":       campaignPerAdnet[0].Country,
 					"operator":      campaignPerAdnet[0].Operator,
@@ -176,15 +179,16 @@ func formatSummaryDataVal(data []entity.CampaignSummaryMonitoring, params entity
 		if params.All == "true" {
 			generatedSummary := generateSummary(data, params, startDate, endDate)
 			placeHolder := map[string]interface{}{
-				"level":   "country",
-				"country": "All",
+				"level":       "url_service_key",
+				"country":     "All",
+				"campaign_id": "ALL Campaigns",
 			}
 			completeSummary := mergeMaps(generatedSummary, placeHolder)
 			formattedData = append(formattedData, completeSummary)
 		} else {
 
 			groupedCountry := goterators.Group(data, func(campaign entity.CampaignSummaryMonitoring) string {
-				return campaign.Country
+				return campaign.UrlServiceKey
 			})
 
 			for _, campaignPerCountry := range groupedCountry {
@@ -409,16 +413,15 @@ func countPercentage(now, prev float64) float64 {
 
 func countTmoEnd(totals map[string]float64, startDate time.Time, endDate time.Time) map[string]float64 {
 	tmoEnd := map[string]float64{}
-	totalDaysRunning := int(endDate.Sub(startDate).Hours() / 24)
+	totalDaysRunning := int(math.Ceil(endDate.Sub(startDate).Hours() / 24))
 	if totalDaysRunning < 1 {
 		totalDaysRunning = 1
 	}
 
 	// Calculate total days in the last month
 	lastMonthEnd := endDate.AddDate(0, 0, -endDate.Day())
-	lastMonthStart := lastMonthEnd.AddDate(0, 0, -lastMonthEnd.Day()+1)
-	totalDaysLastMonth := int(lastMonthEnd.Sub(lastMonthStart).Hours()/24) + 1
-
+	lastMonthStart := lastMonthEnd.AddDate(0, 0, -lastMonthEnd.Day())
+	totalDaysLastMonth := int(math.Ceil(lastMonthEnd.Sub(lastMonthStart).Hours()/24)) + 1
 	for key, value := range totals {
 		result := (value / float64(totalDaysRunning)) * float64(totalDaysLastMonth)
 		tmoEnd[key] = result

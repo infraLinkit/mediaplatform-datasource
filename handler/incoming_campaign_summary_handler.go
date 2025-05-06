@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"math"
 	"net/url"
 	"reflect"
 	"sort"
@@ -19,9 +20,9 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 	if len(dataIndicators) == 0 {
 		switch dataType := c.Query("data-type"); dataType {
 		case "spending":
-			dataIndicators = append(dataIndicators, "spending")
+			dataIndicators = append(dataIndicators, "spending", "budget_usage", "target_daily_budget", "spending_to_adnets")
 		default:
-			dataIndicators = append(dataIndicators, "traffic")
+			dataIndicators = append(dataIndicators, "traffic", "budget_usage", "target_daily_budget", "spending_to_adnets")
 		}
 
 	}
@@ -571,16 +572,15 @@ func countPercentageRevenue(now, prev float64) float64 {
 
 func countTmoEndRevenue(totals map[string]float64, startDate time.Time, endDate time.Time) map[string]float64 {
 	tmoEnd := map[string]float64{}
-	totalDaysRunning := int(endDate.Sub(startDate).Hours() / 24)
+	totalDaysRunning := int(math.Ceil(endDate.Sub(startDate).Hours() / 24))
 	if totalDaysRunning < 1 {
 		totalDaysRunning = 1
 	}
 
 	// Calculate total days in the last month
 	lastMonthEnd := endDate.AddDate(0, 0, -endDate.Day())
-	lastMonthStart := lastMonthEnd.AddDate(0, 0, -lastMonthEnd.Day()+1)
-	totalDaysLastMonth := int(lastMonthEnd.Sub(lastMonthStart).Hours()/24) + 1
-
+	lastMonthStart := lastMonthEnd.AddDate(0, 0, -lastMonthEnd.Day())
+	totalDaysLastMonth := int(math.Ceil(lastMonthEnd.Sub(lastMonthStart).Hours()/24)) + 1
 	for key, value := range totals {
 		result := (value / float64(totalDaysRunning)) * float64(totalDaysLastMonth)
 		tmoEnd[key] = result

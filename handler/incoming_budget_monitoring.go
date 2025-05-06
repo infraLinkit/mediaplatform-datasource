@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"math"
 	"net/url"
 	"reflect"
 	"strings"
@@ -28,6 +29,7 @@ func (h *IncomingHandler) DisplayBudgetMonitoring(c *fiber.Ctx) error {
 		Adnet:          c.Query("adnet"),
 		Service:        c.Query("service"),
 		CampaignName:   c.Query("campaign_name"),
+		UrlServiceKey:  c.Query("url_service_key"),
 		DataIndicators: dataIndicators,
 		DataBasedOn:    c.Query("data-based-on"),
 		DateRange:      c.Query("date-range"),
@@ -73,25 +75,25 @@ func formatBudgetMonitoringData(data []entity.CampaignSummaryMonitoring, params 
 		if params.All == "true" {
 			generatedSummary := generateBudget(data, params, startDate, endDate)
 			placeHolder := map[string]any{
-				"all":         "All Campaign",
-				"campaign_id": "All Campaign",
+				"all":           "All Campaign",
+				"campaign_id":   "All Campaign",
 				"campaign_name": "ALL",
-				"operator": "ALL",
-				"service": "ALL",
-				"adnet": "ALL",
+				"operator":      "ALL",
+				"service":       "ALL",
+				"adnet":         "ALL",
 			}
 			completeSummary := mergeMapsValue(generatedSummary, placeHolder)
 			formattedData = append(formattedData, completeSummary)
 		} else {
 			groupedAdnet := goterators.Group(data, func(campaign entity.CampaignSummaryMonitoring) string {
-				return campaign.CampaignId
+				return campaign.UrlServiceKey
 			})
 			for _, campaignPerAdnet := range groupedAdnet {
 				generatedSummary := generateBudget(campaignPerAdnet, params, startDate, endDate)
 
 				placeHolder := map[string]interface{}{
 					"level":         "campaign_id",
-					"campaign_id":   campaignPerAdnet[0].CampaignId,
+					"campaign_id":   campaignPerAdnet[0].UrlServiceKey,
 					"campaign_name": campaignPerAdnet[0].CampaignName,
 					"country":       campaignPerAdnet[0].Country,
 					"operator":      campaignPerAdnet[0].Operator,
@@ -121,20 +123,20 @@ func formatBudgetMonitoringData(data []entity.CampaignSummaryMonitoring, params 
 		if params.All == "true" {
 			generatedSummary := generateBudget(data, params, startDate, endDate)
 			placeHolder := map[string]interface{}{
-				"level":       "campaign_id",
-				"country":     "All",
-				"campaign_id": "ALL",
+				"level":         "campaign_id",
+				"country":       "All",
+				"campaign_id":   "ALL",
 				"campaign_name": "ALL",
-				"operator": "ALL",
-				"service": "ALL",
-				"adnet": "ALL",
+				"operator":      "ALL",
+				"service":       "ALL",
+				"adnet":         "ALL",
 			}
 			completeSummary := mergeMapsValue(generatedSummary, placeHolder)
 			formattedData = append(formattedData, completeSummary)
 		} else {
 
 			groupedCountry := goterators.Group(data, func(campaign entity.CampaignSummaryMonitoring) string {
-				return campaign.CampaignId
+				return campaign.UrlServiceKey
 			})
 
 			for _, campaignPerCountry := range groupedCountry {
@@ -161,7 +163,7 @@ func formatBudgetMonitoringData(data []entity.CampaignSummaryMonitoring, params 
 					"operator":      campaignPerCountry[0].Operator,
 					"service":       campaignPerCountry[0].Service,
 					"adnet":         campaignPerCountry[0].Adnet,
-					"campaign_id":   campaignPerCountry[0].CampaignId,
+					"campaign_id":   campaignPerCountry[0].UrlServiceKey,
 					// "_children":     children,
 				}
 				completeSummary := mergeMapsValue(generatedCountrySummary, placeHolder)
@@ -282,17 +284,17 @@ func countPercentageValue(now, prev float64) float64 {
 }
 
 func countTmoEndValue(totals map[string]float64, startDate time.Time, endDate time.Time) map[string]float64 {
+
 	tmoEnd := map[string]float64{}
-	totalDaysRunning := int(endDate.Sub(startDate).Hours() / 24)
+	totalDaysRunning := int(math.Ceil(endDate.Sub(startDate).Hours() / 24))
 	if totalDaysRunning < 1 {
 		totalDaysRunning = 1
 	}
 
 	// Calculate total days in the last month
 	lastMonthEnd := endDate.AddDate(0, 0, -endDate.Day())
-	lastMonthStart := lastMonthEnd.AddDate(0, 0, -lastMonthEnd.Day()+1)
-	totalDaysLastMonth := int(lastMonthEnd.Sub(lastMonthStart).Hours()/24) + 1
-
+	lastMonthStart := lastMonthEnd.AddDate(0, 0, -lastMonthEnd.Day())
+	totalDaysLastMonth := int(math.Ceil(lastMonthEnd.Sub(lastMonthStart).Hours()/24)) + 1
 	for key, value := range totals {
 		result := (value / float64(totalDaysRunning)) * float64(totalDaysLastMonth)
 		tmoEnd[key] = result

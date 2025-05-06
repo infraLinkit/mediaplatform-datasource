@@ -16,7 +16,7 @@ func (r *BaseModel) GetRevenueMonitoring(params entity.ParamsRevenueMonitoring) 
 	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
 
 	// Apply Indicator Selection
-	selectedFields := []string{"country", "campaign_id", "campaign_name", "partner", "operator", "service", "adnet"}
+	selectedFields := []string{"country", "campaign_id", "url_service_key", "campaign_name", "partner", "operator", "service", "adnet"}
 	if params.DataType == "monthly_report" {
 		selectedFields = append(selectedFields, "DATE_TRUNC('month', summary_date) as summary_date")
 	} else {

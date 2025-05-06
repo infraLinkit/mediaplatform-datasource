@@ -450,7 +450,7 @@ func (r *BaseModel) GetSummaryCampaignBudgetMonitoring(params entity.ParamsCampa
 	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
 
 	// Apply Indicator Selection -
-	selectedFields := []string{"summary_date", "country", "campaign_id", "campaign_name", "partner", "operator", "service", "adnet"}
+	selectedFields := []string{"summary_date", "country", "url_service_key", "campaign_id", "campaign_name", "partner", "operator", "service", "adnet"}
 	formattedIndicators := formatQueryIndicatorsBudget(params.DataIndicators, params.DataType)
 	selectedFields = append(selectedFields, formattedIndicators...)
 
@@ -460,7 +460,9 @@ func (r *BaseModel) GetSummaryCampaignBudgetMonitoring(params entity.ParamsCampa
 	if params.DataType == "" {
 		params.DataType = "daily_report"
 	}
-
+	if params.UrlServiceKey != "" {
+		query.Where("url_service_key = ?", params.UrlServiceKey)
+	}
 	// Apply paramss
 	if params.Country != "" {
 		query.Where("country = ?", params.Country)

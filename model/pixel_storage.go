@@ -65,6 +65,22 @@ func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, 
 	}
 }
 
+func (r *BaseModel) GetPxByMsisdn(o entity.PixelStorage) (entity.PixelStorage, bool) {
+
+	result := r.DB.Model(&o).
+		Where("url_service_key = ? AND msisdn = ? AND is_used = false", o.URLServiceKey, o.Pixel).
+		First(&o)
+
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b {
+		return o, false
+	} else {
+		r.Logs.Warn(fmt.Sprintf("pixel not found %#v", o))
+		return o, true
+	}
+}
+
 func (r *BaseModel) UpdatePixelById(o entity.PixelStorage) error {
 
 	result := r.DB.Model(&o).Select("is_used", "pixel_used_date", "status_postback", "status_postback", "is_unique", "url_postback", "status_url_postback", "reason_url_postback", "reason_url_postback").Updates(o)

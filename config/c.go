@@ -106,6 +106,7 @@ type (
 		GSAuthProvider                         string
 		GSClient                               string
 		GSUniversalDomain                      string
+		CronResetCapping                       string
 	}
 
 	Setup struct {
@@ -203,6 +204,7 @@ func InitCfg() *Cfg {
 		GSAuthProvider:                         os.Getenv("GSAUTH_PROVIDER"),
 		GSClient:                               os.Getenv("GSCLIENT"),
 		GSUniversalDomain:                      os.Getenv("GSUNIVERSAL_DOMAIN"),
+		CronResetCapping:                       os.Getenv("CRONRESETCAPPING"),
 	}
 
 	return cfg

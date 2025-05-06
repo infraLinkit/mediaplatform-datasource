@@ -59,6 +59,8 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 					px, isPX = h.DS.GetByAdnetCode(pxData)
 				} else if dc.PostbackMethod == "TOKEN" {
 					px, isPX = h.DS.GetToken(pxData)
+				} else if dc.PostbackMethod == "JSON-MSISDN" || dc.PostbackMethod == "XML-MSISDN" || dc.PostbackMethod == "HTML-MSISDN" {
+					px, isPX = h.DS.GetPxByMsisdn(pxData)
 				} else {
 					px, isPX = h.DS.GetPx(pxData)
 				}

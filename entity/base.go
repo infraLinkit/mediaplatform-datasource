@@ -1,5 +1,7 @@
 package entity
 
+import "encoding/json"
+
 type (
 	GlobalResponse struct {
 		Code    int    `json:"code" xml:"code"`
@@ -53,4 +55,16 @@ type (
 		PageSize int    `json:"pageSize" xml:"pageSize"`
 		Search   string `json:"search" xml:"search"`
 	}
+
+	Ack struct {
+		Keyword   string `json:"keyword" xml:"keyword"`
+		ShortCode string `json:"shortcode" xml:"shortcode"`
+		ClickId   string `json:"clickid" xml:"clickid"`
+	}
 )
+
+func EncodeJsonAck(obj Ack) []byte {
+	ack, _ := json.Marshal(obj)
+
+	return ack
+}

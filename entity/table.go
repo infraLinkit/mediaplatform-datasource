@@ -247,7 +247,7 @@ type (
 		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`
 		CampaignDetailId  int       `gorm:"index:idx_mocampdetailid_unique;not null;length:20" json:"campaign_detail_id"`
 		Pxdate            time.Time `gorm:"not null" json:"pxdate"`
-		URLServiceKey     string    `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
+		URLServiceKey     string    `gorm:"index:idx_urlservicekey;index:idx_token;index:idx_msisdn;index:idx_pixel,not null;size:50" json:"urlservicekey"`
 		CampaignId        string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
 		CampaignName      string    `gorm:"size:100;deafult:NA" json:"campaign_name"`
 		Country           string    `gorm:"not null;size:50" json:"country"`
@@ -266,10 +266,10 @@ type (
 		ShortCode         string    `gorm:"size:50;default:NA" json:"short_code"`
 		URL               string    `gorm:"size:255;default:NA" json:"url"`
 		URLType           string    `gorm:"size:50;default:NA" json:"url_type"`
-		Pixel             string    `gorm:"size:255;default:NA" json:"pixel"`
-		Token             string    `gorm:"size:255;default:NA" json:"token"`
+		Pixel             string    `gorm:"index:idx_pixel,size:255;default:NA" json:"pixel"`
+		Token             string    `gorm:"index:idx_token,size:255;default:NA" json:"token"`
 		TrxId             string    `gorm:"size:255;default:NA" json:"trx_id"`
-		Msisdn            string    `gorm:"size:255;default:NA" json:"msisdn"`
+		Msisdn            string    `gorm:"index:idx_msisdn,size:255;default:NA" json:"msisdn"`
 		IsUsed            bool      `gorm:"not null;default:false" json:"is_used"`
 		Browser           string    `gorm:"size:150;default:NA" json:"browser"`
 		OS                string    `gorm:"size:150;default:NA" json:"os"`
@@ -308,6 +308,7 @@ type (
 		Channel           string    `gorm:"size:50;default:NA" json:"channel"`
 		GoogleSheet       string    `gorm:"type:text;default:NA" json:"google_sheet"`
 		Currency          string    `gorm:"size:10;default:NA" json:"currency"`
+		PostbackMethod    string    `gorm:"size:50" json:"postback_method"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}

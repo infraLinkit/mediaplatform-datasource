@@ -6,6 +6,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"github.com/infraLinkit/mediaplatform-datasource/helper"
 )
 
 func (h *IncomingHandler) DisplayUserLogList(c *fiber.Ctx) error {
@@ -166,4 +167,17 @@ func (h *IncomingHandler) CreateUserLog(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 
+}
+
+func (h *IncomingHandler) GetIpAddress(c *fiber.Ctx) error {
+    ip := helper.GetIpAddress(c)
+
+    return c.JSON(entity.ReturnResponse{
+        HttpStatus: fiber.StatusOK,
+        Rsp: entity.GlobalResponseWithData{
+            Data:    ip, // Pass the IP address here
+            Code:    fiber.StatusOK,
+            Message: config.OK_DESC,
+        },
+    })
 }

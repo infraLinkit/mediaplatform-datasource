@@ -153,7 +153,7 @@ func formatSummaryDataValue(data []entity.CampaignSummaryMonitoring, params enti
 
 				placeHolder := map[string]interface{}{
 					"level":         "country",
-					"campaign_id":   campaignPerAdnet[0].CampaignId,
+					"campaign_id":   campaignPerAdnet[0].UrlServiceKey,
 					"campaign_name": campaignPerAdnet[0].CampaignName,
 					"country":       campaignPerAdnet[0].Country,
 					"operator":      campaignPerAdnet[0].Operator,

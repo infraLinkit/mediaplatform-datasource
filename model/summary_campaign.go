@@ -163,7 +163,7 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
 
 	// Apply Indicator Selection
-	selectedFields := []string{"country", "campaign_id", "campaign_name", "partner", "operator", "service", "adnet"}
+	selectedFields := []string{"country", "url_service_key", "campaign_id", "campaign_name", "partner", "operator", "service", "adnet"}
 	if params.DataType == "monthly_report" {
 		selectedFields = append(selectedFields, "DATE_TRUNC('month', summary_date) as summary_date")
 	} else {
@@ -183,6 +183,9 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 	// Apply paramss
 	if params.Country != "" {
 		query.Where("country = ?", params.Country)
+	}
+	if params.UrlServiceKey != "" {
+		query.Where("url_service_key = ?", params.UrlServiceKey)
 	}
 	if params.Operator != "" {
 		query.Where("operator = ?", params.Operator)

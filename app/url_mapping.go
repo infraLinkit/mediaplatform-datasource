@@ -73,6 +73,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 
 	// Postback
 	v1.Get("/postback/:urlservicekey/", h.Postback)
+	v1.Get("/postback", h.Postback2)
 
 	// Report
 	rpt := v1.Group("/report") // Report
@@ -149,6 +150,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 
 	// User Log
 	userlog := management.Group("/userlog")
+	userlog.Get("/ip", h.GetIpAddress).Name("User Log IP")
 	userlog.Post("/", h.CreateUserLog).Name(" Save User Log List")
 	userlog.Get("/", h.DisplayUserLogList).Name(" Display User Log List")
 	userlog.Get("/:id", h.DisplayUserLogHistory).Name(" Display User Log History")

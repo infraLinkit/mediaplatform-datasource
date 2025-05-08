@@ -48,3 +48,28 @@ func (p *PostbackReceive) ValidateParams(Logs *logrus.Logger) GlobalResponse {
 		return GlobalResponse{Code: fiber.StatusOK, Message: ""}
 	}
 }
+
+func NewDataPostbackV2(c *fiber.Ctx) *PostbackReceive {
+
+	m := c.Queries()
+
+	CookieKey := helper.Concat("-", helper.GetIpAddress(c), m["aff_sub"])
+
+	return &PostbackReceive{
+		CookieKey: CookieKey,
+		AffSub:    m["aff_sub"],
+	}
+}
+
+func (p *PostbackReceive) ValidateParamsV2(Logs *logrus.Logger) GlobalResponse {
+
+	if p.AffSub == "" {
+
+		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "pixel empty"}
+
+	} else {
+		Logs.Debug("All traffic service is valid ...\n")
+
+		return GlobalResponse{Code: fiber.StatusOK, Message: ""}
+	}
+}

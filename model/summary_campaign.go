@@ -391,6 +391,8 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 				formattedValue = "MAX(target_monthly_budget) as target_daily_budget"
 			case "waki_revenue":
 				formattedValue = "SUM(saaf - sbaf) AS waki_revenue"
+			case "target_budget":
+				formattedValue = "SUM(target_monthly_budget) AS target_budget"
 			case "budget_usage":
 				formattedValue = "SUM(CASE WHEN target_daily_budget = 0 THEN 0 ELSE (sbaf / target_daily_budget * 100) END) AS budget_usage"
 			case "spending_to_adnets":
@@ -429,6 +431,8 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 			case "spending":
 				formattedValue = "saaf AS spending"
 			case "budget":
+				formattedValue = "target_daily_budget AS budget"
+			case "target_budget":
 				formattedValue = "target_daily_budget AS budget"
 			case "traffic":
 				formattedValue = "landing AS traffic"
@@ -572,6 +576,8 @@ func formatQueryIndicatorsBudget(selects []string, dataType string) []string {
 			switch value {
 			case "budget":
 				formattedValue = "SUM(target_daily_budget) AS budget"
+			case "target_budget":
+				formattedValue = "SUM(target_daily_budget) AS target_budget"
 			case "spending":
 				formattedValue = "SUM(saaf) AS spending"
 			case "mo":
@@ -599,6 +605,8 @@ func formatQueryIndicatorsBudget(selects []string, dataType string) []string {
 			switch value {
 			case "budget":
 				formattedValue = "target_daily_budget AS budget"
+			case "terget_budget":
+				formattedValue = "target_daily_budget AS target_budget"
 			case "spending":
 				formattedValue = "saaf AS spending"
 			case "mo":

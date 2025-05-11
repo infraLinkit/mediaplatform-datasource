@@ -20,9 +20,9 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 	if len(dataIndicators) == 0 {
 		switch dataType := c.Query("data-type"); dataType {
 		case "spending":
-			dataIndicators = append(dataIndicators, "spending", "budget_usage", "target_daily_budget", "spending_to_adnets")
+			dataIndicators = append(dataIndicators, "spending", "spending_to_adnets", "target_daily_budget", "target_budget", "budget_usage")
 		default:
-			dataIndicators = append(dataIndicators, "traffic", "budget_usage", "target_daily_budget", "spending_to_adnets")
+			dataIndicators = append(dataIndicators, "traffic", "spending_to_adnets", "target_daily_budget", "target_budget", "budget_usage")
 		}
 
 	}
@@ -329,10 +329,21 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 
 	// Collect monthly budgets
 	for _, campaign := range data {
-		if containsString(params.DataIndicators, "target_daily_budget") {
+		if containsString(params.DataIndicators, "target_daily_budget") || containsString(params.DataIndicators, "target_budget") {
 			month := campaign.SummaryDate.Format("2006-01")
 			key := fmt.Sprintf("%s|%s|%s", campaign.Country, campaign.Operator, month)
 			budgetValue := getIndicatorValueRevenue(campaign, "target_daily_budget")
+			if budgetValue > 0 {
+				if monthlyBudgets[key] == nil {
+					monthlyBudgets[key] = make(map[string]float64)
+				}
+				monthlyBudgets[key][month] = budgetValue
+			}
+		}
+		if containsString(params.DataIndicators, "target_budget") {
+			month := campaign.SummaryDate.Format("2006-01")
+			key := fmt.Sprintf("%s|%s|%s", campaign.Country, campaign.Operator, month)
+			budgetValue := getIndicatorValueRevenue(campaign, "target_budget")
 			if budgetValue > 0 {
 				if monthlyBudgets[key] == nil {
 					monthlyBudgets[key] = make(map[string]float64)
@@ -526,6 +537,10 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 }
 
 func getIndicatorValueRevenue(item entity.CampaignSummaryMonitoring, key string) float64 {
+	// Jika key adalah target_budget, gunakan nilai dari target_daily_budget
+	if key == "target_budget" {
+		key = "target_daily_budget"
+	}
 
 	key = SnakeToCamelValue(key)
 	values := reflect.ValueOf(item)
@@ -543,8 +558,8 @@ func getIndicatorValueRevenue(item entity.CampaignSummaryMonitoring, key string)
 	default:
 		return 0
 	}
-
 }
+
 func getPreviousValueRevenue(day map[string]map[string]interface{}, indicator string) float64 {
 	if day == nil {
 		return 0
@@ -556,6 +571,7 @@ func getPreviousValueRevenue(day map[string]map[string]interface{}, indicator st
 	}
 	return 0
 }
+
 func countPercentageRevenue(now, prev float64) float64 {
 	if prev == 0 {
 		if now == 0 {

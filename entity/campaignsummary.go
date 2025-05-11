@@ -94,6 +94,7 @@ type (
 		Cpa                float64   `form:"cpa" json:"cpa"`
 		AgencyFee          float64   `form:"agency-fee" json:"agency_fee"`
 		TargetDailyBudget  float64   `form:"target-daily-budget" json:"target_daily_budget"`
+		TargetBudget       float64   `form:"target-budget" json:"target_budget"`
 		CrMO               float64   `form:"cr-mo" json:"cr_mo"`
 		CrPostback         float64   `form:"cr-postback" json:"cr_postback"`
 		BudgetUsage        float64   `form:"budget-usage" json:"budget_usage"`

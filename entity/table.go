@@ -762,8 +762,8 @@ type (
 		IPAddress     string    `gorm:"type:inet" json:"ip_address"`
 		UserAgent     string    `gorm:"type:varchar(1023)" json:"user_agent"`
 		Tags          string    `gorm:"type:varchar(255)" json:"tags"`
-		CreatedAt     time.Time `gorm:"type:timestamp" json:"created_at"`
-		UpdatedAt     time.Time `gorm:"type:timestamp" json:"updated_at"`
+		CreatedAt     time.Time
+		UpdatedAt     time.Time
 		ActionName    string    `gorm:"type:varchar(255)" json:"action_name"`
 	}
 

@@ -605,7 +605,7 @@ func formatQueryIndicatorsBudget(selects []string, dataType string) []string {
 			switch value {
 			case "budget":
 				formattedValue = "target_daily_budget AS budget"
-			case "terget_budget":
+			case "target_budget":
 				formattedValue = "target_daily_budget AS target_budget"
 			case "spending":
 				formattedValue = "saaf AS spending"

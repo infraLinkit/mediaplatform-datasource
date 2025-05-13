@@ -20,9 +20,9 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 	if len(dataIndicators) == 0 {
 		switch dataType := c.Query("data-type"); dataType {
 		case "spending":
-			dataIndicators = append(dataIndicators, "spending", "spending_to_adnets", "target_daily_budget", "target_budget", "budget_usage")
+			dataIndicators = append(dataIndicators, "spending", "target_daily_budget", "budget_usage")
 		default:
-			dataIndicators = append(dataIndicators, "traffic", "spending_to_adnets", "target_daily_budget", "target_budget", "budget_usage")
+			dataIndicators = append(dataIndicators, "traffic", "spending_to_adnets", "target_daily_budget", "budget_usage")
 		}
 
 	}
@@ -304,6 +304,8 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 	monthlyBudgets := make(map[string]map[string]float64)
 	countryDailyBudgets := make(map[string]map[string]float64)
 	operatorDailyBudgets := make(map[string]map[string]float64)
+	countryBudgets := make(map[string]map[string]float64)
+	operatorBudgets := make(map[string]map[string]float64)
 
 	// Initialize dates
 	currentDate := startDate
@@ -365,10 +367,14 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 	var results []map[string]interface{}
 	for country, operators := range groupedData {
 		var countryTotal float64
+		var countryBudgetTotal float64
 		var operatorResults []map[string]interface{}
 
 		if countryDailyBudgets[country] == nil {
 			countryDailyBudgets[country] = make(map[string]float64)
+		}
+		if countryBudgets[country] == nil {
+			countryBudgets[country] = make(map[string]float64)
 		}
 
 		for operator, campaigns := range operators {
@@ -376,7 +382,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 			operatorData := map[string]interface{}{}
 
 			for _, indicator := range params.DataIndicators {
-				if indicator != "target_daily_budget" && indicator != "budget_usage" {
+				if indicator != "target_daily_budget" && indicator != "target_budget" && indicator != "budget_usage" {
 					operatorData[indicator] = 0.0
 				}
 			}
@@ -384,12 +390,15 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 			if operatorDailyBudgets[operatorKey] == nil {
 				operatorDailyBudgets[operatorKey] = make(map[string]float64)
 			}
+			if operatorBudgets[operatorKey] == nil {
+				operatorBudgets[operatorKey] = make(map[string]float64)
+			}
 
 			for _, campaign := range campaigns {
 				date := formatDate(campaign.SummaryDate, params.DataType)
 
 				for _, indicator := range params.DataIndicators {
-					if indicator == "target_daily_budget" || indicator == "budget_usage" {
+					if indicator == "target_daily_budget" || indicator == "target_budget" || indicator == "budget_usage" {
 						continue
 					}
 
@@ -425,6 +434,29 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				operatorData["target_daily_budget"] = operatorTotal
 				totals["target_daily_budget"] += operatorTotal
 				countryTotal += operatorTotal
+			}
+
+			if containsString(params.DataIndicators, "target_budget") {
+				operatorTotal := 0.0
+				currentDate := startDate
+				for !currentDate.After(endDate) {
+					month := currentDate.Format("2006-01")
+					date := formatDate(currentDate, params.DataType)
+
+					if budgets, exists := monthlyBudgets[operatorKey+"|"+month]; exists {
+						if budget, ok := budgets[month]; ok {
+							operatorBudgets[operatorKey][date] = budget
+							days[date]["target_budget"]["value"] = safeFloat(days[date]["target_budget"], "value") + budget
+							countryBudgets[country][date] += budget
+							operatorTotal += budget
+						}
+					}
+
+					currentDate = incrementDate(currentDate, params.DataType)
+				}
+				operatorData["target_budget"] = operatorTotal
+				totals["target_budget"] += operatorTotal
+				countryBudgetTotal += operatorTotal
 			}
 
 			if containsString(params.DataIndicators, "budget_usage") {
@@ -477,6 +509,27 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				date := formatDate(currentDate, params.DataType)
 				if budget, exists := countryDailyBudgets[country][date]; exists {
 					days[date]["target_daily_budget"]["value"] = budget
+				}
+				currentDate = incrementDate(currentDate, params.DataType)
+			}
+		}
+
+		if containsString(params.DataIndicators, "target_budget") {
+			countBudgetDays := len(countryBudgets[country])
+			avg := 0.0
+			if countBudgetDays > 0 {
+				avg = safeDivision(countryBudgetTotal, float64(countBudgetDays))
+			}
+			countryData["target_budget"] = map[string]interface{}{
+				"total": countryBudgetTotal,
+				"avg":   avg,
+			}
+
+			currentDate := startDate
+			for !currentDate.After(endDate) {
+				date := formatDate(currentDate, params.DataType)
+				if budget, exists := countryBudgets[country][date]; exists {
+					days[date]["target_budget"]["value"] = budget
 				}
 				currentDate = incrementDate(currentDate, params.DataType)
 			}
@@ -539,7 +592,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 func getIndicatorValueRevenue(item entity.CampaignSummaryMonitoring, key string) float64 {
 	// Jika key adalah target_budget, gunakan nilai dari target_daily_budget
 	if key == "target_budget" {
-		key = "target_daily_budget"
+		return item.TargetDailyBudget
 	}
 
 	key = SnakeToCamelValue(key)

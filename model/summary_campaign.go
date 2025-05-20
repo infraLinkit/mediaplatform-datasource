@@ -249,7 +249,7 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 
 	// Grouping for monthly reports
 	if params.DataType == "monthly_report" {
-		query.Group("DATE_TRUNC('month', summary_date),country, campaign_name,campaign_id, partner, operator, service, adnet")
+		query.Group("DATE_TRUNC('month', summary_date),country, campaign_name, campaign_id, url_service_key, partner, operator, service, adnet")
 	}
 
 	rows, _ = query.Unscoped().Rows()
@@ -440,6 +440,8 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 				formattedValue = "mo_received AS mo"
 			case "revenue":
 				formattedValue = "revenue AS revenue"
+			case "target_daily_budget":
+				formattedValue = "target_daily_budget AS target_daily_budget"
 			default:
 				formattedValue = fmt.Sprintf("%s AS %s", value, value)
 			}
@@ -533,7 +535,7 @@ func (r *BaseModel) GetSummaryCampaignBudgetMonitoring(params entity.ParamsCampa
 
 	// Grouping for monthly reports
 	if params.DataType == "monthly_report" {
-		query.Group("EXTRACT(YEAR FROM summary_date), EXTRACT(MONTH FROM summary_date), country, partner, operator, service, adnet")
+		query.Group("EXTRACT(YEAR FROM summary_date), EXTRACT(MONTH FROM summary_date), country, partner, operator, service, adnet, url_service_key")
 	}
 
 	rows, _ = query.Unscoped().Rows()

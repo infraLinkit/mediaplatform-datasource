@@ -20,7 +20,7 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 	if len(dataIndicators) == 0 {
 		switch dataType := c.Query("data-type"); dataType {
 		case "spending":
-			dataIndicators = append(dataIndicators, "spending", "target_daily_budget", "budget_usage")
+			dataIndicators = append(dataIndicators, "spending", "target_daily_budget")
 		default:
 			dataIndicators = append(dataIndicators, "traffic", "spending_to_adnets", "target_daily_budget", "budget_usage")
 		}
@@ -331,7 +331,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 
 	// Collect monthly budgets
 	for _, campaign := range data {
-		if containsString(params.DataIndicators, "target_daily_budget") || containsString(params.DataIndicators, "target_budget") {
+		if containsString(params.DataIndicators, "target_daily_budget") {
 			month := campaign.SummaryDate.Format("2006-01")
 			key := fmt.Sprintf("%s|%s|%s", campaign.Country, campaign.Operator, month)
 			budgetValue := getIndicatorValueRevenue(campaign, "target_daily_budget")
@@ -398,9 +398,9 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				date := formatDate(campaign.SummaryDate, params.DataType)
 
 				for _, indicator := range params.DataIndicators {
-					if indicator == "target_daily_budget" || indicator == "target_budget" || indicator == "budget_usage" {
-						continue
-					}
+					// if indicator == "target_daily_budget" || indicator == "target_budget" || indicator == "budget_usage" {
+					// 	continue
+					// }
 
 					indicatorValue := getIndicatorValueRevenue(campaign, indicator)
 					if days[date][indicator] != nil {
@@ -413,28 +413,28 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				}
 			}
 
-			if containsString(params.DataIndicators, "target_daily_budget") {
-				operatorTotal := 0.0
-				currentDate := startDate
-				for !currentDate.After(endDate) {
-					month := currentDate.Format("2006-01")
-					date := formatDate(currentDate, params.DataType)
+			// if containsString(params.DataIndicators, "target_daily_budget") {
+			// 	operatorTotal := 0.0
+			// 	currentDate := startDate
+			// 	for !currentDate.After(endDate) {
+			// 		month := currentDate.Format("2006-01")
+			// 		date := formatDate(currentDate, params.DataType)
 
-					if budgets, exists := monthlyBudgets[operatorKey+"|"+month]; exists {
-						if budget, ok := budgets[month]; ok {
-							operatorDailyBudgets[operatorKey][date] = budget
-							days[date]["target_daily_budget"]["value"] = safeFloat(days[date]["target_daily_budget"], "value") + budget
-							countryDailyBudgets[country][date] += budget
-							operatorTotal += budget
-						}
-					}
+			// 		if budgets, exists := monthlyBudgets[operatorKey+"|"+month]; exists {
+			// 			if budget, ok := budgets[month]; ok {
+			// 				operatorDailyBudgets[operatorKey][date] = budget
+			// 				days[date]["target_daily_budget"]["value"] = safeFloat(days[date]["target_daily_budget"], "value") + budget
+			// 				countryDailyBudgets[country][date] += budget
+			// 				operatorTotal += budget
+			// 			}
+			// 		}
 
-					currentDate = incrementDate(currentDate, params.DataType)
-				}
-				operatorData["target_daily_budget"] = operatorTotal
-				totals["target_daily_budget"] += operatorTotal
-				countryTotal += operatorTotal
-			}
+			// 		currentDate = incrementDate(currentDate, params.DataType)
+			// 	}
+			// 	operatorData["target_daily_budget"] = operatorTotal
+			// 	totals["target_daily_budget"] += operatorTotal
+			// 	countryTotal += operatorTotal
+			// }
 
 			if containsString(params.DataIndicators, "target_budget") {
 				operatorTotal := 0.0
@@ -591,9 +591,6 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 
 func getIndicatorValueRevenue(item entity.CampaignSummaryMonitoring, key string) float64 {
 	// Jika key adalah target_budget, gunakan nilai dari target_daily_budget
-	if key == "target_budget" {
-		return item.TargetDailyBudget
-	}
 
 	key = SnakeToCamelValue(key)
 	values := reflect.ValueOf(item)

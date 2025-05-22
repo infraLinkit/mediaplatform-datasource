@@ -382,7 +382,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 			operatorData := map[string]interface{}{}
 
 			for _, indicator := range params.DataIndicators {
-				if indicator != "target_daily_budget" && indicator != "target_budget" && indicator != "budget_usage" {
+				if indicator != "target_daily_budget" && indicator != "budget_usage" {
 					operatorData[indicator] = 0.0
 				}
 			}
@@ -398,9 +398,9 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				date := formatDate(campaign.SummaryDate, params.DataType)
 
 				for _, indicator := range params.DataIndicators {
-					// if indicator == "target_daily_budget" || indicator == "target_budget" || indicator == "budget_usage" {
-					// 	continue
-					// }
+					if indicator == "target_daily_budget" {
+						continue
+					}
 
 					indicatorValue := getIndicatorValueRevenue(campaign, indicator)
 					if days[date][indicator] != nil {
@@ -412,29 +412,120 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 					totals[indicator] += indicatorValue
 				}
 			}
+			if params.All == "true" && params.DataType != "monthly_report" {
+				if containsString(params.DataIndicators, "target_daily_budget") {
+					currentDate := startDate
+					for !currentDate.After(endDate) {
+						month := currentDate.Format("2006-01")
+						date := formatDate(currentDate, params.DataType)
 
-			// if containsString(params.DataIndicators, "target_daily_budget") {
-			// 	operatorTotal := 0.0
-			// 	currentDate := startDate
-			// 	for !currentDate.After(endDate) {
-			// 		month := currentDate.Format("2006-01")
-			// 		date := formatDate(currentDate, params.DataType)
+						totalBudget := 0.0
+						activeCount := 0
 
-			// 		if budgets, exists := monthlyBudgets[operatorKey+"|"+month]; exists {
-			// 			if budget, ok := budgets[month]; ok {
-			// 				operatorDailyBudgets[operatorKey][date] = budget
-			// 				days[date]["target_daily_budget"]["value"] = safeFloat(days[date]["target_daily_budget"], "value") + budget
-			// 				countryDailyBudgets[country][date] += budget
-			// 				operatorTotal += budget
-			// 			}
-			// 		}
+						for _, monthly := range monthlyBudgets {
+							if budget, ok := monthly[month]; ok {
+								totalBudget += budget
+								activeCount++
+							}
+						}
 
-			// 		currentDate = incrementDate(currentDate, params.DataType)
-			// 	}
-			// 	operatorData["target_daily_budget"] = operatorTotal
-			// 	totals["target_daily_budget"] += operatorTotal
-			// 	countryTotal += operatorTotal
-			// }
+						// Hindari pembagian dengan nol
+						if activeCount > 0 {
+							averageBudget := totalBudget / float64(activeCount)
+							days[date]["target_daily_budget"]["value"] =
+								safeFloat(days[date]["target_daily_budget"], "value") + averageBudget
+							totals["target_daily_budget"] += averageBudget
+						}
+
+						currentDate = incrementDate(currentDate, params.DataType)
+					}
+				}
+
+			} else if params.All == "true" && params.DataType == "monthly_report" {
+
+				if containsString(params.DataIndicators, "target_daily_budget") {
+					operatorTotal := 0.0
+					currentDate := startDate
+
+					for !currentDate.After(endDate) {
+						month := currentDate.Format("2006-01")
+						date := formatDate(currentDate, params.DataType)
+
+						// Perbarui ini: Akumulasi budget harian hanya memerhatikan country
+						totalBudget := 0.0
+						activeCount := 0
+
+						for _, budgets := range monthlyBudgets {
+							if budget, ok := budgets[month]; ok {
+								totalBudget += budget
+								activeCount++
+							}
+						}
+
+						// Hindari pembagian dengan nol
+						if activeCount > 0 {
+							averageBudget := totalBudget / float64(activeCount)
+							if days[date] == nil {
+								days[date] = make(map[string]map[string]interface{})
+							}
+							if days[date]["target_daily_budget"] == nil {
+								days[date]["target_daily_budget"] = map[string]interface{}{
+									"value": 0.0,
+								}
+							}
+							days[date]["target_daily_budget"]["value"] = safeFloat(days[date]["target_daily_budget"], "value") + averageBudget
+						}
+
+						// Per operator+country spesifik (untuk total per operator dan country)
+						if budgets, exists := monthlyBudgets[operatorKey+"|"+month]; exists {
+							if budget, ok := budgets[month]; ok {
+								// Inisialisasi jika belum ada
+								if operatorDailyBudgets[operatorKey] == nil {
+									operatorDailyBudgets[operatorKey] = make(map[string]float64)
+								}
+								if countryDailyBudgets[country] == nil {
+									countryDailyBudgets[country] = make(map[string]float64)
+								}
+
+								operatorDailyBudgets[operatorKey][date] = budget
+								countryDailyBudgets[country][date] += budget
+								operatorTotal += budget
+							}
+						}
+
+						currentDate = incrementDate(currentDate, params.DataType)
+					}
+
+					operatorData["target_daily_budget"] = operatorTotal
+					totals["target_daily_budget"] += operatorTotal
+					countryTotal += operatorTotal
+				}
+
+			} else {
+
+				if containsString(params.DataIndicators, "target_daily_budget") {
+					operatorTotal := 0.0
+					currentDate := startDate
+					for !currentDate.After(endDate) {
+						month := currentDate.Format("2006-01")
+						date := formatDate(currentDate, params.DataType)
+
+						if budgets, exists := monthlyBudgets[operatorKey+"|"+month]; exists {
+							if budget, ok := budgets[month]; ok {
+								operatorDailyBudgets[operatorKey][date] = budget
+								days[date]["target_daily_budget"]["value"] = safeFloat(days[date]["target_daily_budget"], "value") + budget
+								countryDailyBudgets[country][date] += budget
+								operatorTotal += budget
+							}
+						}
+
+						currentDate = incrementDate(currentDate, params.DataType)
+					}
+					operatorData["target_daily_budget"] = operatorTotal
+					totals["target_daily_budget"] += operatorTotal
+					countryTotal += operatorTotal
+				}
+			}
 
 			if containsString(params.DataIndicators, "target_budget") {
 				operatorTotal := 0.0

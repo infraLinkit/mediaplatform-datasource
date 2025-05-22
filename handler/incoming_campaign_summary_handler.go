@@ -464,7 +464,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 
 						// Hindari pembagian dengan nol
 						if activeCount > 0 {
-							averageBudget := totalBudget / float64(activeCount)
+							//averageBudget := totalBudget / float64(activeCount)
 							if days[date] == nil {
 								days[date] = make(map[string]map[string]interface{})
 							}
@@ -473,7 +473,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 									"value": 0.0,
 								}
 							}
-							days[date]["target_daily_budget"]["value"] = safeFloat(days[date]["target_daily_budget"], "value") + averageBudget
+							days[date]["target_daily_budget"]["value"] = totalBudget
 						}
 
 						// Per operator+country spesifik (untuk total per operator dan country)
@@ -500,7 +500,6 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 					totals["target_daily_budget"] += operatorTotal
 					countryTotal += operatorTotal
 				}
-
 			} else {
 
 				if containsString(params.DataIndicators, "target_daily_budget") {

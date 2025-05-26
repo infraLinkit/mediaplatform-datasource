@@ -148,8 +148,12 @@ func (r *BaseModel) UpdateCPAReportSummaryCampaign(o entity.SummaryCampaign) err
 
 func (r *BaseModel) UpdateReportSummaryCampaignMonitoringBudget(o entity.SummaryCampaign) error {
 	result := r.DB.Model(&o).
-		Where("EXTRACT(YEAR FROM summary_date) = ? AND EXTRACT(MONTH FROM summary_date) = ? AND country = ? AND operator = ?", o.SummaryDate.Year(), int(o.SummaryDate.Month()), o.Country, o.Operator).
-		Updates(entity.SummaryCampaign{TargetDailyBudget: o.TargetDailyBudget, TargetMonthlyBudget: o.TargetMonthlyBudget})
+		Where("EXTRACT(YEAR FROM summary_date) = ? AND EXTRACT(MONTH FROM summary_date) = ? AND country = ? AND operator = ?",
+			o.SummaryDate.Year(), int(o.SummaryDate.Month()), o.Country, o.Operator).
+		Updates(map[string]interface{}{
+			"target_daily_budget":   o.TargetDailyBudget,
+			"target_monthly_budget": o.TargetMonthlyBudget,
+		})
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 

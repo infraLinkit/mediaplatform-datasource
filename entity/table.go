@@ -454,6 +454,8 @@ type (
 		Subkeyword        string    `gorm:"size:50" json:"subkeyword"`
 		IsBillable        bool      `gorm:"not null;default:false" json:"is_billable"`
 		Plan              string    `gorm:"size:50;default:NA" json:"plan"`
+		OS                string    `gorm:"size:35;default:NA" json:"os"`
+		IsOperator        bool      `gorm:"not null;default:false" json:"is_operator"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
@@ -477,6 +479,8 @@ type (
 		Subkeyword    string    `gorm:"size:50" json:"subkeyword"`
 		IsBillable    bool      `gorm:"not null;default:false" json:"is_billable"`
 		Plan          string    `gorm:"size:50;default:NA" json:"plan"`
+		OS            string    `gorm:"size:35;default:NA" json:"os"`
+		IsOperator    bool      `gorm:"not null;default:false" json:"is_operator"`
 		CreatedAt     time.Time
 		UpdatedAt     time.Time
 	}
@@ -500,6 +504,8 @@ type (
 		Subkeyword        string    `gorm:"size:50" json:"subkeyword"`
 		IsBillable        bool      `gorm:"not null;default:false" json:"is_billable"`
 		Plan              string    `gorm:"size:50;default:NA" json:"plan"`
+		OS                string    `gorm:"size:35;default:NA" json:"os"`
+		IsOperator        bool      `gorm:"not null;default:false" json:"is_operator"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
@@ -523,6 +529,8 @@ type (
 		Subkeyword       string    `gorm:"size:50" json:"subkeyword"`
 		IsBillable       bool      `gorm:"not null;default:false" json:"is_billable"`
 		Plan             string    `gorm:"size:50;default:NA" json:"plan"`
+		OS               string    `gorm:"size:35;default:NA" json:"os"`
+		IsOperator       bool      `gorm:"not null;default:false" json:"is_operator"`
 		CreatedAt        time.Time
 		UpdatedAt        time.Time
 	}
@@ -750,21 +758,21 @@ type (
 		IsDummyPixel string `gorm:"type:bool;default:false" json:"is_dummy_pixel"`
 	}
 	Audit struct {
-		ID            uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-		UserType      string    `gorm:"type:varchar(255)" json:"user_type"`
-		UserID        int       `gorm:"type:int8" json:"user_id"`
-		Event         string    `gorm:"type:varchar(255)" json:"event"`
-		AuditableType string    `gorm:"type:varchar(255)" json:"auditable_type"`
-		AuditableID   string    `gorm:"type:varchar(255)" json:"auditable_id"`
-		OldValues     string    `gorm:"type:text" json:"old_values"`
-		NewValues     string    `gorm:"type:text" json:"new_values"`
-		URL           string    `gorm:"type:text" json:"url"`
-		IPAddress     string    `gorm:"type:inet" json:"ip_address"`
-		UserAgent     string    `gorm:"type:varchar(1023)" json:"user_agent"`
-		Tags          string    `gorm:"type:varchar(255)" json:"tags"`
+		ID            uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		UserType      string `gorm:"type:varchar(255)" json:"user_type"`
+		UserID        int    `gorm:"type:int8" json:"user_id"`
+		Event         string `gorm:"type:varchar(255)" json:"event"`
+		AuditableType string `gorm:"type:varchar(255)" json:"auditable_type"`
+		AuditableID   string `gorm:"type:varchar(255)" json:"auditable_id"`
+		OldValues     string `gorm:"type:text" json:"old_values"`
+		NewValues     string `gorm:"type:text" json:"new_values"`
+		URL           string `gorm:"type:text" json:"url"`
+		IPAddress     string `gorm:"type:inet" json:"ip_address"`
+		UserAgent     string `gorm:"type:varchar(1023)" json:"user_agent"`
+		Tags          string `gorm:"type:varchar(255)" json:"tags"`
 		CreatedAt     time.Time
 		UpdatedAt     time.Time
-		ActionName    string    `gorm:"type:varchar(255)" json:"action_name"`
+		ActionName    string `gorm:"type:varchar(255)" json:"action_name"`
 	}
 
 	Agency struct {

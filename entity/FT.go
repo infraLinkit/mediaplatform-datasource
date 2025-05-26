@@ -148,6 +148,8 @@ type (
 		Date       string `json:"date"`
 		Time       string `json:"time"`
 		HTTPStatus string `json:"http_status"`
+		OS         string `json:"os"`
+		IsOperator bool   `json:"is_operator"`
 	}
 
 	DataCounterDetailInternal struct {

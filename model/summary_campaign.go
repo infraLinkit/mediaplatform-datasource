@@ -165,7 +165,7 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 		rows *sql.Rows
 	)
 	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
-
+	query.Where("deleted_at IS NULL")
 	// Apply Indicator Selection
 	selectedFields := []string{"country", "url_service_key", "campaign_id", "campaign_name", "partner", "operator", "service", "adnet"}
 	if params.DataType == "monthly_report" {

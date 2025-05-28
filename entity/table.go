@@ -785,6 +785,7 @@ type (
 		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Name string `gorm:"type:varchar(80)" json:"name" `
 	}
+
 	MainstreamGroup struct {
 		ID           uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Name         string `gorm:"type:varchar(254)" json:"name" `
@@ -792,6 +793,34 @@ type (
 		Agency       string `gorm:"type:varchar(80)" json:"agency" `
 		Service      string `gorm:"type:varchar(80)" json:"service" `
 		UniqueDomain string `gorm:"type:varchar(80)" json:"unique_domain"`
+	}
+
+	SummaryLanding struct {
+		gorm.Model
+		ID              int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		SummaryDateHour time.Time `gorm:"type:timestamp;not null;size:50;uniqueIndex:idx_summary_unique" json:"summary_date_hour"`
+		URLServiceKey   string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"urlservicekey"`
+		CampaignId      string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"campaign_id"`
+		CampaignName    string    `gorm:"not null;size:100" json:"campaign_name"`
+		Country         string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"country"`
+		Operator        string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"operator"`
+		Partner         string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"partner"`
+		Aggregator      string    `gorm:"size:50;uniqueIndex:idx_summary_unique" json:"aggregator"`
+		Adnet           string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"adnet"`
+		Service         string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"service"`
+
+		URLCampaign      string  `gorm:"not null;size:255" json:"url_campaign"`
+		ResponseTime     float64 `gorm:"not null;length:20" json:"response_time"`
+		TotalLoadTime    float64 `gorm:"not null;length:20" json:"total_load_time"`
+		Landing          int     `gorm:"default:0" json:"landing"`
+		SuccessRate      float64 `gorm:"default:0" json:"success_rate"`
+		ClickIOS         int     `gorm:"default:0" json:"click_ios"`
+		ClickAndroid     int     `gorm:"default:0" json:"click_android"`
+		ClickOperator    int     `gorm:"default:0" json:"click_operator"`
+		ClickNonOperator int     `gorm:"default:0" json:"click_non_operator"`
+
+		CreatedAt time.Time
+		UpdatedAt time.Time
 	}
 )
 

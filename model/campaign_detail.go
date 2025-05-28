@@ -120,6 +120,12 @@ func (r *BaseModel) DelCampaign(o entity.Campaign) error {
 	return result.Error
 }
 
+func (r *BaseModel) CountCampaignDetailByCampaignID(o entity.CampaignDetail) (int, error) {
+    var count int64
+    err := r.DB.Model(&entity.CampaignDetail{}).Where("campaign_id = ?", o.CampaignId).Count(&count).Error
+    return int(count), err
+}
+
 func (r *BaseModel) DelCampaignDetail(o entity.CampaignDetail) error {
 
 	result := r.DB.

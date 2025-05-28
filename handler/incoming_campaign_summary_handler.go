@@ -435,6 +435,9 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 							days[date]["target_daily_budget"]["value"] =
 								safeFloat(days[date]["target_daily_budget"], "value") + averageBudget
 							totals["target_daily_budget"] += averageBudget
+						} else {
+							days[date]["target_daily_budget"]["value"] = 0
+							totals["target_daily_budget"] += 0
 						}
 
 						currentDate = incrementDate(currentDate, params.DataType)

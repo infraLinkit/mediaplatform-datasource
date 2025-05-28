@@ -326,6 +326,18 @@ func (h *IncomingHandler) DelCampaign(c *fiber.Ctx) error {
 			CampaignId:    o.CampaignId,
 		})
 
+		count, err := h.DS.CountCampaignDetailByCampaignID(entity.CampaignDetail{CampaignId: o.CampaignId})
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to count campaign details"})
+		}
+
+		if count == 0 {
+			err = h.DS.DelCampaign(entity.Campaign{CampaignId: o.CampaignId})
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete campaign"})
+			}
+		}
+
 		return c.Status(fiber.StatusOK).Send([]byte("OK"))
 	}
 }

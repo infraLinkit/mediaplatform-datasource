@@ -413,6 +413,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				}
 			}
 			if params.All == "true" && params.DataType != "monthly_report" {
+				operatorTotal := 0.0
 				if containsString(params.DataIndicators, "target_daily_budget") {
 					currentDate := startDate
 					for !currentDate.After(endDate) {
@@ -426,22 +427,27 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 							if budget, ok := monthly[month]; ok {
 								totalBudget += budget
 								activeCount++
+								operatorDailyBudgets[operatorKey][date] = budget
+								countryDailyBudgets[country][date] += budget
+								operatorTotal += budget
 							}
 						}
 
-						// Hindari pembagian dengan nol
+						// Set nilai harian
 						if activeCount > 0 {
 							averageBudget := totalBudget / float64(activeCount)
-							days[date]["target_daily_budget"]["value"] =
-								safeFloat(days[date]["target_daily_budget"], "value") + averageBudget
-							totals["target_daily_budget"] += averageBudget
+							days[date]["target_daily_budget"]["value"] = averageBudget
 						} else {
 							days[date]["target_daily_budget"]["value"] = 0
-							totals["target_daily_budget"] += 0
 						}
 
 						currentDate = incrementDate(currentDate, params.DataType)
 					}
+					// Set total operator dan country
+					operatorData["target_daily_budget"] = operatorTotal
+					countryTotal += operatorTotal
+					// Set total keseluruhan
+					totals["target_daily_budget"] = countryTotal
 				}
 
 			} else if params.All == "true" && params.DataType == "monthly_report" {

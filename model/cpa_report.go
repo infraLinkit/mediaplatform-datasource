@@ -21,6 +21,9 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
 		}
+		if o.UrlServiceKey != "" {
+			query = query.Where("url_service_key = ?", o.UrlServiceKey)
+		}
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
 		}
@@ -111,31 +114,40 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]ent
 	query = query.Where("campaign_objective = ?", "MAINSTREAM")
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
-			query = query.Where("campaign_id = ?", o.CampaignId)
+			query = query.Where("LOWER(campaign_id) = LOWER(?)", o.CampaignId)
+		}
+		if o.Agency != "" {
+			query = query.Where("LOWER(adnet) = LOWER(?)", o.Agency)
+		}
+		if o.UrlServiceKey != "" {
+			query = query.Where("LOWER(url_service_key) = LOWER(?)", o.UrlServiceKey)
 		}
 		if o.Country != "" {
-			query = query.Where("country = ?", o.Country)
+			query = query.Where("LOWER(country) = LOWER(?)", o.Country)
 		}
 		if o.Company != "" {
-			query = query.Where("company = ?", o.Company)
+			query = query.Where("LOWER(company) = LOWER(?)", o.Company)
 		}
 		if o.ClientType != "" {
-			query = query.Where("client_type = ?", o.ClientType)
+			query = query.Where("LOWER(client_type) = LOWER(?)", o.ClientType)
 		}
 		if o.Operator != "" {
-			query = query.Where("operator = ?", o.Operator)
+			query = query.Where("LOWER(operator) = LOWER(?)", o.Operator)
 		}
 		if o.CampaignName != "" {
-			query = query.Where("campaign_name = ?", o.CampaignName)
+			query = query.Where("LOWER(campaign_name) = LOWER(?)", o.CampaignName)
+		}
+		if o.Channel != "" {
+			query = query.Where("LOWER(channel) = LOWER(?)", o.Channel)
 		}
 		if o.Partner != "" {
-			query = query.Where("partner = ?", o.Partner)
+			query = query.Where("LOWER(partner) = LOWER(?)", o.Partner)
 		}
 		if o.Adnet != "" { //Publisher
-			query = query.Where("adnet = ?", o.Adnet)
+			query = query.Where("LOWER(adnet) = LOWER(?)", o.Adnet)
 		}
 		if o.Service != "" {
-			query = query.Where("service = ?", o.Service)
+			query = query.Where("LOWER(service) = LOWER(?0", o.Service)
 		}
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
@@ -155,6 +167,59 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]ent
 				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
 			default:
 				query = query.Where("summary_date = ?", o.DateRange)
+			}
+		}
+
+		if o.DataBasedOn != "" {
+			switch strings.ToUpper(o.DataBasedOn) {
+			case "HIGHEST_PIXEL_RECEIVED":
+				query = query.Order("mo_received DESC")
+			case "HIGHEST_PIXEL_SEND":
+				query = query.Order("postback DESC")
+			case "HIGHEST_PRICE_PER_POSTBACK":
+				query = query.Order("po DESC")
+			case "HIGHEST_COST_PER_CONVERSION":
+				query = query.Order("cost_per_conversion DESC")
+			case "HIGHEST_AGENCY_FEE":
+				query = query.Order("agency_fee DESC")
+			case "HIGHEST_SPENDING_TO_ADNETS":
+				query = query.Order("sbaf DESC")
+			case "HIGHEST_TOTAL_WAKI_AGENCY_FEE":
+				query = query.Order("total_waki_agency_fee DESC")
+			case "HIGHEST_TOTAL_SPENDING":
+				query = query.Order("saaf DESC")
+			case "HIGHEST_ECPA":
+				query = query.Order("cpa DESC")
+			case "HIGHEST_LANDING":
+				query = query.Order("traffic DESC")
+			case "HIGHEST_POSTBACK":
+				query = query.Order("cr_postback DESC")
+			case "HIGHEST_MO":
+				query = query.Order("cr_mo DESC")
+			case "LOWEST_PIXEL_RECEIVED":
+				query = query.Order("pixel_received ASC")
+			case "LOWEST_PIXEL_SEND":
+				query = query.Order("postback ASC")
+			case "LOWEST_PRICE_PER_POSTBACK":
+				query = query.Order("po ASC")
+			case "LOWEST_COST_PER_CONVERSION":
+				query = query.Order("cost_per_conversion ASC")
+			case "LOWEST_AGENCY_FEE":
+				query = query.Order("agency_fee ASC")
+			case "LOWEST_SPENDING_TO_ADNETS":
+				query = query.Order("sbaf ASC")
+			case "LOWEST_TOTAL_WAKI_AGENCY_FEE":
+				query = query.Order("total_waki_agency_fee ASC")
+			case "LOWEST_TOTAL_SPENDING":
+				query = query.Order("saaf ASC")
+			case "LOWEST_ECPA":
+				query = query.Order("cpa ASC")
+			case "LOWEST_LANDING":
+				query = query.Order("traffic ASC")
+			case "LOWEST_POSTBACK":
+				query = query.Order("cr_postback ASC")
+			case "LOWEST_MO":
+				query = query.Order("cr_mo ASC")
 			}
 		}
 

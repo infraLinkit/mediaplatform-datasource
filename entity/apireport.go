@@ -62,13 +62,17 @@ type (
 		ID                int       `form:"id" json:"id"`
 		SummaryDate       time.Time `form:"summary_date" json:"summary_date"`
 		CampaignId        string    `form:"campaign_id" json:"campaign_id"`
+		UrlServiceKey     string    `form:"url_service_key" json:"url_service_key"`
+		Channel           string    `form:"channel" json:"channel"`
 		CampaignName      string    `form:"campaign_name" json:"campaign_name"`
 		Country           string    `form:"country" json:"country"`
 		Operator          string    `form:"operator" json:"operator"`
 		Partner           string    `form:"partner" json:"partner"`
+		Agency            string    `form:"agency" json:"agency"`
 		Aggregator        string    `form:"aggregator" json:"aggregator"`
 		Adnet             string    `form:"adnet" json:"adnet"`
 		Service           string    `form:"service" json:"service"`
+		DataBasedOn       string    `form:"data_based_on" json:"data_based_on"`
 		Cost              float64   `form:"cost" json:"cost"`
 		SBAF              float64   `form:"sbaf" json:"sbaf"`
 		SAAF              float64   `form:"saaf" json:"saaf"`

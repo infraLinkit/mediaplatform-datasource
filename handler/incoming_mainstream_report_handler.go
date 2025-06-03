@@ -28,24 +28,28 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 	}
 	draw, _ := strconv.Atoi(m["draw"])
 	fe := entity.DisplayCPAReport{
-		SummaryDate:  time.Time{},
-		CampaignId:   m["campaign_id"],
-		CampaignName: m["campaign_name"],
-		Country:      m["country"],
-		ClientType:   m["client_type"],
-		Company:      m["company"],
-		Operator:     m["operator"],
-		Partner:      m["partner"],
-		Aggregator:   m["aggregator"],
-		Adnet:        m["adnet"],
-		Service:      m["service"],
-		Draw:         draw,
-		Page:         page,
-		PageSize:     pageSize,
-		Action:       m["action"],
-		DateRange:    m["date_range"],
-		DateBefore:   m["date_before"],
-		DateAfter:    m["date_after"],
+		SummaryDate:   time.Time{},
+		CampaignId:    m["campaign_id"],
+		CampaignName:  m["campaign_name"],
+		UrlServiceKey: m["url_service_key"],
+		Country:       m["country"],
+		ClientType:    m["client_type"],
+		Company:       m["company"],
+		Operator:      m["operator"],
+		Partner:       m["partner"],
+		Channel:       m["channel"],
+		Agency:        m["agency"],
+		Aggregator:    m["aggregator"],
+		Adnet:         m["adnet"],
+		Service:       m["service"],
+		DataBasedOn:   m["data_based_on"],
+		Draw:          draw,
+		Page:          page,
+		PageSize:      pageSize,
+		Action:        m["action"],
+		DateRange:     m["date_range"],
+		DateBefore:    m["date_before"],
+		DateAfter:     m["date_after"],
 	}
 	r := h.DisplayMainstreamReportExtra(c, fe)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
@@ -55,14 +59,18 @@ func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.D
 	key := "temp_key_api_mainstream_report" +
 		"_" + fe.CampaignId +
 		"_" + fe.CampaignName +
+		"_" + fe.UrlServiceKey +
 		"_" + fe.Country +
 		"_" + fe.ClientType +
 		"_" + fe.Company +
 		"_" + fe.Operator +
 		"_" + fe.Partner +
+		"_" + fe.Channel +
+		"_" + fe.Agency +
 		"_" + fe.Aggregator +
 		"_" + fe.Adnet +
 		"_" + fe.Service +
+		"_" + fe.DataBasedOn +
 		"_" + fe.DateRange +
 		"_" + fe.DateBefore +
 		"_" + fe.DateAfter +

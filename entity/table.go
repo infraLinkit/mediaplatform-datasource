@@ -798,7 +798,7 @@ type (
 	SummaryLanding struct {
 		gorm.Model
 		ID              int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		SummaryDateHour time.Time `gorm:"type:timestamp;not null;size:50;uniqueIndex:idx_summary_unique" json:"summary_date_hour"`
+		SummaryDateHour time.Time `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"summary_date_hour"`
 		URLServiceKey   string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"urlservicekey"`
 		CampaignId      string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"campaign_id"`
 		CampaignName    string    `gorm:"not null;size:100" json:"campaign_name"`

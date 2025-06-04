@@ -92,6 +92,11 @@ type (
 		TitleColor                string  `json:"title_color"`
 		TitleStyle                string  `json:"title_style"`
 		TitlePageType             string  `json:"title_page_type"`
+		SubTitle                  string  `json:"sub_title"`
+		SubTitleOriginal          string  `json:"sub_title_original"`
+		SubTitleColor             string  `json:"sub_title_color"`
+		SubTitleStyle             string  `json:"sub_title_style"`
+		SubTitlePageType          string  `json:"sub_title_page_type"`
 		BackgroundURL             string  `json:"background_url"`
 		BackgroundColor           string  `json:"background_color"`
 		LogoURL                   string  `json:"logo_url"`

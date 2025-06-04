@@ -82,6 +82,11 @@ type (
 		TitleColor                string    `gorm:"size:50;default:NA" json:"title_color"`
 		TitleStyle                string    `gorm:"size:50;default:NA" json:"title_style"`
 		TitlePageType             string    `gorm:"size:50;default:NA" json:"title_page_type"`
+		SubTitle                  string    `gorm:"size:80;default:NA" json:"sub_title"`
+		SubTitleOriginal          string    `gorm:"size:80;default:NA" json:"sub_title_original"`
+		SubTitleColor             string    `gorm:"size:50;default:NA" json:"sub_title_color"`
+		SubTitleStyle             string    `gorm:"size:50;default:NA" json:"sub_title_style"`
+		SubTitlePageType          string    `gorm:"size:50;default:NA" json:"sub_title_page_type"`
 		BackgroundURL             string    `gorm:"size:255;default:NA" json:"background_url"`
 		BackgroundColor           string    `gorm:"size:50;default:NA" json:"background_color"`
 		LogoURL                   string    `gorm:"size:255;default:NA" json:"logo_url"`

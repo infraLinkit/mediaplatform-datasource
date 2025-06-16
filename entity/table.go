@@ -663,6 +663,7 @@ type (
 		CreatedBy       string         `gorm:"type:varchar(255)" json:"created_by,omitempty"`
 		UpdatedBy       string         `gorm:"type:varchar(255)" json:"updated_by,omitempty"`
 		DeletedAt       gorm.DeletedAt `gorm:"index"`
+		ProfilePic      string         `gorm:"type:varchar(255);default:null" json:"profile_pic,omitempty"`
 		CreatedAt       time.Time
 		UpdatedAt       time.Time
 
@@ -670,6 +671,17 @@ type (
 		Role       Role         `gorm:"foreignKey:RoleID;references:ID"`
 		DetailUser []DetailUser `gorm:"foreignKey:UserID;references:ID"`
 		UserAdnet  []UserAdnet  `gorm:"foreignKey:UserID;references:ID"`
+	}
+
+	CcEmail struct {
+		ID        int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		UserID    int    `gorm:"not null" json:"user_id"`
+		Email     string `gorm:"type:varchar(255);not null" json:"email"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
+
+		// Relations
+		// User User `gorm:"foreignKey:UserID;references:ID"`
 	}
 
 	DetailUser struct {

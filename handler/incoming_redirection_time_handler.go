@@ -166,6 +166,10 @@ func generateSummaryRedirection(data []entity.SummaryLanding, params entity.Redi
 	totals := make(map[string]float64)
 	counts := make(map[string]int)
 
+	// Tambahan: untuk menghitung average per indikator per tanggal
+	totalsPerDay := map[string]map[string]float64{}
+	countsPerDay := map[string]map[string]int{}
+
 	for _, campaign := range data {
 		date := campaign.SummaryDateHour.Format("2006-01-02")
 		prevDate := campaign.SummaryDateHour.AddDate(0, 0, -1).Format("2006-01-02")
@@ -177,6 +181,11 @@ func generateSummaryRedirection(data []entity.SummaryLanding, params entity.Redi
 
 		if days[date] == nil {
 			days[date] = make(map[string]map[string]interface{})
+		}
+
+		if totalsPerDay[date] == nil {
+			totalsPerDay[date] = make(map[string]float64)
+			countsPerDay[date] = make(map[string]int)
 		}
 
 		for _, indicator := range params.DataIndicators {
@@ -191,16 +200,21 @@ func generateSummaryRedirection(data []entity.SummaryLanding, params entity.Redi
 
 			prevValue := getPreviousValueRedirection(days[prevDate], indicator)
 
-			// Hitung Total & Count
+			// Hitung Total & Count (untuk total keseluruhan)
 			totals[indicator] += indicatorValue
 			counts[indicator]++
 
+			// Hitung per hari (untuk average "All")
+			totalsPerDay[date][indicator] += indicatorValue
+			countsPerDay[date][indicator]++
+
 			var newValue float64
 
-			// KHUSUS untuk "All", hitung average untuk indikator tertentu
+			// KHUSUS untuk "All", hitung average untuk indikator tertentu PER TANGGAL
 			if params.All == "true" && (indicator == "success_rate" || indicator == "response_time" || indicator == "total_load_time") {
-				if counts[indicator] > 0 {
-					newValue = totals[indicator] / float64(counts[indicator])
+				count := countsPerDay[date][indicator]
+				if count > 0 {
+					newValue = totalsPerDay[date][indicator] / float64(count)
 				} else {
 					newValue = 0.0
 				}
@@ -225,11 +239,11 @@ func generateSummaryRedirection(data []entity.SummaryLanding, params entity.Redi
 	summaryData := map[string]interface{}{
 		"data_indicators": params.DataIndicators,
 		"total":           totals,
-		"avg":             countAverageRedirection(totals, startDate, endDate),
+		"avg": countAverageRedirection(totals, counts, startDate, endDate),
 		"t_mo_end":        tmoEnd,
 	}
 
-	// Merge with daily breakdowns
+	// Merge with daily/monthly breakdowns
 	completeSummary := mergeDaysRedirection(summaryData, days)
 
 	return completeSummary
@@ -319,8 +333,6 @@ func sameDay(a, b time.Time) bool {
 	by, bm, bd := b.Date()
 	return ay == by && am == bm && ad == bd
 }
-
-
 
 func groupOperatorRedirection(campaings []entity.SummaryLanding, params entity.RedirectionTimeParams, startDate time.Time, endDate time.Time) []interface{} {
 	var formattedData []any
@@ -473,19 +485,21 @@ func countTmoEndRedirection(totals map[string]float64, startDate time.Time, endD
 	return tmoEnd
 }
 
-func countAverageRedirection(totals map[string]float64, startDate, endDate time.Time) map[string]float64 {
+func countAverageRedirection(totals map[string]float64, counts map[string]int, startDate, endDate time.Time) map[string]float64 {
 	averages := map[string]float64{}
-	totalDaysRunning := int(endDate.Sub(startDate).Hours() / 24)
-	if totalDaysRunning < 1 {
-		totalDaysRunning = 1
-	}
 
-	for key, value := range totals {
-		avg := value / float64(totalDaysRunning)
-		if key == "success_rate" && avg > 100 {
-			avg = 100
+	for key, total := range totals {
+		count := counts[key]
+
+		if count > 0 {
+			avg := total / float64(count)
+			if key == "success_rate" && avg > 100 {
+				avg = 100
+			}
+			averages[key] = avg
+		} else {
+			averages[key] = 0.0
 		}
-		averages[key] = avg
 	}
 
 	return averages
@@ -494,22 +508,30 @@ func countAverageRedirection(totals map[string]float64, startDate, endDate time.
 func countAverageRedirectionHourly(totals map[string]float64, hours map[string]map[string]map[string]interface{}) map[string]float64 {
 	averages := map[string]float64{}
 
-	numHours := len(hours)
-	if numHours == 0 {
-		numHours = 1
-	}
-
 	for indicator, totalValue := range totals {
-		avg := totalValue / float64(numHours)
-		if indicator == "success_rate" && avg > 100 {
-			avg = 100
+		nonZeroCount := 0
+
+		for _, hourData := range hours {
+			if valueRaw, ok := hourData[indicator]; ok {
+				if value, ok := valueRaw["value"].(float64); ok && value > 0 {
+					nonZeroCount++
+				}
+			}
 		}
-		averages[indicator] = avg
+
+		if nonZeroCount > 0 {
+			avg := totalValue / float64(nonZeroCount)
+			if indicator == "success_rate" && avg > 100 {
+				avg = 100
+			}
+			averages[indicator] = avg
+		} else {
+			averages[indicator] = 0.0
+		}
 	}
 
 	return averages
 }
-
 
 
 func extractQueryArrayRedirection(c *fiber.Ctx, key string) []string {

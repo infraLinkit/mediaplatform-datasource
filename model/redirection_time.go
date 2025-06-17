@@ -134,10 +134,10 @@ func (r *BaseModel) GetRedirectionTime(params entity.RedirectionTimeParams) ([]e
 		results = append(results, row)
 
 		// KPI Check
-		if row.TotalLoadTime > 3000 {
+		if row.TotalLoadTime > 300 {
 			kpiStats.ExceedLoadTimeCount++
 		}
-		if row.ResponseTime > 300 {
+		if row.ResponseTime > 0.3 {
 			kpiStats.ExceedResponseTimeCount++
 		}
 		if row.SuccessRate < 95 {
@@ -156,8 +156,11 @@ func (r *BaseModel) GetRedirectionTimeHourly(params entity.RedirectionTimeParams
 	query := r.DB.Model(&entity.SummaryLanding{})
 
 	// Select field utama
-	selectedFields := []string{"country", "campaign_id", "url_service_key", "campaign_name", "partner", "operator", "service", "adnet", "url_campaign"}
-	selectedFields = append(selectedFields, "DATE_TRUNC('hour', summary_date_hour) as summary_date_hour")
+	selectedFields := []string{
+		"country", "campaign_id", "url_service_key", "campaign_name",
+		"partner", "operator", "service", "adnet", "url_campaign",
+		"DATE_TRUNC('hour', summary_date_hour) as summary_date_hour",
+	}
 
 	formattedIndicators := formatQueryIndicatorsRedirection(params.DataIndicators, "hourly_report")
 	selectedFields = append(selectedFields, formattedIndicators...)
@@ -187,43 +190,52 @@ func (r *BaseModel) GetRedirectionTimeHourly(params entity.RedirectionTimeParams
 		query.Where("url_service_key = ?", params.CampaignId)
 	}
 
-	// Range jam (khusus per hari)
+	// Tentukan tanggal
 	var dateStart, dateEnd time.Time
-	today := time.Now()
+	loc := time.FixedZone("Asia/Jakarta", 7*3600) // UTC+7 sesuai data DB
 
-	// Ambil custom range
 	if strings.ToUpper(params.DateRange) == "CUSTOM_RANGE" {
 		splitTime := strings.Split(params.DateCustomRange, "to")
-		dateStart, _ = time.Parse("2006-01-02", strings.TrimSpace(splitTime[0]))
-		dateEnd, _ = time.Parse("2006-01-02", strings.TrimSpace(splitTime[1]))
+		dateStart, _ = time.ParseInLocation("2006-01-02", strings.TrimSpace(splitTime[0]), loc)
+		dateEnd, _ = time.ParseInLocation("2006-01-02", strings.TrimSpace(splitTime[1]), loc)
 	} else {
+		today := time.Now().In(loc)
 		dateStart = today
 		dateEnd = today
 	}
 
-	// Untuk hourly, hanya 1 hari dan jam-jamnya
-	dateStart = time.Date(dateStart.Year(), dateStart.Month(), dateStart.Day(), 0, 0, 0, 0, dateStart.Location())
-	dateEnd = time.Date(dateEnd.Year(), dateEnd.Month(), dateEnd.Day(), 23, 59, 59, 0, dateEnd.Location())
+	// Normalize range untuk 1 hari penuh
+	dateStart = time.Date(dateStart.Year(), dateStart.Month(), dateStart.Day(), 0, 0, 0, 0, loc)
+	dateEnd = time.Date(dateEnd.Year(), dateEnd.Month(), dateEnd.Day(), 23, 59, 59, 999999999, loc)
 
-	// Tambahkan filter waktu
+	// Filter waktu
 	query.Where("summary_date_hour BETWEEN ? AND ?", dateStart, dateEnd)
 
-	// Group by jam
-	groupFields := []string{"country", "campaign_id", "url_service_key", "campaign_name", "partner", "operator", "service", "adnet", "url_campaign", "DATE_TRUNC('hour', summary_date_hour)"}
+	// Group by
+	groupFields := []string{
+		"country", "campaign_id", "url_service_key", "campaign_name",
+		"partner", "operator", "service", "adnet", "url_campaign",
+		"DATE_TRUNC('hour', summary_date_hour)",
+	}
 	query.Group(strings.Join(groupFields, ", "))
 
 	// Eksekusi
-	rows, _ = query.Unscoped().Rows()
+	rows, err := query.Unscoped().Rows()
+	if err != nil {
+		return nil, dateStart, dateEnd, err
+	}
 	defer rows.Close()
 
 	var results []entity.SummaryLanding
 	for rows.Next() {
 		var row entity.SummaryLanding
-		r.DB.ScanRows(rows, &row)
+		err := r.DB.ScanRows(rows, &row)
+		if err != nil {
+			return nil, dateStart, dateEnd, err
+		}
 		results = append(results, row)
 	}
 
-	println(results)
 	return results, dateStart, dateEnd, rows.Err()
 }
 

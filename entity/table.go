@@ -3,6 +3,7 @@ package entity
 import (
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -740,8 +741,9 @@ type (
 	Partner struct {
 		ID             uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 		Country        string    `gorm:"type:varchar(10)" json:"country"`
-		Name           string    `gorm:"type:varchar(30)" json:"name"`
+		Name           string    `gorm:"type:varchar(75)" json:"name"`
 		Operator       string    `gorm:"type:varchar(50)" json:"operator"`
+		Service        string    `gorm:"type:varchar(50)" json:"service"`
 		Client         string    `gorm:"type:varchar(50)" json:"client"`
 		ClientType     string    `gorm:"type:varchar(50)" json:"client_type"`
 		Company        string    `gorm:"type:varchar(75)" json:"company"`
@@ -749,8 +751,8 @@ type (
 		Postback       string    `gorm:"type:varchar(50)" json:"postback"`
 		PostbackMethod string    `gorm:"type:varchar(50)" json:"postback_method"`
 		Aggregator     string    `gorm:"type:varchar(50)" json:"aggregator"`
-		IsActive       string    `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
-		IsBillable     string    `gorm:"type:bool;default:false" json:"is_billable" form:"is_billable"`
+		IsActive       bool      `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
+		IsBillable     bool      `gorm:"type:bool;default:false" json:"is_billable" form:"is_billable"`
 		Lastupdate     time.Time `gorm:"type:timestamp" json:"lastupdate"`
 	}
 
@@ -763,16 +765,17 @@ type (
 	}
 
 	AdnetList struct {
-		ID           uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-		Code         string `gorm:"type:varchar(30)" json:"code"`
-		Name         string `gorm:"type:varchar(30)" json:"name"`
-		ApiUrl       string `gorm:"type:text" json:"api_url"`
-		ApiUrlBefore string `gorm:"column:api_url" json:"api_url_before"`
-		ApiUrlDr     string `gorm:"type:text" json:"api_url_dr"`
-		IsActive     string `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
-		IsRemnant    string `gorm:"type:bool;default:false" json:"is_remnant" form:"is_remnant"`
-		Lastupdate   string `gorm:"type:timestamp" json:"lastupdate"`
-		IsDummyPixel string `gorm:"type:bool;default:false" json:"is_dummy_pixel"`
+		ID           uint           `gorm:"primaryKey;autoIncrement" json:"id"`
+		Code         string         `gorm:"type:varchar(30)" json:"code"`
+		Name         string         `gorm:"type:varchar(30)" json:"name"`
+		ApiUrl       string         `gorm:"type:text" json:"api_url"`
+		ApiUrlBefore string         `gorm:"column:api_url" json:"api_url_before"`
+		ApiUrlDr     string         `gorm:"type:text" json:"api_url_dr"`
+		IsActive     string         `gorm:"type:bool;default:true" json:"is_active" form:"is_active"`
+		IsRemnant    string         `gorm:"type:bool;default:false" json:"is_remnant" form:"is_remnant"`
+		Lastupdate   time.Time      `gorm:"type:timestamp" json:"lastupdate"`
+		IsDummyPixel string         `gorm:"type:bool;default:false" json:"is_dummy_pixel"`
+		CcEmail      pq.StringArray `gorm:"type:text[]" json:"cc_email"`
 	}
 	Audit struct {
 		ID            uint   `gorm:"primaryKey;autoIncrement" json:"id"`

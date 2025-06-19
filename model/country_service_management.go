@@ -15,6 +15,10 @@ func (m *BaseModel) UpdateCountry(country *entity.Country) error {
 	return m.DB.Updates(country).Error
 }
 
+func (m *BaseModel) DeleteCountry(id uint) error {
+	return m.DB.Delete(&entity.Country{}, id).Error
+}
+
 func (r *BaseModel) GetCountry(o entity.GlobalRequestFromDataTable) ([]entity.Country, int64, error) {
 
 	var (
@@ -56,6 +60,10 @@ func (m *BaseModel) CreateCompany(company *entity.Company) error {
 
 func (m *BaseModel) UpdateCompany(company *entity.Company) error {
 	return m.DB.Updates(company).Error
+}
+
+func (m *BaseModel) DeleteCompany(id uint) error {
+	return m.DB.Delete(&entity.Company{}, id).Error
 }
 
 func (r *BaseModel) GetCompany(o entity.GlobalRequestFromDataTable) ([]entity.Company, int64, error) {
@@ -101,6 +109,10 @@ func (m *BaseModel) UpdateDomain(domain *entity.Domain) error {
 	return m.DB.Updates(domain).Error
 }
 
+func (m *BaseModel) DeleteDomain(id uint) error {
+	return m.DB.Delete(&entity.Domain{}, id).Error
+}
+
 func (r *BaseModel) GetDomain(o entity.GlobalRequestFromDataTable) ([]entity.Domain, int64, error) {
 
 	var (
@@ -144,6 +156,10 @@ func (m *BaseModel) UpdateOperator(operator *entity.Operator) error {
 	return m.DB.Updates(operator).Error
 }
 
+func (m *BaseModel) DeleteOperator(id uint) error {
+	return m.DB.Delete(&entity.Operator{}, id).Error
+}
+
 func (r *BaseModel) GetOperator(o entity.GlobalRequestFromDataTable) ([]entity.Operator, int64, error) {
 
 	var (
@@ -185,6 +201,10 @@ func (m *BaseModel) CreatePartner(partner *entity.Partner) error {
 
 func (m *BaseModel) UpdatePartner(partner *entity.Partner) error {
 	return m.DB.Updates(partner).Error
+}
+
+func (m *BaseModel) DeletePartner(id uint) error {
+	return m.DB.Delete(&entity.Partner{}, id).Error
 }
 
 func (r *BaseModel) GetPartner(o entity.GlobalRequestFromDataTable) ([]entity.Partner, int64, error) {
@@ -237,6 +257,10 @@ func (m *BaseModel) UpdateService(service *entity.Service) error {
 	return m.DB.Updates(service).Error
 }
 
+func (m *BaseModel) DeleteService(id uint) error {
+	return m.DB.Delete(&entity.Service{}, id).Error
+}
+
 func (r *BaseModel) GetService(o entity.GlobalRequestFromDataTable) ([]entity.Service, int64, error) {
 
 	var (
@@ -281,6 +305,10 @@ func (m *BaseModel) CreateAdnetList(adnet_list *entity.AdnetList) error {
 
 func (m *BaseModel) UpdateAdnetList(adnet_list *entity.AdnetList) error {
 	return m.DB.Updates(adnet_list).Error
+}
+
+func (m *BaseModel) DeleteAdnetList(id uint) error {
+	return m.DB.Delete(&entity.AdnetList{}, id).Error
 }
 
 func (r *BaseModel) GetAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.AdnetList, int64, error) {
@@ -365,6 +393,10 @@ func (m *BaseModel) UpdateAgency(agency *entity.Agency) error {
 	return m.DB.Updates(agency).Error
 }
 
+func (m *BaseModel) DeleteAgency(id uint) error {
+	return m.DB.Delete(&entity.Agency{}, id).Error
+}
+
 func (r *BaseModel) GetChannel(o entity.GlobalRequestFromDataTable) ([]entity.Channel, int64, error) {
 
 	var (
@@ -408,6 +440,10 @@ func (m *BaseModel) UpdateChannel(channel *entity.Channel) error {
 	return m.DB.Updates(channel).Error
 }
 
+func (m *BaseModel) DeleteChannel(id uint) error {
+	return m.DB.Delete(&entity.Channel{}, id).Error
+}
+
 func (r *BaseModel) GetMainstreamGroup(o entity.GlobalRequestFromDataTable) ([]entity.MainstreamGroup, int64, error) {
 
 	var (
@@ -449,4 +485,8 @@ func (m *BaseModel) CreateMainstreamGroup(mainstreamGroup *entity.MainstreamGrou
 
 func (m *BaseModel) UpdateMainstreamGroup(mainstreamGroup *entity.MainstreamGroup) error {
 	return m.DB.Updates(mainstreamGroup).Error
+}
+
+func (m *BaseModel) DeleteMainstreamGroup(id uint) error {
+	return m.DB.Delete(&entity.MainstreamGroup{}, id).Error
 }

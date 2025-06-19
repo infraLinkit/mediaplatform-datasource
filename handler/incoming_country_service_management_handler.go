@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -55,6 +56,17 @@ func (h *IncomingHandler) UpdateCountry(c *fiber.Ctx) error {
 	if err := h.DS.UpdateCountry(&country); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update country",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DeleteCountry(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteCountry(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete country",
 		})
 	}
 
@@ -173,6 +185,17 @@ func (h *IncomingHandler) UpdateCompany(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
 
+func (h *IncomingHandler) DeleteCompany(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteCompany(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete company",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
 func (h *IncomingHandler) DisplayCompany(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -279,6 +302,17 @@ func (h *IncomingHandler) UpdateDomain(c *fiber.Ctx) error {
 	if err := h.DS.UpdateDomain(&domain); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update domain",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DeleteDomain(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteDomain(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete domain",
 		})
 	}
 
@@ -399,6 +433,17 @@ func (h *IncomingHandler) UpdateOperator(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
 
+func (h *IncomingHandler) DeleteOperator(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteOperator(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete operator",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
 func (h *IncomingHandler) DisplayOperator(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -469,6 +514,7 @@ func (h *IncomingHandler) CreatePartner(c *fiber.Ctx) error {
 	if errForm := c.BodyParser(&partner); errForm != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Invalid request body",
+			"error":   errForm.Error(),
 		})
 	}
 
@@ -480,10 +526,12 @@ func (h *IncomingHandler) CreatePartner(c *fiber.Ctx) error {
 			"errors":  errValidation.Error(),
 		})
 	}
+	fmt.Printf("Parsed Partner: %+v\n", partner)
 
 	if errCreate := h.DS.CreatePartner(&partner); errCreate != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to create partner",
+			"error":   errCreate.Error(),
 		})
 	}
 
@@ -507,6 +555,17 @@ func (h *IncomingHandler) UpdatePartner(c *fiber.Ctx) error {
 	if err := h.DS.UpdatePartner(&partner); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update partner",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DeletePartner(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeletePartner(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete partner",
 		})
 	}
 
@@ -625,6 +684,17 @@ func (h *IncomingHandler) UpdateService(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
 
+func (h *IncomingHandler) DeleteService(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteService(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete service",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
 func (h *IncomingHandler) DisplayService(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -695,6 +765,7 @@ func (h *IncomingHandler) CreateAdnetList(c *fiber.Ctx) error {
 	if errForm := c.BodyParser(&adnet_list); errForm != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Invalid request body",
+			"error":   errForm.Error(),
 		})
 	}
 
@@ -708,6 +779,7 @@ func (h *IncomingHandler) CreateAdnetList(c *fiber.Ctx) error {
 	if errCreate := h.DS.CreateAdnetList(&adnet_list); errCreate != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to create adnet_list",
+			"error":   errCreate.Error(),
 		})
 	}
 
@@ -731,6 +803,17 @@ func (h *IncomingHandler) UpdateAdnetList(c *fiber.Ctx) error {
 	if err := h.DS.UpdateAdnetList(&adnet_list); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update adnet_list",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DeleteAdnetList(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteAdnetList(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete adnet_list",
 		})
 	}
 
@@ -849,6 +932,17 @@ func (h *IncomingHandler) UpdateAgency(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
 
+func (h *IncomingHandler) DeleteAgency(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteAgency(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete agency",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
 func (h *IncomingHandler) DisplayAgency(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -961,6 +1055,17 @@ func (h *IncomingHandler) UpdateChannel(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
 
+func (h *IncomingHandler) DeleteChannel(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteChannel(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete channel",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
 func (h *IncomingHandler) DisplayChannel(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -1067,6 +1172,17 @@ func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
 	if err := h.DS.UpdateMainstreamGroup(&mainstreamGroup); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update mainstreamGroup",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DeleteMainstreamGroup(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteMainstreamGroup(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete mainstreamGroup",
 		})
 	}
 

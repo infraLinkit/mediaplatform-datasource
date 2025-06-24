@@ -65,7 +65,9 @@ type (
 		ISP                       string  `json:"isp"`
 		IsActive                  bool    `json:"is_active"`
 		MOCapping                 int     `json:"mo_capping"`
+		MOCappingService          int     `json:"mo_capping_service"`
 		CounterMOCapping          int     `json:"counter_mo_capping"`
+		CounterMOCappingService   int     `json:"counter_mo_capping_service"`
 		StatusCapping             bool    `json:"status_capping"`
 		KPIUpperLimitCapping      int     `json:"kpi_upper_limit_capping"`
 		IsMachineLearningCapping  bool    `json:"is_machine_learning_capping"`

@@ -555,6 +555,7 @@ func (h *IncomingHandler) UpdatePartner(c *fiber.Ctx) error {
 	if err := h.DS.UpdatePartner(&partner); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update partner",
+			"error":   err.Error(),
 		})
 	}
 
@@ -655,6 +656,7 @@ func (h *IncomingHandler) CreateService(c *fiber.Ctx) error {
 	if errCreate := h.DS.CreateService(&service); errCreate != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to create service",
+			"errors":  errCreate.Error(),
 		})
 	}
 

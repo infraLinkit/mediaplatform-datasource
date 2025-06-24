@@ -760,6 +760,7 @@ type (
 		ID       uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Service  string `gorm:"type:varchar(55)" json:"service"`
 		Adn      string `gorm:"type:varchar(20)" json:"adn"`
+		Partner  string `gorm:"type:varchar(50)" json:"partner"`
 		Country  string `gorm:"type:varchar(50)" json:"country"`
 		Operator string `gorm:"type:varchar(50)" json:"operator"`
 	}

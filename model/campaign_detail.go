@@ -300,3 +300,68 @@ func (r *BaseModel) ResetCappingCampaignByCapped(o entity.CampaignDetail) error 
 
 	return result.Error
 }
+
+func (r *BaseModel) UpdateMOCappingS2S(o entity.CampaignDetail) error {
+	result := r.DB.Exec(`
+		UPDATE campaign_details cd
+		SET mo_capping_service = ?
+		FROM campaigns c
+		WHERE c.campaign_id = cd.campaign_id
+			AND cd.country = ? 
+			AND cd.operator = ? 
+			AND cd.partner = ? 
+			AND cd.service = ? 
+			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC')
+	`, o.MOCappingService, o.Country, o.Operator, o.Partner, o.Service)
+
+	r.Logs.Debug(fmt.Sprintf("UpdateMOCounterService - affected: %d, error: %v", result.RowsAffected, result.Error))
+	return result.Error
+}
+
+func (r *BaseModel) UpdateMOCounterServiceS2S(o entity.CampaignDetail) error {
+	var result *gorm.DB
+
+	if o.CounterMOCappingService >= o.MOCappingService {
+		result = r.DB.Exec(`
+			UPDATE campaign_details cd
+			SET counter_mo_capping_service = ?, status_capping = true
+			FROM campaigns c
+			WHERE c.campaign_id = cd.campaign_id
+			AND cd.country = ? AND cd.operator = ? AND cd.partner = ? AND cd.service = ?
+			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC')
+		`, o.CounterMOCappingService, o.Country, o.Operator, o.Partner, o.Service)
+	} else {
+		result = r.DB.Exec(`
+			UPDATE campaign_details cd
+			SET counter_mo_capping_service = ?
+			FROM campaigns c
+			WHERE c.campaign_id = cd.campaign_id
+			AND cd.country = ? AND cd.operator = ? AND cd.partner = ? AND cd.service = ?
+			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC')
+		`, o.CounterMOCappingService, o.Country, o.Operator, o.Partner, o.Service)
+	}
+
+	r.Logs.Debug(fmt.Sprintf("UpdateMOCounterService - affected: %d, error: %v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) GetMOCappingServiceAndCounter(o entity.CampaignDetail) (int, int, error) {
+	var moCappingService int
+	var counterMOCappingService int
+
+	err := r.DB.Raw(`
+		SELECT mo_capping_service, counter_mo_capping_service 
+		FROM campaign_details 
+		WHERE country = ? AND operator = ? AND partner = ? AND service = ?
+		LIMIT 1
+	`, o.Country, o.Operator, o.Partner, o.Service).Row().Scan(&moCappingService, &counterMOCappingService)
+
+	if err != nil {
+		r.Logs.Error(fmt.Sprintf("Failed to fetch MO Capping data: %v", err))
+		return 0, 0, err
+	}
+
+	r.Logs.Debug(fmt.Sprintf("Fetched mo_capping_service: %d, counter_mo_capping_service: %d", moCappingService, counterMOCappingService))
+	return moCappingService, counterMOCappingService, nil
+}

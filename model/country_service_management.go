@@ -2,6 +2,7 @@ package model
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
@@ -66,7 +67,7 @@ func (m *BaseModel) DeleteCompany(id uint) error {
 	return m.DB.Delete(&entity.Company{}, id).Error
 }
 
-func (r *BaseModel) GetCompany(o entity.GlobalRequestFromDataTable) ([]entity.Company, int64, error) {
+func (r *BaseModel) GetCompany(o entity.GlobalRequestFromDataTableCompany) ([]entity.Company, int64, error) {
 
 	var (
 		rows       *sql.Rows
@@ -79,6 +80,13 @@ func (r *BaseModel) GetCompany(o entity.GlobalRequestFromDataTable) ([]entity.Co
 		search_value := strings.Trim(o.Search, " ")
 		query = query.Where("name ILIKE ?", "%"+search_value+"%")
 	}
+	orderBy := "id asc" // default
+	fmt.Println("Sort column:", o.OrderColumn)
+	fmt.Println("Sort dir:", o.OrderDir)
+	if o.OrderColumn != "" && o.OrderDir != "" {
+		orderBy = fmt.Sprintf("%s %s", o.OrderColumn, o.OrderDir)
+	}
+	query = query.Order(orderBy)
 
 	// Get the total count after applying filters
 	query.Unscoped().Count(&total_rows)

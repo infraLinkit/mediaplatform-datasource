@@ -56,6 +56,16 @@ type (
 		Search   string `json:"search" xml:"search"`
 	}
 
+	GlobalRequestFromDataTableCompany struct {
+		Page        int    `json:"page" xml:"page"`
+		Action      string `json:"action" xml:"action"`
+		Draw        int    `json:"draw" xml:"draw"`
+		PageSize    int    `json:"pageSize" xml:"pageSize"`
+		Search      string `json:"search" xml:"search"`
+		OrderColumn string `json:"order_column" xml:"orderColumn" form:"order_column"`
+		OrderDir    string `json:"order_dir" xml:"order_dir" form:"orderDir"`
+	}
+
 	Ack struct {
 		Keyword   string `json:"keyword" xml:"keyword"`
 		ShortCode string `json:"shortcode" xml:"shortcode"`

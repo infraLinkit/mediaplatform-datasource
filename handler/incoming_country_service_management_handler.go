@@ -209,13 +209,20 @@ func (h *IncomingHandler) DisplayCompany(c *fiber.Ctx) error {
 	if errRequest != nil {
 		pageSize = 10
 	}
+	orderColumn := m["order_column"]
+	orderDir := m["order_dir"]
+
+	fmt.Println(page, orderColumn, orderDir)
+
 	draw, _ := strconv.Atoi(m["draw"])
-	fe := entity.GlobalRequestFromDataTable{
-		Page:     page,
-		Action:   m["action"],
-		Draw:     draw,
-		PageSize: pageSize,
-		Search:   m["search[value]"],
+	fe := entity.GlobalRequestFromDataTableCompany{
+		Page:        page,
+		Action:      m["action"],
+		Draw:        draw,
+		PageSize:    pageSize,
+		Search:      m["search[value]"],
+		OrderColumn: orderColumn,
+		OrderDir:    orderDir,
 	}
 
 	var (

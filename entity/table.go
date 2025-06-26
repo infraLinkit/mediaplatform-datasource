@@ -58,7 +58,9 @@ type (
 		IpAddress                 []string  `gorm:"type:text[]"`
 		IsActive                  bool      `gorm:"not null;default:true" json:"is_active"`
 		MOCapping                 int       `gorm:"not null;length:10;default:0" json:"mo_capping"`
+		MOCappingService 		  int       `gorm:"not null;length:10;default:0" json:"mo_capping_service"`
 		CounterMOCapping          int       `gorm:"not null;length:10;default:0" json:"counter_mo_capping"`
+		CounterMOCappingService   int       `gorm:"not null;length:10;default:0" json:"counter_mo_capping_service"`
 		StatusCapping             bool      `gorm:"not null;default:false" json:"status_capping"`
 		KPIUpperLimitCapping      int       `gorm:"not null;length:20;default:1" json:"kpi_upper_limit_capping"`
 		IsMachineLearningCapping  bool      `gorm:"not null;default:false" json:"is_machine_learning_capping"`

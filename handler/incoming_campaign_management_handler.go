@@ -431,3 +431,24 @@ func (h *IncomingHandler) UpdateGoogleSheet(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).Send([]byte("OK"))
 	}
 }
+
+func (h *IncomingHandler) EditMOCappingServiceS2S(c *fiber.Ctx) error {
+	o := new(entity.CampaignDetail)
+	if err := c.BodyParser(o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+	// Update database (tanpa campaign_objective)
+	h.DS.UpdateMOCappingS2S(entity.CampaignDetail{
+		MOCappingService: o.MOCappingService,
+		LastUpdate:       helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+		Country:          o.Country,
+		Operator:         o.Operator,
+		Partner:          o.Partner,
+		Service:          o.Service,
+	})
+
+	return c.Status(fiber.StatusOK).SendString("OK")
+}

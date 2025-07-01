@@ -10,6 +10,140 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
+func (h *IncomingHandler) CreateEmail(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	var email entity.Email
+
+	if errForm := c.BodyParser(&email); errForm != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	if errValidation := validate.Struct(email); errValidation != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Validation error",
+			"errors":  errValidation.Error(),
+		})
+	}
+
+	if errCreate := h.DS.CreateEmail(&email); errCreate != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create country",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+
+}
+
+func (h *IncomingHandler) UpdateEmail(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var email entity.Email
+
+	if formErr := c.BodyParser(&email); formErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   formErr.Error(),
+		})
+	}
+
+	email.ID = id
+
+	if err := h.DS.UpdateEmail(&email); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update country",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DeleteEmail(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteEmail(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete country",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DisplayEmail(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil {
+		pageSize = 10
+	}
+	draw, _ := strconv.Atoi(m["draw"])
+	fe := entity.GlobalRequestFromDataTable{
+		Page:     page,
+		Action:   m["action"],
+		Draw:     draw,
+		PageSize: pageSize,
+		Search:   m["search[value]"],
+	}
+
+	var (
+		errResponse  error
+		total_data   int64
+		country_list []entity.Email
+	)
+
+	// key := "temp_key_api_country_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	// need to add redis mechanism here
+	country_list, total_data, errResponse = h.DS.GetEmail(fe)
+
+	r := entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
+	}
+
+	if errResponse == nil {
+
+		r = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            country_list,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	}
+
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
+func (h *IncomingHandler) DisplayEmailByID(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	email, err := h.DS.GetEmailByID(uint(id))
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to get email",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: config.OK_DESC, Data: email})
+}
+
 func (h *IncomingHandler) CreateCountry(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")
@@ -211,8 +345,6 @@ func (h *IncomingHandler) DisplayCompany(c *fiber.Ctx) error {
 	}
 	orderColumn := m["order_column"]
 	orderDir := m["order_dir"]
-
-	fmt.Println(page, orderColumn, orderDir)
 
 	draw, _ := strconv.Atoi(m["draw"])
 	fe := entity.GlobalRequestFromDataTableCompany{

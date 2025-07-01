@@ -58,7 +58,7 @@ type (
 		IpAddress                 []string  `gorm:"type:text[]"`
 		IsActive                  bool      `gorm:"not null;default:true" json:"is_active"`
 		MOCapping                 int       `gorm:"not null;length:10;default:0" json:"mo_capping"`
-		MOCappingService 		  int       `gorm:"not null;length:10;default:0" json:"mo_capping_service"`
+		MOCappingService          int       `gorm:"not null;length:10;default:0" json:"mo_capping_service"`
 		CounterMOCapping          int       `gorm:"not null;length:10;default:0" json:"counter_mo_capping"`
 		CounterMOCappingService   int       `gorm:"not null;length:10;default:0" json:"counter_mo_capping_service"`
 		StatusCapping             bool      `gorm:"not null;default:false" json:"status_capping"`
@@ -685,6 +685,18 @@ type (
 
 		// Relations
 		// User User `gorm:"foreignKey:UserID;references:ID"`
+	}
+
+	Email struct {
+		ID           int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		EmailName    string `gorm:"type:varchar(255)" json:"email_name"`
+		EmailPurpose string `gorm:"type:varchar(255)" json:"email_purpose"`
+		EmailContent string `gorm:"type:longtext" json:"email_content"`
+		EmailSubject string `gorm:"type:varchar(500)" json:"email_subject"`
+		EmailBody    string `gorm:"type:longtext" json:"email_body"`
+		EmailFooter  string `gorm:"type:longtext" json:"email_footer"`
+		CreatedAt    time.Time
+		UpdatedAt    time.Time
 	}
 
 	DetailUser struct {

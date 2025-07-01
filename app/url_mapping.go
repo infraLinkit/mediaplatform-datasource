@@ -159,6 +159,11 @@ func MapUrls(obj App3rdParty) *fiber.App {
 
 	//  Country and Service Management
 	countryService := management.Group("/country-service")
+	countryService.Get("/email", h.DisplayEmail).Name("Display Email")
+	countryService.Get("/email/:id", h.DisplayEmailByID).Name("Display Email By ID")
+	countryService.Post("/email", h.CreateEmail).Name("Create Email")
+	countryService.Put("/email/:id", h.UpdateEmail).Name("Update Email")
+	countryService.Delete("/email/:id", h.DeleteEmail).Name("Delete Email")
 	countryService.Get("/country", h.DisplayCountry).Name("Create Country")
 	countryService.Post("/country", h.CreateCountry).Name("Create Country")
 	countryService.Put("/country/:id", h.UpdateCountry).Name("Update Country")

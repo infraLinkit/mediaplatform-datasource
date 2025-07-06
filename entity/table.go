@@ -688,15 +688,16 @@ type (
 	}
 
 	Email struct {
-		ID           int    `gorm:"primaryKey;autoIncrement" json:"id"`
-		EmailName    string `gorm:"type:varchar(255)" json:"email_name"`
-		EmailPurpose string `gorm:"type:varchar(255)" json:"email_purpose"`
-		EmailContent string `gorm:"type:longtext" json:"email_content"`
-		EmailSubject string `gorm:"type:varchar(500)" json:"email_subject"`
-		EmailBody    string `gorm:"type:longtext" json:"email_body"`
-		EmailFooter  string `gorm:"type:longtext" json:"email_footer"`
-		CreatedAt    time.Time
-		UpdatedAt    time.Time
+		ID              int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		EmailName       string `gorm:"type:varchar(255)" json:"email_name"`
+		EmailPurpose    string `gorm:"type:varchar(255)" json:"email_purpose"`
+		EmailContentSub string `gorm:"type:text" json:"email_content_sub"`
+		EmailContent    string `gorm:"type:text" json:"email_content"`
+		EmailSubject    string `gorm:"type:text" json:"email_subject"`
+		EmailBody       string `gorm:"type:text" json:"email_body"`
+		EmailFooter     string `gorm:"type:text" json:"email_footer"`
+		CreatedAt       time.Time
+		UpdatedAt       time.Time
 	}
 
 	DetailUser struct {

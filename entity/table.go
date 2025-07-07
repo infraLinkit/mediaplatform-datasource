@@ -317,6 +317,10 @@ type (
 		GoogleSheet       string    `gorm:"type:text;default:NA" json:"google_sheet"`
 		Currency          string    `gorm:"size:10;default:NA" json:"currency"`
 		PostbackMethod    string    `gorm:"size:50" json:"postback_method"`
+		LandingTime       time.Time `json:"landing_time"`
+		LandedTime        int       `gorm:"not null;length:20" json:"clicked_button_time"`
+		HttpStatus        int       `gorm:"not null;length:10" json:"http_status"`
+		IsOperator        bool      `gorm:"not null;default:false" json:"is_operator"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}

@@ -16,7 +16,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	// fmt.Println(query)
-	query = query.Where("campaign_objective = ?", "CPA")
+	query = query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
@@ -103,6 +103,14 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
 
 	return ss, total_rows, rows.Err()
+}
+
+func (r *BaseModel) CreateCpaReport(s entity.SummaryCampaign) error {
+	return r.DB.Create(&s).Error
+}
+
+func (r *BaseModel) UpdateCpaReport(s entity.SummaryCampaign) error {
+	return r.DB.Updates(&s).Error
 }
 
 func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]entity.SummaryCampaign, error) {

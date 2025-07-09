@@ -444,3 +444,57 @@ func (h *IncomingHandler) PinPerformance(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
+
+func (h *IncomingHandler) UploadExcel(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	var campaign entity.SummaryCampaign
+
+	if errForm := c.BodyParser(&campaign); errForm != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"errors":  errForm.Error(),
+		})
+	}
+
+	if errValidation := validate.Struct(campaign); errValidation != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Validation error",
+			"errors":  errValidation.Error(),
+		})
+	}
+
+	if errCreate := h.DS.CreateCpaReport(campaign); errCreate != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create SMS",
+			"errors":  errCreate.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) UpdateExcel(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var campaign entity.SummaryCampaign
+
+	if formErr := c.BodyParser(&campaign); formErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   formErr.Error(),
+		})
+	}
+
+	campaign.ID = id
+
+	if err := h.DS.UpdateCpaReport(campaign); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update SMS Campaign",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}

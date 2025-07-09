@@ -402,13 +402,13 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 }
 
 func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport) entity.ReturnResponse {
-	key := "temp_key_api_cpa_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+	// key := "temp_key_api_cpa_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
 		err        error
 		total_data int64
-		isempty    bool
-		cpareport  []entity.SummaryCampaign
+		// isempty    bool
+		cpareport []entity.SummaryCampaign
 		// displaycpareport []entity.SummaryCampaign
 	)
 
@@ -417,15 +417,15 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe)
 	} else {
 
-		if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
+		// if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
 
-			cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe)
+		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe)
 
-			s, _ := json.Marshal(cpareport)
+		// s, _ := json.Marshal(cpareport)
 
-			h.DS.SetData(key, "$", string(s))
-			h.DS.SetExpireData(key, 60)
-		}
+		// h.DS.SetData(key, "$", string(s))
+		// h.DS.SetExpireData(key, 60)
+		// }
 	}
 
 	if err == nil {

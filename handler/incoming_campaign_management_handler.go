@@ -440,8 +440,40 @@ func (h *IncomingHandler) EditMOCappingServiceS2S(c *fiber.Ctx) error {
 
 	h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
 
-	// Update database (tanpa campaign_objective)
-	h.DS.UpdateMOCappingS2S(entity.CampaignDetail{
+	keys, err := h.DS.ScanKeys("*-configIdx")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal ambil key Redis"})
+	}
+
+	updated := false
+	updatedCount := 0
+
+	for _, key := range keys {
+		data, err := h.DS.GetDataJSON(key)
+		if err != nil {
+			continue
+		}
+
+		country := data["country"]
+		operator := data["operator"]
+		partner := data["partner"]
+		service := data["service"]
+
+		if country == o.Country && operator == o.Operator && partner == o.Partner && service == o.Service {
+			h.DS.SetData(key, "$.mo_capping_service", strconv.Itoa(o.MOCappingService))
+			updated = true
+			updatedCount++
+			h.Logs.Debug(fmt.Sprintf("Updated config key: %s", key))
+		}
+	}
+
+	if !updated {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Data not found"})
+	}
+
+	h.Logs.Debug(fmt.Sprintf("Total configs updated: %d", updatedCount))
+
+	err = h.DS.UpdateMOCappingS2S(entity.CampaignDetail{
 		MOCappingService: o.MOCappingService,
 		LastUpdate:       helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
 		Country:          o.Country,
@@ -449,6 +481,12 @@ func (h *IncomingHandler) EditMOCappingServiceS2S(c *fiber.Ctx) error {
 		Partner:          o.Partner,
 		Service:          o.Service,
 	})
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update DB"})
+	}
 
-	return c.Status(fiber.StatusOK).SendString("OK")
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":       fmt.Sprintf("Success update %d configs", updatedCount),
+		"updated_count": updatedCount,
+	})
 }

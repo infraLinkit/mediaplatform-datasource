@@ -690,3 +690,42 @@ func (h *BaseModel) RGetDisplayMainstreamReport(key string, path string) ([]enti
 
 	return p, isempty
 }
+
+func (h *BaseModel) ScanKeys(pattern string) ([]string, error) {
+	ctx := context.Background()
+	var (
+		cursor uint64 = 0
+		keys   []string
+	)
+	for {
+		result, err := h.R.Conn().Do(ctx, h.R.Conn().B().Scan().Cursor(cursor).Match(pattern).Count(100).Build()).AsScanEntry()
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("ScanKeys error: %v", err))
+			return nil, err
+		}
+		keys = append(keys, result.Elements...)
+		cursor = result.Cursor
+		if cursor == 0 {
+			break
+		}
+	}
+	return keys, nil
+}
+
+func (h *BaseModel) GetDataJSON(key string) (map[string]interface{}, error) {
+	ctx := context.Background()
+	result, err := h.R.Conn().Do(ctx, h.R.Conn().B().JsonGet().Key(key).Path("$").Build()).ToString()
+	if err != nil {
+		h.Logs.Error(fmt.Sprintf("GetDataJSON error: %v", err))
+		return nil, err
+	}
+	var data []map[string]interface{}
+	if err := json.Unmarshal([]byte(result), &data); err != nil {
+		h.Logs.Error(fmt.Sprintf("GetDataJSON unmarshal error: %v", err))
+		return nil, err
+	}
+	if len(data) > 0 {
+		return data[0], nil
+	}
+	return nil, errors.New("no data found or empty JSON")
+}

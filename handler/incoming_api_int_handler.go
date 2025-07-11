@@ -509,6 +509,16 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 		})
 	}
 
+	campaign.SuccessFP = 0
+	campaign.PO = 0
+	campaign.AgencyFee = 0
+	campaign.TotalWakiAgencyFee = 0
+	campaign.TechnicalFee = 0
+	campaign.CPA = 0
+	campaign.Traffic = 0
+	campaign.CrPostback = 0
+	campaign.CrMO = 0
+
 	// Cek apakah data sudah ada
 	existing, err := h.DS.FindSummaryCampaignByUniqueKey(
 		&campaign.SummaryDate,

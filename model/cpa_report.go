@@ -106,11 +106,37 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 }
 
 func (r *BaseModel) CreateCpaReport(s entity.SummaryCampaign) error {
+	s.SuccessFP = 0
+	s.PO = 0
+	s.AgencyFee = 0
+	s.TotalWakiAgencyFee = 0
+	s.TechnicalFee = 0
+	s.CPA = 0
+	s.Traffic = 0
+	s.CrPostback = 0
+	s.CrMO = 0
 	return r.DB.Create(&s).Error
 }
 
 func (r *BaseModel) UpdateCpaReport(s entity.SummaryCampaign) error {
-	return r.DB.Updates(&s).Error
+	if err := r.DB.Model(&entity.SummaryCampaign{}).Where("id = ?", s.ID).Updates(&s).Error; err != nil {
+		return err
+	}
+
+	// Override field default (misalnya 0) agar ikut terupdate
+	resetFields := map[string]interface{}{
+		"success_fp":            0,
+		"po":                    0,
+		"agency_fee":            0,
+		"total_waki_agency_fee": 0,
+		"technical_fee":         0,
+		"cpa":                   0,
+		"traffic":               0,
+		"cr_postback":           0,
+		"cr_mo":                 0,
+	}
+
+	return r.DB.Model(&entity.SummaryCampaign{}).Where("id = ?", s.ID).Updates(resetFields).Error
 }
 
 func (r *BaseModel) FindSummaryCampaignByUniqueKey(

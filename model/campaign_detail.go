@@ -294,7 +294,7 @@ func (r *BaseModel) GetCampaignDetailByStatusAndCapped(o entity.CampaignDetail, 
 
 func (r *BaseModel) ResetCappingCampaignByCapped(o entity.CampaignDetail) error {
 
-	result := r.DB.Exec(fmt.Sprintf("UPDATE campaign_details SET counter_mo_capping = 0, status_capping = false, counter_mo_ratio = 0, status_ratio = false AND is_active = true WHERE id = %d", o.ID))
+	result := r.DB.Exec(fmt.Sprintf("UPDATE campaign_details SET counter_mo_capping = 0, counter_mo_capping_service = 0, status_capping = false, status_capping_service = false, counter_mo_ratio = 0, status_ratio = false AND is_active = true WHERE id = %d", o.ID))
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 

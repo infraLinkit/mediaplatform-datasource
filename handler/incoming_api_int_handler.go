@@ -498,3 +498,78 @@ func (h *IncomingHandler) UpdateExcel(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
+
+func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
+	var campaign entity.SummaryCampaign
+
+	if errForm := c.BodyParser(&campaign); errForm != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"errors":  errForm.Error(),
+		})
+	}
+
+	// Cek apakah data sudah ada
+	existing, err := h.DS.FindSummaryCampaignByUniqueKey(
+		&campaign.SummaryDate,
+		campaign.CampaignId,
+		campaign.Country,
+		campaign.Operator,
+		campaign.Partner,
+		campaign.Service,
+		campaign.Adnet,
+		campaign.URLServiceKey,
+	)
+	if err == nil && existing.ID > 0 {
+		// Update jika ada
+		campaign.ID = existing.ID
+		if err := h.DS.UpdateCpaReport(campaign); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "Failed to update SMS Campaign",
+				"error":   err.Error(),
+			})
+		}
+		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "Updated"})
+	} else {
+		// Cari referensi (latest)
+		latest, err := h.DS.FindLatestSummaryCampaignByUniqueKey(
+			campaign.Service,
+			campaign.Adnet,
+			campaign.Operator,
+		)
+		if err == nil && latest.ID > 0 {
+			// Copy data lama, timpa field dari FE, lalu create
+			newCampaign := latest
+			newCampaign.SummaryDate = campaign.SummaryDate
+			// newCampaign.CampaignObjective = campaign.CampaignObjective
+			// newCampaign.Adnet = campaign.Adnet
+			// newCampaign.Operator = campaign.Operator
+			// newCampaign.Service = campaign.Service
+			newCampaign.MoReceived = campaign.MoReceived
+			newCampaign.Postback = campaign.Postback
+			newCampaign.CostPerConversion = campaign.CostPerConversion
+			newCampaign.SBAF = campaign.SBAF
+			newCampaign.SAAF = campaign.SAAF
+			newCampaign.RatioSend = campaign.RatioSend
+			newCampaign.RatioReceive = campaign.RatioReceive
+			newCampaign.ID = 0 // pastikan create baru
+
+			if err := h.DS.CreateCpaReport(newCampaign); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "Failed to create SMS",
+					"errors":  err.Error(),
+				})
+			}
+			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "Created from latest"})
+		} else {
+			// Tidak ada referensi, create langsung dari FE
+			if err := h.DS.CreateCpaReport(campaign); err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"message": "Failed to create SMS",
+					"errors":  err.Error(),
+				})
+			}
+			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "Created"})
+		}
+	}
+}

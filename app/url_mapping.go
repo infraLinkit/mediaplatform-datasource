@@ -111,6 +111,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	internal.Get("/pinperformance", h.PinPerformance).Name("Receive Pin Performance Report Transactional")
 	internal.Post("/uploadexcel", h.UploadExcel).Name("Upload Excal SMS Campaign")
 	internal.Put("/updateexcel/:id", h.UpdateExcel).Name("Update Excal SMS Campaign")
+	internal.Put("/upsertexcel/", h.UpsertExcel).Name("Upsert Excal SMS Campaign")
 
 	// Management
 	management := v1.Group("/management") // Management

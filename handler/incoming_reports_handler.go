@@ -458,6 +458,10 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 		// 	}
 		// }
 
+		if cpareport == nil {
+			cpareport = []entity.SummaryCampaign{}
+		}
+
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithDataTable{

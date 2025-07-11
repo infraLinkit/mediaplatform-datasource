@@ -113,6 +113,49 @@ func (r *BaseModel) UpdateCpaReport(s entity.SummaryCampaign) error {
 	return r.DB.Updates(&s).Error
 }
 
+func (r *BaseModel) FindSummaryCampaignByUniqueKey(
+	summaryDate *time.Time,
+	campaignId, country, operator, partner, service, adnet, urlServiceKey string,
+) (entity.SummaryCampaign, error) {
+	db := r.DB.Model(&entity.SummaryCampaign{})
+	if summaryDate != nil {
+		db = db.Where("summary_date = ?", *summaryDate)
+	}
+	if campaignId != "" {
+		db = db.Where("LOWER(campaign_id) = LOWER(?)", campaignId)
+	}
+	if country != "" {
+		db = db.Where("LOWER(country) = LOWER(?)", country)
+	}
+	if operator != "" {
+		db = db.Where("LOWER(operator) = LOWER(?)", operator)
+	}
+	if partner != "" {
+		db = db.Where("LOWER(partner) = LOWER(?)", partner)
+	}
+	if service != "" {
+		db = db.Where("LOWER(service) = LOWER(?)", service)
+	}
+	if adnet != "" {
+		db = db.Where("LOWER(adnet) = LOWER(?)", adnet)
+	}
+	if urlServiceKey != "" {
+		db = db.Where("LOWER(url_service_key) = LOWER(?)", urlServiceKey)
+	}
+
+	var s entity.SummaryCampaign
+	result := db.First(&s)
+	return s, result.Error
+}
+
+func (r *BaseModel) FindLatestSummaryCampaignByUniqueKey(service, adnet, operator string) (entity.SummaryCampaign, error) {
+	var s entity.SummaryCampaign
+	result := r.DB.Where("LOWER(service) = LOWER(?) AND LOWER(adnet) = LOWER(?) AND LOWER(operator) = LOWER(?)", service, adnet, operator).
+		Order("summary_date DESC").
+		First(&s)
+	return s, result.Error
+}
+
 func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]entity.SummaryCampaign, error) {
 	var rows *sql.Rows
 	var err error

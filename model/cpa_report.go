@@ -53,7 +53,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 			case "TODAY":
 				query = query.Where("summary_date = CURRENT_DATE")
 			case "YESTERDAY":
-				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
+				query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
 			case "LAST7DAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 			case "LAST30DAY":

@@ -95,6 +95,9 @@ type (
 		LogLevel                               string
 		TZ                                     *time.Location
 		APIARPU                                string
+		ARPUUsername                           string
+		ARPUPassword                           string
+		APILINKITDashboard                     string
 		GSType                                 string
 		GSProjectID                            string
 		GSPrivateKeyID                         string
@@ -193,6 +196,9 @@ func InitCfg() *Cfg {
 		LogLevel:                               os.Getenv("LOGLEVEL"),
 		TZ:                                     loc,
 		APIARPU:                                os.Getenv("APIARPU"),
+		ARPUUsername:                           os.Getenv("ARPU_USERNAME"),
+		ARPUPassword:                           os.Getenv("ARPU_PASSWORD"),
+		APILINKITDashboard:                     os.Getenv("APILINKIT_DASHBOARD"),
 		GSType:                                 os.Getenv("GSTYPE"),
 		GSProjectID:                            os.Getenv("GSPROJECT_ID"),
 		GSPrivateKeyID:                         os.Getenv("GSPRIVATE_KEY_ID"),

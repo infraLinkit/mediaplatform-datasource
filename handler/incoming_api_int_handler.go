@@ -583,3 +583,28 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 		}
 	}
 }
+
+func (h *IncomingHandler) GetDataArpu(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	fe := entity.ArpuParams{
+		Country:  m["country"],
+		Operator: m["operator"],
+		Service:  m["service"],
+		From:     m["from"],
+		To:       m["to"],
+	}
+
+	if err := h.DS.GetDataArpu(fe); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to get data arpu",
+			"error":   err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "OK"})
+}

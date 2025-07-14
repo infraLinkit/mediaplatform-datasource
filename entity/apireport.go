@@ -194,6 +194,14 @@ type (
 		BillrateFP         float64 `json:"billrate_fp"`
 	}
 
+	ArpuParams struct {
+		Country  string `form:"country" json:"country"`
+		Operator string `form:"operator" json:"operator"`
+		Service  string `form:"service" json:"service"`
+		From     string `form:"from" json:"from"`
+		To       string `form:"to" json:"to"`
+	}
+
 	ARPUResponse struct {
 		Status  int          `json:"status"`
 		Message string       `json:"message"`
@@ -217,6 +225,33 @@ type (
 		Arpu90USD    float64 `json:"arpu90_usd"`
 		Arpu90USDNet float64 `json:"arpu90_usd_net"`
 		Service      string  `json:"service"`
+	}
+
+	WakiCallbackParams struct {
+		Date          string
+		Publisher     string
+		Adnet         string
+		Operator      string
+		Adn           string
+		Client        string
+		Aggregator    string
+		Country       string
+		Service       string
+		MoReceived    string
+		MoPostback    string
+		TotalMo       string
+		TotalPostback string
+		Landing       string
+		CrMoReceived  string
+		CrMoPostback  string
+		UrlCampaign   string
+		UrlService    string
+		Sbaf          string
+		Saaf          string
+		Spending      string
+		Campaign      string
+		Payout        string
+		PricePerMo    string
 	}
 )
 

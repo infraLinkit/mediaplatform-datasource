@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"github.com/lib/pq"
 )
 
 func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([]entity.CampaignManagementData, entity.CampaignCounts, error) {
@@ -25,7 +26,7 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 		`).
 		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
 		Group("campaigns.campaign_id, campaigns.name, campaigns.campaign_objective, campaign_details.country, campaign_details.partner, campaign_details.is_active, campaigns.created_at").
-		Order("campaigns.created_at DESC") 
+		Order("campaigns.created_at DESC")
 
 	if o.Action == "Search" {
 		if o.Country != "" {
@@ -104,33 +105,64 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 }
 
 func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManagement) ([]entity.CampaignManagementDataDetail, error) {
+	// First, get the campaign objective to determine if we should include cc_email
+	var campaignObjective string
+	err := r.DB.Model(&entity.Campaign{}).
+		Select("campaign_objective").
+		Where("campaign_id = ?", o.CampaignId).
+		Scan(&campaignObjective).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Build the SELECT clause based on campaign objective
+	selectClause := `
+		campaign_details.id,
+		campaign_details.campaign_id,
+        campaign_details.operator, 
+        campaign_details.service, 
+        campaigns.name AS campaign_name,
+		campaigns.campaign_objective AS campaign_objective, 
+        campaign_details.country, 
+        campaign_details.partner,
+		campaign_details.adnet,
+        campaign_details.short_code, 
+        campaign_details.mo_capping AS mo_limit, 
+        campaign_details.po, 
+        campaign_details.ratio_send, 
+        campaign_details.ratio_receive, 
+        campaign_details.url_postback, 
+        campaign_details.url_service, 
+        campaign_details.url_landing, 
+        campaign_details.url_warp_landing, 
+        campaign_details.api_url, 
+        campaign_details.is_active,
+		campaign_details.url_service_key,
+		campaign_details.channel,
+		campaign_details.url_type,
+		campaign_details.device_type,
+		campaign_details.is_billable`
+
+	// Add cc_email only if campaign objective is not MAINSTREAM
+	if campaignObjective != "MAINSTREAM" {
+		selectClause += `,
+			adnet_lists.cc_email`
+	} else {
+		selectClause += `,
+			NULL AS cc_email`
+	}
+
 	query := r.DB.Model(&entity.CampaignDetail{}).
-		Select(`
-			campaign_details.id,
-			campaign_details.campaign_id,
-            campaign_details.operator, 
-            campaign_details.service, 
-            campaigns.name AS campaign_name,
-			campaigns.campaign_objective AS campaign_objective, 
-            campaign_details.country, 
-            campaign_details.partner,
-			campaign_details.adnet,
-            campaign_details.short_code, 
-            campaign_details.mo_capping AS mo_limit, 
-            campaign_details.po, 
-            campaign_details.ratio_send, 
-            campaign_details.ratio_receive, 
-            campaign_details.url_postback, 
-            campaign_details.url_service, 
-            campaign_details.url_landing, 
-            campaign_details.url_warp_landing, 
-            campaign_details.api_url, 
-            campaign_details.is_active,
-			campaign_details.url_service_key,
-			campaign_details.channel
-        `).
-		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
-		Where("campaigns.campaign_id = ?", o.CampaignId).
+		Select(selectClause).
+		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id")
+
+	// Only join adnet_lists if campaign objective is not MAINSTREAM
+	if campaignObjective != "MAINSTREAM" {
+		query = query.Joins("INNER JOIN adnet_lists ON adnet_lists.code = campaign_details.adnet")
+	}
+
+	query = query.Where("campaigns.campaign_id = ?", o.CampaignId).
 		Where("campaign_details.is_active = ?", o.Status).
 		Order("campaign_details.operator, campaign_details.service")
 
@@ -144,13 +176,41 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 
 	for rows.Next() {
 		var detail entity.CampaignManagementDetail
-		if err := rows.Scan(
+		var ccEmail interface{}
+
+		// Create scan args based on campaign objective
+		scanArgs := []interface{}{
 			&detail.ID, &detail.CampaignID, &detail.Operator, &detail.Service, &detail.CampaignName, &detail.CampaignObjective, &detail.Country,
 			&detail.Partner, &detail.Adnet, &detail.ShortCode, &detail.MOLimit, &detail.Payout,
 			&detail.RatioSend, &detail.RatioReceive, &detail.URLPostback, &detail.URLService,
-			&detail.URLanding, &detail.URLWarpLanding, &detail.APIURL, &detail.IsActive, &detail.UrlServiceKey, &detail.Channel,
-		); err != nil {
+			&detail.URLanding, &detail.URLWarpLanding, &detail.APIURL, &detail.IsActive, &detail.UrlServiceKey, &detail.Channel, &detail.URLType,
+			&detail.DeviceType, &detail.IsBillable, &ccEmail,
+		}
+
+		if err := rows.Scan(scanArgs...); err != nil {
 			return nil, err
+		}
+
+		// Handle cc_email based on campaign objective
+		if campaignObjective != "MAINSTREAM" {
+			if ccEmail != nil {
+				// Convert string to pq.StringArray if needed
+				if ccEmailStr, ok := ccEmail.(string); ok {
+					// If it's a string, we need to parse it or handle it appropriately
+					// For now, let's create a single-element array
+					detail.CCEmail = pq.StringArray{ccEmailStr}
+				} else if ccEmailArr, ok := ccEmail.(pq.StringArray); ok {
+					detail.CCEmail = ccEmailArr
+				} else {
+					// Fallback to empty array
+					detail.CCEmail = pq.StringArray{}
+				}
+			} else {
+				detail.CCEmail = pq.StringArray{}
+			}
+		} else {
+			// For MAINSTREAM campaigns, set empty array
+			detail.CCEmail = pq.StringArray{}
 		}
 
 		if _, exists := campaignMap[detail.Operator]; !exists {

@@ -370,7 +370,22 @@ func (h *IncomingHandler) ImplementIPRange(c *fiber.Ctx) error {
 }
 
 func (h *IncomingHandler) GetIPRangeFiles(c *fiber.Ctx) error {
-	rawResults, err := h.DS.GetIPRangeFiles()
+	m := c.Queries()
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil || pageSize <= 0 {
+		pageSize = 10
+	}
+	draw, _ := strconv.Atoi(m["draw"])
+
+	fe := entity.GlobalRequestFromDataTable{
+		Page:     page,
+		Draw:     draw,
+		PageSize: pageSize,
+		Search:   m["search[value]"],
+	}
+
+	rawResults, total, err := h.DS.GetIPRangeFiles(fe)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to fetch ip range files",
@@ -378,7 +393,6 @@ func (h *IncomingHandler) GetIPRangeFiles(c *fiber.Ctx) error {
 	}
 
 	var results []entity.ResultIPRange
-
 	for _, r := range rawResults {
 		year := ""
 		monthName := ""
@@ -392,7 +406,6 @@ func (h *IncomingHandler) GetIPRangeFiles(c *fiber.Ctx) error {
 				monthName = monthNum
 			}
 		}
-
 		filename := "GeoIP2-ISP-Blocks-" + r.IPType + "-" + year + "-" + monthName + ".csv"
 		results = append(results, entity.ResultIPRange{
 			IPType:   r.IPType,
@@ -401,11 +414,19 @@ func (h *IncomingHandler) GetIPRangeFiles(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(results)
+	resp := entity.GlobalResponseWithDataTable{
+		Draw:            draw,
+		Code:            fiber.StatusOK,
+		Message:         config.OK_DESC,
+		Data:            results,
+		RecordsTotal:    int(total),
+		RecordsFiltered: int(total),
+	}
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (h *IncomingHandler) DownloadIPRangeCSV(c *fiber.Ctx) error {
-	
+
 	var req entity.DownloadReq
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid json body"})

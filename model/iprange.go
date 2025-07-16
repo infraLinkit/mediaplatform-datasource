@@ -39,17 +39,28 @@ func (r *BaseModel) GetIPRanges(o entity.GlobalRequestFromDataTable) ([]entity.I
 	return ss, total_rows, rows.Err()
 }
 
-func (r *BaseModel) GetIPRangeFiles() ([]struct{ IPType, Month string }, error) {
+func (r *BaseModel) GetIPRangeFiles(o entity.GlobalRequestFromDataTable) ([]struct{ IPType, Month string }, int64, error) {
 	var results []struct {
 		IPType string
 		Month  string
 	}
-	err := r.DB.Table("ip_range_csv_rows").
+	var total int64
+	sub := r.DB.Table("ip_range_csv_rows").
 		Select("ip_type, to_char(upload_date, 'YYYY-MM') as month").
-		Group("ip_type, month").
-		Order("month desc, ip_type").
-		Scan(&results).Error
-	return results, err
+		Group("ip_type, month")
+
+	r.DB.Table("(?) as sub", sub).Count(&total)
+
+	query := r.DB.Table("(?) as sub", sub).
+		Order("month desc, ip_type")
+	if o.PageSize > 0 {
+		query = query.Limit(o.PageSize)
+	}
+	if o.Page > 0 {
+		query = query.Offset((o.Page - 1) * o.PageSize)
+	}
+	err := query.Scan(&results).Error
+	return results, total, err
 }
 
 func (h *BaseModel) GetDataIPSafe(key string) (map[string]map[string][]string, error) {
@@ -61,7 +72,7 @@ func (h *BaseModel) GetDataIPSafe(key string) (map[string]map[string][]string, e
 
 	if err != nil {
 		if strings.Contains(err.Error(), "does not exist") || strings.Contains(err.Error(), "ERR") {
-			return result, nil // kosong, tidak error
+			return result, nil
 		}
 		return nil, err
 	}

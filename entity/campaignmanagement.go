@@ -1,5 +1,9 @@
 package entity
 
+import (
+	"github.com/lib/pq"
+)
+
 type (
 	DisplayCampaignManagement struct {
 		Country      string `form:"country" json:"country"`
@@ -17,42 +21,46 @@ type (
 	}
 
 	CampaignManagementData struct {
-		ID            []int  `json:"id"`
-		CampaignID    string `json:"campaign_id"`
-		CampaignName  string `json:"campaign_name"`
+		ID                []int  `json:"id"`
+		CampaignID        string `json:"campaign_id"`
+		CampaignName      string `json:"campaign_name"`
 		CampaignObjective string `json:"campaign_objective"`
-		Country       string `json:"country"`
-		Partner       string `json:"partner"`
-		TotalOperator int    `json:"total_operator"`
-		Service       string `json:"service"`
-		TotalAdnet    int    `json:"total_adnet"`
-		ShortCode     string `json:"short_code"`
-		IsActive      bool   `json:"is_active"`
+		Country           string `json:"country"`
+		Partner           string `json:"partner"`
+		TotalOperator     int    `json:"total_operator"`
+		Service           string `json:"service"`
+		TotalAdnet        int    `json:"total_adnet"`
+		ShortCode         string `json:"short_code"`
+		IsActive          bool   `json:"is_active"`
 	}
 
 	CampaignManagementDetail struct {
-		ID             int    `json:"id"`
-		CampaignID     string `json:"campaign_id"`
-		CampaignName   string `json:"campaign_name"`
-		CampaignObjective   string `json:"campaign_objective"`
-		Country        string `json:"country"`
-		Operator       string `json:"operator"`
-		Service        string `json:"service"`
-		Adnet          string `json:"adnet"`
-		Partner        string `json:"partner"`
-		ShortCode      string `json:"short_code"`
-		MOLimit        int    `json:"mo_limit"`
-		Payout         string `json:"po"`
-		RatioSend      int    `json:"ratio_send"`
-		RatioReceive   int    `json:"ratio_receive"`
-		URLPostback    string `json:"url_postback"`
-		URLService     string `json:"url_service"`
-		URLanding      string `json:"url_landing"`
-		URLWarpLanding string `json:"url_warp_landing"`
-		APIURL         string `json:"api_url"`
-		IsActive       bool   `json:"is_active"`
-		UrlServiceKey  string `json:"url_service_key"`
-		Channel        string `json:"channel"`
+		ID                int            `json:"id"`
+		CampaignID        string         `json:"campaign_id"`
+		CampaignName      string         `json:"campaign_name"`
+		CampaignObjective string         `json:"campaign_objective"`
+		Country           string         `json:"country"`
+		Operator          string         `json:"operator"`
+		Service           string         `json:"service"`
+		Adnet             string         `json:"adnet"`
+		Partner           string         `json:"partner"`
+		ShortCode         string         `json:"short_code"`
+		MOLimit           int            `json:"mo_limit"`
+		Payout            string         `json:"po"`
+		RatioSend         int            `json:"ratio_send"`
+		RatioReceive      int            `json:"ratio_receive"`
+		URLPostback       string         `json:"url_postback"`
+		URLService        string         `json:"url_service"`
+		URLanding         string         `json:"url_landing"`
+		URLWarpLanding    string         `json:"url_warp_landing"`
+		APIURL            string         `json:"api_url"`
+		IsActive          bool           `json:"is_active"`
+		UrlServiceKey     string         `json:"url_service_key"`
+		URLType           string         `json:"url_type"`
+		DeviceType        string         `json:"device_type"`
+		Channel           string         `json:"channel"`
+		CCEmail           pq.StringArray `json:"cc_email"`
+		IsBillable        bool           `json:"is_billable"`
 	}
 
 	CampaignManagementDataDetail struct {

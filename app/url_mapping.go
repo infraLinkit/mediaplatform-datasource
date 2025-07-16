@@ -28,6 +28,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	f := fiber.New(fiber.Config{
 		JSONEncoder: json.Marshal,
 		JSONDecoder: json.Unmarshal,
+		BodyLimit:   100 * 1024 * 1024,
 	})
 
 	f.Use(
@@ -208,6 +209,12 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	countryService.Post("/mainstream-group", h.CreateMainstreamGroup).Name("Create MainStreamGroup")
 	countryService.Put("/mainstream-group/:id", h.UpdateMainstreamGroup).Name("Update MainStreamGroup")
 	countryService.Delete("/mainstream-group/:id", h.DeleteMainstreamGroup).Name("Delete MainStreamGroup")
+
+	ipRange := management.Group("/ipranges")
+	ipRange.Get("/", h.GetIPRangeFiles).Name(" Display IP Ranges List List")
+	ipRange.Post("/upload", h.UploadIPRangeRows).Name("Upload IP Ranges CSV")
+	ipRange.Post("/implement", h.ImplementIPRange).Name("Implement IP Ranges")
+	ipRange.Post("/download", h.DownloadIPRangeCSV).Name("Download IP Ranges")
 
 	// API External
 	v1.Group("/ext") // External API

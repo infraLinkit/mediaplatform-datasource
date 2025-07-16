@@ -16,17 +16,18 @@ import (
 )
 
 // GetDataArpu method untuk BaseModel
-func (r *BaseModel) GetDataArpu(fe entity.ArpuParams) error {
+func (r *BaseModel) GetDataArpu(fe entity.ArpuParams) (result entity.ARPUResponse, err error) {
 	// Menggunakan environment variable APIARPU dari config
 	baseURL := r.Config.APIARPU
 	if baseURL == "" {
-		return errors.New("APIARPU environment variable is empty")
+		return entity.ARPUResponse{}, errors.New("APIARPU environment variable is empty")
 	}
+	fmt.Println("APIARPU: ", baseURL)
 
 	// Membuat URL untuk request API
 	apiURL, err := url.Parse(baseURL + "/api/v4/arpu/arpu90")
 	if err != nil {
-		return fmt.Errorf("failed to parse base URL: %v", err)
+		return entity.ARPUResponse{}, fmt.Errorf("failed to parse base URL: %v", err)
 	}
 
 	// Menambahkan query parameters
@@ -52,23 +53,25 @@ func (r *BaseModel) GetDataArpu(fe entity.ArpuParams) error {
 	// Membuat HTTP request
 	req, err := http.NewRequest("GET", apiURL.String(), nil)
 	if err != nil {
-		return fmt.Errorf("failed to create request: %v", err)
+		return entity.ARPUResponse{}, fmt.Errorf("failed to create request: %v", err)
 	}
 
-	// Menambahkan headers yang diperlukan
 	encUsername := r.Config.ARPUUsername
 	encPassword := r.Config.ARPUPassword
 
+	fmt.Println("ARPUUsername: ", encUsername, "ARPUPassword: ", encPassword)
+
 	username, err := decryptEnv(encUsername)
 	if err != nil {
-		return fmt.Errorf("failed to decrypt ARPU_USERNAME: %v", err)
+		return entity.ARPUResponse{}, fmt.Errorf("failed to decrypt ARPUUsername: %v", err)
 	}
 	password, err := decryptEnv(encPassword)
 	if err != nil {
-		return fmt.Errorf("failed to decrypt ARPU_PASSWORD: %v", err)
+		return entity.ARPUResponse{}, fmt.Errorf("failed to decrypt ARPUPassword: %v", err)
 	}
-
 	auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+	fmt.Println("auth: ", auth, username, password)
+
 	req.Header.Add("Authorization", "Basic "+auth)
 	req.Header.Add("Accept", "application/json")
 
@@ -76,23 +79,23 @@ func (r *BaseModel) GetDataArpu(fe entity.ArpuParams) error {
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to make request: %v", err)
+		return entity.ARPUResponse{}, fmt.Errorf("failed to make request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	// Membaca response
 	var apiResponse entity.ARPUResponse
 	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
-		return fmt.Errorf("failed to decode response: %v", err)
+		return entity.ARPUResponse{}, fmt.Errorf("failed to decode response: %v", err)
 	}
 
 	// Validasi response
 	if apiResponse.Status != 200 {
-		return fmt.Errorf("API returned status %d: %s", apiResponse.Status, apiResponse.Message)
+		return entity.ARPUResponse{}, fmt.Errorf("API returned status %d: %s", apiResponse.Status, apiResponse.Message)
 	}
 
 	r.Logs.Info(fmt.Sprintf("Successfully retrieved ARPU data for %s/%s/%s", fe.Country, fe.Operator, fe.Service))
-	return nil
+	return apiResponse, nil
 }
 
 func decryptEnv(enc string) (string, error) {
@@ -122,7 +125,8 @@ func (r *BaseModel) SendWakiCallback() error {
 	for _, sc := range summaries {
 		// Bangun query URL
 		q := url.Values{
-			"date":           {time.Now().Format("2006-01-02")},
+			"date":           {sc.SummaryDate.Format("2006-01-02")},
+			"campaign_id":    {sc.URLServiceKey},
 			"publisher":      {sc.Adnet},
 			"adnet":          {sc.Adnet},
 			"operator":       {sc.Partner},
@@ -159,11 +163,106 @@ func (r *BaseModel) SendWakiCallback() error {
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("API returned status %d for campaign %s", resp.StatusCode, sc.CampaignId)
+			return fmt.Errorf("API returned status %d for campaign %s", resp.StatusCode, sc.URLServiceKey)
 		}
 
 		log.Printf("✅ Sent to LinkIT: %s", fullURL)
 	}
 
 	return nil
+}
+
+func (r *BaseModel) FetchAndUpdateARPUData() {
+	// Step 1: Ambil kombinasi unik dari DB
+	var summaries []struct {
+		Country     string
+		Operator    string
+		Service     string
+		SummaryDate time.Time
+	}
+
+	r.DB.Model(&entity.SummaryCampaign{}).
+		Distinct("country", "partner AS operator", "service", "summary_date").
+		Where("deleted_at IS NULL").
+		Scan(&summaries)
+
+	for _, item := range summaries {
+		currentYear := time.Now().Year()
+		from := time.Date(currentYear, 1, 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+		to := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
+
+		// Bangun URL
+		query := fmt.Sprintf(
+			"%s/api/v4/arpu/arpu90?from=%s&to=%s&country=%s&operator=%s&service=%s&to_renewal=%s",
+			r.Config.APIARPU,
+			from,
+			to,
+			url.QueryEscape(item.Country),
+			url.QueryEscape(item.Operator),
+			url.QueryEscape(item.Service),
+			url.QueryEscape("2025-01-22"),
+		)
+
+		// 🔐 Ambil kredensial ARPU API
+		encUsername := r.Config.ARPUUsername
+		encPassword := r.Config.ARPUPassword
+
+		username, err := decryptEnv(encUsername)
+		if err != nil {
+			log.Println("❌ Failed to decrypt ARPUUsername:", err)
+			continue
+		}
+		password, err := decryptEnv(encPassword)
+		if err != nil {
+			log.Println("❌ Failed to decrypt ARPUPassword:", err)
+			continue
+		}
+		auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
+
+		// 🔗 Buat request manual dengan header
+		req, err := http.NewRequest("GET", query, nil)
+		if err != nil {
+			log.Println("❌ Failed to create request:", err)
+			continue
+		}
+		req.Header.Add("Authorization", "Basic "+auth)
+		req.Header.Add("Accept", "application/json")
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println("❌ Error fetching ARPU:", err)
+			continue
+		}
+
+		var arpuResp entity.ARPUResponse
+		if err := json.NewDecoder(resp.Body).Decode(&arpuResp); err != nil {
+			log.Println("❌ Error decoding ARPU response:", err)
+			resp.Body.Close()
+			continue
+		}
+
+		resp.Body.Close()
+		if arpuResp.Status != 200 || arpuResp.Data == nil {
+			log.Println("❌ Invalid ARPU response:", arpuResp.Message)
+			continue
+		}
+
+		// 🔄 Loop hasil ARPU
+		for _, d := range arpuResp.Data.Data {
+			err := r.DB.Model(&entity.SummaryCampaign{}).
+				Where("summary_date = ? AND LOWER(adnet) = LOWER(?) AND LOWER(country) = LOWER(?) AND LOWER(partner) = LOWER(?) AND LOWER(service) = LOWER(?)",
+					item.SummaryDate, d.Adnet, item.Country, item.Operator, item.Service).
+				Updates(map[string]interface{}{
+					"roi": d.Arpu90USDNet,
+				}).Error
+			if err != nil {
+				log.Printf("❌ Failed to update ROI on adnet %s: %v", d.Adnet, err)
+			} else {
+				log.Printf("✅ ROI updated for adnet %s => %.2f", d.Adnet, d.Arpu90USDNet)
+			}
+		}
+	}
+
+	log.Println("✅ Cron update ARPU DONE")
 }

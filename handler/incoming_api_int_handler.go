@@ -599,12 +599,17 @@ func (h *IncomingHandler) GetDataArpu(c *fiber.Ctx) error {
 		To:       m["to"],
 	}
 
-	if err := h.DS.GetDataArpu(fe); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to get data arpu",
-			"error":   err.Error(),
-		})
-	}
+	result, _ := h.DS.GetDataArpu(fe)
+	// if err != nil {
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{
+	// 		Code:    fiber.StatusInternalServerError,
+	// 		Message: "Failed to get data arpu",
+	// 	})
+	// }
 
-	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "OK"})
+	return c.Status(fiber.StatusOK).JSON(entity.ARPUResponse{
+		Status:  fiber.StatusOK,
+		Message: result.Message,
+		Data:    result.Data,
+	})
 }

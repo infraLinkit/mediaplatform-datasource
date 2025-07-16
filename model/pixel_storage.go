@@ -20,7 +20,7 @@ func (r *BaseModel) NewPixel(o entity.PixelStorage) int {
 func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
 	result := r.DB.Model(&o).
-		Where("url_service_key = ? AND pixel = ? AND is_used = false", o.URLServiceKey, o.Pixel).
+		Where("url_service_key = ? AND pxdate = ? AND pixel = ? AND is_used = false", o.URLServiceKey, o.Pxdate, o.Pixel).
 		First(&o)
 
 	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
@@ -36,7 +36,7 @@ func (r *BaseModel) GetPx(o entity.PixelStorage) (entity.PixelStorage, bool) {
 func (r *BaseModel) GetToken(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
 	result := r.DB.Model(&o).
-		Where("url_service_key = ? AND token = ? AND is_used = false", o.URLServiceKey, o.Pixel).
+		Where("url_service_key = ? AND pxdate = ? AND token = ? AND is_used = false", o.URLServiceKey, o.Pxdate, o.Pixel).
 		First(&o)
 
 	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
@@ -52,7 +52,7 @@ func (r *BaseModel) GetToken(o entity.PixelStorage) (entity.PixelStorage, bool) 
 func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
 	result := r.DB.Model(&o).
-		Where("url_service_key = ? AND is_used = false", o.URLServiceKey).
+		Where("url_service_key = ? AND pxdate = ? AND is_used = false", o.URLServiceKey, o.Pxdate).
 		First(&o)
 
 	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
@@ -68,7 +68,7 @@ func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, 
 func (r *BaseModel) GetPxByMsisdn(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
 	result := r.DB.Model(&o).
-		Where("url_service_key = ? AND msisdn = ? AND is_used = false", o.URLServiceKey, o.Pixel).
+		Where("url_service_key = ? AND pxdate = ? AND msisdn = ? AND is_used = false", o.URLServiceKey, o.Pxdate, o.Pixel).
 		First(&o)
 
 	b := errors.Is(result.Error, gorm.ErrRecordNotFound)

@@ -177,20 +177,24 @@ func (h *IncomingHandler) Postback2(c *fiber.Ctx) error {
 				if dc, err := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$"); err == nil {
 
 					pxData := entity.PixelStorage{
-						URLServiceKey: p.URLServiceKey, Pixel: p.AffSub}
+						URLServiceKey: p.URLServiceKey,
+						Pxdate:        helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+						Pixel:         p.AffSub,
+					}
 
 					var (
 						px   entity.PixelStorage
 						isPX bool
 					)
 
-					if dc.PostbackMethod == "ADNETCODE" {
+					switch dc.PostbackMethod {
+					case "ADNETCODE":
 						px, isPX = h.DS.GetByAdnetCode(pxData)
-					} else if dc.PostbackMethod == "TOKEN" {
+					case "TOKEN":
 						px, isPX = h.DS.GetToken(pxData)
-					} else if dc.PostbackMethod == "JSON-MSISDN" || dc.PostbackMethod == "XML-MSISDN" || dc.PostbackMethod == "HTML-MSISDN" {
+					case "JSON-MSISDN", "XML-MSISDN", "HTML-MSISDN":
 						px, isPX = h.DS.GetPxByMsisdn(pxData)
-					} else {
+					default:
 						px, isPX = h.DS.GetPx(pxData)
 					}
 

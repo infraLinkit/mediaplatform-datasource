@@ -107,6 +107,7 @@ type (
 		Channel                   string    `gorm:"size:50;default:NA" json:"channel"`
 		GoogleSheet               string    `gorm:"type:text;default:NA" json:"google_sheet"`
 		Currency                  string    `gorm:"size:10;default:NA" json:"currency"`
+		MCC 					  string	`gorm:"size:10;default:NA" json:"mcc"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}
@@ -731,12 +732,13 @@ type (
 	}
 
 	Country struct {
-		ID          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-		Code        string `gorm:"type:varchar(10)" json:"code" validate:"unique,required,max=10"`
-		Code2       string `gorm:"type:varchar(10)" json:"code2" validate:"unique,required,max=10"`
-		Name        string `gorm:"type:varchar(80)" json:"name"  validate:"unique,required,max=80"`
-		NumericCode string `gorm:"type:varchar(10)" json:"numeric_code" form:"numeric_code"  validate:"required,max=10"`
-		IsActive    string `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
+		ID                uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Code              string `gorm:"type:varchar(10)" json:"code" validate:"unique,required,max=10"`
+		Code2             string `gorm:"type:varchar(10)" json:"code2" validate:"unique,required,max=10"`
+		Name              string `gorm:"type:varchar(80)" json:"name"  validate:"unique,required,max=80"`
+		NumericCode       string `gorm:"type:varchar(10)" json:"numeric_code" form:"numeric_code"  validate:"required,max=10"`
+		MobileCountryCode string `gorm:"type:varchar(10)" json:"mobile_country_code" form:"mobile_country_code"  validate:"required,max=10"`
+		IsActive          string `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
 	}
 
 	Company struct {
@@ -861,6 +863,25 @@ type (
 
 		CreatedAt time.Time
 		UpdatedAt time.Time
+	}
+
+	IPRangeCsvRow struct {
+		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		IPType            string    `gorm:"type:varchar(50);uniqueIndex:idx_ip_range_csv_row_unique" json:"ip_type"`
+		UploadDate        time.Time `gorm:"not null;uniqueIndex:idx_ip_range_csv_row_unique" json:"upload_date"`
+		Network           string    `gorm:"type:varchar(50);uniqueIndex:idx_ip_range_csv_row_unique" json:"network"`
+		ISP               string    `gorm:"type:varchar(50);uniqueIndex:idx_ip_range_csv_row_unique" json:"isp"`
+		MobileCountryCode string    `gorm:"type:varchar(10)" json:"mobile_country_code"`
+	}
+
+	IPRange struct {
+		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		IPType            string    `gorm:"type:varchar(50);uniqueIndex:idx_ip_range_unique" json:"ip_type"`
+		UploadDate        time.Time `gorm:"not null;size:50;uniqueIndex:idx_ip_range_unique" json:"upload_date"`
+		Network           string    `gorm:"type:varchar(50);uniqueIndex:idx_ip_range_unique" json:"network"`
+		ISP               string    `gorm:"type:varchar(50);uniqueIndex:idx_ip_range_unique" json:"isp"`
+		MobileCountryCode string    `gorm:"type:varchar(10)" json:"mobile_country_code"`
+		Country           string    `gorm:"type:varchar(10)" json:"country"`
 	}
 )
 

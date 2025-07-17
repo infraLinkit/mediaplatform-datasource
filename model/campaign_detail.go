@@ -365,3 +365,19 @@ func (r *BaseModel) GetMOCappingServiceAndCounter(o entity.CampaignDetail) (int,
 	r.Logs.Debug(fmt.Sprintf("Fetched mo_capping_service: %d, counter_mo_capping_service: %d", moCappingService, counterMOCappingService))
 	return moCappingService, counterMOCappingService, nil
 }
+
+func (r *BaseModel) GetCampaignDetailsWithObjectiveByCampaignId(campaignId string) ([]struct {
+    entity.CampaignDetail
+    CampaignObjective string
+}, error) {
+    var results []struct {
+        entity.CampaignDetail
+        CampaignObjective string
+    }
+    err := r.DB.Table("campaign_details").
+        Select("campaign_details.*, campaigns.campaign_objective").
+        Joins("JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
+        Where("campaign_details.campaign_id = ?", campaignId).
+        Scan(&results).Error
+    return results, err
+}

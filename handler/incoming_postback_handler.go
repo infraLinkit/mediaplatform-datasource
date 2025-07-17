@@ -183,10 +183,9 @@ func (h *IncomingHandler) Postback2(c *fiber.Ctx) error {
 						PostbackMethod: p.Method,
 					}
 
-					var (
-						px   entity.PixelStorage
-						isPX bool
-					)
+					var px entity.PixelStorage
+
+					isPX := false
 
 					switch p.Method {
 					case "ADNETCODE":

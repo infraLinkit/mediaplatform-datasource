@@ -1,6 +1,8 @@
 package entity
 
 import (
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
 	"github.com/sirupsen/logrus"
@@ -11,6 +13,7 @@ type (
 		CookieKey     string
 		URLServiceKey string `json:"urlservicekey"`
 		AffSub        string `json:"aff_sub"`
+		Method        string `json:"method"`
 	}
 
 	PostbackData struct {
@@ -58,6 +61,7 @@ func NewDataPostbackV2(c *fiber.Ctx) *PostbackReceive {
 	return &PostbackReceive{
 		CookieKey: CookieKey,
 		AffSub:    m["aff_sub"],
+		Method:    strings.ToUpper(m["method"]),
 	}
 }
 

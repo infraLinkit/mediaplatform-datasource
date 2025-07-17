@@ -197,11 +197,9 @@ func (h *IncomingHandler) Postback2(c *fiber.Ctx) error {
 						px, isPX = h.DS.GetPxByMsisdn(pxData)
 					case "PIXEL":
 						px, isPX = h.DS.GetPx(pxData)
-					default:
-						isPX = false
 					}
 
-					if !isPX {
+					if !isPX && p.Method == "" {
 
 						return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found or duplicate used and parameter should have a method parameter, pixel : " + p.AffSub})
 

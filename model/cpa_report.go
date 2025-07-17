@@ -17,6 +17,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	// fmt.Println(query)
 	query = query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
+	query = query.Where("mo_received > 0")
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
@@ -189,6 +190,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]ent
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	// fmt.Println(query)
 	query = query.Where("campaign_objective = ?", "MAINSTREAM")
+	query = query.Where("mo_received > 0")
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("LOWER(campaign_id) = LOWER(?)", o.CampaignId)

@@ -182,13 +182,13 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 	}
 
 	r.DB.Model(&entity.SummaryCampaign{}).
-		Distinct("country", "partner AS operator", "service", "summary_date").
+		Distinct("country", "partner AS operator", "service").
 		Where("deleted_at IS NULL").
 		Scan(&summaries)
 
 	for _, item := range summaries {
 		currentYear := time.Now().Year()
-		from := time.Date(currentYear, 1, 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+		from := time.Date(currentYear-1, 1, 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
 		to := time.Now().AddDate(0, 0, -1).Format("2006-01-02")
 
 		// Bangun URL
@@ -200,7 +200,7 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 			url.QueryEscape(item.Country),
 			url.QueryEscape(item.Operator),
 			url.QueryEscape(item.Service),
-			url.QueryEscape("2025-01-22"),
+			url.QueryEscape(to),
 		)
 
 		// 🔐 Ambil kredensial ARPU API
@@ -251,8 +251,8 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 		// 🔄 Loop hasil ARPU
 		for _, d := range arpuResp.Data.Data {
 			err := r.DB.Model(&entity.SummaryCampaign{}).
-				Where("summary_date = ? AND LOWER(adnet) = LOWER(?) AND LOWER(country) = LOWER(?) AND LOWER(partner) = LOWER(?) AND LOWER(service) = LOWER(?)",
-					item.SummaryDate, d.Adnet, item.Country, item.Operator, item.Service).
+				Where("LOWER(adnet) = LOWER(?) AND LOWER(country) = LOWER(?) AND LOWER(partner) = LOWER(?) AND LOWER(service) = LOWER(?)",
+					d.Adnet, item.Country, item.Operator, item.Service).
 				Updates(map[string]interface{}{
 					"roi": d.Arpu90USDNet,
 				}).Error

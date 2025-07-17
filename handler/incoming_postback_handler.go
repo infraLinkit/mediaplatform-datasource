@@ -177,9 +177,10 @@ func (h *IncomingHandler) Postback2(c *fiber.Ctx) error {
 				if dc, err := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$"); err == nil {
 
 					pxData := entity.PixelStorage{
-						URLServiceKey: p.URLServiceKey,
-						Pxdate:        helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-						Pixel:         p.AffSub,
+						URLServiceKey:  p.URLServiceKey,
+						Pxdate:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+						Pixel:          p.AffSub,
+						PostbackMethod: p.Method,
 					}
 
 					var (
@@ -187,20 +188,22 @@ func (h *IncomingHandler) Postback2(c *fiber.Ctx) error {
 						isPX bool
 					)
 
-					switch dc.PostbackMethod {
+					switch p.Method {
 					case "ADNETCODE":
 						px, isPX = h.DS.GetByAdnetCode(pxData)
 					case "TOKEN":
 						px, isPX = h.DS.GetToken(pxData)
 					case "JSON-MSISDN", "XML-MSISDN", "HTML-MSISDN":
 						px, isPX = h.DS.GetPxByMsisdn(pxData)
-					default:
+					case "PIXEL":
 						px, isPX = h.DS.GetPx(pxData)
+					default:
+						isPX = false
 					}
 
 					if !isPX {
 
-						return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found or duplicate used, pixel : " + p.AffSub})
+						return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found or duplicate used and parameter should have a method parameter, pixel : " + p.AffSub})
 
 					} else {
 

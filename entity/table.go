@@ -108,7 +108,7 @@ type (
 		GoogleSheet               string    `gorm:"type:text;default:NA" json:"google_sheet"`
 		Currency                  string    `gorm:"size:10;default:NA" json:"currency"`
 		MCC 					  string	`gorm:"size:10;default:NA" json:"mcc"`
-		ClickableEverywhere		  bool 		`gorm:"not null;default:false" json:"clickable_everywhere"`
+		ClickableAnywhere		  bool 		`gorm:"not null;default:false" json:"clickable_anywhere"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}

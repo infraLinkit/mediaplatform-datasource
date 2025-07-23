@@ -268,8 +268,8 @@ func formatQueryIndicatorsRedirection(selects []string, dataType string) []strin
 	return formatted
 }
 
-func (r *BaseModel) GetDataLandingsByCreatedAtRange(start, end time.Time) ([]entity.DataLanding, error) {
-	var landings []entity.DataLanding
+func (r *BaseModel) GetDataLandingsByCreatedAtRange(start, end time.Time) ([]entity.PixelStorage, error) {
+	var landings []entity.PixelStorage
 	err := r.DB.
 		Where("created_at >= ? AND created_at < ?", start, end).
 		Find(&landings).Error

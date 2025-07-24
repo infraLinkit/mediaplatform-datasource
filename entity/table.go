@@ -109,6 +109,7 @@ type (
 		Currency                  string    `gorm:"size:10;default:NA" json:"currency"`
 		MCC 					  string	`gorm:"size:10;default:NA" json:"mcc"`
 		ClickableAnywhere		  bool 		`gorm:"not null;default:false" json:"clickable_anywhere"`
+		NonTargetURL              string 	`gorm:"type:text;default:NA" json:"non_target_url"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}

@@ -206,10 +206,9 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
-				query = query.Where("pxdate >= CURRENT_DATE AND pxdate < CURRENT_DATE + INTERVAL '1 DAY'")
+				query = query.Where("pxdate >= CURRENT_DATE AND pxdate < CURRENT_DATE + INTERVAL '1 day'")
 			case "YESTERDAY":
 				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
-			case "LAST7DAY":
 				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 			case "LAST30DAY":
 				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")

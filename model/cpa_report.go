@@ -52,7 +52,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
-				query = query.Where("summary_date = CURRENT_DATE")
+				query = query.Where("summary_date >= CURRENT_DATE AND summary_date < CURRENT_DATE + INTERVAL '1 DAY'")
 			case "YESTERDAY":
 				query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
 			case "LAST7DAY":

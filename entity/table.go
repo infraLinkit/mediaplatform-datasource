@@ -47,7 +47,7 @@ type (
 		ClientType                string    `gorm:"not null;size:50" json:"client_type"`
 		TrafficSource             bool      `gorm:"not null;default:false" json:"traffic_source"`
 		UniqueClick               bool      `gorm:"not null;default:false" json:"unique_click"`
-		URLBanner                 string    `gorm:"size:255;default:NA" json:"url_banner"`
+		URLBanner                 string    `gorm:"type:text;default:NA" json:"url_banner"`
 		URLLanding                string    `gorm:"size:255;default:NA" json:"url_landing"`
 		URLWarpLanding            string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
 		URLService                string    `gorm:"size:255;default:NA" json:"url_service"`
@@ -80,27 +80,27 @@ type (
 		TechnicalFee              float64   `gorm:"type:double precision" json:"technical_fee"`
 		URLPostback               string    `gorm:"size:255;default:NA" json:"url_postback"`
 		MainstreamLpType          string    `gorm:"size:50;default:NA" json:"mainstream_lp_type"`
-		Title                     string    `gorm:"size:80;default:NA" json:"title"`
-		TitleOriginal             string    `gorm:"size:80;default:NA" json:"title_original"`
+		Title                     string    `gorm:"type:text;default:NA" json:"title"`
+		TitleOriginal             string    `gorm:"type:text;default:NA" json:"title_original"`
 		TitleColor                string    `gorm:"size:50;default:NA" json:"title_color"`
 		TitleStyle                string    `gorm:"size:50;default:NA" json:"title_style"`
 		TitlePageType             string    `gorm:"size:50;default:NA" json:"title_page_type"`
-		SubTitle                  string    `gorm:"size:80;default:NA" json:"sub_title"`
-		SubTitleOriginal          string    `gorm:"size:80;default:NA" json:"sub_title_original"`
+		SubTitle                  string    `gorm:"type:text;default:NA" json:"sub_title"`
+		SubTitleOriginal          string    `gorm:"type:text;default:NA" json:"sub_title_original"`
 		SubTitleColor             string    `gorm:"size:50;default:NA" json:"sub_title_color"`
 		SubTitleStyle             string    `gorm:"size:50;default:NA" json:"sub_title_style"`
 		SubTitlePageType          string    `gorm:"size:50;default:NA" json:"sub_title_page_type"`
-		BackgroundURL             string    `gorm:"size:255;default:NA" json:"background_url"`
+		BackgroundURL             string    `gorm:"type:text;default:NA" json:"background_url"`
 		BackgroundColor           string    `gorm:"size:50;default:NA" json:"background_color"`
-		LogoURL                   string    `gorm:"size:255;default:NA" json:"logo_url"`
-		URLBannerOriginal         string    `gorm:"size:255;default:NA" json:"url_banner_original"`
-		Tnc                       string    `gorm:"size:255;default:NA" json:"tnc"`
-		TncOriginal               string    `gorm:"size:255;default:NA" json:"tnc_original"`
+		LogoURL                   string    `gorm:"type:text;default:NA" json:"logo_url"`
+		URLBannerOriginal         string    `gorm:"type:text;default:NA" json:"url_banner_original"`
+		Tnc                       string    `gorm:"type:text;default:NA" json:"tnc"`
+		TncOriginal               string    `gorm:"type:text;default:NA" json:"tnc_original"`
 		TncColor                  string    `gorm:"size:50;default:NA" json:"tnc_color"`
 		TncStyle                  string    `gorm:"size:50;default:NA" json:"tnc_style"`
 		TncPageType               string    `gorm:"size:50;default:NA" json:"tnc_page_type"`
-		ButtonSubscribe           string    `gorm:"size:100;default:NA" json:"button_subscribe"`
-		ButtonSubscribeOriginal   string    `gorm:"size:100;default:NA" json:"button_subscribe_original"`
+		ButtonSubscribe           string    `gorm:"type:text;default:NA" json:"button_subscribe"`
+		ButtonSubscribeOriginal   string    `gorm:"type:text;default:NA" json:"button_subscribe_original"`
 		ButtonSubscribeColor      string    `gorm:"size:100;default:NA" json:"button_subscribe_color"`
 		StatusSubmitKeyMainstream bool      `gorm:"not null;default:false" json:"status_submit_key_mainstream"`
 		KeyMainstream             string    `gorm:"size:50;default:NA" json:"key_mainstream"`
@@ -108,6 +108,8 @@ type (
 		GoogleSheet               string    `gorm:"type:text;default:NA" json:"google_sheet"`
 		Currency                  string    `gorm:"size:10;default:NA" json:"currency"`
 		MCC 					  string	`gorm:"size:10;default:NA" json:"mcc"`
+		ClickableAnywhere		  bool 		`gorm:"not null;default:false" json:"clickable_anywhere"`
+		NonTargetURL              string 	`gorm:"type:text;default:NA" json:"non_target_url"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}

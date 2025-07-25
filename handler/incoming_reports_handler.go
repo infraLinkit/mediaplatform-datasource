@@ -312,28 +312,28 @@ func (h *IncomingHandler) DisplayPerformanceReport(c *fiber.Ctx) error {
 
 func (h *IncomingHandler) DisplayConversionLogReportExtra(c *fiber.Ctx, fe entity.DisplayConversionLogReport) entity.ReturnResponse {
 
-	key := "temp_key_api_conversion_log_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+	// key := "temp_key_api_conversion_log_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err                   error
-		total_data            int64
-		isempty               bool
+		err        error
+		total_data int64
+		// isempty               bool
 		conversion_log_report []entity.PixelStorage
 	)
 
-	if fe.Action != "" {
-		conversion_log_report, total_data, err = h.DS.GetConversionLogReport(fe)
-	} else {
-		if conversion_log_report, isempty = h.DS.RGetConversionLogReport(key, "$"); isempty {
+	// if fe.Action != "" {
+	conversion_log_report, total_data, err = h.DS.GetConversionLogReport(fe)
+	// } else {
+	// 	if conversion_log_report, isempty = h.DS.RGetConversionLogReport(key, "$"); isempty {
 
-			conversion_log_report, total_data, err = h.DS.GetConversionLogReport(fe)
+	// 		conversion_log_report, total_data, err = h.DS.GetConversionLogReport(fe)
 
-			s, _ := json.Marshal(conversion_log_report)
+	// 		s, _ := json.Marshal(conversion_log_report)
 
-			h.DS.SetData(key, "$", string(s))
-			h.DS.SetExpireData(key, 60)
-		}
-	}
+	// 		h.DS.SetData(key, "$", string(s))
+	// 		h.DS.SetExpireData(key, 60)
+	// 	}
+	// }
 
 	if err == nil {
 

@@ -261,15 +261,27 @@ func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
 
 	mo, _ := strconv.Atoi(m["mo"])
 	postback, _ := strconv.Atoi(m["postback"])
+	sbaf, _ := strconv.ParseFloat(m["sbaf"], 64)
+	saaf, _ := strconv.ParseFloat(m["saaf"], 64)
+	price_per_mo, _ := strconv.ParseFloat(m["price_per_mo"], 64)
+	waki_revenue, _ := strconv.ParseFloat(m["waki_revenue"], 64)
 
 	pin := ApiPinReport{
-		Adnet:         m["adnet"],
+		CampaignId:    m["campaign_id"],
 		Country:       m["country"],
+		Company:       m["company"],
+		Adnet:         m["adnet"],
 		Service:       m["service"],
 		Operator:      m["telco"],
 		DateSend:      helper.GetCurrentTime(cfg.TZ, time.RFC3339),
+		PayoutAdn:     m["payout_adn"],
+		PayoutAF:      m["payout_af"],
 		TotalMO:       mo,
 		TotalPostback: postback,
+		SBAF:          sbaf,
+		SAAF:          saaf,
+		PricePerMO:    price_per_mo,
+		WakiRevenue:   waki_revenue,
 	}
 
 	return &pin

@@ -94,11 +94,13 @@ type (
 		TitleColor                string  `json:"title_color"`
 		TitleStyle                string  `json:"title_style"`
 		TitlePageType             string  `json:"title_page_type"`
+		TitleFontSize             string  `json:"title_font_size"`
 		SubTitle                  string  `json:"sub_title"`
 		SubTitleOriginal          string  `json:"sub_title_original"`
 		SubTitleColor             string  `json:"sub_title_color"`
 		SubTitleStyle             string  `json:"sub_title_style"`
 		SubTitlePageType          string  `json:"sub_title_page_type"`
+		SubTitleFontSize          string  `json:"sub_title_font_size"`
 		BackgroundURL             string  `json:"background_url"`
 		BackgroundColor           string  `json:"background_color"`
 		LogoURL                   string  `json:"logo_url"`
@@ -108,6 +110,7 @@ type (
 		TncColor                  string  `json:"tnc_color"`
 		TncStyle                  string  `json:"tnc_style"`
 		TncPageType               string  `json:"tnc_page_type"`
+		TncFontSize               string  `json:"tnc_font_size"`
 		ButtonSubscribe           string  `json:"button_subscribe"`
 		ButtonSubscribeOriginal   string  `json:"button_subscribe_original"`
 		ButtonSubscribeColor      string  `json:"button_subscribe_color"`

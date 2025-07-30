@@ -85,11 +85,13 @@ type (
 		TitleColor                string    `gorm:"size:50;default:NA" json:"title_color"`
 		TitleStyle                string    `gorm:"size:50;default:NA" json:"title_style"`
 		TitlePageType             string    `gorm:"size:50;default:NA" json:"title_page_type"`
+		TitleFontSize             string    `gorm:"size:50;default:NA" json:"title_font_size"`
 		SubTitle                  string    `gorm:"type:text;default:NA" json:"sub_title"`
 		SubTitleOriginal          string    `gorm:"type:text;default:NA" json:"sub_title_original"`
 		SubTitleColor             string    `gorm:"size:50;default:NA" json:"sub_title_color"`
 		SubTitleStyle             string    `gorm:"size:50;default:NA" json:"sub_title_style"`
 		SubTitlePageType          string    `gorm:"size:50;default:NA" json:"sub_title_page_type"`
+		SubTitleFontSize          string    `gorm:"size:50;default:NA" json:"sub_title_font_size"`
 		BackgroundURL             string    `gorm:"type:text;default:NA" json:"background_url"`
 		BackgroundColor           string    `gorm:"size:50;default:NA" json:"background_color"`
 		LogoURL                   string    `gorm:"type:text;default:NA" json:"logo_url"`
@@ -99,6 +101,7 @@ type (
 		TncColor                  string    `gorm:"size:50;default:NA" json:"tnc_color"`
 		TncStyle                  string    `gorm:"size:50;default:NA" json:"tnc_style"`
 		TncPageType               string    `gorm:"size:50;default:NA" json:"tnc_page_type"`
+		TncFontSize               string    `gorm:"size:50;default:NA" json:"tnc_font_size"`
 		ButtonSubscribe           string    `gorm:"type:text;default:NA" json:"button_subscribe"`
 		ButtonSubscribeOriginal   string    `gorm:"type:text;default:NA" json:"button_subscribe_original"`
 		ButtonSubscribeColor      string    `gorm:"size:100;default:NA" json:"button_subscribe_color"`

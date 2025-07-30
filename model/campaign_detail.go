@@ -139,13 +139,24 @@ func (r *BaseModel) DelCampaignDetail(o entity.CampaignDetail) error {
 }
 
 func (r *BaseModel) EditSettingCampaignDetail(o entity.CampaignDetail) error {
+	updates := map[string]interface{}{
+		"po":            o.PO,
+		"mo_capping":    o.MOCapping,
+		"ratio_send":    o.RatioSend,
+		"ratio_receive": o.RatioReceive,
+		"last_update":   o.LastUpdate,
+	}
 
-	result := r.DB.Model(&o).
-		Where("url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
-		Updates(entity.CampaignDetail{PO: o.PO, MOCapping: o.MOCapping, RatioSend: o.RatioSend, RatioReceive: o.RatioReceive, LastUpdate: o.LastUpdate})
+	if o.StatusCapping {
+		updates["status_capping"] = false
+	}
+
+	result := r.DB.Model(&entity.CampaignDetail{}).
+		Where("url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?",
+			o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Updates(updates)
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
-
 	return result.Error
 }
 
@@ -304,7 +315,7 @@ func (r *BaseModel) ResetCappingCampaignByCapped(o entity.CampaignDetail) error 
 func (r *BaseModel) UpdateMOCappingS2S(o entity.CampaignDetail) error {
 	result := r.DB.Exec(`
 		UPDATE campaign_details cd
-		SET mo_capping_service = ?
+		SET mo_capping_service = ?, status_capping = false
 		FROM campaigns c
 		WHERE c.campaign_id = cd.campaign_id
 			AND cd.country = ? 

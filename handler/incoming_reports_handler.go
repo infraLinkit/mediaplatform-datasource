@@ -151,28 +151,28 @@ func (h *IncomingHandler) DisplayPinPerformanceReport(c *fiber.Ctx) error {
 
 func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe entity.DisplayPinPerformanceReport) entity.ReturnResponse {
 
-	key := "temp_key_api_pin_performance_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+	// key := "temp_key_api_pin_performance_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err                  error
-		total_data           int64
-		isempty              bool
+		err        error
+		total_data int64
+		// isempty              bool
 		pinperformancereport []entity.ApiPinPerformance
 	)
 
-	if fe.Action != "" {
-		pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
-	} else {
-		if pinperformancereport, isempty = h.DS.RGetApiPinPerformanceReport(key, "$"); isempty {
+	// if fe.Action != "" {
+	pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
+	// } else {
+	// 	if pinperformancereport, isempty = h.DS.RGetApiPinPerformanceReport(key, "$"); isempty {
 
-			pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
+	// 		pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
 
-			s, _ := json.Marshal(pinperformancereport)
+	// 		s, _ := json.Marshal(pinperformancereport)
 
-			h.DS.SetData(key, "$", string(s))
-			h.DS.SetExpireData(key, 60)
-		}
-	}
+	// 		h.DS.SetData(key, "$", string(s))
+	// 		h.DS.SetExpireData(key, 60)
+	// 	}
+	// }
 
 	if err == nil {
 

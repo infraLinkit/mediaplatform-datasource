@@ -68,6 +68,8 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 			default:
 				query = query.Where("summary_date = ?", o.DateRange)
 			}
+		} else {
+			query = query.Where("summary_date >= CURRENT_DATE AND summary_date < CURRENT_DATE + INTERVAL '1 DAY'")
 		}
 
 		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
@@ -244,9 +246,12 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]ent
 				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
 				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
+			case "ALLDATERANGE":
 			default:
 				query = query.Where("summary_date = ?", o.DateRange)
 			}
+		} else {
+			query = query.Where("summary_date >= CURRENT_DATE AND summary_date < CURRENT_DATE + INTERVAL '1 DAY'")
 		}
 
 		if o.DataBasedOn != "" {
@@ -375,6 +380,7 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport) ([]entity.C
 	)
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
+	query = query.Where("mo_received > 0")
 
 	if o.Action == "Search" {
 
@@ -398,9 +404,12 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport) ([]entity.C
 				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
 				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
+			case "ALLDATERANGE":
 			default:
 				query = query.Where("summary_date = ?", o.DateRange)
 			}
+		} else {
+			// query = query.Where("summary_date = CURRENT_DATE")
 		}
 
 		rows, err = query.Select(`
@@ -486,6 +495,7 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 	)
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
+	query = query.Where("mo_received > 0")
 
 	if o.Action == "Search" {
 

@@ -170,6 +170,7 @@ type (
 		Company            string  `json:"company"`
 		ClientType         string  `json:"client_type"`
 		CampaignName       string  `json:"campaign_name"`
+		Partner            string  `json:"partner"`
 		Operator           string  `json:"operator"`
 		Service            string  `json:"service"`
 		Adnet              string  `json:"adnet"`

@@ -132,9 +132,12 @@ func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceRep
 				query = query.Where("date_send BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
 				query = query.Where("date_send BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
+			case "ALLDATERANGE":
 			default:
 				query = query.Where("date_send = ?", o.DateRange)
 			}
+		} else {
+			query = query.Where("date_send = CURRENT_DATE")
 		}
 	}
 
@@ -219,9 +222,14 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 			case "CUSTOMRANGE":
 				dateEnd, _ := time.Parse("2006-01-02", o.DateEnd)
 				query = query.Where("pxdate BETWEEN ? AND ?", o.DateStart, dateEnd.AddDate(0, 0, 1))
+			case "LAST7DAY":
+				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+			case "ALLDATERANGE":
 			default:
 				query = query.Where("pxdate = ?", o.DateRange)
 			}
+		} else {
+			query = query.Where("pxdate >= CURRENT_DATE AND pxdate < CURRENT_DATE + INTERVAL '1 day'")
 		}
 	}
 
@@ -274,11 +282,11 @@ func (r *BaseModel) GetPerformanceReport(o entity.PerformaceReportParams) ([]ent
 
 	// Apply filters, minus the pagination constraints
 	query := r.DB.Model(&entity.SummaryCampaign{})
-
-	query.Select(`country, company, client_type, campaign_name, operator, service, adnet, SUM(mo_received) AS pixel_received, SUM(postback) as pixel_send, SUM(cr_postback) as cr_postback,
-SUM(cr_mo) as cr_mo, SUM(landing) as landing, MAX(ratio_send) as ratio_send, MAX(ratio_receive) as ratio_receive,SUM(po) as price_per_postback,SUM(cost_per_conversion) as cost_per_conversion,
-SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total_waki_agency_fee), SUM(total_waki_agency_fee + po*postback) as total_spending,sum(cpa) as e_cpa,
-SUM(total_fp) as total_fp,SUM(success_fp) as success_fp`)
+	query = query.Where("mo_received > 0")
+	query.Select(`country, company, client_type, campaign_name, partner, operator, service, adnet, SUM(mo_received) AS pixel_received, SUM(postback) as pixel_send, SUM(cr_postback) as cr_postback,
+	SUM(cr_mo) as cr_mo, SUM(landing) as landing, MAX(ratio_send) as ratio_send, MAX(ratio_receive) as ratio_receive,SUM(po) as price_per_postback,SUM(cost_per_conversion) as cost_per_conversion,
+	SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total_waki_agency_fee), SUM(total_waki_agency_fee + po*postback) as total_spending,sum(cpa) as e_cpa,
+	SUM(total_fp) as total_fp,SUM(success_fp) as success_fp`)
 
 	if o.Action == "Search" {
 		if o.Country != "" {
@@ -288,7 +296,7 @@ SUM(total_fp) as total_fp,SUM(success_fp) as success_fp`)
 			query = query.Where("operator = ?", o.Operator)
 		}
 		if o.Partner != "" {
-			query = query.Where("country = ?", o.Partner)
+			query = query.Where("partner = ?", o.Partner)
 		}
 		if o.Company != "" {
 			query = query.Where("company= ?", o.Company)
@@ -316,7 +324,7 @@ SUM(total_fp) as total_fp,SUM(success_fp) as success_fp`)
 	dateStart, errStart := time.Parse("2006-01-02", o.DateStart)
 	dateEnd, errEnd := time.Parse("2006-01-02", o.DateEnd)
 	if errStart != nil {
-		dateStart = now.AddDate(0, 0, -30)
+		dateStart = now
 	}
 	if errEnd != nil {
 		dateEnd = now
@@ -324,7 +332,7 @@ SUM(total_fp) as total_fp,SUM(success_fp) as success_fp`)
 
 	query = query.Where("summary_date BETWEEN ? AND ?", dateStart, dateEnd)
 
-	query.Group("country, company, client_type, campaign_name, operator, service, adnet")
+	query.Group("country, company, client_type, campaign_name, partner, operator, service, adnet")
 
 	// Get the total count after applying filters
 	query.Unscoped().Count(&total_rows)

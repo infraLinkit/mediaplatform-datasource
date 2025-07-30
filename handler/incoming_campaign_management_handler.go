@@ -227,11 +227,17 @@ func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
 		// Update to redis with key
 		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
 		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+		mocappingChanged := o.MOCapping != cfgCmp.MOCapping
+
 		cfgCmp.PO = o.PO
 		cfgCmp.RatioSend = o.RatioSend
 		cfgCmp.RatioReceive = o.RatioReceive
 		cfgCmp.MOCapping = o.MOCapping
 		cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+
+		if mocappingChanged {
+			cfgCmp.StatusCapping = false
+		}
 
 		cfgDataConfig, _ := json.Marshal(cfgCmp)
 
@@ -251,6 +257,7 @@ func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
 			Adnet:         cfgCmp.Adnet,
 			Service:       cfgCmp.Service,
 			CampaignId:    o.CampaignId,
+			StatusCapping:  bool(mocappingChanged),
 		})
 
 		pos, _ := strconv.ParseFloat(strings.TrimSpace(o.PO), 64)
@@ -461,6 +468,7 @@ func (h *IncomingHandler) EditMOCappingServiceS2S(c *fiber.Ctx) error {
 
 		if country == o.Country && operator == o.Operator && partner == o.Partner && service == o.Service {
 			h.DS.SetData(key, "$.mo_capping_service", strconv.Itoa(o.MOCappingService))
+			h.DS.SetData(key, "$.status_capping", strconv.FormatBool(false))
 			updated = true
 			updatedCount++
 			h.Logs.Debug(fmt.Sprintf("Updated config key: %s", key))

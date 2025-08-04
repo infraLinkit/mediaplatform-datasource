@@ -254,6 +254,19 @@ type (
 		Payout        string
 		PricePerMo    string
 	}
+
+	SuccessRateData struct {
+		Date        string `json:"date"`
+		Operator    string `json:"operator"`
+		Service     string `json:"service"`
+		SuccessRate string `json:"success_rate"`
+	}
+
+	SuccessRateResponse struct {
+		Status string          `json:"status"`
+		Code   int             `json:"code"`
+		Data   SuccessRateData `json:"data"`
+	}
 )
 
 func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {

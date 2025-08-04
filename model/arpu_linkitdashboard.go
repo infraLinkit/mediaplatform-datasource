@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"encoding/base64"
@@ -184,6 +186,8 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 	r.DB.Model(&entity.SummaryCampaign{}).
 		Distinct("country", "partner AS operator", "service").
 		Where("deleted_at IS NULL").
+		Where("mo_received > 0").
+		Where("summary_date = ? ", time.Now().Format("2006-01-02")).
 		Scan(&summaries)
 
 	for _, item := range summaries {
@@ -209,12 +213,12 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 
 		username, err := decryptEnv(encUsername)
 		if err != nil {
-			log.Println("❌ Failed to decrypt ARPUUsername:", err)
+			log.Println(" Failed to decrypt ARPUUsername:", err)
 			continue
 		}
 		password, err := decryptEnv(encPassword)
 		if err != nil {
-			log.Println("❌ Failed to decrypt ARPUPassword:", err)
+			log.Println(" Failed to decrypt ARPUPassword:", err)
 			continue
 		}
 		auth := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", username, password)))
@@ -222,7 +226,7 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 		// 🔗 Buat request manual dengan header
 		req, err := http.NewRequest("GET", query, nil)
 		if err != nil {
-			log.Println("❌ Failed to create request:", err)
+			log.Println(" Failed to create request:", err)
 			continue
 		}
 		req.Header.Add("Authorization", "Basic "+auth)
@@ -231,20 +235,20 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Println("❌ Error fetching ARPU:", err)
+			log.Println(" Error fetching ARPU:", err)
 			continue
 		}
 
 		var arpuResp entity.ARPUResponse
 		if err := json.NewDecoder(resp.Body).Decode(&arpuResp); err != nil {
-			log.Println("❌ Error decoding ARPU response:", err)
+			log.Println(" Error decoding ARPU response:", err)
 			resp.Body.Close()
 			continue
 		}
 
 		resp.Body.Close()
 		if arpuResp.Status != 200 || arpuResp.Data == nil {
-			log.Println("❌ Invalid ARPU response:", arpuResp.Message)
+			log.Println(" Invalid ARPU response:", arpuResp.Message)
 			continue
 		}
 
@@ -257,7 +261,7 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 					"roi": d.Arpu90USDNet,
 				}).Error
 			if err != nil {
-				log.Printf("❌ Failed to update ROI on adnet %s: %v", d.Adnet, err)
+				log.Printf("No Match arpu_update on adnet %s: %v", d.Adnet, err)
 			} else {
 				log.Printf("✅ ROI updated for adnet %s => %.2f", d.Adnet, d.Arpu90USDNet)
 			}
@@ -265,4 +269,118 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 	}
 
 	log.Println("✅ Cron update ARPU DONE")
+}
+
+func (r *BaseModel) SuccesRateLinkit() (entity.SuccessRateResponse, error) {
+	var result entity.SuccessRateResponse
+
+	var summaries []struct {
+		Country     string
+		Operator    string
+		Service     string
+		SummaryDate time.Time
+	}
+
+	// Ambil data summary campaign unik untuk hari ini
+	if err := r.DB.Model(&entity.SummaryCampaign{}).
+		Distinct("country", "partner AS operator", "service", "summary_date").
+		Where("deleted_at IS NULL").
+		Where("summary_date = ?", time.Now().Format("2006-01-02")).
+		Where("mo_received > 0").
+		Scan(&summaries).Error; err != nil {
+		log.Println(" Failed to fetch summary data:", err)
+		return result, err
+	}
+
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	// Iterasi setiap kombinasi operator/service/date
+	for i, item := range summaries {
+
+		if i > 0 {
+			<-ticker.C
+		}
+		urlStr := fmt.Sprintf(
+			"%s/success-rate?operator=%s&service=%s&date=%s",
+			r.Config.APILINKITDashboard,
+			url.QueryEscape(strings.ToLower(item.Operator)),
+			url.QueryEscape(strings.ToLower(item.Service)),
+			url.QueryEscape(item.SummaryDate.Format("2006-01-02")),
+		)
+
+		req, err := http.NewRequest("GET", urlStr, nil)
+		if err != nil {
+			log.Println(" Failed to create request:", err)
+			continue
+		}
+
+		client := &http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Println(" Error calling success-rate API:", err)
+			continue
+		}
+
+		bodyBytes, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			log.Printf(" Failed to read body: %v", err)
+			continue
+		}
+
+		// Coba decode ke response normal
+		var successRate entity.SuccessRateResponse
+		if err := json.Unmarshal(bodyBytes, &successRate); err != nil {
+			log.Printf(" Failed to decode as SuccessRateResponse for %s/%s: %v", item.Operator, item.Service, err)
+			log.Printf(" Raw response: %s", string(bodyBytes))
+			continue
+		}
+
+		if successRate.Code != 200 {
+			// Coba decode pesan error
+			var errorMsg struct {
+				Message string `json:"message"`
+			}
+			if err := json.Unmarshal(bodyBytes, &errorMsg); err != nil {
+				log.Printf("success_rate for %s/%s, code=%d but failed to parse message. Raw: %s", item.Operator, item.Service, successRate.Code, string(bodyBytes))
+			} else {
+				log.Printf("success_rate for %s/%s: %s", item.Operator, item.Service, errorMsg.Message)
+			}
+			continue
+		}
+
+		// Bersihkan "8.24%" jadi 8.24 float
+		cleanRate := strings.TrimSuffix(successRate.Data.SuccessRate, "%")
+		rateFloat, err := strconv.ParseFloat(cleanRate, 64)
+		if err != nil {
+			log.Printf(" Failed to parse success rate '%s' for %s: %v", cleanRate, successRate.Data.Operator, err)
+			continue
+		}
+
+		// Update successrate_fp di database
+		err = r.DB.Model(&entity.SummaryCampaign{}).
+			Where("LOWER(partner) = LOWER(?) AND LOWER(service) = LOWER(?) AND summary_date = ?",
+				successRate.Data.Operator,
+				successRate.Data.Service,
+				successRate.Data.Date,
+			).
+			Updates(map[string]interface{}{
+				"success_fp": rateFloat,
+			}).Error
+
+		if err != nil {
+			log.Printf("No Match success_rate for operator=%s service=%s: %v",
+				successRate.Data.Operator, successRate.Data.Service, err)
+		} else {
+			log.Printf("✅ successrate_fp updated: operator=%s service=%s => %.2f%%",
+				successRate.Data.Operator, successRate.Data.Service, rateFloat)
+		}
+
+		// if i < len(summaries)-1 {
+		// 	time.Sleep(5 * time.Minute)
+		// }
+	}
+
+	return result, nil
 }

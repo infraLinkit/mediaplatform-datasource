@@ -318,13 +318,13 @@ func (c *Cfg) InitGormPgx(l *logrus.Logger) *gorm.DB {
 		sqlDB, _ := db.DB()
 
 		// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetMaxIdleConns(0)
 
 		// SetMaxOpenConns sets the maximum number of open connections to the database.
-		sqlDB.SetMaxOpenConns(100)
+		sqlDB.SetMaxOpenConns(0)
 
 		// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-		sqlDB.SetConnMaxLifetime(time.Hour)
+		sqlDB.SetConnMaxLifetime(0)
 	}
 
 	return db

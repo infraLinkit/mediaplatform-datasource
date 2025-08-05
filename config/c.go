@@ -19,6 +19,7 @@ import (
 	"google.golang.org/api/sheets/v4"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 var APP_PATH = "/Users/wiliewahyuhidayat/Documents/GO/mediaplatform/cores/" // local
@@ -302,7 +303,9 @@ func (c *Cfg) InitGormPgx(l *logrus.Logger) *gorm.DB {
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN:                  "host=" + c.PSQLHost + " user=" + c.PSQLUsername + " password=" + c.PSQLPassword + " dbname=" + c.PSQLDB + " port=" + c.PSQLPort + " sslmode=disable TimeZone=" + c.TZ.String(),
 		PreferSimpleProtocol: true, // disables implicit prepared statement usage
-	}), &gorm.Config{})
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 
 	if err != nil {
 
@@ -318,13 +321,13 @@ func (c *Cfg) InitGormPgx(l *logrus.Logger) *gorm.DB {
 		sqlDB, _ := db.DB()
 
 		// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetMaxIdleConns(0)
 
 		// SetMaxOpenConns sets the maximum number of open connections to the database.
-		sqlDB.SetMaxOpenConns(100)
+		sqlDB.SetMaxOpenConns(0)
 
 		// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
-		sqlDB.SetConnMaxLifetime(time.Hour)
+		sqlDB.SetConnMaxLifetime(0)
 	}
 
 	return db

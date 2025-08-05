@@ -1,15 +1,15 @@
 package handler
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"strconv"
-	"strings"
+	// "strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
-	"github.com/infraLinkit/mediaplatform-datasource/helper"
+	// "github.com/infraLinkit/mediaplatform-datasource/helper"
 )
 
 // const PAGESIZE int = 10
@@ -56,41 +56,41 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 }
 
 func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport) entity.ReturnResponse {
-	key := "temp_key_api_mainstream_report" +
-		"_" + fe.CampaignId +
-		"_" + fe.CampaignName +
-		"_" + fe.UrlServiceKey +
-		"_" + fe.Country +
-		"_" + fe.ClientType +
-		"_" + fe.Company +
-		"_" + fe.Operator +
-		"_" + fe.Partner +
-		"_" + fe.Channel +
-		"_" + fe.Agency +
-		"_" + fe.Aggregator +
-		"_" + fe.Adnet +
-		"_" + fe.Service +
-		"_" + fe.DataBasedOn +
-		"_" + fe.DateRange +
-		"_" + fe.DateBefore +
-		"_" + fe.DateAfter +
-		"_" + strconv.Itoa(fe.Page) +
-		"_" + strconv.Itoa(fe.PageSize) + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+	// key := "temp_key_api_mainstream_report" +
+	// 	"_" + fe.CampaignId +
+	// 	"_" + fe.CampaignName +
+	// 	"_" + fe.UrlServiceKey +
+	// 	"_" + fe.Country +
+	// 	"_" + fe.ClientType +
+	// 	"_" + fe.Company +
+	// 	"_" + fe.Operator +
+	// 	"_" + fe.Partner +
+	// 	"_" + fe.Channel +
+	// 	"_" + fe.Agency +
+	// 	"_" + fe.Aggregator +
+	// 	"_" + fe.Adnet +
+	// 	"_" + fe.Service +
+	// 	"_" + fe.DataBasedOn +
+	// 	"_" + fe.DateRange +
+	// 	"_" + fe.DateBefore +
+	// 	"_" + fe.DateAfter +
+	// 	"_" + strconv.Itoa(fe.Page) +
+	// 	"_" + strconv.Itoa(fe.PageSize) + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 	var (
-		err                     error
-		x                       int
-		isempty                 bool
+		err error
+		x   int
+		// isempty                 bool
 		mainstreamreport        []entity.SummaryCampaign
 		displaymainstreamreport []entity.SummaryCampaign
 	)
 
-	if mainstreamreport, isempty = h.DS.RGetDisplayMainstreamReport(key, "$"); isempty {
-		mainstreamreport, err = h.DS.GetDisplayMainstreamReport(fe)
-		s, _ := json.Marshal(mainstreamreport)
-
-		h.DS.SetData(key, "$", string(s))
-		h.DS.SetExpireData(key, 60)
-	}
+	// if mainstreamreport, isempty = h.DS.RGetDisplayMainstreamReport(key, "$"); isempty {
+	mainstreamreport, err = h.DS.GetDisplayMainstreamReport(fe)
+	// s, _ := json.Marshal(mainstreamreport)
+	//
+	// h.DS.SetData(key, "$", string(s))
+	// h.DS.SetExpireData(key, 60)
+	// }
 
 	if err != nil {
 		return entity.ReturnResponse{

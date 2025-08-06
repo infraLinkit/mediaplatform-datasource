@@ -453,6 +453,27 @@ type (
 		UpdatedAt                time.Time
 	}
 
+	IncSummaryCampaign struct {
+		gorm.Model
+		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		SummaryDate       time.Time `gorm:"type:date;uniqueIndex:idx_sumunique" json:"summary_date"`
+		URLServiceKey     string    `gorm:"index:idx_urlservicekey;uniqueIndex:idx_sumunique;not null;size:50" json:"urlservicekey"`
+		CampaignId        string    `gorm:"index:idx_campdetailid_unique;uniqueIndex:idx_sumunique;not null;size:50" json:"campaign_id"`
+		CampaignObjective string    `gorm:"uniqueIndex:idx_sumunique;size:50;default:NA" json:"campaign_objective"`
+		Country           string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"country"`
+		Operator          string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"operator"`
+		Partner           string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"partner"`
+		Aggregator        string    `gorm:"not null;size:50" json:"aggregator"`
+		Adnet             string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"adnet"`
+		Service           string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"service"`
+		ShortCode         string    `gorm:"not null;size:50" json:"short_code"`
+		Landing           int       `gorm:"length:20;default:0" json:"landing"`
+		MoReceived        int       `gorm:"length:20;default:0" json:"mo_received"`
+		Postback          int       `gorm:"length:20;default:0" json:"postback"`
+		CreatedAt         time.Time
+		UpdatedAt         time.Time
+	}
+
 	DataClicked struct {
 		gorm.Model
 		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`

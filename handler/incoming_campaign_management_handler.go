@@ -37,6 +37,9 @@ func (h *IncomingHandler) DisplayCampaignManagement(c *fiber.Ctx) error {
 		Page:         page,
 		Draw:         draw,
 		Action:       m["action"],
+		URLServiceKey:  m["url_service_key"],
+		OrderColumn:    m["order_column"],
+		OrderDir:       m["order_dir"],
 	}
 
 	v := c.Params("v")

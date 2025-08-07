@@ -18,6 +18,9 @@ type (
 		Page         int    `form:"page" json:"page"`
 		Draw         int    `form:"draw" json:"draw"`
 		Action       string `form:"action" json:"action"`
+		URLServiceKey string `form:"url_service_key" json:"url_service_key"`
+		OrderColumn   string `form:"order_column" json:"order_column"`
+		OrderDir      string `form:"order_dir" json:"order_dir"`
 	}
 
 	CampaignManagementData struct {
@@ -28,10 +31,11 @@ type (
 		Country           string `json:"country"`
 		Partner           string `json:"partner"`
 		TotalOperator     int    `json:"total_operator"`
-		Service           string `json:"service"`
+		Service           int 	 `json:"service"`
 		TotalAdnet        int    `json:"total_adnet"`
-		ShortCode         string `json:"short_code"`
+		ShortCode         int 	 `json:"short_code"`
 		IsActive          bool   `json:"is_active"`
+		URLServiceKey     []string `json:"url_service_key"`
 	}
 
 	CampaignManagementDetail struct {

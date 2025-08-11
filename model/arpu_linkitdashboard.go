@@ -119,7 +119,7 @@ func (r *BaseModel) SendWakiCallback() error {
 
 	// Ambil semua summary_campaigns untuk hari ini yg mo_received > 0
 	if err := r.DB.
-		Where("summary_date = DATE(NOW()) AND mo_received > 0 AND deleted_at IS NULL").
+		Where("summary_date = CURRENT_DATE AND mo_received > 0").
 		Find(&summaries).Error; err != nil {
 		return err
 	}
@@ -184,10 +184,10 @@ func (r *BaseModel) FetchAndUpdateARPUData() {
 	}
 
 	r.DB.Model(&entity.SummaryCampaign{}).
-		Distinct("country", "partner AS operator", "service").
-		Where("deleted_at IS NULL").
+		// Distinct("country", "partner AS operator", "service").
+		// Where("deleted_at IS NULL").
 		Where("mo_received > 0").
-		Where("summary_date = ? ", time.Now().Format("2006-01-02")).
+		Where("summary_date = CURRENT_DATE ").
 		Scan(&summaries)
 
 	for _, item := range summaries {
@@ -283,9 +283,9 @@ func (r *BaseModel) SuccesRateLinkit() (entity.SuccessRateResponse, error) {
 
 	// Ambil data summary campaign unik untuk hari ini
 	if err := r.DB.Model(&entity.SummaryCampaign{}).
-		Distinct("country", "partner AS operator", "service", "summary_date").
-		Where("deleted_at IS NULL").
-		Where("summary_date = ?", time.Now().Format("2006-01-02")).
+		// Distinct("country", "partner AS operator", "service", "summary_date").
+		// Where("deleted_at IS NULL").
+		Where("summary_date = CURRENT_DATE").
 		Where("mo_received > 0").
 		Scan(&summaries).Error; err != nil {
 		log.Println(" Failed to fetch summary data:", err)
@@ -309,7 +309,7 @@ func (r *BaseModel) SuccesRateLinkit() (entity.SuccessRateResponse, error) {
 			url.QueryEscape(item.SummaryDate.Format("2006-01-02")),
 		)
 
-		req, err := http.NewRequest("GET", urlStr, nil)
+		req, err := http.NewRequest("POST", urlStr, nil)
 		if err != nil {
 			log.Println(" Failed to create request:", err)
 			continue

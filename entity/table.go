@@ -403,8 +403,8 @@ type (
 		ID                       int       `gorm:"primaryKey;autoIncrement" json:"id"`
 		Status                   bool      `gorm:"not null;size:50" json:"status"`
 		SummaryDate              time.Time `gorm:"type:date;uniqueIndex:idx_sumunique" json:"summary_date"`
-		URLServiceKey            string    `gorm:"index:idx_urlservicekey;uniqueIndex:idx_sumunique;not null;size:50" json:"urlservicekey"`
-		CampaignId               string    `gorm:"index:idx_campdetailid_unique;uniqueIndex:idx_sumunique;not null;size:50" json:"campaign_id"`
+		URLServiceKey            string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"urlservicekey"`
+		CampaignId               string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"campaign_id"`
 		CampaignName             string    `gorm:"not null;size:100" json:"campaign_name"`
 		Country                  string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"country"`
 		Operator                 string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"operator"`

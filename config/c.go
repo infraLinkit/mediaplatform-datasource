@@ -42,26 +42,9 @@ type (
 		AppHostPort                            string
 		AppApi                                 string
 		AppApiPort                             string
-		Host1                                  string
-		Host2                                  string
-		Host3                                  string
-		Host4                                  string
-		Host5                                  string
-		Host6                                  string
-		Host7                                  string
-		Host8                                  string
-		Host9                                  string
-		Host10                                 string
-		Port1                                  string
-		Port2                                  string
-		Port3                                  string
-		Port4                                  string
-		Port5                                  string
-		Port6                                  string
-		Port7                                  string
-		Port8                                  string
-		Port9                                  string
-		Port10                                 string
+		TrustedProxyHeader                     bool
+		ReduceMemoryUsage                      bool
+		ConcurrencyConnection                  int
 		RedisHost                              string
 		RedisPort                              int
 		RedisDBIndex                           int
@@ -136,6 +119,9 @@ func InitCfg() *Cfg {
 	redis_port, _ := strconv.Atoi(os.Getenv("REDISPORT"))
 	redis_exp, _ := strconv.Atoi(os.Getenv("REDISKEYEXPIRE"))
 	ratio_queue_threshold, _ := strconv.Atoi(os.Getenv("RABBITMQRATIOQUEUETHRESHOLD"))
+	trusted_proxy_header, _ := strconv.ParseBool(os.Getenv("TRUSTED_PROXY_HEADER"))
+	reduce_memory_usage, _ := strconv.ParseBool(os.Getenv("REDUCE_MEMORY_USAGE"))
+	concurrency_connection, _ := strconv.Atoi(os.Getenv("CONCURRENCY_CONNECTION"))
 
 	cfg := &Cfg{
 		AppDockerVer:                           os.Getenv("APP_DOCKER_VER"),
@@ -143,26 +129,9 @@ func InitCfg() *Cfg {
 		AppHostPort:                            os.Getenv("APPHOSTPORT"),
 		AppApi:                                 os.Getenv("APPAPI"),
 		AppApiPort:                             os.Getenv("APPAPIPORT"),
-		Host1:                                  os.Getenv("HOST1"),
-		Host2:                                  os.Getenv("HOST2"),
-		Host3:                                  os.Getenv("HOST3"),
-		Host4:                                  os.Getenv("HOST4"),
-		Host5:                                  os.Getenv("HOST5"),
-		Host6:                                  os.Getenv("HOST6"),
-		Host7:                                  os.Getenv("HOST7"),
-		Host8:                                  os.Getenv("HOST8"),
-		Host9:                                  os.Getenv("HOST9"),
-		Host10:                                 os.Getenv("HOST10"),
-		Port1:                                  os.Getenv("PORT1"),
-		Port2:                                  os.Getenv("PORT2"),
-		Port3:                                  os.Getenv("PORT3"),
-		Port4:                                  os.Getenv("PORT4"),
-		Port5:                                  os.Getenv("PORT5"),
-		Port6:                                  os.Getenv("PORT6"),
-		Port7:                                  os.Getenv("PORT7"),
-		Port8:                                  os.Getenv("PORT8"),
-		Port9:                                  os.Getenv("PORT9"),
-		Port10:                                 os.Getenv("PORT10"),
+		TrustedProxyHeader:                     trusted_proxy_header,
+		ReduceMemoryUsage:                      reduce_memory_usage,
+		ConcurrencyConnection:                  concurrency_connection,
 		RedisHost:                              os.Getenv("REDISHOST"),
 		RedisPort:                              redis_port,
 		RedisDBIndex:                           redis_dbindex,

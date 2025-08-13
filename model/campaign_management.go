@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"github.com/lib/pq"
@@ -25,8 +26,24 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 			campaign_details.is_active
 		`).
 		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
-		Group("campaigns.campaign_id, campaigns.name, campaigns.campaign_objective, campaign_details.country, campaign_details.partner, campaign_details.is_active, campaigns.created_at").
-		Order("campaigns.created_at DESC")
+		Group("campaigns.campaign_id, campaigns.name, campaigns.campaign_objective, campaign_details.country, campaign_details.partner, campaign_details.is_active, campaigns.created_at")
+
+		orderColumn := map[string]string{
+			"total_operator": "COUNT(DISTINCT campaign_details.operator)",
+			"service":        "COUNT(DISTINCT campaign_details.service)",
+			"total_adnet":    "COUNT(DISTINCT campaign_details.adnet)",
+		}
+		
+		if col, ok := orderColumn[o.OrderColumn]; ok {
+			dir := "ASC"
+			if strings.ToUpper(o.OrderDir) == "DESC" {
+				dir = "DESC"
+			}
+			query = query.Order(fmt.Sprintf("%s %s", col, dir))
+		} else {
+			query = query.Order("campaigns.created_at DESC")
+		}		
+		
 
 	if o.Action == "Search" {
 		if o.Country != "" {
@@ -57,6 +74,10 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 				query = query.Where("campaigns.campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
 			}
 		}
+		if o.URLServiceKey != "" {
+			query = query.Where("campaign_details.url_service_key ILIKE ?", "%"+o.URLServiceKey+"%")
+		}
+		
 	}
 
 	rows, err := query.Rows()
@@ -71,6 +92,7 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 	for rows.Next() {
 		var campaign entity.CampaignManagementData
 		var campaignIDs []int // Slice to store all IDs for a campaign
+		var urlKeys []string
 
 		r.DB.ScanRows(rows, &campaign)
 
@@ -84,6 +106,15 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 		}
 
 		campaign.ID = campaignIDs // Assign campaign IDs
+
+		// Get all url_service_key for this group
+		err = r.DB.Table("campaign_details").
+			Where("campaign_id = ? AND country = ? AND partner = ?", campaign.CampaignID, campaign.Country, campaign.Partner).
+			Pluck("DISTINCT url_service_key", &urlKeys).Error
+		if err != nil {
+			return nil, entity.CampaignCounts{}, err
+		}
+		campaign.URLServiceKey = urlKeys
 		campaigns = append(campaigns, campaign)
 
 		// Count total campaigns
@@ -164,7 +195,7 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 
 	query = query.Where("campaigns.campaign_id = ?", o.CampaignId).
 		Where("campaign_details.is_active = ?", o.Status).
-		Order("campaign_details.operator, campaign_details.service")
+		Order("CAST(SUBSTRING(campaign_details.url_service_key FROM '[0-9]+') AS INTEGER) ASC, campaign_details.operator, campaign_details.service")
 
 	rows, err := query.Rows()
 	if err != nil {

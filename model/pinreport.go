@@ -209,7 +209,7 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
-				query = query.Where("pxdate >= CURRENT_DATE AND pxdate < CURRENT_DATE + INTERVAL '1 day'")
+				query = query.Where("pxdate BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day' - INTERVAL '1 second'")
 			case "YESTERDAY":
 				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
 				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
@@ -229,7 +229,7 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 				query = query.Where("pxdate = ?", o.DateRange)
 			}
 		} else {
-			query = query.Where("pxdate >= CURRENT_DATE AND pxdate < CURRENT_DATE + INTERVAL '1 day'")
+			query = query.Where("pxdate BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day' - INTERVAL '1 second'")
 		}
 	}
 

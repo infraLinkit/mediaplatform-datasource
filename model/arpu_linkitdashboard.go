@@ -201,8 +201,8 @@ func (r *BaseModel) FetchAndUpdateARPUData(curdate_time time.Time) {
 	}
 
 	r.DB.Model(&entity.SummaryCampaign{}).
-		Distinct("country", "partner AS operator", "service").
-		Where("deleted_at IS NULL").
+		// Distinct("country", "partner AS operator", "service").
+		// Where("deleted_at IS NULL").
 		Where("mo_received > 0").
 		Where("summary_date = ? ", curdate_time).
 		Scan(&summaries)

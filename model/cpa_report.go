@@ -16,7 +16,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	// fmt.Println(query)
-	query = query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
+	query = query.Where("campaign_objective IN (?)", []string{"CPA", "UPLOAD SMS"})
 	query = query.Where("mo_received > 0")
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
@@ -52,7 +52,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
-				query = query.Where("summary_date >= CURRENT_DATE AND summary_date < CURRENT_DATE + INTERVAL '1 DAY'")
+				query = query.Where("summary_date = CURRENT_DATE")
 			case "YESTERDAY":
 				query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
 			case "LAST7DAY":
@@ -69,7 +69,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.Sum
 				query = query.Where("summary_date = ?", o.DateRange)
 			}
 		} else {
-			query = query.Where("summary_date >= CURRENT_DATE AND summary_date < CURRENT_DATE + INTERVAL '1 DAY'")
+			query = query.Where("summary_date = CURRENT_DATE")
 		}
 
 		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
@@ -233,7 +233,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]ent
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
-				query = query.Where("summary_date >= CURRENT_DATE AND summary_date < CURRENT_DATE + INTERVAL '1 DAY'")
+				query = query.Where("summary_date = CURRENT_DATE")
 			case "YESTERDAY":
 				query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
 			case "LAST7DAY":
@@ -251,7 +251,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]ent
 				query = query.Where("summary_date = ?", o.DateRange)
 			}
 		} else {
-			query = query.Where("summary_date >= CURRENT_DATE AND summary_date < CURRENT_DATE + INTERVAL '1 DAY'")
+			query = query.Where("summary_date = CURRENT_DATE")
 		}
 
 		if o.DataBasedOn != "" {
@@ -334,8 +334,6 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]ent
 	}
 
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-
-	fmt.Println("---- Query from DB / Not from Redis ----")
 
 	return ss, rows.Err()
 }

@@ -778,11 +778,12 @@ type (
 	}
 
 	Operator struct {
-		ID         uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-		Country    string    `gorm:"type:varchar(10)" json:"country"`
-		Name       string    `gorm:"type:varchar(30)" json:"name"`
-		IsActive   string    `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
-		Lastupdate time.Time `gorm:"type:timestamp" json:"lastupdate"`
+		ID         uint           `gorm:"primaryKey;autoIncrement" json:"id"`
+		Country    string         `gorm:"type:varchar(10)" json:"country"`
+		Name       string         `gorm:"type:varchar(30)" json:"name"`
+		IsActive   string         `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
+		Lastupdate time.Time      `gorm:"type:timestamp" json:"lastupdate"`
+		Prefix     pq.StringArray `gorm:"type:text[]" json:"prefix"`
 	}
 
 	Partner struct {

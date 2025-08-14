@@ -186,6 +186,8 @@ func (r *BaseModel) SendWakiCallback(curdate_time time.Time) error {
 		}.Do()
 
 		r.Logs.Info(fmt.Sprintf("✅ Sent to LinkIT: %s", fullURL))
+
+		time.Sleep(time.Duration(5) * time.Second)
 	}
 
 	return nil
@@ -290,6 +292,8 @@ func (r *BaseModel) FetchAndUpdateARPUData(curdate_time time.Time) {
 				r.Logs.Info(fmt.Sprintf("✅ ROI updated for adnet %s => %.2f\n", d.Adnet, d.Arpu90USDNet))
 			}
 		}
+
+		time.Sleep(time.Duration(5) * time.Second)
 	}
 }
 
@@ -413,7 +417,7 @@ func (r *BaseModel) SuccesRateLinkit(curdate_time time.Time) (entity.SuccessRate
 				successRate.Data.Operator, successRate.Data.Service, rateFloat))
 		}
 
-		time.Sleep(time.Duration(5) * time.Minute)
+		time.Sleep(time.Duration(5) * time.Second)
 
 		// if i < len(summaries)-1 {
 		// 	time.Sleep(5 * time.Minute)

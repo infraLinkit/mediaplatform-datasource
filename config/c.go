@@ -82,6 +82,9 @@ type (
 		ARPUUsername                           string
 		ARPUPassword                           string
 		APILINKITDashboard                     string
+		SendToLinkitDashboard                  bool
+		GetDataArpu                            bool
+		GetSuccessFP                           bool
 		GSType                                 string
 		GSProjectID                            string
 		GSPrivateKeyID                         string
@@ -122,6 +125,9 @@ func InitCfg() *Cfg {
 	trusted_proxy_header, _ := strconv.ParseBool(os.Getenv("TRUSTED_PROXY_HEADER"))
 	reduce_memory_usage, _ := strconv.ParseBool(os.Getenv("REDUCE_MEMORY_USAGE"))
 	concurrency_connection, _ := strconv.Atoi(os.Getenv("CONCURRENCY_CONNECTION"))
+	send_to_linkit_dashboard, _ := strconv.ParseBool(os.Getenv("SEND_TO_LINKIT_DASHBOARD"))
+	get_data_arpu, _ := strconv.ParseBool(os.Getenv("GET_DATA_ARPU"))
+	get_success_fp, _ := strconv.ParseBool(os.Getenv("GET_SUCCESS_FP"))
 
 	cfg := &Cfg{
 		AppDockerVer:                           os.Getenv("APP_DOCKER_VER"),
@@ -169,6 +175,9 @@ func InitCfg() *Cfg {
 		ARPUUsername:                           os.Getenv("ARPUUsername"),
 		ARPUPassword:                           os.Getenv("ARPUPassword"),
 		APILINKITDashboard:                     os.Getenv("APILINKITDashboard"),
+		SendToLinkitDashboard:                  send_to_linkit_dashboard,
+		GetDataArpu:                            get_data_arpu,
+		GetSuccessFP:                           get_success_fp,
 		GSType:                                 os.Getenv("GSTYPE"),
 		GSProjectID:                            os.Getenv("GSPROJECT_ID"),
 		GSPrivateKeyID:                         os.Getenv("GSPRIVATE_KEY_ID"),

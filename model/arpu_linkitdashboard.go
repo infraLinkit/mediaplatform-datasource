@@ -342,7 +342,7 @@ func (r *BaseModel) SuccesRateLinkit(curdate_time time.Time) (entity.SuccessRate
 		helper.Block{
 			Try: func() {
 
-				if resp, _, status_code, strlog, err = helper.Get(fullURL, map[string]string{}, helper.PHttp{
+				if resp, _, status_code, strlog, err = helper.Post(fullURL, map[string]string{}, []byte(""), helper.PHttp{
 					Timeout:            5,
 					KeepAlive:          3,
 					IsDisableKeepAlive: true,

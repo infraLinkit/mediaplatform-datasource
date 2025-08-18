@@ -151,28 +151,28 @@ func (h *IncomingHandler) DisplayPinPerformanceReport(c *fiber.Ctx) error {
 
 func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe entity.DisplayPinPerformanceReport) entity.ReturnResponse {
 
-	// key := "temp_key_api_pin_performance_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+	key := "temp_key_api_pin_performance_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err        error
-		total_data int64
-		// isempty              bool
+		err                  error
+		total_data           int64
+		isempty              bool
 		pinperformancereport []entity.ApiPinPerformance
 	)
 
-	// if fe.Action != "" {
-	pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
-	// } else {
-	// 	if pinperformancereport, isempty = h.DS.RGetApiPinPerformanceReport(key, "$"); isempty {
+	if fe.Action != "" {
+		pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
+	} else {
+		if pinperformancereport, isempty = h.DS.RGetApiPinPerformanceReport(key, "$"); isempty {
 
-	// 		pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
+			pinperformancereport, total_data, err = h.DS.GetApiPinPerformanceReport(fe)
 
-	// 		s, _ := json.Marshal(pinperformancereport)
+			s, _ := json.Marshal(pinperformancereport)
 
-	// 		h.DS.SetData(key, "$", string(s))
-	// 		h.DS.SetExpireData(key, 60)
-	// 	}
-	// }
+			h.DS.SetData(key, "$", string(s))
+			h.DS.SetExpireData(key, 60)
+		}
+	}
 
 	if err == nil {
 
@@ -397,11 +397,13 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 		Reload:       m["reload"],
 	}
 
-	r := h.DisplayCPAReportExtra(c, fe)
+	allowedCompanies, _ := c.Locals("companies").([]string)
+
+	r := h.DisplayCPAReportExtra(c, fe, allowedCompanies)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport) entity.ReturnResponse {
+func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport, allowedCompanies []string) entity.ReturnResponse {
 	// key := "temp_key_api_cpa_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
@@ -414,12 +416,12 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 
 	if fe.Action != "" || fe.Reload == "true" {
 		fmt.Println("-----", fe.Reload, "-----")
-		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe)
+		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 	} else {
 
 		// if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
 
-		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe)
+		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 
 		// s, _ := json.Marshal(cpareport)
 
@@ -536,13 +538,16 @@ func (h *IncomingHandler) ExportCpaReportExtraNoLimit(c *fiber.Ctx, fe entity.Di
 		// displaycpareport []entity.SummaryCampaign
 	)
 
+	
+	allowedCompanies, _ := c.Locals("companies").([]string)
+
 	if fe.Action != "" {
-		cpareport, _, err = h.DS.GetDisplayCPAReport(fe)
+		cpareport, _, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 	} else {
 
 		if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
 
-			cpareport, _, err = h.DS.GetDisplayCPAReport(fe)
+			cpareport, _, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 
 			s, _ := json.Marshal(cpareport)
 
@@ -608,11 +613,13 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 		Draw:         draw,
 	}
 
-	r := h.DisplayCostReportExtra(c, fe, v)
+	allowedAdnets, _ := c.Locals("adnets").([]string)
+
+	r := h.DisplayCostReportExtra(c, fe, v, allowedAdnets)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.DisplayCostReport, v string) entity.ReturnResponse {
+func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.DisplayCostReport, v string, allowedAdnets[]string) entity.ReturnResponse {
 	key := "temp_key_api_cost_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 	keydetail := "temp_key_api_cost_report_detail_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
@@ -625,10 +632,10 @@ func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.Display
 	)
 	if v == "list" {
 		if fe.Action != "" {
-			costreport, total_data, err = h.DS.GetDisplayCostReport(fe)
+			costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
 		} else {
 			if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
-				costreport, total_data, err = h.DS.GetDisplayCostReport(fe)
+				costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
 				s, _ := json.Marshal(costreport)
 				h.DS.SetData(key, "$", string(s))
 				h.DS.SetExpireData(key, 60)
@@ -706,7 +713,9 @@ func (h *IncomingHandler) ExportCostButton(c *fiber.Ctx) error {
 	export_cost := m["export_cost"]
 	if export_cost == "true" {
 
-		r := h.ExportCostReportExtraNoLimit(c, fe)
+		allowedAdnets, _ := c.Locals("adnets").([]string)
+
+		r := h.ExportCostReportExtraNoLimit(c, fe, allowedAdnets)
 		return c.Status(r.HttpStatus).JSON(r.Rsp)
 	}
 
@@ -716,7 +725,7 @@ func (h *IncomingHandler) ExportCostButton(c *fiber.Ctx) error {
 	})
 }
 
-func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.DisplayCostReport) entity.ReturnResponse {
+func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.DisplayCostReport, allowedAdnets[]string) entity.ReturnResponse {
 	key := "temp_key_api_cost_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
@@ -728,10 +737,10 @@ func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.D
 	)
 
 	if fe.Action != "" {
-		costreport, total_data, err = h.DS.GetDisplayCostReport(fe)
+		costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
 	} else {
 		if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
-			costreport, total_data, err = h.DS.GetDisplayCostReport(fe)
+			costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
 			s, _ := json.Marshal(costreport)
 			h.DS.SetData(key, "$", string(s))
 			h.DS.SetExpireData(key, 60)

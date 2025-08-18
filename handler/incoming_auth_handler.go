@@ -19,7 +19,7 @@ func (h *IncomingHandler) AuthMiddleware(c *fiber.Ctx) error {
 	}
 
 	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-	secret := os.Getenv("JWT_SECRET")
+	secret := strings.TrimSpace(os.Getenv("JWT_SECRET"))
 	if secret == "" {
 		h.Logs.Error("AuthMiddleware: JWT_SECRET environment variable not set")
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "JWT secret not configured"})

@@ -39,6 +39,8 @@ github.com/gofiber/storage/rueidis v1.2.3 h1:Ub2lZyhLUUe5l4+buqmLxVDigUqcwZIefjC
 github.com/gofiber/storage/rueidis v1.2.3/go.mod h1:1B8kFsYkQpTYbgF3gaLSD+0+ZE2Ewd3418wva4ANPKk=
 github.com/gofiber/utils/v2 v2.0.0-beta.4 h1:1gjbVFFwVwUb9arPcqiB6iEjHBwo7cHsyS41NeIW3co=
 github.com/gofiber/utils/v2 v2.0.0-beta.4/go.mod h1:sdRsPU1FXX6YiDGGxd+q2aPJRMzpsxdzCXo9dz+xtOY=
+github.com/golang-jwt/jwt/v4 v4.5.2 h1:YtQM7lnr8iZ+j5q71MGKkNw9Mn7AjHM68uc9g5fXeUI=
+github.com/golang-jwt/jwt/v4 v4.5.2/go.mod h1:m21LjoU+eqJr34lmDMbreY2eSTRJ1cv77w39/MY0Ch0=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=
 github.com/golang/protobuf v1.4.0-rc.1/go.mod h1:ceaxUfeHdC40wWswd/P6IGgMaK3YpKi5j83Wpe3EHw8=
 github.com/golang/protobuf v1.4.0-rc.1.0.20200221234624-67d41d38c208/go.mod h1:xKAWHe0F5eneWXFV3EuXVDTCmh+JuBKY0li0aMyXATA=

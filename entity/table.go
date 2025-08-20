@@ -324,7 +324,7 @@ type (
 		Currency          string    `gorm:"size:10;default:NA" json:"currency"`
 		PostbackMethod    string    `gorm:"size:50" json:"postback_method"`
 		LandingTime       time.Time `json:"landing_time"`
-		LandedTime        int       `gorm:"not null;length:20;default:0" json:"landed_time"`
+		LandedTime        float64   `gorm:"not null;length:20;default:0" json:"landed_time"`
 		HttpStatus        int       `gorm:"not null;length:10;default:0" json:"http_status"`
 		IsOperator        bool      `gorm:"not null;default:false" json:"is_operator"`
 		CreatedAt         time.Time

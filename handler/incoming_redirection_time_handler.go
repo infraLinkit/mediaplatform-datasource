@@ -182,7 +182,6 @@ func generateSummaryRedirection(data []entity.SummaryLanding, params entity.Redi
 		if days[date] == nil {
 			days[date] = make(map[string]map[string]interface{})
 		}
-
 		if totalsPerDay[date] == nil {
 			totalsPerDay[date] = make(map[string]float64)
 			countsPerDay[date] = make(map[string]int)
@@ -200,30 +199,24 @@ func generateSummaryRedirection(data []entity.SummaryLanding, params entity.Redi
 
 			prevValue := getPreviousValueRedirection(days[prevDate], indicator)
 
-			// Hitung Total & Count (untuk total keseluruhan)
+			// Hitung total untuk all
 			totals[indicator] += indicatorValue
 			counts[indicator]++
 
-			// Hitung per hari (untuk average "All")
+			// Hitung per hari (untuk daily avg & all avg)
 			totalsPerDay[date][indicator] += indicatorValue
 			countsPerDay[date][indicator]++
 
 			var newValue float64
-
-			// KHUSUS untuk "All", hitung average untuk indikator tertentu PER TANGGAL
-			if params.All == "true" && (indicator == "success_rate" || indicator == "response_time" || indicator == "total_load_time") {
-				count := countsPerDay[date][indicator]
-				if count > 0 {
-					newValue = totalsPerDay[date][indicator] / float64(count)
-				} else {
-					newValue = 0.0
+			// Khusus indikator yang harus avg
+			if indicator == "success_rate" || indicator == "response_time" || indicator == "total_load_time" {
+				cnt := countsPerDay[date][indicator]
+				if cnt > 0 {
+					newValue = totalsPerDay[date][indicator] / float64(cnt)
 				}
 			} else {
-				// Default: jumlahkan value
-				currentValue, ok := days[date][indicator]["value"].(float64)
-				if !ok {
-					currentValue = 0.0
-				}
+				// indikator lain: sum
+				currentValue, _ := days[date][indicator]["value"].(float64)
 				newValue = currentValue + indicatorValue
 			}
 
@@ -239,22 +232,19 @@ func generateSummaryRedirection(data []entity.SummaryLanding, params entity.Redi
 	summaryData := map[string]interface{}{
 		"data_indicators": params.DataIndicators,
 		"total":           totals,
-		"avg": countAverageRedirection(totals, counts, startDate, endDate),
+		"avg":             countAverageRedirection(totals, counts, startDate, endDate),
 		"t_mo_end":        tmoEnd,
 	}
 
-	// Merge with daily/monthly breakdowns
 	completeSummary := mergeDaysRedirection(summaryData, days)
-
 	return completeSummary
 }
-
 
 func generateHourlySummaryRedirection(data []entity.SummaryLanding, params entity.RedirectionTimeParams, date time.Time) map[string]interface{} {
 	hours := make(map[string]map[string]map[string]interface{})
 	totals := make(map[string]float64)
+	counts := make(map[string]int)
 
-	// Siapkan struktur untuk 24 jam (00–23)
 	for i := 0; i < 24; i++ {
 		hourStr := fmt.Sprintf("%02d", i)
 		hours[hourStr] = make(map[string]map[string]interface{})
@@ -267,50 +257,47 @@ func generateHourlySummaryRedirection(data []entity.SummaryLanding, params entit
 	}
 
 	for _, campaign := range data {
-		// Pastikan hanya data dengan tanggal yang sama
 		if !sameDay(campaign.SummaryDateHour, date) {
 			continue
 		}
-
 		hour := campaign.SummaryDateHour.Format("15")
 		prevHour := campaign.SummaryDateHour.Add(-1 * time.Hour).Format("15")
 
 		for _, indicator := range params.DataIndicators {
-			indicatorValue := getIndicatorValueRedirection(campaign, indicator)
+			val := getIndicatorValueRedirection(campaign, indicator)
 
-			currentValue := hours[hour][indicator]["value"].(float64)
-			newValue := currentValue + indicatorValue
+			current := hours[hour][indicator]["value"].(float64)
+			newValue := current + val
 			hours[hour][indicator]["value"] = newValue
 
+			// Count untuk avg per jam
+			totals[indicator] += val
+			counts[indicator]++
+
 			prevValue := 0.0
-			if val, ok := hours[prevHour]; ok {
-				if pv, exists := val[indicator]; exists {
+			if valMap, ok := hours[prevHour]; ok {
+				if pv, exists := valMap[indicator]; exists {
 					prevValue, _ = pv["value"].(float64)
 				}
 			}
-
 			hours[hour][indicator]["percentage"] = countPercentageRedirection(newValue, prevValue)
-			totals[indicator] += indicatorValue
 		}
 	}
 
-	// Hapus jam-jam yang belum terjadi jika date adalah hari ini
+	// Hapus jam yg belum terjadi jika hari ini
 	if sameDay(date, time.Now()) {
-		currentHour := time.Now().Hour()
-		for i := currentHour + 1; i < 24; i++ {
-			hourStr := fmt.Sprintf("%02d", i)
-			delete(hours, hourStr)
+		currHour := time.Now().Hour()
+		for i := currHour + 1; i < 24; i++ {
+			delete(hours, fmt.Sprintf("%02d", i))
 		}
 	}
 
 	summaryData := map[string]interface{}{
 		"data_indicators": params.DataIndicators,
 		"total":           totals,
-		"avg":             countAverageRedirectionHourly(totals, hours),
+		"avg":             countAverageRedirection(totals, counts, date, date),
 	}
-
 	completeSummary := mergeHoursRedirection(summaryData, hours)
-
 	return completeSummary
 }
 
@@ -487,10 +474,8 @@ func countTmoEndRedirection(totals map[string]float64, startDate time.Time, endD
 
 func countAverageRedirection(totals map[string]float64, counts map[string]int, startDate, endDate time.Time) map[string]float64 {
 	averages := map[string]float64{}
-
 	for key, total := range totals {
 		count := counts[key]
-
 		if count > 0 {
 			avg := total / float64(count)
 			if key == "success_rate" && avg > 100 {
@@ -498,10 +483,9 @@ func countAverageRedirection(totals map[string]float64, counts map[string]int, s
 			}
 			averages[key] = avg
 		} else {
-			averages[key] = 0.0
+			averages[key] = 0
 		}
 	}
-
 	return averages
 }
 
@@ -610,39 +594,85 @@ func sortDataRedirection(data []map[string]interface{}, dataBasedOn string, data
 func generateHourlyChartRedirection(data []entity.SummaryLanding, params entity.RedirectionTimeParams, date time.Time) map[string][]map[string]interface{} {
 	chart := make(map[string][]map[string]interface{})
 
-	// Inisialisasi untuk semua indikator
+	// Inisialisasi chart untuk semua indikator
 	for _, indicator := range params.DataIndicators {
 		chart[indicator] = []map[string]interface{}{}
 	}
 
 	// Siapkan nilai awal per jam
 	hourlyMap := make(map[string]map[string]float64) // hour => indicator => value
+	hoursToUse := []string{}
 	for i := 0; i < 24; i++ {
 		hourStr := fmt.Sprintf("%02d", i)
+		hoursToUse = append(hoursToUse, hourStr)
 		hourlyMap[hourStr] = make(map[string]float64)
 		for _, indicator := range params.DataIndicators {
 			hourlyMap[hourStr][indicator] = 0.0
 		}
 	}
 
-	// Kelompokkan nilai berdasarkan jam dan indikator
+	// Kelompokkan data berdasarkan jam dan indikator
 	for _, item := range data {
+		// Filter: hanya tanggal yang sama
 		if !sameDay(item.SummaryDateHour, date) {
+			continue
+		}
+		// Filter: jika URLServiceKey diberikan, hanya ambil yang sama
+		if params.URLServiceKey != "" && item.URLServiceKey != params.URLServiceKey {
 			continue
 		}
 
 		hour := item.SummaryDateHour.Format("15")
 		for _, indicator := range params.DataIndicators {
 			val := getIndicatorValueRedirection(item, indicator)
-			hourlyMap[hour][indicator] += val
+
+			// Jika All = true & indikator tertentu → hitung rata-rata per jam
+			if params.All == "true" && (indicator == "success_rate" || indicator == "response_time" || indicator == "total_load_time") {
+				current := hourlyMap[hour][indicator]
+				hourlyMap[hour][indicator] = current + val // total sementara
+			} else {
+				hourlyMap[hour][indicator] += val
+			}
 		}
 	}
 
-	// Hitung percentage dan bentuk data chart
-	for i := 0; i < 24; i++ {
-		hourStr := fmt.Sprintf("%02d", i)
-		prevHourStr := fmt.Sprintf("%02d", i-1)
+	// Hitung rata-rata untuk All per jam
+	if params.All == "true" {
+		countsPerHour := make(map[string]map[string]int) // hour -> indicator -> count
+		for _, item := range data {
+			if !sameDay(item.SummaryDateHour, date) {
+				continue
+			}
+			if params.URLServiceKey != "" && item.URLServiceKey != params.URLServiceKey {
+				continue
+			}
 
+			hour := item.SummaryDateHour.Format("15")
+			if countsPerHour[hour] == nil {
+				countsPerHour[hour] = make(map[string]int)
+			}
+			for _, indicator := range params.DataIndicators {
+				if indicator == "success_rate" || indicator == "response_time" || indicator == "total_load_time" {
+					countsPerHour[hour][indicator]++
+				}
+			}
+		}
+
+		// Update hourlyMap menjadi rata-rata
+		for hour, indicators := range countsPerHour {
+			for indicator, cnt := range indicators {
+				if cnt > 0 {
+					hourlyMap[hour][indicator] = hourlyMap[hour][indicator] / float64(cnt)
+				} else {
+					hourlyMap[hour][indicator] = 0.0
+				}
+			}
+		}
+	}
+
+	// Bentuk data chart dengan percentage
+	for i, hourStr := range hoursToUse {
+		prevHourStr := fmt.Sprintf("%02d", i-1)
 		for _, indicator := range params.DataIndicators {
 			current := hourlyMap[hourStr][indicator]
 			previous := 0.0
@@ -659,7 +689,7 @@ func generateHourlyChartRedirection(data []entity.SummaryLanding, params entity.
 		}
 	}
 
-	// Hapus jam-jam yang belum terjadi jika tanggal adalah hari ini
+	// Hapus jam yang belum terjadi jika tanggal adalah hari ini
 	if sameDay(date, time.Now()) {
 		currentHour := time.Now().Hour()
 		for _, indicator := range params.DataIndicators {
@@ -669,3 +699,4 @@ func generateHourlyChartRedirection(data []entity.SummaryLanding, params entity.
 
 	return chart
 }
+

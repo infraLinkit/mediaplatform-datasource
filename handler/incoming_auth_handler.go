@@ -54,6 +54,16 @@ func (h *IncomingHandler) AuthMiddleware(c *fiber.Ctx) error {
 		}
 	}
 
+	if tokenType, ok := claims["type"].(string); !ok || tokenType != "access" {
+		h.Logs.Warn("AuthMiddleware: Invalid token type")
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token type"})
+	}
+
+	if jti, ok := claims["jti"].(string); !ok || jti == "" {
+		h.Logs.Warn("AuthMiddleware: Missing or invalid jti in token")
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token (jti)"})
+	}
+
 	var userID int
 	switch v := claims["sub"].(type) {
 	case float64:

@@ -10,14 +10,18 @@ import (
 type (
 	Campaign struct {
 		gorm.Model
-		ID                int    `gorm:"primaryKey;autoIncrement" json:"id"`
-		CampaignId        string `gorm:"index:idx_campid_unique;not null;size:50" json:"campaign_id"`
-		Name              string `gorm:"not null;size:50" json:"name"`
-		CampaignObjective string `gorm:"not null;size:50" json:"campaign_objective"`
-		Country           string `gorm:"not null;size:50" json:"country"`
-		Advertiser        string `gorm:"not null;size:50" json:"advertiser"`
-		CreatedAt         time.Time
-		UpdatedAt         time.Time
+		ID                  int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		CampaignId          string `gorm:"index:idx_campid_unique;not null;size:50" json:"campaign_id"`
+		Name                string `gorm:"not null;size:50" json:"name"`
+		CampaignObjective   string `gorm:"not null;size:50" json:"campaign_objective"`
+		Country             string `gorm:"not null;size:50" json:"country"`
+		Advertiser          string `gorm:"not null;size:50" json:"advertiser"`
+		SingleURLServiceKey string `gorm:"not null;size:50" json:"singleurlservicekey"`
+		URLLanding          string `gorm:"type:text;default:NA" json:"url_landing"`
+		URLWarpLanding      string `gorm:"type:text;default:NA" json:"url_warp_landing"`
+		MCC                 string `gorm:"not null;size:50" json:"mcc"`
+		CreatedAt           time.Time
+		UpdatedAt           time.Time
 	}
 
 	CampaignDetail struct {

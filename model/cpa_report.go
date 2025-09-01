@@ -9,15 +9,16 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
-func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport) ([]entity.SummaryCampaign, int64, error) {
+func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, int64, error) {
 	var rows *sql.Rows
 	var err error
 	var total_rows int64
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	// fmt.Println(query)
-	query = query.Where("campaign_objective IN (?)", []string{"CPA", "UPLOAD SMS"})
+	query = query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
 	query = query.Where("mo_received > 0")
+	query = query.Where("company IN ?", allowedCompanies)
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
@@ -185,7 +186,7 @@ func (r *BaseModel) FindLatestSummaryCampaignByUniqueKey(service, adnet, operato
 	return s, result.Error
 }
 
-func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]entity.SummaryCampaign, error) {
+func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, error) {
 	var rows *sql.Rows
 	var err error
 
@@ -193,6 +194,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport) ([]ent
 	// fmt.Println(query)
 	query = query.Where("campaign_objective = ?", "MAINSTREAM")
 	query = query.Where("mo_received > 0")
+	query = query.Where("company IN ?", allowedCompanies)
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("LOWER(campaign_id) = LOWER(?)", o.CampaignId)
@@ -370,7 +372,7 @@ func (r *BaseModel) UpdateAgencyCostModel(o entity.SummaryCampaign) error {
 
 }
 
-func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport) ([]entity.CostReport, int64, error) {
+func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdnets []string) ([]entity.CostReport, int64, error) {
 	var (
 		rows       *sql.Rows
 		err        error
@@ -379,6 +381,7 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport) ([]entity.C
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	query = query.Where("mo_received > 0")
+	query = query.Where("adnet IN ?", allowedAdnets)
 
 	if o.Action == "Search" {
 
@@ -540,21 +543,39 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 				}
 			}
 		}
-
+		/*
+			rows, err = query.Select(`
+				adnet,
+				MAX(summary_date) as summary_date,
+				country,
+				operator,
+				SUM(traffic) as landing,
+				SUM(cr_postback) as cr_postback,
+				short_code,
+				url_after,
+				SUM(postback) as conversion1,
+				SUM(sbaf) as cost1,
+				NULL as conversion2,
+				NULL as cost2
+			`).Group("adnet, country, operator, short_code, url_after").
+				Rows()
+		*/
 		rows, err = query.Select(`
 			adnet,
-			MAX(summary_date) as summary_date,
+			summary_date,
 			country,
 			operator,
 			SUM(traffic) as landing,
-			SUM(cr_postback) as cr_postback,
+			CASE WHEN SUM(traffic)=0 THEN 0 ELSE SUM(postback)/SUM(traffic) END as cr_postback,
+			CASE WHEN SUM(traffic)=0 THEN 0 ELSE SUM(mo_received)/SUM(traffic) END as cr_mo,
 			short_code,
 			url_after,
 			SUM(postback) as conversion1,
+			SUM(mo_received) as mo_conversion1,
 			SUM(sbaf) as cost1,
 			NULL as conversion2,
 			NULL as cost2
-		`).Group("adnet, country, operator, short_code, url_after").
+		`).Group("summary_date, adnet, country, operator, short_code, url_after").Order("summary_date ASC").
 			Rows()
 
 		if o.DataBasedOn != "" {
@@ -586,18 +607,20 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 
 		rows, err = query.Select(`
 			adnet,
-			MAX(summary_date) as summary_date,
+			summary_date,
 			country,
 			operator,
 			SUM(traffic) as landing,
-			SUM(cr_postback) as cr_postback,
+			CASE WHEN SUM(traffic)=0 THEN 0 ELSE SUM(postback)/SUM(traffic) END as cr_postback,
+			CASE WHEN SUM(traffic)=0 THEN 0 ELSE SUM(mo_received)/SUM(traffic) END as cr_mo,
 			short_code,
 			url_after,
 			SUM(postback) as conversion1,
+			SUM(mo_received) as mo_conversion1,
 			SUM(sbaf) as cost1,
 			NULL as conversion2,
 			NULL as cost2
-		`).Group("adnet, country, operator, adn, url_after").
+		`).Group("summary_date, adnet, country, operator, adn, url_after").
 			Rows()
 
 		if err != nil {

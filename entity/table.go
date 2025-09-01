@@ -706,9 +706,10 @@ type (
 		UpdatedAt       time.Time
 
 		// Relations
-		Role       Role         `gorm:"foreignKey:RoleID;references:ID"`
-		DetailUser []DetailUser `gorm:"foreignKey:UserID;references:ID"`
-		UserAdnet  []UserAdnet  `gorm:"foreignKey:UserID;references:ID"`
+		Role         Role           `gorm:"foreignKey:RoleID;references:ID"`
+		DetailUser   []DetailUser   `gorm:"foreignKey:UserID;references:ID"`
+		UserAdnet    []UserAdnet    `gorm:"foreignKey:UserID;references:ID"`
+		UserCompany  []UserCompany  `gorm:"foreignKey:UserID;references:ID"`
 	}
 
 	CcEmail struct {
@@ -758,7 +759,8 @@ type (
 		UpdatedAt time.Time
 
 		// Relations
-		User User `gorm:"foreignKey:UserID;references:ID"`
+		User  User      `gorm:"foreignKey:UserID;references:ID"`
+		Adnet AdnetList `gorm:"foreignKey:AdnetID;references:ID"`
 	}
 
 	Country struct {
@@ -913,6 +915,19 @@ type (
 		ISP               string    `gorm:"type:varchar(50);uniqueIndex:idx_ip_range_unique" json:"isp"`
 		MobileCountryCode string    `gorm:"type:varchar(10)" json:"mobile_country_code"`
 		Country           string    `gorm:"type:varchar(10)" json:"country"`
+	}
+
+	UserCompany struct {
+		ID        int       `gorm:"primaryKey" json:"id"`
+		UserID    int       `json:"user_id"`
+		CompanyID int       `json:"company_id"`
+		Status    bool      `json:"status"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
+	
+		// Relations
+		User    User    `gorm:"foreignKey:UserID;references:ID"`
+		Company Company `gorm:"foreignKey:CompanyID;references:ID"`
 	}
 )
 

@@ -23,18 +23,18 @@ type (
 	}
 
 	DataCampaignAction struct {
-		Action       string       `json:"action"`
-		Id           int          `json:"id"`
-		CampaignId   string       `json:"campaign_id"`
-		CampaignName string       `json:"name"`
-		Objective    string       `json:"campaign_objective"`
-		Country      string       `json:"country"`
-		Advertiser   string       `json:"advertiser"`
-		IsDelCamp    bool         `json:"is_del_camp"`
-		CPCR         string       `json:"cost_per_conversion"`
-		AgencyFee    string       `json:"agency_fee"`
-		MCC          string       `json:"mcc"`
-		DataConfig   []DataConfig `json:"data"`
+		Action       string `json:"action"`
+		Id           int    `json:"id"`
+		CampaignId   string `json:"campaign_id"`
+		CampaignName string `json:"name"`
+		Objective    string `json:"campaign_objective"`
+		Country      string `json:"country"`
+		Advertiser   string `json:"advertiser"`
+		IsDelCamp    bool   `json:"is_del_camp"`
+		CPCR         string `json:"cost_per_conversion"`
+		AgencyFee    string `json:"agency_fee"`
+		//MCC          string       `json:"mcc"`
+		DataConfig []DataConfig `json:"data"`
 	}
 
 	DataConfig struct {

@@ -10,18 +10,18 @@ import (
 type (
 	Campaign struct {
 		gorm.Model
-		ID                  int    `gorm:"primaryKey;autoIncrement" json:"id"`
-		CampaignId          string `gorm:"index:idx_campid_unique;not null;size:50" json:"campaign_id"`
-		Name                string `gorm:"not null;size:50" json:"name"`
-		CampaignObjective   string `gorm:"not null;size:50" json:"campaign_objective"`
-		Country             string `gorm:"not null;size:50" json:"country"`
-		Advertiser          string `gorm:"not null;size:50" json:"advertiser"`
-		SingleURLServiceKey string `gorm:"not null;size:50" json:"singleurlservicekey"`
+		ID                int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		CampaignId        string `gorm:"index:idx_campid_unique;not null;size:50" json:"campaign_id"`
+		Name              string `gorm:"not null;size:50" json:"name"`
+		CampaignObjective string `gorm:"not null;size:50" json:"campaign_objective"`
+		Country           string `gorm:"not null;size:50" json:"country"`
+		Advertiser        string `gorm:"not null;size:50" json:"advertiser"`
+		/* SingleURLServiceKey string `gorm:"not null;size:50" json:"singleurlservicekey"`
 		URLLanding          string `gorm:"type:text;default:NA" json:"url_landing"`
 		URLWarpLanding      string `gorm:"type:text;default:NA" json:"url_warp_landing"`
-		MCC                 string `gorm:"not null;size:50" json:"mcc"`
-		CreatedAt           time.Time
-		UpdatedAt           time.Time
+		MCC                 string `gorm:"not null;size:50" json:"mcc"` */
+		CreatedAt time.Time
+		UpdatedAt time.Time
 	}
 
 	CampaignDetail struct {
@@ -117,6 +117,8 @@ type (
 		MCC                       string    `gorm:"size:10;default:NA" json:"mcc"`
 		ClickableAnywhere         bool      `gorm:"not null;default:false" json:"clickable_anywhere"`
 		NonTargetURL              string    `gorm:"type:text;default:NA" json:"non_target_url"`
+		EnableIpRanges            bool      `gorm:"not null;default:false" json:"enable_ip_ranges"`
+		ConversionName            string    `gorm:"size:50;default:NA" json:"conversion_name"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}
@@ -706,10 +708,10 @@ type (
 		UpdatedAt       time.Time
 
 		// Relations
-		Role         Role           `gorm:"foreignKey:RoleID;references:ID"`
-		DetailUser   []DetailUser   `gorm:"foreignKey:UserID;references:ID"`
-		UserAdnet    []UserAdnet    `gorm:"foreignKey:UserID;references:ID"`
-		UserCompany  []UserCompany  `gorm:"foreignKey:UserID;references:ID"`
+		Role        Role          `gorm:"foreignKey:RoleID;references:ID"`
+		DetailUser  []DetailUser  `gorm:"foreignKey:UserID;references:ID"`
+		UserAdnet   []UserAdnet   `gorm:"foreignKey:UserID;references:ID"`
+		UserCompany []UserCompany `gorm:"foreignKey:UserID;references:ID"`
 	}
 
 	CcEmail struct {
@@ -918,13 +920,13 @@ type (
 	}
 
 	UserCompany struct {
-		ID        int       `gorm:"primaryKey" json:"id"`
-		UserID    int       `json:"user_id"`
-		CompanyID int       `json:"company_id"`
-		Status    bool      `json:"status"`
+		ID        int  `gorm:"primaryKey" json:"id"`
+		UserID    int  `json:"user_id"`
+		CompanyID int  `json:"company_id"`
+		Status    bool `json:"status"`
 		CreatedAt time.Time
 		UpdatedAt time.Time
-	
+
 		// Relations
 		User    User    `gorm:"foreignKey:UserID;references:ID"`
 		Company Company `gorm:"foreignKey:CompanyID;references:ID"`

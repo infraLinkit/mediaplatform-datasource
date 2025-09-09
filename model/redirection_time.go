@@ -134,7 +134,7 @@ func (r *BaseModel) GetRedirectionTime(params entity.RedirectionTimeParams) ([]e
 		results = append(results, row)
 
 		// KPI Check
-		if row.TotalLoadTime > 300 {
+		if row.TotalLoadTime > 3.0 {
 			kpiStats.ExceedLoadTimeCount++
 		}
 		if row.ResponseTime > 0.3 {
@@ -256,10 +256,6 @@ func formatQueryIndicatorsRedirection(selects []string, dataType string) []strin
 			formatted = append(formatted, fmt.Sprintf("SUM(%s) AS %s", value, value))
 		case "click_non_operator":
 			formatted = append(formatted, fmt.Sprintf("SUM(%s) AS %s", value, value))
-		case "total_load_time":
-			formatted = append(formatted, fmt.Sprintf("AVG(%s) / 1000.0 AS %s", value, value))
-		case "response_time":
-			formatted = append(formatted, fmt.Sprintf("AVG(%s) / 1000.0 AS %s", value, value))
 		default:
 			formatted = append(formatted, fmt.Sprintf("AVG(%s) AS %s", value, value))
 		}

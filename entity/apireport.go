@@ -70,7 +70,7 @@ type (
 		Partner           string    `form:"partner" json:"partner"`
 		Agency            string    `form:"agency" json:"agency"`
 		Aggregator        string    `form:"aggregator" json:"aggregator"`
-		Adnet             string    `form:"adnet" json:"adnet"`
+		Adnets 			  []string  `form:"adnet" json:"adnet"`
 		Service           string    `form:"service" json:"service"`
 		DataBasedOn       string    `form:"data_based_on" json:"data_based_on"`
 		Cost              float64   `form:"cost" json:"cost"`
@@ -90,6 +90,8 @@ type (
 		DateAfter         string    `form:"date_after" json:"date_after"`
 		Draw              int       `form:"draw" json:"draw"`
 		Reload            string    `form:"draw" json:"reload"`
+		OrderColumn   string `form:"order_column" json:"order_column"`
+		OrderDir      string `form:"order_dir" json:"order_dir"`
 	}
 
 	CostReport struct {

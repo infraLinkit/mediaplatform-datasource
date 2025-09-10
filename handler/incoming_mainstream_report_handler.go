@@ -27,6 +27,12 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 		pageSize = PAGESIZE
 	}
 	draw, _ := strconv.Atoi(m["draw"])
+	var adnets []string
+    for k, v := range m {
+        if strings.HasPrefix(k, "adnet[") {
+            adnets = append(adnets, v)
+        }
+    }
 	fe := entity.DisplayCPAReport{
 		SummaryDate:   time.Time{},
 		CampaignId:    m["campaign_id"],
@@ -40,7 +46,7 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 		Channel:       m["channel"],
 		Agency:        m["agency"],
 		Aggregator:    m["aggregator"],
-		Adnet:         m["adnet"],
+		Adnets:        adnets,
 		Service:       m["service"],
 		DataBasedOn:   m["data_based_on"],
 		Draw:          draw,
@@ -50,6 +56,8 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 		DateRange:     m["date_range"],
 		DateBefore:    m["date_before"],
 		DateAfter:     m["date_after"],
+		OrderColumn:    m["order_column"],
+		OrderDir:       m["order_dir"],
 	}
 
 	allowedCompanies, _ := c.Locals("companies").([]string)
@@ -59,6 +67,7 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 }
 
 func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport, allowedCompanies[]string) entity.ReturnResponse {
+	adnetKey := strings.Join(fe.Adnets, ",")
 	key := "temp_key_api_mainstream_report" +
 		"_" + fe.CampaignId +
 		"_" + fe.CampaignName +
@@ -71,12 +80,14 @@ func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.D
 		"_" + fe.Channel +
 		"_" + fe.Agency +
 		"_" + fe.Aggregator +
-		"_" + fe.Adnet +
+		"_" + adnetKey +
 		"_" + fe.Service +
 		"_" + fe.DataBasedOn +
 		"_" + fe.DateRange +
 		"_" + fe.DateBefore +
 		"_" + fe.DateAfter +
+		"_" + fe.OrderColumn + 
+		"_" + fe.OrderDir + 
 		"_" + strconv.Itoa(fe.Page) +
 		"_" + strconv.Itoa(fe.PageSize) + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 	var (

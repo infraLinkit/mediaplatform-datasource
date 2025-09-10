@@ -15,10 +15,10 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 	var total_rows int64
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
-	// fmt.Println(query)
 	query = query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
 	query = query.Where("mo_received > 0")
 	query = query.Where("company IN ?", allowedCompanies)
+
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
@@ -44,12 +44,13 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		if o.Partner != "" {
 			query = query.Where("partner = ?", o.Partner)
 		}
-		if o.Adnet != "" { //Publisher
-			query = query.Where("adnet = ?", o.Adnet)
+		if len(o.Adnets) > 0 {
+			query = query.Where("adnet IN ?", o.Adnets)
 		}
 		if o.Service != "" {
 			query = query.Where("service = ?", o.Service)
 		}
+		
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
@@ -72,16 +73,23 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		} else {
 			query = query.Where("summary_date = CURRENT_DATE")
 		}
+	} else {
+		query = query.Where("summary_date = CURRENT_DATE")
+	}
 
-		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
-		if err != nil {
-			return []entity.SummaryCampaign{}, 0, err
+	if o.OrderColumn != "" {
+		dir := "ASC"
+		if strings.ToUpper(o.OrderDir) == "DESC" {
+			dir = "DESC"
+		}
+
+		if o.OrderColumn == "waki_revenue" {
+			query = query.Order(fmt.Sprintf("(saaf - sbaf) %s", dir))
+		} else {
+			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
 		}
 	} else {
-		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
-		if err != nil {
-			return []entity.SummaryCampaign{}, 0, err
-		}
+		query = query.Order("summary_date DESC").Order("id DESC")
 	}
 
 	query.Unscoped().Count(&total_rows)
@@ -91,16 +99,16 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
 	}
 
-	rows, _ = query_limit.Rows()
+	rows, err = query_limit.Rows()
+	if err != nil {
+		return []entity.SummaryCampaign{}, 0, err
+	}
 	defer rows.Close()
 
 	var ss []entity.SummaryCampaign
-
 	for rows.Next() {
 		var s entity.SummaryCampaign
-
 		r.DB.ScanRows(rows, &s)
-
 		ss = append(ss, s)
 	}
 
@@ -191,10 +199,10 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 	var err error
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
-	// fmt.Println(query)
-	query = query.Where("campaign_objective = ?", "MAINSTREAM")
-	query = query.Where("mo_received > 0")
-	query = query.Where("company IN ?", allowedCompanies)
+	query = query.Where("campaign_objective = ?", "MAINSTREAM").
+		Where("mo_received > 0").
+		Where("company IN ?", allowedCompanies)
+
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("LOWER(campaign_id) = LOWER(?)", o.CampaignId)
@@ -226,12 +234,14 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		if o.Partner != "" {
 			query = query.Where("LOWER(partner) = LOWER(?)", o.Partner)
 		}
-		if o.Adnet != "" { //Publisher
-			query = query.Where("LOWER(adnet) = LOWER(?)", o.Adnet)
-		}
+		if len(o.Adnets) > 0 {
+            query = query.Where("adnet IN ?", o.Adnets)
+        }
 		if o.Service != "" {
-			query = query.Where("LOWER(service) = LOWER(?0", o.Service)
+			query = query.Where("LOWER(service) = LOWER(?)", o.Service)
 		}
+
+		// Date range filter
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
@@ -249,94 +259,91 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 			case "CUSTOMRANGE":
 				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
 			case "ALLDATERANGE":
+				// no filter
 			default:
 				query = query.Where("summary_date = ?", o.DateRange)
 			}
 		} else {
 			query = query.Where("summary_date = CURRENT_DATE")
 		}
-
-		if o.DataBasedOn != "" {
-			switch strings.ToUpper(o.DataBasedOn) {
-			case "HIGHEST_PIXEL_RECEIVED":
-				query = query.Order("mo_received DESC")
-			case "HIGHEST_PIXEL_SEND":
-				query = query.Order("postback DESC")
-			case "HIGHEST_PRICE_PER_POSTBACK":
-				query = query.Order("po DESC")
-			case "HIGHEST_COST_PER_CONVERSION":
-				query = query.Order("cost_per_conversion DESC")
-			case "HIGHEST_AGENCY_FEE":
-				query = query.Order("agency_fee DESC")
-			case "HIGHEST_SPENDING_TO_ADNETS":
-				query = query.Order("sbaf DESC")
-			case "HIGHEST_TOTAL_WAKI_AGENCY_FEE":
-				query = query.Order("total_waki_agency_fee DESC")
-			case "HIGHEST_TOTAL_SPENDING":
-				query = query.Order("saaf DESC")
-			case "HIGHEST_ECPA":
-				query = query.Order("cpa DESC")
-			case "HIGHEST_LANDING":
-				query = query.Order("traffic DESC")
-			case "HIGHEST_POSTBACK":
-				query = query.Order("cr_postback DESC")
-			case "HIGHEST_MO":
-				query = query.Order("cr_mo DESC")
-			case "LOWEST_PIXEL_RECEIVED":
-				query = query.Order("pixel_received ASC")
-			case "LOWEST_PIXEL_SEND":
-				query = query.Order("postback ASC")
-			case "LOWEST_PRICE_PER_POSTBACK":
-				query = query.Order("po ASC")
-			case "LOWEST_COST_PER_CONVERSION":
-				query = query.Order("cost_per_conversion ASC")
-			case "LOWEST_AGENCY_FEE":
-				query = query.Order("agency_fee ASC")
-			case "LOWEST_SPENDING_TO_ADNETS":
-				query = query.Order("sbaf ASC")
-			case "LOWEST_TOTAL_WAKI_AGENCY_FEE":
-				query = query.Order("total_waki_agency_fee ASC")
-			case "LOWEST_TOTAL_SPENDING":
-				query = query.Order("saaf ASC")
-			case "LOWEST_ECPA":
-				query = query.Order("cpa ASC")
-			case "LOWEST_LANDING":
-				query = query.Order("traffic ASC")
-			case "LOWEST_POSTBACK":
-				query = query.Order("cr_postback ASC")
-			case "LOWEST_MO":
-				query = query.Order("cr_mo ASC")
-			}
-		}
-
-		rows, err = query.Order("created_at DESC").Order("id DESC").Rows()
-		if err != nil {
-			return []entity.SummaryCampaign{}, err
-		}
-	} else {
-		rows, err = query.Order("summary_date DESC").Order("id DESC").Rows()
-		if err != nil {
-			return []entity.SummaryCampaign{}, err
-		}
 	}
 
-	if rows == nil {
-		return []entity.SummaryCampaign{}, nil
+	if o.OrderColumn != "" {
+		dir := "ASC"
+		if strings.ToUpper(o.OrderDir) == "DESC" {
+			dir = "DESC"
+		}
+		query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
+	} else if o.DataBasedOn != "" {
+		switch strings.ToUpper(o.DataBasedOn) {
+		case "HIGHEST_PIXEL_RECEIVED":
+			query = query.Order("mo_received DESC")
+		case "HIGHEST_PIXEL_SEND":
+			query = query.Order("postback DESC")
+		case "HIGHEST_PRICE_PER_POSTBACK":
+			query = query.Order("po DESC")
+		case "HIGHEST_COST_PER_CONVERSION":
+			query = query.Order("cost_per_conversion DESC")
+		case "HIGHEST_AGENCY_FEE":
+			query = query.Order("agency_fee DESC")
+		case "HIGHEST_SPENDING_TO_ADNETS":
+			query = query.Order("sbaf DESC")
+		case "HIGHEST_TOTAL_WAKI_AGENCY_FEE":
+			query = query.Order("total_waki_agency_fee DESC")
+		case "HIGHEST_TOTAL_SPENDING":
+			query = query.Order("saaf DESC")
+		case "HIGHEST_ECPA":
+			query = query.Order("cpa DESC")
+		case "HIGHEST_LANDING":
+			query = query.Order("landing DESC")
+		case "HIGHEST_POSTBACK":
+			query = query.Order("cr_postback DESC")
+		case "HIGHEST_MO":
+			query = query.Order("cr_mo DESC")
+		case "LOWEST_PIXEL_RECEIVED":
+			query = query.Order("mo_received ASC")
+		case "LOWEST_PIXEL_SEND":
+			query = query.Order("postback ASC")
+		case "LOWEST_PRICE_PER_POSTBACK":
+			query = query.Order("po ASC")
+		case "LOWEST_COST_PER_CONVERSION":
+			query = query.Order("cost_per_conversion ASC")
+		case "LOWEST_AGENCY_FEE":
+			query = query.Order("agency_fee ASC")
+		case "LOWEST_SPENDING_TO_ADNETS":
+			query = query.Order("sbaf ASC")
+		case "LOWEST_TOTAL_WAKI_AGENCY_FEE":
+			query = query.Order("total_waki_agency_fee ASC")
+		case "LOWEST_TOTAL_SPENDING":
+			query = query.Order("saaf ASC")
+		case "LOWEST_ECPA":
+			query = query.Order("cpa ASC")
+		case "LOWEST_LANDING":
+			query = query.Order("landing ASC")
+		case "LOWEST_POSTBACK":
+			query = query.Order("cr_postback ASC")
+		case "LOWEST_MO":
+			query = query.Order("cr_mo ASC")
+		}
+	} else {
+		// default order
+		query = query.Order("summary_date DESC").Order("id DESC")
+	}
+
+	rows, err = query.Rows()
+	if err != nil {
+		return []entity.SummaryCampaign{}, err
 	}
 	defer rows.Close()
 
 	var ss []entity.SummaryCampaign
-
 	for rows.Next() {
 		var s entity.SummaryCampaign
-
 		r.DB.ScanRows(rows, &s)
-
 		ss = append(ss, s)
 	}
 
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-
 	return ss, rows.Err()
 }
 

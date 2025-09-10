@@ -375,6 +375,12 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 		pageSize = PAGESIZE
 	}
 	draw, _ := strconv.Atoi(m["draw"])
+	var adnets []string
+    for k, v := range m {
+        if strings.HasPrefix(k, "adnet[") {
+            adnets = append(adnets, v)
+        }
+    }
 	fe := entity.DisplayCPAReport{
 		SummaryDate:  time.Time{},
 		CampaignId:   m["campaign_id"],
@@ -385,7 +391,7 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 		Operator:     m["operator"],
 		Partner:      m["partner"],
 		Aggregator:   m["aggregator"],
-		Adnet:        m["adnet"],
+		Adnets:       adnets,
 		Service:      m["service"],
 		Draw:         draw,
 		Page:         page,
@@ -395,6 +401,8 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 		DateBefore:   m["date_before"],
 		DateAfter:    m["date_after"],
 		Reload:       m["reload"],
+		OrderColumn:  m["order_column"],
+		OrderDir:     m["order_dir"],
 	}
 
 	allowedCompanies, _ := c.Locals("companies").([]string)
@@ -497,6 +505,12 @@ func (h *IncomingHandler) ExportCpaButton(c *fiber.Ctx) error {
 	m := c.Queries()
 
 	page, _ := strconv.Atoi(m["page"])
+	var adnets []string
+    for k, v := range m {
+        if strings.HasPrefix(k, "adnet[") {
+            adnets = append(adnets, v)
+        }
+    }
 	fe := entity.DisplayCPAReport{
 		SummaryDate:  time.Time{},
 		CampaignId:   m["campaign_id"],
@@ -505,13 +519,15 @@ func (h *IncomingHandler) ExportCpaButton(c *fiber.Ctx) error {
 		Operator:     m["operator"],
 		Partner:      m["partner"],
 		Aggregator:   m["aggregator"],
-		Adnet:        m["adnet"],
+		Adnets:       adnets,
 		Service:      m["service"],
 		Page:         page,
 		Action:       m["action"],
 		DateRange:    m["date_range"],
 		DateBefore:   m["date_before"],
 		DateAfter:    m["date_after"],
+		OrderColumn:  m["order_column"],
+		OrderDir:     m["order_dir"],
 	}
 
 	export_cpa := m["export_cpa"]

@@ -455,6 +455,7 @@ type (
 		CampaignObjective        string    `gorm:"uniqueIndex:idx_sumunique;size:50;default:NA" json:"campaign_objective"`
 		Channel                  string    `gorm:"size:50;default:NA" json:"channel"`
 		PricePerMO               float64   `gorm:"type:double precision;default:0" json:"price_per_mo"`
+		POAF                     float64   `gorm:"type:double precision;default:0" json:"po_af"`
 		CreatedAt                time.Time
 		UpdatedAt                time.Time
 	}
@@ -895,6 +896,9 @@ type (
 		ClickAndroid     int     `gorm:"default:0" json:"click_android"`
 		ClickOperator    int     `gorm:"default:0" json:"click_operator"`
 		ClickNonOperator int     `gorm:"default:0" json:"click_non_operator"`
+
+		URLService             string  `gorm:"not null;size:255" json:"url_service"`
+		ResponseUrlServiceTime float64 `gorm:"not null;length:20" json:"response_url_service_time"`
 
 		CreatedAt time.Time
 		UpdatedAt time.Time

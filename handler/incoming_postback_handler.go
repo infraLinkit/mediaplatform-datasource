@@ -196,6 +196,72 @@ func (h *IncomingHandler) Postback2(c *fiber.Ctx) error {
 						px, isPX = h.DS.GetPxByMsisdn(pxData)
 					case "PIXEL":
 						px, isPX = h.DS.GetPx(pxData)
+					case "SPC-MVLS":
+
+						campIdRemover := strings.NewReplacer(dc.URLServiceKey+"-", "")
+						msisdn := campIdRemover.Replace(p.AffSub)
+
+						isPX = true
+
+						px = entity.PixelStorage{
+							CampaignDetailId:  dc.Id,
+							Pxdate:            helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+							URLServiceKey:     dc.URLServiceKey,
+							CampaignId:        dc.CampaignId,
+							Country:           dc.Country,
+							Partner:           dc.Partner,
+							Operator:          dc.Operator,
+							Aggregator:        dc.Aggregator,
+							Service:           dc.Service,
+							ShortCode:         dc.ShortCode,
+							Adnet:             dc.Adnet,
+							Keyword:           dc.Keyword,
+							Subkeyword:        dc.SubKeyword,
+							IsBillable:        dc.IsBillable,
+							Plan:              dc.Plan,
+							URL:               dc.APIURL,
+							URLType:           dc.URLType,
+							Pixel:             "NA",
+							Msisdn:            msisdn,
+							TrxId:             "NA",
+							Token:             "NA",
+							IsUsed:            true,
+							Browser:           "NA",
+							OS:                "NA",
+							Ip:                strings.Join(c.IPs(), ", "),
+							ISP:               "NA",
+							ReferralURL:       "NA",
+							PubId:             dc.PubId,
+							UserAgent:         "NA",
+							TrafficSource:     false,
+							TrafficSourceData: "NA",
+							UserRejected:      false,
+							UniqueClick:       false,
+							UserDuplicated:    false,
+							Handset:           "NA",
+							HandsetCode:       "NA",
+							HandsetType:       "NA",
+							URLLanding:        dc.URLLanding,
+							URLWarpLanding:    dc.URLWarpLanding,
+							URLService:        dc.URLService,
+							URLTFCORSmartlink: dc.URLTFCSmartlink,
+							StatusCapping:     dc.StatusCapping,
+							StatusRatio:       dc.StatusRatio,
+							PO:                dc.PO,
+							Cost:              dc.Cost,
+							CampaignObjective: dc.Objective,
+							Channel:           dc.Channel,
+							Currency:          dc.Currency,
+							PostbackMethod:    dc.PostbackMethod,
+							LandingTime:       helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+							LandedTime:        float64(0),
+							HttpStatus:        200,
+							IsOperator:        false,
+							CreatedAt:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+							UpdatedAt:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+						}
+
+						h.DS.NewPixel(px)
 					}
 
 					if !isPX && p.Method == "" {

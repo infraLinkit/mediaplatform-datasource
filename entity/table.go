@@ -477,6 +477,7 @@ type (
 		Landing           int       `gorm:"length:20;default:0" json:"landing"`
 		MoReceived        int       `gorm:"length:20;default:0" json:"mo_received"`
 		Postback          int       `gorm:"length:20;default:0" json:"postback"`
+		POAF              float64   `gorm:"type:double precision;default:0" json:"po_af"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}

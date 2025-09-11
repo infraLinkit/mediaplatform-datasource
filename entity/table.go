@@ -898,8 +898,8 @@ type (
 		ClickOperator    int     `gorm:"default:0" json:"click_operator"`
 		ClickNonOperator int     `gorm:"default:0" json:"click_non_operator"`
 
-		URLService             string  `gorm:"not null;size:255" json:"url_service"`
-		ResponseUrlServiceTime float64 `gorm:"not null;length:20" json:"response_url_service_time"`
+		URLService             string  `gorm:"not null;size:255;default:NA" json:"url_service"`
+		ResponseUrlServiceTime float64 `gorm:"not null;length:20;default:0" json:"response_url_service_time"`
 
 		CreatedAt time.Time
 		UpdatedAt time.Time

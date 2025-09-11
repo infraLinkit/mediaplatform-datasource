@@ -501,3 +501,29 @@ func (h *IncomingHandler) EditMOCappingServiceS2S(c *fiber.Ctx) error {
 		"updated_count": updatedCount,
 	})
 }
+
+func (h *IncomingHandler) EditPOAF(c *fiber.Ctx) error {
+
+	o := new(entity.SummaryCampaign)
+
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	} else {
+
+		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+		h.DS.EditPOAFIncSummaryCampaign(entity.IncSummaryCampaign{
+			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			POAF: 		   o.POAF,
+			URLServiceKey: o.URLServiceKey,
+		})
+
+		h.DS.EditPOAFSummaryCampaign(entity.SummaryCampaign{
+			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			POAF:          o.POAF,
+			URLServiceKey: o.URLServiceKey,
+		})
+
+		return c.Status(fiber.StatusOK).Send([]byte("OK"))
+	}
+}

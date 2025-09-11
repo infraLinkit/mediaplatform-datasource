@@ -39,6 +39,28 @@ func (r *BaseModel) EditSettingSummaryCampaign(o entity.SummaryCampaign) error {
 	return result.Error
 }
 
+func (r *BaseModel) EditPOAFIncSummaryCampaign(o entity.IncSummaryCampaign) error {
+
+	result := r.DB.Model(&o).
+		Where("summary_date = ? AND url_service_key = ?", o.SummaryDate, o.URLServiceKey).
+		Updates(entity.SummaryCampaign{POAF: o.POAF})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) EditPOAFSummaryCampaign(o entity.SummaryCampaign) error {
+
+	result := r.DB.Model(&o).
+		Where("summary_date = ? AND url_service_key = ?", o.SummaryDate, o.URLServiceKey).
+		Updates(entity.SummaryCampaign{POAF: o.POAF})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
 func (r *BaseModel) UpdateSummaryCampaign(o entity.SummaryCampaign) error {
 
 	result := r.DB.Model(&o).

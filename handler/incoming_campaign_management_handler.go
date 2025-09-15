@@ -527,3 +527,34 @@ func (h *IncomingHandler) EditPOAF(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).Send([]byte("OK"))
 	}
 }
+
+
+func (h *IncomingHandler) EditCampaignManagementDetail(c *fiber.Ctx) error {
+
+	o := new(entity.CampaignDetail)
+
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	} else {
+
+		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+		// Update to redis with key
+		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+
+		cfgCmp.APIURL = o.APIURL
+
+		cfgDataConfig, _ := json.Marshal(cfgCmp)
+
+		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+
+		h.DS.EditCampaignManagementDetail(entity.CampaignDetail{
+			APIURL: cfgCmp.APIURL,
+			URLServiceKey: o.URLServiceKey,
+			CampaignId:    o.CampaignId,
+		})
+
+		return c.Status(fiber.StatusOK).Send([]byte("OK"))
+	}
+}

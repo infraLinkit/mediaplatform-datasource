@@ -279,3 +279,17 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 	r.Logs.Debug(fmt.Sprintf("Total data: %d ...\n", len(campaigns)))
 	return campaigns, nil
 }
+
+func (r *BaseModel) EditCampaignManagementDetail(o entity.CampaignDetail) error {
+
+	result := r.DB.Exec(`
+		UPDATE campaign_details 
+		SET api_url = ?
+		WHERE url_service_key = ? AND campaign_id = ?`,
+		o.APIURL, o.URLServiceKey, o.CampaignId,
+	)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}

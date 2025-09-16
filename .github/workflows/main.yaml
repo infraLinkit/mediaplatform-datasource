@@ -17,7 +17,7 @@ jobs:
                 include:
                   - 
                     dockerfile: ./Dockerfile.datasource.server
-                    image: wiliehidayat87/mediaplatform-datasource-server
+                    image: infralinkit/mediaplatform-datasource-server
                         
         permissions:
             contents: read

@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,128 +10,113 @@ import (
 )
 
 func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([]entity.CampaignManagementData, entity.CampaignCounts, error) {
-	var rows *sql.Rows
-	query := r.DB.Model(&entity.CampaignDetail{}).
-		Select(`
-			campaigns.campaign_id AS campaign_id,
-			campaigns.name AS campaign_name,
-			campaigns.campaign_objective AS campaign_objective, 
-			campaign_details.country, 
-			campaign_details.partner, 
-			COUNT(DISTINCT campaign_details.operator) AS total_operator, 
-			COUNT(DISTINCT campaign_details.service) AS service, 
-			COUNT(DISTINCT campaign_details.adnet) AS total_adnet, 
-			COUNT(DISTINCT campaign_details.short_code) AS short_code,
-			campaign_details.is_active
-		`).
-		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
-		Group("campaigns.campaign_id, campaigns.name, campaigns.campaign_objective, campaign_details.country, campaign_details.partner, campaign_details.is_active, campaigns.created_at")
+    // Subquery agregasi campaign_details
+    agg := r.DB.Model(&entity.CampaignDetail{}).
+        Select(`
+            campaign_id,
+            country,
+            partner,
+            is_active,
+            COUNT(DISTINCT operator) AS total_operator,
+            COUNT(DISTINCT service) AS service,
+            COUNT(DISTINCT adnet) AS total_adnet,
+            COUNT(DISTINCT short_code) AS short_code,
+            ARRAY_AGG(DISTINCT id) AS id,
+            ARRAY_AGG(DISTINCT url_service_key) AS url_service_key
+        `).
+        Group("campaign_id, country, partner, is_active")
 
-		orderColumn := map[string]string{
-			"total_operator": "COUNT(DISTINCT campaign_details.operator)",
-			"service":        "COUNT(DISTINCT campaign_details.service)",
-			"total_adnet":    "COUNT(DISTINCT campaign_details.adnet)",
-		}
-		
-		if col, ok := orderColumn[o.OrderColumn]; ok {
-			dir := "ASC"
-			if strings.ToUpper(o.OrderDir) == "DESC" {
-				dir = "DESC"
-			}
-			query = query.Order(fmt.Sprintf("%s %s", col, dir))
-		} else {
-			query = query.Order("campaigns.created_at DESC")
-		}		
-		
+    // Query utama join ke campaigns
+    query := r.DB.Table("(?) as agg", agg).
+        Select(`
+            campaigns.campaign_id,
+            campaigns.name AS campaign_name,
+            campaigns.campaign_objective,
+            agg.country,
+            agg.partner,
+            agg.total_operator,
+            agg.service,
+            agg.total_adnet,
+            agg.short_code,
+            agg.is_active,
+            agg.id,
+            agg.url_service_key
+        `).
+        Joins("INNER JOIN campaigns ON campaigns.campaign_id = agg.campaign_id")
 
-	if o.Action == "Search" {
-		if o.Country != "" {
-			query = query.Where("campaign_details.country = ?", o.Country)
-		}
-		if o.Operator != "" {
-			query = query.Where("campaign_details.operator = ?", o.Operator)
-		}
-		if o.Service != "" {
-			query = query.Where("campaign_details.service = ?", o.Service)
-		}
-		if o.Adnet != "" {
-			query = query.Where("campaign_details.adnet = ?", o.Adnet)
-		}
-		if o.Partner != "" {
-			query = query.Where("campaign_details.partner = ?", o.Partner)
-		}
-		if o.Status != "" {
-			query = query.Where("campaign_details.is_active = ?", o.Status)
-		}
-		if o.CampaignName != "" {
-			query = query.Where("campaigns.name = ?", o.CampaignName)
-		}
-		if o.CampaignType != "" {
-			if o.CampaignType == "mainstream" {
-				query = query.Where("campaigns.campaign_objective = ?", "MAINSTREAM")
-			} else {
-				query = query.Where("campaigns.campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
-			}
-		}
-		if o.URLServiceKey != "" {
-			query = query.Where("campaign_details.url_service_key ILIKE ?", "%"+o.URLServiceKey+"%")
-		}
-		
-	}
+    // filter search
+    if o.Action == "Search" {
+        if o.Country != "" {
+            query = query.Where("agg.country = ?", o.Country)
+        }
+        if o.Operator != "" {
+            query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.operator = ?)", o.Operator)
+        }
+        if o.Service != "" {
+            query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.service = ?)", o.Service)
+        }
+        if o.Adnet != "" {
+            query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.adnet = ?)", o.Adnet)
+        }
+        if o.Partner != "" {
+            query = query.Where("agg.partner = ?", o.Partner)
+        }
+        if o.Status != "" {
+            query = query.Where("agg.is_active = ?", o.Status)
+        }
+        if o.CampaignName != "" {
+            query = query.Where("campaigns.name = ?", o.CampaignName)
+        }
+        if o.CampaignType != "" {
+            if o.CampaignType == "mainstream" {
+                query = query.Where("campaigns.campaign_objective = ?", "MAINSTREAM")
+            } else {
+                query = query.Where("campaigns.campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
+            }
+        }
+        if o.URLServiceKey != "" {
+            query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.url_service_key ILIKE ?)", "%"+o.URLServiceKey+"%")
+        }
+    }
 
-	rows, err := query.Rows()
-	if err != nil {
-		return nil, entity.CampaignCounts{}, err
-	}
-	defer rows.Close()
+    // order
+    orderColumn := map[string]string{
+        "total_operator": "agg.total_operator",
+        "service":        "agg.service",
+        "total_adnet":    "agg.total_adnet",
+    }
+    if col, ok := orderColumn[o.OrderColumn]; ok {
+        dir := "ASC"
+        if strings.ToUpper(o.OrderDir) == "DESC" {
+            dir = "DESC"
+        }
+        query = query.Order(fmt.Sprintf("%s %s", col, dir))
+    } else {
+        query = query.Order("campaigns.created_at DESC")
+    }
 
-	var campaigns []entity.CampaignManagementData
-	var total, active, nonActive int
+    // eksekusi query
+    var campaigns []entity.CampaignManagementData
+    if err := query.Scan(&campaigns).Error; err != nil {
+        return nil, entity.CampaignCounts{}, err
+    }
 
-	for rows.Next() {
-		var campaign entity.CampaignManagementData
-		var campaignIDs []int // Slice to store all IDs for a campaign
-		var urlKeys []string
+    // Hitung total aktif / non aktif
+    var total, active, nonActive int
+    for _, c := range campaigns {
+        total++
+        if c.IsActive {
+            active++
+        } else {
+            nonActive++
+        }
+    }
 
-		r.DB.ScanRows(rows, &campaign)
-
-		// Fetch all campaign IDs associated with this campaign
-		err := r.DB.Table("campaign_details").
-			Where("campaign_id = ?", campaign.CampaignID).
-			Pluck("id", &campaignIDs).Error
-
-		if err != nil {
-			return nil, entity.CampaignCounts{}, err
-		}
-
-		campaign.ID = campaignIDs // Assign campaign IDs
-
-		// Get all url_service_key for this group
-		err = r.DB.Table("campaign_details").
-			Where("campaign_id = ? AND country = ? AND partner = ?", campaign.CampaignID, campaign.Country, campaign.Partner).
-			Pluck("DISTINCT url_service_key", &urlKeys).Error
-		if err != nil {
-			return nil, entity.CampaignCounts{}, err
-		}
-		campaign.URLServiceKey = urlKeys
-		campaigns = append(campaigns, campaign)
-
-		// Count total campaigns
-		total++
-		if campaign.IsActive {
-			active++
-		} else {
-			nonActive++
-		}
-	}
-
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(campaigns)))
-
-	return campaigns, entity.CampaignCounts{
-		TotalCampaigns:          total,
-		TotalActiveCampaigns:    active,
-		TotalNonActiveCampaigns: nonActive,
-	}, nil
+    return campaigns, entity.CampaignCounts{
+        TotalCampaigns:          total,
+        TotalActiveCampaigns:    active,
+        TotalNonActiveCampaigns: nonActive,
+    }, nil
 }
 
 func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManagement) ([]entity.CampaignManagementDataDetail, error) {

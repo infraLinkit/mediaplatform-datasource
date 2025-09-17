@@ -24,7 +24,7 @@ type (
 	}
 
 	CampaignManagementData struct {
-		ID                []int  `json:"id"`
+		ID                pq.Int64Array  `gorm:"type:bigint[]" json:"id"`
 		CampaignID        string `json:"campaign_id"`
 		CampaignName      string `json:"campaign_name"`
 		CampaignObjective string `json:"campaign_objective"`
@@ -35,7 +35,7 @@ type (
 		TotalAdnet        int    `json:"total_adnet"`
 		ShortCode         int 	 `json:"short_code"`
 		IsActive          bool   `json:"is_active"`
-		URLServiceKey     []string `json:"url_service_key"`
+		URLServiceKey     pq.StringArray `gorm:"type:text[]" json:"url_service_key"`
 	}
 
 	CampaignManagementDetail struct {

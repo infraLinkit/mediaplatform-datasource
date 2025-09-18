@@ -270,55 +270,62 @@ func (h *IncomingHandler) Postback2(c *fiber.Ctx) error {
 
 					} else {
 
-						if px.IsUsed {
+						if !isPX {
 
-							return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
-								Adnet:         dc.Adnet,
-								IsBillable:    dc.IsBillable,
-								Pixel:         px.Pixel,
-								Browser:       px.Browser,
-								OS:            px.OS,
-								Handset:       px.UserAgent,
-								PubId:         px.PubId,
-								PixelUsedDate: px.PixelUsedDate.Format(time.RFC3339),
-							}})
+							return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Pixel not found or duplicate used and parameter should have a method parameter, pixel : " + p.AffSub})
 
 						} else {
 
-							px.PixelUsedDate = helper.GetCurrentTime(h.Config.TZ, time.RFC3339)
+							if px.IsUsed {
 
-							bodyReq, _ := json.Marshal(px)
-
-							corId := "RTO" + helper.GetUniqId(h.Config.TZ)
-
-							published := h.Rmqp.PublishMsg(rmqp.PublishItems{
-								ExchangeName: h.Config.RabbitMQRatioExchangeName,
-								QueueName:    h.Config.RabbitMQRatioQueueName,
-								ContentType:  h.Config.RabbitMQDataType,
-								CorId:        corId,
-								Payload:      string(bodyReq),
-								Priority:     0,
-							})
-
-							if !published {
-
-								h.Logs.Debug(fmt.Sprintf("[x] Failed published: %s, Data: %s ...", corId, string(bodyReq)))
+								return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
+									Adnet:         dc.Adnet,
+									IsBillable:    dc.IsBillable,
+									Pixel:         px.Pixel,
+									Browser:       px.Browser,
+									OS:            px.OS,
+									Handset:       px.UserAgent,
+									PubId:         px.PubId,
+									PixelUsedDate: px.PixelUsedDate.Format(time.RFC3339),
+								}})
 
 							} else {
 
-								h.Logs.Debug(fmt.Sprintf("[v] Published: %s, Data: %s ...", corId, string(bodyReq)))
-							}
+								px.PixelUsedDate = helper.GetCurrentTime(h.Config.TZ, time.RFC3339)
 
-							return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
-								Adnet:         dc.Adnet,
-								IsBillable:    dc.IsBillable,
-								Pixel:         px.Pixel,
-								Browser:       px.Browser,
-								OS:            px.OS,
-								Handset:       px.UserAgent,
-								PubId:         px.PubId,
-								PixelUsedDate: helper.GetFormatTime(h.Config.TZ, time.RFC3339),
-							}})
+								bodyReq, _ := json.Marshal(px)
+
+								corId := "RTO" + helper.GetUniqId(h.Config.TZ)
+
+								published := h.Rmqp.PublishMsg(rmqp.PublishItems{
+									ExchangeName: h.Config.RabbitMQRatioExchangeName,
+									QueueName:    h.Config.RabbitMQRatioQueueName,
+									ContentType:  h.Config.RabbitMQDataType,
+									CorId:        corId,
+									Payload:      string(bodyReq),
+									Priority:     0,
+								})
+
+								if !published {
+
+									h.Logs.Debug(fmt.Sprintf("[x] Failed published: %s, Data: %s ...", corId, string(bodyReq)))
+
+								} else {
+
+									h.Logs.Debug(fmt.Sprintf("[v] Published: %s, Data: %s ...", corId, string(bodyReq)))
+								}
+
+								return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
+									Adnet:         dc.Adnet,
+									IsBillable:    dc.IsBillable,
+									Pixel:         px.Pixel,
+									Browser:       px.Browser,
+									OS:            px.OS,
+									Handset:       px.UserAgent,
+									PubId:         px.PubId,
+									PixelUsedDate: helper.GetFormatTime(h.Config.TZ, time.RFC3339),
+								}})
+							}
 						}
 					}
 

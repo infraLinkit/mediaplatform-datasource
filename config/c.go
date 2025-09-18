@@ -48,6 +48,7 @@ type (
 		RedisHost                              string
 		RedisPort                              int
 		RedisDBIndex                           int
+		RedisCachePixel                        int
 		RedisPwd                               string
 		RedisKeyExpiration                     int64
 		PSQLHost                               string
@@ -103,6 +104,7 @@ type (
 		Config *Cfg
 		Logs   *logrus.Logger
 		R      *rueidis.Storage
+		RCP    *redis.Client
 		DB     *gorm.DB
 		Rmqp   rmqp.AMQP
 		GS     *sheets.Service
@@ -119,6 +121,7 @@ func InitCfg() *Cfg {
 
 	rabbitmq_port, _ := strconv.Atoi(os.Getenv("RABBITMQPORT"))
 	redis_dbindex, _ := strconv.Atoi(os.Getenv("REDISDBINDEX"))
+	redis_cache_pixel, _ := strconv.Atoi(os.Getenv("REDISCACHEPIXEL"))
 	redis_port, _ := strconv.Atoi(os.Getenv("REDISPORT"))
 	redis_exp, _ := strconv.Atoi(os.Getenv("REDISKEYEXPIRE"))
 	ratio_queue_threshold, _ := strconv.Atoi(os.Getenv("RABBITMQRATIOQUEUETHRESHOLD"))
@@ -141,6 +144,7 @@ func InitCfg() *Cfg {
 		RedisHost:                              os.Getenv("REDISHOST"),
 		RedisPort:                              redis_port,
 		RedisDBIndex:                           redis_dbindex,
+		RedisCachePixel:                        redis_cache_pixel,
 		RedisPwd:                               os.Getenv("REDISPASSWORD"),
 		RedisKeyExpiration:                     int64(redis_exp),
 		PSQLHost:                               os.Getenv("DB_HOST"),
@@ -206,6 +210,7 @@ func (c *Cfg) Initiate(logname string) *Setup {
 		Config: c,
 		Logs:   l,
 		R:      c.InitRedisJSON(l, c.RedisDBIndex),
+		RCP:    c.InitRedis(l, c.RedisCachePixel),
 		DB:     c.InitGormPgx(l),
 		Rmqp:   c.InitMessageBroker(),
 		GS:     c.InitGoogleSheet(l),

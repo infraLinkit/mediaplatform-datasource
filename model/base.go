@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/go-redis/redis"
 	"github.com/gofiber/storage/rueidis"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	_ "github.com/lib/pq"
@@ -17,6 +18,7 @@ type (
 		Logs   *logrus.Logger
 		DB     *gorm.DB
 		R      *rueidis.Storage
+		RCP    *redis.Client
 		GS     *sheets.Service
 	}
 )
@@ -28,6 +30,7 @@ func NewBaseModel(obj BaseModel) *BaseModel {
 		Logs:   obj.Logs,
 		DB:     obj.DB,
 		R:      obj.R,
+		RCP:    obj.RCP,
 		GS:     obj.GS,
 	}
 }

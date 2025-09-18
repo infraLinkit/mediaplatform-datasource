@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 
+	"github.com/go-redis/redis"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/storage/rueidis"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
@@ -20,6 +21,7 @@ type App3rdParty struct {
 	Logs   *logrus.Logger
 	DB     *gorm.DB
 	R      *rueidis.Storage
+	RCP    *redis.Client
 	Rmqp   rmqp.AMQP
 }
 
@@ -65,6 +67,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 		Config: obj.Config,
 		Logs:   obj.Logs,
 		R:      obj.R,
+		RCP:    obj.RCP,
 		DB:     obj.DB,
 		Rmqp:   obj.Rmqp,
 	})
@@ -74,7 +77,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 
 	// Postback
 	v1.Get("/postback/:urlservicekey/", h.Postback)
-	v1.Get("/postback", h.Postback2)
+	v1.Get("/postback", h.PostbackV3)
 
 	// Report
 	rpt := v1.Group("/report") // Report

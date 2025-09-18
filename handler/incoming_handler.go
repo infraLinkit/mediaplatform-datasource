@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/go-redis/redis"
 	"github.com/gofiber/storage/rueidis"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/model"
@@ -16,6 +17,7 @@ type (
 		DB     *gorm.DB
 		Rmqp   rmqp.AMQP
 		R      *rueidis.Storage
+		RCP    *redis.Client
 		DS     *model.BaseModel
 	}
 )
@@ -27,6 +29,7 @@ func NewIncomingHandler(obj IncomingHandler) *IncomingHandler {
 		Logs:   obj.Logs,
 		DB:     obj.DB,
 		R:      obj.R,
+		RCP:    obj.RCP,
 	})
 
 	return &IncomingHandler{
@@ -34,6 +37,7 @@ func NewIncomingHandler(obj IncomingHandler) *IncomingHandler {
 		Logs:   obj.Logs,
 		DB:     obj.DB,
 		R:      obj.R,
+		RCP:    obj.RCP,
 		Rmqp:   obj.Rmqp,
 		DS:     b,
 	}

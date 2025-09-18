@@ -30,6 +30,7 @@ var serverCmd = &cobra.Command{
 			Logs:   c.Logs,
 			DB:     c.DB,
 			R:      c.R,
+			RCP:    c.RCP,
 			Rmqp:   c.Rmqp,
 		})
 

@@ -105,7 +105,6 @@ type (
 		Logs   *logrus.Logger
 		R      *rueidis.Storage
 		RCP    *redis.Client
-		RCPAC  *redis.Client
 		DB     *gorm.DB
 		Rmqp   rmqp.AMQP
 		GS     *sheets.Service

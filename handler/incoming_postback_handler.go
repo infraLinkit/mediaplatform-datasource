@@ -413,7 +413,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							for _, k := range keys {
 
 								g := h.RCP.Get(k)
-								credis, _ = g.Result()
+								credis = g.Val()
 
 								h.Logs.Info(
 									fmt.Sprintf("Pixel %s, Val: %s", k, credis),
@@ -446,12 +446,13 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 						if g := h.RCP.Get(p.AffSub); g.Err() == nil {
 
 							isPX = true
-							credis, _ := g.Result()
 
-							if err = json.Unmarshal([]byte(credis), &px); err != nil {
+							if err = json.Unmarshal([]byte(g.Val()), &px); err != nil {
 
 								return c.Status(fiber.StatusNotAcceptable).JSON(entity.GlobalResponse{Code: fiber.StatusNotAcceptable, Message: "Invalid pixel format or this pixel not found, pixel : " + p.AffSub})
 							}
+
+							h.RCP.Del(p.AffSub)
 
 						} else {
 							px, isPX = h.DS.GetPx(pxData)

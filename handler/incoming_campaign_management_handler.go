@@ -266,6 +266,7 @@ func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
 		pos, _ := strconv.ParseFloat(strings.TrimSpace(o.PO), 64)
 
 		h.DS.EditSettingSummaryCampaign(entity.SummaryCampaign{
+			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
 			PO:            pos,
 			MOLimit:       o.MOCapping,
 			RatioSend:     o.RatioSend,

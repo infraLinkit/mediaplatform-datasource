@@ -520,6 +520,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							IsOperator:        false,
 							CreatedAt:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
 							UpdatedAt:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+							IsUnique:          false,
 						}
 
 						h.DS.NewPixel(px)

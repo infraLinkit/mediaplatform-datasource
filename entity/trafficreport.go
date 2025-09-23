@@ -1,43 +1,41 @@
 package entity
 
-type (
-	DisplayTrafficReport struct {
-		Draw         int    `form:"draw" json:"draw"`
-		Date         string `form:"date" json:"date"`
-		CampaignID   string `form:"campaign_id" json:"campaign_id"`
-		CampaignName string `form:"campaign_name" json:"campaign_name"`
-		Country      string `form:"country" json:"country"`
-		Operator     string `form:"operator" json:"operator"`
-		Service      string `form:"service" json:"service"`
-		Adnet        string `form:"adnet" json:"adnet"`
 
-		DataIndicator []string `form:"indicator" json:"indicator"`
+// TrafficReportParams defines the query parameters for TrafficReport time reports
+type TrafficReportParams struct {
+	DataType              string   `json:"data_type"`
+	ReportType           string   `json:"report_type"`
+	Country              string   `json:"country"`
+	Operator             string   `json:"operator"`
+	PartnerName          string   `json:"partner_name"`
+	Service              string   `json:"service"`
+	Adnet                string   `json:"adnet"`
+	TypeData             string   `json:"type_data"`
+	CampaignId           string   `json:"campaign_id"`
+	URLServiceKey        string   `json:"url_service_key"`
+	DataIndicators       []string `json:"data_indicators"`
+	DataBasedOn          string   `json:"data_based_on"`
+	DataBasedOnIndicator string   `json:"data_based_on_indicator"`
+	DateRange           string   `json:"date_range"`
+	DateStart           string   `json:"date_start"`
+	DateEnd             string   `json:"date_end"`
+	DateCustomRange     string   `json:"date_custom_range"`
+	All                 string   `json:"all"`
+	ChartType           string   `json:"chart_type"`
+	CampaignName        string   `json:"campaign_name"`
+}
 
-		Total []DataIndicator `form:"total" json:"total"`
-
-		Avg []DataIndicator `form:"avarage" json:"avarage"`
-
-		TmoEnd []DataIndicator `form:"tmo_end" json:"tmo_end"`
-
-		TitleDate []Dates `form:"title_dates" json:"title_dates"`
-
-		Page       int    `form:"page" json:"page"`
-		PageSize   int    `form:"page_size" json:"page_size"`
-		DateRange  string `form:"date_range" json:"date_range"`
-		DateBefore string `form:"date_before" json:"date_before"`
-		DateAfter  string `form:"date_after" json:"date_after"`
-		Action     string `form:"action" json:"action"`
-	}
-
-	DataIndicator struct {
-		Traffic   int `form:"traffic" json:"traffic"`
-		Cr        int `form:"cr" json:"cr"`
-		Mo        int `form:"mo_received" json:"mo_received"`
-		FirstPush int `form:"first_push" json:"first_push"`
-	}
-
-	Dates struct {
-		Date  string          `form:"date" json:"date"`
-		Value []DataIndicator `form:"value" json:"value"`
-	}
-)
+// TrafficReportSummary represents the aggregated TrafficReport time data
+type TrafficReportSummary struct {
+	DateTime     string                          `json:"date_time"`
+	CampaignId   string                          `json:"campaign_id"`
+	CampaignName string                          `json:"campaign_name"`
+	Country      string                          `json:"country"`
+	Operator     string                          `json:"operator"`
+	Partner      string                          `json:"partner"`
+	Adnet        string                          `json:"adnet"`
+	Service      string                          `json:"service"`
+	URL          string                          `json:"url"`
+	Metrics      map[string]float64              `json:"metrics"`
+	DailyMetrics map[string]map[string]float64   `json:"daily_metrics"`
+}

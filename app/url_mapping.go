@@ -91,6 +91,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/campaign-monitoring-summary/chart", h.DisplayCampaignSummaryChart).Name("Campaign Summary Chart")
 	rpt.Get("/alertreport/:v", h.DisplayAlertReportAll).Name("All Alert Report list/")
 	rpt.Get("/trafficreport", h.DisplayTrafficReport).Name("Traffic Report list")
+	rpt.Get("/trafficreport/chart", h.GetTrafficReportChart).Name("Traffic Report chart")
 	rpt.Get("/mainstreamreport", h.AuthMiddleware, h.DisplayMainstreamReport).Name("Mainstream Report list")
 	rpt.Get("/budgetmonitoring", h.DisplayBudgetMonitoring).Name("Budget Monitoring list")
 	rpt.Get("/performance-report", h.DisplayPerformanceReport).Name("Performance Report list")

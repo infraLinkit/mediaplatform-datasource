@@ -793,6 +793,10 @@ func extractQueryArrayRevenue(c *fiber.Ctx, key string) []string {
 }
 
 func SnakeToCamelValue(snake string) string {
+	if snake == "cr_mo" {
+		return "CrMO"
+	}
+	
 	words := strings.Split(snake, "_")
 	for i, word := range words {
 		words[i] = strings.ToLower(word)

@@ -181,6 +181,10 @@ func formatSummaryDataValTrafficReport(data []entity.SummaryTraffic, params enti
 func generateSummaryTrafficReport(data []entity.SummaryTraffic, params entity.TrafficReportParams, startDate time.Time, endDate time.Time) map[string]interface{} {
 	days := map[string]map[string]map[string]interface{}{}
 	totals := make(map[string]float64)
+	dayLanding := make(map[string]float64)
+	dayMoReceived := make(map[string]float64)
+	totalLanding := 0.0
+	totalMoReceived := 0.0
 
 	for _, campaign := range data {
 		date := campaign.SummaryDateHour.Format("2006-01-02")
@@ -191,50 +195,96 @@ func generateSummaryTrafficReport(data []entity.SummaryTraffic, params entity.Tr
 			prevDate = campaign.SummaryDateHour.AddDate(0, -1, 0).Format("2006-01")
 		}
 
-		// Initialize the day's indicator map if it doesn't exist
 		if days[date] == nil {
 			days[date] = make(map[string]map[string]interface{})
 		}
 
 		for _, indicator := range params.DataIndicators {
-			indicatorValue := getIndicatorValueTrafficReport(campaign, indicator)
+			val := getIndicatorValueTrafficReport(campaign, indicator)
+
 			if days[date][indicator] == nil {
 				days[date][indicator] = map[string]interface{}{
-					"value":      0.0, // Initialize "value" to 0
-					"percentage": 0.0, // Initialize "percentage" to 0
+					"value":      0.0,
+					"percentage": 0.0,
 				}
 			}
 
 			prevValue := getPreviousValueTrafficReport(days[prevDate], indicator)
 
-			currentValue, ok := days[date][indicator]["value"].(float64)
-			if !ok {
-				currentValue = 0.0
+			curVal := days[date][indicator]["value"].(float64)
+			newVal := curVal + val
+			days[date][indicator]["value"] = newVal
+			days[date][indicator]["percentage"] = countPercentageTrafficReport(newVal, prevValue)
+
+			// simpan untuk hitung cr_mo nanti
+			if indicator == "landing" {
+				dayLanding[date] += val
+				totalLanding += val
 			}
-			newValue := currentValue + indicatorValue
+			if indicator == "mo_received" {
+				dayMoReceived[date] += val
+				totalMoReceived += val
+			}
 
-			days[date][indicator]["value"] = newValue
-			days[date][indicator]["percentage"] = countPercentageTrafficReport(newValue, prevValue)
+			// simpan totals untuk indikator lain
+			if indicator != "cr_mo" {
+				totals[indicator] += val
+			}
+		}
+	}
 
-			totals[indicator] += indicatorValue
+	// hitung cr_mo harian
+	for date := range days {
+		if contains(params.DataIndicators, "cr_mo") {
+			var cr, prevCr float64
+
+			if dayLanding[date] > 0 {
+				cr = (dayMoReceived[date] / dayLanding[date]) * 100
+			}
+
+			// cari prevDate sesuai type
+			var prevDate string
+			if params.DataType == "monthly_report" {
+				parts, _ := time.Parse("2006-01", date)
+				prevDate = parts.AddDate(0, -1, 0).Format("2006-01")
+			} else {
+				parts, _ := time.Parse("2006-01-02", date)
+				prevDate = parts.AddDate(0, 0, -1).Format("2006-01-02")
+			}
+
+			if prev, ok := days[prevDate]; ok {
+				if pv, ok2 := prev["cr_mo"]["value"].(float64); ok2 {
+					prevCr = pv
+				}
+			}
+
+			days[date]["cr_mo"] = map[string]interface{}{
+				"value":      cr,
+				"percentage": countPercentageTrafficReport(cr, prevCr),
+			}
+		}
+	}
+
+	// hitung cr_mo total
+	if contains(params.DataIndicators, "cr_mo") {
+		if totalLanding > 0 {
+			totals["cr_mo"] = (totalMoReceived / totalLanding) * 100
+		} else {
+			totals["cr_mo"] = 0
 		}
 	}
 
 	// Final calculations
 	tmoEnd := countTmoEndTrafficReport(totals, startDate, endDate)
 
-	// Prepare summary data
 	summaryData := map[string]interface{}{
 		"data_indicators": params.DataIndicators,
 		"total":           totals,
-		"avg":             countAverageTrafficReport(totals, startDate, endDate),
+		"avg":             countAverageTrafficReport(totals, days),
 		"t_mo_end":        tmoEnd,
 	}
 
-	// Merge with daily breakdowns
-	completeSummary := mergeDaysTrafficReport(summaryData, days)
-
-	return completeSummary
+	return mergeDaysTrafficReport(summaryData, days)
 }
 
 func generateHourlyTrafficReport(data []entity.SummaryTraffic, params entity.TrafficReportParams, date time.Time) map[string]interface{} {
@@ -295,7 +345,7 @@ func generateHourlyTrafficReport(data []entity.SummaryTraffic, params entity.Tra
 	summaryData := map[string]interface{}{
 		"data_indicators": params.DataIndicators,
 		"total":           totals,
-		"avg":             countAverageTrafficReport(totals, date, date),
+		"avg":             countAverageTrafficReport(totals, hours),
 	}
 
 	return mergeHoursTrafficReport(summaryData, hours)
@@ -324,26 +374,35 @@ func getIndicatorValueTrafficReport(item entity.SummaryTraffic, key string) floa
 }
 
 
-func countAverageTrafficReport(totals map[string]float64, startDate, endDate time.Time) map[string]float64 {
+func countAverageTrafficReport(totals map[string]float64, days map[string]map[string]map[string]interface{}) map[string]float64 {
 	averages := map[string]float64{}
-	totalDaysRunning := int(endDate.Sub(startDate).Hours() / 24)
-	if totalDaysRunning < 1 {
-		totalDaysRunning = 1
+	counts := map[string]int{}
+
+	// hitung jumlah hari yang punya data untuk tiap indikator
+	for _, indicators := range days {
+		for key, val := range indicators {
+			if v, ok := val["value"].(float64); ok && v > 0 {
+				counts[key]++
+			}
+		}
 	}
 
-	for key, value := range totals {
-		avg := value / float64(totalDaysRunning)
+	for key, total := range totals {
+		if cnt := counts[key]; cnt > 0 {
+			avg := total / float64(cnt)
 
-		if key == "mo_received" || key == "landing" {
-			avg = float64(int(avg + 0.5))
+			// untuk mo_received & landing dibulatkan ke integer
+			if key == "mo_received" || key == "landing" {
+				avg = float64(int(avg + 0.5))
+			}
+			averages[key] = avg
+		} else {
+			averages[key] = 0
 		}
-
-		averages[key] = avg
 	}
 
 	return averages
 }
-
 
 func countTmoEndTrafficReport(totals map[string]float64, startDate time.Time, endDate time.Time) map[string]float64 {
 	tmoEnd := map[string]float64{}
@@ -642,21 +701,53 @@ func generateChartData(data []entity.SummaryTraffic, params entity.TrafficReport
 		record := map[string]interface{}{
 			"summary_date": date,
 		}
-
+	
+		landingSum := 0.0
+		moReceivedSum := 0.0
+	
 		for _, indicator := range params.DataIndicators {
 			sum := 0.0
 			for _, item := range items {
 				val := getIndicatorValueTrafficReport(item, indicator)
 				sum += val
 			}
-			record[indicator] = sum
+	
+			if indicator == "landing" {
+				landingSum = sum
+			}
+			if indicator == "mo_received" {
+				moReceivedSum = sum
+			}
+	
+			if indicator != "cr_mo" {
+				record[indicator] = sum
+			}
 		}
+	
+		if contains(params.DataIndicators, "cr_mo") {
+			if landingSum > 0 {
+				record["cr_mo"] = (moReceivedSum / landingSum) * 100
+			} else {
+				record["cr_mo"] = 0
+			}
+		}
+	
 		chart = append(chart, record)
 	}
+	
 
 	sort.Slice(chart, func(i, j int) bool {
 		return chart[i]["summary_date"].(string) < chart[j]["summary_date"].(string)
 	})
 
 	return chart
+}
+
+func contains(slice []string, val string) bool {
+	for _, s := range slice {
+		if s == val {
+			return true
+		}
+	}
+	return false
 }

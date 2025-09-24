@@ -165,20 +165,30 @@ func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceRep
 }
 
 func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) ([]entity.PixelStorage, int64, error) {
-
 	var (
 		rows       *sql.Rows
 		total_rows int64
 	)
 
-	// Apply filters, minus the pagination constraints
-	query := r.DB.Model(&entity.PixelStorage{})
+	tableName := "pixel_storages"
+
+	if strings.ToUpper(o.DateRange) == "YESTERDAY" {
+		yesterday := time.Now().AddDate(0, 0, -1).Format("20060102")
+		tableName = fmt.Sprintf("pixel_storages_%s", yesterday)
+	} else if strings.ToUpper(o.DateRange) == "2DAYAGO" {
+		twoDaysAgo := time.Now().AddDate(0, 0, -2).Format("20060102")
+		tableName = fmt.Sprintf("pixel_storages_%s", twoDaysAgo)
+	}
+
+	query := r.DB.Table(tableName)
 	query = query.Where("is_used = ?", "true")
+
 	if o.CampaignType == "mainstream" {
-		query = query.Where("campaign_objective = ?", "MAINSTREAM").Where("status_postback = ? ", "true")
+		query = query.Where("campaign_objective = ?", "MAINSTREAM").Where("status_postback = ?", "true")
 	} else {
 		query = query.Where("campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
 	}
+
 	if o.Action == "Search" {
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
@@ -194,7 +204,6 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 		}
 		if o.CampaignType == "mainstream" {
 			if o.Agency != "" {
-				//compare to adnet maybe will change in the future
 				query = query.Where("adnet = ?", o.Agency)
 			}
 		}
@@ -206,13 +215,11 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 				query = query.Where("adnet = ?", o.Adnet)
 			}
 		}
-		if o.DateRange != "" {
+
+		if o.DateRange != "" && strings.ToUpper(o.DateRange) != "YESTERDAY" && strings.ToUpper(o.DateRange) != "2DAYAGO" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
 				query = query.Where("pxdate BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day' - INTERVAL '1 second'")
-			case "YESTERDAY":
-				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
-				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 			case "LAST30DAY":
 				query = query.Where("pxdate BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
 			case "THISMONTH":
@@ -228,13 +235,10 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 			default:
 				query = query.Where("pxdate = ?", o.DateRange)
 			}
-		} else {
-			query = query.Where("pxdate BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day' - INTERVAL '1 second'")
 		}
 	}
 
-	// Get the total count after applying filters
-	query.Unscoped().Count(&total_rows)
+	query.Count(&total_rows)
 
 	query_limit := query.Limit(o.PageSize)
 	if o.Page > 0 {
@@ -242,7 +246,6 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	}
 
 	var startIndex int
-
 	if o.Order == "asc" {
 		query_limit = query_limit.Order("pxdate asc")
 		startIndex = int(total_rows) - ((o.Page - 1) * o.PageSize)
@@ -255,7 +258,6 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	defer rows.Close()
 
 	var ss []entity.PixelStorage
-
 	for rows.Next() {
 		var s entity.PixelStorage
 		r.DB.ScanRows(rows, &s)
@@ -267,7 +269,6 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 			s.ID = startIndex + 1
 			startIndex++
 		}
-
 		ss = append(ss, s)
 	}
 	return ss, total_rows, rows.Err()

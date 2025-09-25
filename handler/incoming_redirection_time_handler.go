@@ -43,6 +43,13 @@ func (h *IncomingHandler) DisplayRedirectionTime(c *fiber.Ctx) error {
 		All:                  c.Query("all"),
 	}
 
+	if params.DataBasedOn == "" {
+        params.DataBasedOn = "highest"
+    }
+    if params.DataBasedOnIndicator == "" {
+        params.DataBasedOnIndicator = "landing"
+    }
+
 	r := h.GenerateRedirection(c, params)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
@@ -561,30 +568,24 @@ func mergeMapsRedirection(map1, map2 map[string]interface{}) map[string]interfac
 }
 
 func sortDataRedirection(data []map[string]interface{}, dataBasedOn string, dataBasedOnIndicator string) []map[string]interface{} {
-	// Make a copy of the original slice to avoid modifying it directly
 	sortedData := make([]map[string]interface{}, len(data))
 	copy(sortedData, data)
 
-	// Define the sorting function based on the parameters
 	sort.Slice(sortedData, func(i, j int) bool {
-		// Get the "total" map from each item
 		totalI, okI := sortedData[i]["total"].(map[string]float64)
 		totalJ, okJ := sortedData[j]["total"].(map[string]float64)
 
-		// If either total is missing or doesn't have the indicator, maintain order
 		if !okI || !okJ {
 			return i < j
 		}
 
-		// Get the indicator values
 		valI := totalI[dataBasedOnIndicator]
 		valJ := totalJ[dataBasedOnIndicator]
 
-		// Sort based on the specified direction
 		if dataBasedOn == "highest" {
-			return valI > valJ // Sort descending
+			return valI > valJ
 		} else {
-			return valI < valJ // Sort ascending
+			return valI < valJ
 		}
 	})
 

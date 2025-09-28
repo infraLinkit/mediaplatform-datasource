@@ -420,7 +420,7 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 			case "target_budget":
 				formattedValue = "SUM(target_monthly_budget) AS target_budget"
 			case "budget_usage":
-				formattedValue = "SUM(CASE WHEN target_daily_budget = 0 THEN 0 ELSE (sbaf / target_daily_budget * 100) END) AS budget_usage"
+				formattedValue = "SUM(CASE WHEN target_daily_budget = 0 THEN 0 ELSE (saaf / target_daily_budget * 100) END) AS budget_usage"
 			case "spending_to_adnets":
 				formattedValue = "SUM(sbaf) AS spending_to_adnets"
 			case "total_spending":
@@ -445,7 +445,7 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 			case "waki_revenue":
 				formattedValue = "saaf - sbaf AS waki_revenue"
 			case "budget_usage":
-				formattedValue = "CASE WHEN target_daily_budget = 0 THEN NULL ELSE (sbaf / target_daily_budget * 100) END AS budget_usage, sbaf AS sbaf_t, target_daily_budget AS target_daily_budget_t"
+				formattedValue = "CASE WHEN target_daily_budget = 0 THEN NULL ELSE (saaf / target_daily_budget * 100) END AS budget_usage, sbaf AS sbaf_t, target_daily_budget AS target_daily_budget_t"
 			case "fp":
 				formattedValue = "first_push AS fp"
 			case "mo_sent":
@@ -613,7 +613,7 @@ func formatQueryIndicatorsBudget(selects []string, dataType string) []string {
 			case "waki_revenue":
 				formattedValue = "SUM(saaf - sbaf) AS waki_revenue"
 			case "budget_usage":
-				formattedValue = "SUM(CASE WHEN target_daily_budget = 0 THEN 0 ELSE (sbaf / target_daily_budget * 100) END) AS budget_usage"
+				formattedValue = "SUM(CASE WHEN target_daily_budget = 0 THEN 0 ELSE (saaf / target_daily_budget * 100) END) AS budget_usage"
 			case "spending_to_adnets":
 				formattedValue = "SUM(sbaf) AS spending_to_adnets"
 			case "total_spending":
@@ -642,7 +642,7 @@ func formatQueryIndicatorsBudget(selects []string, dataType string) []string {
 			case "waki_revenue":
 				formattedValue = "saaf - sbaf AS waki_revenue"
 			case "budget_usage":
-				formattedValue = "CASE WHEN target_daily_budget = 0 THEN NULL ELSE (sbaf / target_daily_budget * 100) END AS budget_usage, sbaf AS sbaf_t, target_daily_budget AS target_daily_budget_t"
+				formattedValue = "CASE WHEN target_daily_budget = 0 THEN NULL ELSE (saaf / target_daily_budget * 100) END AS budget_usage, sbaf AS sbaf_t, target_daily_budget AS target_daily_budget_t"
 			case "fp":
 				formattedValue = "first_push AS fp"
 			case "mo_sent":

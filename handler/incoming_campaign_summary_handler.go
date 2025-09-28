@@ -45,6 +45,13 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 		All:                  c.Query("all"),
 	}
 
+	if params.DataBasedOn == "" {
+        params.DataBasedOn = "highest"
+    }
+    if params.DataBasedOnIndicator == "" {
+        params.DataBasedOnIndicator = "traffic"
+    }
+
 	r := h.GenerateCampaignSummary(c, params)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }

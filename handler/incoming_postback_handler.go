@@ -413,10 +413,12 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							px_byte = []byte(h.RCP.Get(key).Val())
 							isPX = true
 
-							if err = json.Unmarshal(px_byte, &px); err != nil {
-
+							if err = json.Unmarshal(px_byte, &px); err == nil {
+								h.RCP.Del(px.Pixel)
+							} else {
 								return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotAcceptable, Message: "Invalid pixel format or this pixel not found, pixel : " + p.AffSub})
 							}
+
 						} else {
 							px, isPX = h.DS.GetByAdnetCode(pxData)
 						}

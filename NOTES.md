@@ -1,8 +1,6 @@
 UP DATE : 2025-09-29(2)
 ===
 
-DS
-===
 Author : Wilie
 ----------
 description : 
@@ -13,7 +11,8 @@ version image :
 - infralinkit/mediaplatform-datasource-server:1.6.3
 ----------
 correlation : 
-- https://linkit360.atlassian.net/browse/xxxxx
+- https://linkit360.atlassian.net/browse/WR-240
+- https://linkit360.atlassian.net/browse/WR-241
 ----------
 
 UP DATE : 2025-09-29

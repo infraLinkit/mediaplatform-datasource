@@ -4,7 +4,6 @@ UP DATE : 2025-09-29
 DS
 ===
 Author : Fadhil
-1. ?
 ----------
 description : 
 ----------
@@ -26,7 +25,7 @@ UP DATE : 2025-09-24
 
 DS
 ===
-1. Fix postback adnetcode
+Author : wilie
 ----------
 description : 
 ----------

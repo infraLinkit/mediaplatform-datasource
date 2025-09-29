@@ -399,41 +399,24 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 					switch p.Method {
 					case "ADNETCODE":
 
-						var (
-							//cursor uint64
-							keys   []string
-							err    error
-							credis string
-						)
+						var key string
+						iter := h.RCP.Scan(0, p.URLServiceKey+"*", 0).Iterator()
 
-						// Checking redis by spesific key
-						keys, _, _ = h.RCP.Scan(1, p.URLServiceKey+"*", 0).Result()
+						if err := iter.Err(); err == nil {
 
-						if len(keys) > 0 {
-							for _, k := range keys {
-
-								g := h.RCP.Get(k)
-								credis = g.Val()
-
-								h.Logs.Info(
-									fmt.Sprintf("Pixel %s, Val: %s", k, credis),
-								)
-
-								h.RCP.Del(k)
+							for iter.Next() {
+								key = iter.Val()
+								//fmt.Println("keys", key)
 								break
 							}
-						}
 
-						if credis != "" {
-
-							px_byte = []byte(credis)
+							px_byte = []byte(h.RCP.Get(key).Val())
 							isPX = true
 
 							if err = json.Unmarshal(px_byte, &px); err != nil {
 
-								return c.Status(fiber.StatusNotAcceptable).JSON(entity.GlobalResponse{Code: fiber.StatusNotAcceptable, Message: "Invalid pixel format or this pixel not found, pixel : " + p.AffSub})
+								return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotAcceptable, Message: "Invalid pixel format or this pixel not found, pixel : " + p.AffSub})
 							}
-
 						} else {
 							px, isPX = h.DS.GetByAdnetCode(pxData)
 						}
@@ -486,7 +469,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							Msisdn:            msisdn,
 							TrxId:             "NA",
 							Token:             "NA",
-							IsUsed:            true,
+							IsUsed:            false,
 							Browser:           "NA",
 							OS:                "NA",
 							Ip:                strings.Join(c.IPs(), ", "),
@@ -540,7 +523,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 
 							if px.IsUsed {
 
-								return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
+								return c.Status(fiber.StatusConflict).JSON(entity.GlobalResponseWithData{Code: fiber.StatusConflict, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
 									Adnet:         dc.Adnet,
 									IsBillable:    dc.IsBillable,
 									Pixel:         px.Pixel,

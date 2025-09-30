@@ -1,3 +1,21 @@
+UP DATE : 2025-10-01
+===
+
+DS
+===
+Author : Fadhil
+----------
+description : 
+----------
+- Fix api report insert & get display report
+----------
+version image : 
+- infralinkit/mediaplatform-datasource-server:1.6.7
+----------
+correlation : 
+- https://linkit360.atlassian.net/browse/WR-245
+----------
+
 UP DATE : 2025-09-29(2)
 ===
 

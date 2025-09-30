@@ -7,7 +7,7 @@ Author : Fadhil
 ----------
 description : 
 ----------
-- Fix api report insert & get display report
+- Fix api report insert, get display report, & edit payout af
 ----------
 version image : 
 - infralinkit/mediaplatform-datasource-server:1.6.7

@@ -8,9 +8,11 @@ Author : Fadhil
 description : 
 ----------
 - Fix api report insert, get display report, & edit payout af
+- Fix date send insert api report
 ----------
 version image : 
 - infralinkit/mediaplatform-datasource-server:1.6.7
+- infralinkit/mediaplatform-datasource-server:1.6.8
 ----------
 correlation : 
 - https://linkit360.atlassian.net/browse/WR-245

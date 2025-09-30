@@ -29,67 +29,59 @@ func (h *IncomingHandler) DisplayPinReport(c *fiber.Ctx) error {
 		pageSize = PAGESIZE
 	}
 	draw, _ := strconv.Atoi(m["draw"])
+	var adnets []string
+    for k, v := range m {
+        if strings.HasPrefix(k, "adnet[") {
+            adnets = append(adnets, v)
+        }
+    }
 	fe := entity.DisplayPinReport{
-		Adnet:      m["adnet"],
-		Country:    m["country"],
-		Service:    m["service"],
-		Operator:   m["operator"],
-		DateRange:  m["date_range"],
-		DateBefore: m["date_before"],
-		DateAfter:  m["date_after"],
-		Draw:       draw,
-		Page:       page,
-		PageSize:   pageSize,
-		Action:     m["action"],
+		DateSend:  time.Time{},
+		CampaignId:   m["campaign_id"],
+		Country:      m["country"],
+		Company:      m["company"],
+		Operator:     m["operator"],
+		Partner:      m["partner"],
+		Aggregator:   m["aggregator"],
+		Adnets:       adnets,
+		Service:      m["service"],
+		Draw:         draw,
+		Page:         page,
+		PageSize:     pageSize,
+		Action:       m["action"],
+		DateRange:    m["date_range"],
+		DateBefore:   m["date_before"],
+		DateAfter:    m["date_after"],
+		Reload:       m["reload"],
+		OrderColumn:  m["order_column"],
+		OrderDir:     m["order_dir"],
 	}
 
-	r := h.DisplayPinReportExtra(c, fe)
+	allowedCompanies, _ := c.Locals("companies").([]string)
+
+	r := h.DisplayPinReportExtra(c, fe, allowedCompanies)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayPinReport) entity.ReturnResponse {
-
-	key := "temp_key_api_pin_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
-
+func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayPinReport, allowedCompanies []string) entity.ReturnResponse {
 	var (
-		err              error
-		x                int
-		isempty          bool
-		pinreport        []entity.ApiPinReport
-		displaypinreport []entity.ApiPinReport
+		err        error
+		total_data int64
+		apireport []entity.ApiPinReport
 	)
 
-	if fe.Action != "" {
-		pinreport, err = h.DS.GetApiPinReport(fe)
+	if fe.Action != "" || fe.Reload == "true" {
+		fmt.Println("-----", fe.Reload, "-----")
+		apireport, total_data, err = h.DS.GetDisplayPinReport(fe, allowedCompanies)
 	} else {
-		if pinreport, isempty = h.DS.RGetApiPinReport(key, "$"); isempty {
 
-			pinreport, err = h.DS.GetApiPinReport(fe)
-
-			s, _ := json.Marshal(pinreport)
-
-			h.DS.SetData(key, "$", string(s))
-			h.DS.SetExpireData(key, 60)
-		}
+		apireport, total_data, err = h.DS.GetDisplayPinReport(fe, allowedCompanies)
 	}
 
 	if err == nil {
 
-		pagesize := fe.PageSize
-		if pagesize == 0 {
-			pagesize = PAGESIZE
-		}
-		if fe.Page >= 2 {
-			x = pagesize * (fe.Page - 1)
-		} else {
-			x = 0
-		}
-
-		for i := x; i < len(pinreport) && i < x+pagesize; i++ {
-
-			// h.Logs.Debug(fmt.Sprintf("incr : %d, ID : %d", i, pinreport[i].ID))
-
-			displaypinreport = append(displaypinreport, pinreport[i])
+		if apireport == nil {
+			apireport = []entity.ApiPinReport{}
 		}
 
 		return entity.ReturnResponse{
@@ -98,9 +90,9 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 				Draw:            fe.Draw,
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
-				Data:            displaypinreport,
-				RecordsTotal:    len(pinreport),
-				RecordsFiltered: len(pinreport),
+				Data:            apireport,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
 			},
 		}
 
@@ -113,6 +105,27 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 				Message: "empty",
 			},
 		}
+	}
+}
+
+func (h *IncomingHandler) EditPOAFAPIReport(c *fiber.Ctx) error {
+
+	o := new(entity.ApiPinReport)
+
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	} else {
+
+		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+
+		h.DS.EditPOAFAPIReport(entity.ApiPinReport{
+			DateSend:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			PayoutAF:      o.PayoutAF,
+			CampaignId:    o.CampaignId,
+		})
+
+		return c.Status(fiber.StatusOK).Send([]byte("OK"))
 	}
 }
 

@@ -607,24 +607,24 @@ type (
 	ApiPinReport struct {
 		gorm.Model
 		ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		DateSend      time.Time `gorm:"type:date" json:"date_send"`
-		Country       string    `gorm:"not null;size:50" json:"country"`
+		DateSend      time.Time `gorm:"type:date;uniqueIndex:idx_pin_unique" json:"date_send"`
+		Country       string    `gorm:"not null;size:50;uniqueIndex:idx_pin_unique" json:"country"`
 		Company       string    `gorm:"not null;size:50" json:"company"`
-		Adnet         string    `gorm:"not null;size:50" json:"adnet"`
-		Operator      string    `gorm:"not null;size:50" json:"operator"`
-		Service       string    `gorm:"not null;size:50" json:"service"`
-		PayoutAdn     string    `gorm:"size:50" json:"payout_adn"`
-		PayoutAF      string    `gorm:"size:50" json:"payout_af"`
-		TotalMO       int       `gorm:"length:20;default:0" json:"total_mo"`
-		TotalPostback int       `gorm:"length:20;default:0" json:"total_postback"`
-		SBAF          float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
-		SAAF          float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
-		PricePerMO    float64   `gorm:"type:double precision;not null;length:20;default:0" json:"price_per_mo"`
-		WakiRevenue   float64   `gorm:"type:double precision;not null;length:20;default:0" json:"waki_revenue"`
-		CampaignId    string    `gorm:"size:50" json:"campaign_id"`
+		Adnet         string    `gorm:"not null;size:50;uniqueIndex:idx_pin_unique" json:"adnet"`
+		Operator      string    `gorm:"not null;size:50;uniqueIndex:idx_pin_unique" json:"operator"`
+		Service       string    `gorm:"not null;size:50;uniqueIndex:idx_pin_unique" json:"service"`
+		PayoutAdn     float64   `gorm:"type:double precision;default:0" json:"payout_adn"`
+		PayoutAF      float64   `gorm:"type:double precision;default:0" json:"payout_af"`
+		TotalMO       int       `gorm:"default:0" json:"total_mo"`
+		TotalPostback int       `gorm:"default:0" json:"total_postback"`
+		SBAF          float64   `gorm:"type:double precision;default:0" json:"sbaf"`
+		SAAF          float64   `gorm:"type:double precision;default:0" json:"saaf"`
+		PricePerMO    float64   `gorm:"type:double precision;default:0" json:"price_per_mo"`
+		WakiRevenue   float64   `gorm:"type:double precision;default:0" json:"waki_revenue"`
+		CampaignId    string    `gorm:"size:50;uniqueIndex:idx_pin_unique" json:"campaign_id"`
 		CreatedAt     time.Time
 		UpdatedAt     time.Time
-	}
+	}	
 
 	ApiPinPerformance struct {
 		gorm.Model

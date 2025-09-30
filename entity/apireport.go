@@ -2,6 +2,7 @@ package entity
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,18 +12,29 @@ import (
 )
 
 type (
-	DisplayPinReport struct {
-		Draw       int    `form:"draw" json:"draw"`
-		Country    string `form:"country" json:"country"`
-		Adnet      string `form:"adnet" json:"adnet"`
-		Operator   string `form:"operator" json:"operator"`
-		Service    string `form:"service" json:"service"`
-		Page       int    `form:"page" json:"page"`
-		PageSize   int    `form:"page_size" json:"page_size"`
-		DateRange  string `form:"date_range" json:"date_range"`
-		DateBefore string `form:"date_before" json:"date_before"`
-		DateAfter  string `form:"date_after" json:"date_after"`
-		Action     string `form:"action" json:"action"`
+	DisplayPinReport struct { // api report
+		ID                int       `form:"id" json:"id"`
+		DateSend       time.Time `form:"date_send" json:"date_send"`
+		CampaignId        string    `form:"campaign_id" json:"campaign_id"`
+		Channel           string    `form:"channel" json:"channel"`
+		Country           string    `form:"country" json:"country"`
+		Operator          string    `form:"operator" json:"operator"`
+		Partner           string    `form:"partner" json:"partner"`
+		Agency            string    `form:"agency" json:"agency"`
+		Aggregator        string    `form:"aggregator" json:"aggregator"`
+		Adnets 			  []string  `form:"adnet" json:"adnet"`
+		Service           string    `form:"service" json:"service"`
+		Company           string    `form:"company" json:"company"`
+		PageSize          int       `form:"page_size" json:"page_size"`
+		Page              int       `form:"page" json:"page"`
+		Action            string    `form:"action" json:"action"`
+		DateRange         string    `form:"date_range" json:"date_range"`
+		DateBefore        string    `form:"date_before" json:"date_before"`
+		DateAfter         string    `form:"date_after" json:"date_after"`
+		Draw              int       `form:"draw" json:"draw"`
+		Reload            string    `form:"draw" json:"reload"`
+		OrderColumn   string `form:"order_column" json:"order_column"`
+		OrderDir      string `form:"order_dir" json:"order_dir"`
 	}
 
 	DisplayPinPerformanceReport struct {
@@ -279,25 +291,23 @@ func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
 	postback, _ := strconv.Atoi(m["postback"])
 	sbaf, _ := strconv.ParseFloat(m["sbaf"], 64)
 	saaf, _ := strconv.ParseFloat(m["saaf"], 64)
-	price_per_mo, _ := strconv.ParseFloat(m["price_per_mo"], 64)
-	waki_revenue, _ := strconv.ParseFloat(m["waki_revenue"], 64)
+	payout_adn, _:= strconv.ParseFloat(m["payout_adn"], 64) 
+	payout_af, _:= strconv.ParseFloat(m["payout_af"], 64)
 
 	pin := ApiPinReport{
-		CampaignId:    m["campaign_id"],
-		Country:       m["country"],
-		Company:       m["company"],
-		Adnet:         m["adnet"],
-		Service:       m["service"],
-		Operator:      m["telco"],
+		CampaignId:    strings.ToUpper(m["campaign_id"]),
+		Country:       strings.ToUpper(m["country"]),
+		Company:       strings.ToUpper(m["company"]),
+		Adnet:         strings.ToUpper(m["adnet"]),
+		Service:       strings.ToUpper(m["service"]),
+		Operator:      strings.ToUpper(m["telco"]),
 		DateSend:      helper.GetCurrentTime(cfg.TZ, time.RFC3339),
-		PayoutAdn:     m["payout_adn"],
-		PayoutAF:      m["payout_af"],
+		PayoutAdn:     payout_adn,
+		PayoutAF:      payout_af,
 		TotalMO:       mo,
 		TotalPostback: postback,
 		SBAF:          sbaf,
 		SAAF:          saaf,
-		PricePerMO:    price_per_mo,
-		WakiRevenue:   waki_revenue,
 	}
 
 	return &pin
@@ -320,6 +330,14 @@ func (t *ApiPinReport) ValidateParams(Logs *logrus.Logger) ReturnResponse {
 	} else if t.Operator == "" {
 
 		return ReturnResponse{HttpStatus: fiber.StatusBadRequest, Rsp: GlobalResponse{Code: fiber.StatusBadRequest, Message: "Parameter Operator is mandatory"}}
+
+	} else if t.CampaignId == "" {
+
+		return ReturnResponse{HttpStatus: fiber.StatusBadRequest, Rsp: GlobalResponse{Code: fiber.StatusBadRequest, Message: "Parameter Campaign ID is mandatory"}}
+
+	} else if t.Company == "" {
+
+		return ReturnResponse{HttpStatus: fiber.StatusBadRequest, Rsp: GlobalResponse{Code: fiber.StatusBadRequest, Message: "Parameter Company is mandatory"}}
 
 	} else {
 

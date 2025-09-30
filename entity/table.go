@@ -485,7 +485,7 @@ type (
 	IncSummaryCampaignHour struct {
 		gorm.Model
 		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		SummaryDateHour       time.Time `gorm:"uniqueIndex:idx_incsumunique" json:"summary_date_hour"`
+		SummaryDateHour   time.Time `gorm:"uniqueIndex:idx_incsumunique" json:"summary_date_hour"`
 		URLServiceKey     string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"urlservicekey"`
 		CampaignId        string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"campaign_id"`
 		CampaignObjective string    `gorm:"uniqueIndex:idx_incsumunique;size:50;default:NA" json:"campaign_objective"`
@@ -899,8 +899,8 @@ type (
 	SummaryLanding struct {
 		gorm.Model
 		ID              int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		SummaryDateHour time.Time `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"summary_date_hour"`
-		URLServiceKey   string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"urlservicekey"`
+		SummaryDateHour time.Time `gorm:"not null;size:50;uniqueIndex:idx_summary_unique;index:idx_totloadtime_check" json:"summary_date_hour"`
+		URLServiceKey   string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique;index:idx_totloadtime_check" json:"urlservicekey"`
 		CampaignId      string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"campaign_id"`
 		CampaignName    string    `gorm:"not null;size:100" json:"campaign_name"`
 		Country         string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"country"`
@@ -948,33 +948,33 @@ type (
 
 	SummaryTraffic struct {
 		gorm.Model
-		ID                       int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		Status                   bool      `gorm:"not null;size:50" json:"status"`
-		SummaryDateHour              time.Time `gorm:"uniqueIndex:idx_sumunique" json:"summary_date_hour"`
-		URLServiceKey            string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"urlservicekey"`
-		CampaignId               string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"campaign_id"`
-		CampaignName             string    `gorm:"not null;size:100" json:"campaign_name"`
-		Country                  string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"country"`
-		Operator                 string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"operator"`
-		Partner                  string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"partner"`
-		Aggregator               string    `gorm:"not null;size:50" json:"aggregator"`
-		Adnet                    string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"adnet"`
-		Service                  string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"service"`
-		ShortCode                string    `gorm:"not null;size:50" json:"short_code"`
-		Landing                  int       `gorm:"length:20;default:0" json:"landing"`
-		MoReceived               int       `gorm:"length:20;default:0" json:"mo_received"`
-		Postback                 int       `gorm:"length:20;default:0" json:"postback"`
-		FirstPush                float64   `gorm:"type:double precision;default:0" json:"first_push"`
-		URLWarpLanding                 string    `gorm:"size:255;default:NA" json:"url_landing"`
-		URLLanding                string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
-		Company                  string    `gorm:"size:255;default:NA" json:"company"`
-		ClientType               string    `gorm:"size:30;default:NA" json:"client_type"`
-		CrMO                     float64   `gorm:"type:double precision;default:0" json:"cr_mo"`
-		CrPostback               float64   `gorm:"type:double precision;default:0" json:"cr_postback"`
-		CampaignObjective        string    `gorm:"uniqueIndex:idx_sumunique;size:50;default:NA" json:"campaign_objective"`
-		Channel                  string    `gorm:"size:50;default:NA" json:"channel"`
-		CreatedAt                time.Time
-		UpdatedAt                time.Time
+		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		Status            bool      `gorm:"not null;size:50" json:"status"`
+		SummaryDateHour   time.Time `gorm:"uniqueIndex:idx_sumunique" json:"summary_date_hour"`
+		URLServiceKey     string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"urlservicekey"`
+		CampaignId        string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"campaign_id"`
+		CampaignName      string    `gorm:"not null;size:100" json:"campaign_name"`
+		Country           string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"country"`
+		Operator          string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"operator"`
+		Partner           string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"partner"`
+		Aggregator        string    `gorm:"not null;size:50" json:"aggregator"`
+		Adnet             string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"adnet"`
+		Service           string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"service"`
+		ShortCode         string    `gorm:"not null;size:50" json:"short_code"`
+		Landing           int       `gorm:"length:20;default:0" json:"landing"`
+		MoReceived        int       `gorm:"length:20;default:0" json:"mo_received"`
+		Postback          int       `gorm:"length:20;default:0" json:"postback"`
+		FirstPush         float64   `gorm:"type:double precision;default:0" json:"first_push"`
+		URLWarpLanding    string    `gorm:"size:255;default:NA" json:"url_landing"`
+		URLLanding        string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
+		Company           string    `gorm:"size:255;default:NA" json:"company"`
+		ClientType        string    `gorm:"size:30;default:NA" json:"client_type"`
+		CrMO              float64   `gorm:"type:double precision;default:0" json:"cr_mo"`
+		CrPostback        float64   `gorm:"type:double precision;default:0" json:"cr_postback"`
+		CampaignObjective string    `gorm:"uniqueIndex:idx_sumunique;size:50;default:NA" json:"campaign_objective"`
+		Channel           string    `gorm:"size:50;default:NA" json:"channel"`
+		CreatedAt         time.Time
+		UpdatedAt         time.Time
 	}
 
 	UserCompany struct {

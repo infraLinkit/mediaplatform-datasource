@@ -12,41 +12,75 @@ import (
 	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"gorm.io/gorm/clause"
 )
 
 func (r *BaseModel) PinReport(o entity.ApiPinReport) int {
+    result := r.DB.Clauses(clause.OnConflict{
+        Columns: []clause.Column{
+            {Name: "date_send"},
+            {Name: "country"},
+            {Name: "adnet"},
+            {Name: "operator"},
+            {Name: "service"},
+            {Name: "campaign_id"},
+        },
+        DoUpdates: clause.AssignmentColumns([]string{
+            "payout_adn",
+            "payout_af",
+            "total_mo",
+            "total_postback",
+            "sbaf",
+            "saaf",
+            "price_per_mo",
+            "waki_revenue",
+            "updated_at",
+        }),
+    }).Create(&o)
 
-	result := r.DB.Create(&o)
+    r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
-	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
-
-	return int(o.ID)
+    return int(o.ID)
 }
 
-func (r *BaseModel) GetApiPinReport(o entity.DisplayPinReport) ([]entity.ApiPinReport, error) {
+func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedCompanies []string) ([]entity.ApiPinReport, int64, error) {
+	var totalRows int64
+	var ss []entity.ApiPinReport
 
-	var (
-		rows *sql.Rows
-	)
-
-	query := r.DB.Model(&entity.ApiPinReport{})
+	query := r.DB.Model(&entity.ApiPinReport{}).Select(`
+		api_pin_reports.*,
+		(payout_af * total_postback) AS saaf,
+		(payout_adn * total_postback) AS sbaf,
+		(CASE WHEN total_mo > 0 THEN (payout_af * total_postback) / total_mo ELSE 0 END) AS price_per_mo,
+		((payout_af * total_postback) - (payout_adn * total_postback)) AS waki_revenue
+	`).Where("company IN ?", allowedCompanies)
 
 	if o.Action == "Search" {
+		if o.CampaignId != "" {
+			query = query.Where("campaign_id = ?", o.CampaignId)
+		}
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
+		}
+		if o.Company != "" {
+			query = query.Where("company = ?", o.Company)
 		}
 		if o.Operator != "" {
 			query = query.Where("operator = ?", o.Operator)
 		}
+		if len(o.Adnets) > 0 {
+			query = query.Where("adnet IN ?", o.Adnets)
+		}
 		if o.Service != "" {
 			query = query.Where("service = ?", o.Service)
 		}
+
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
 				query = query.Where("date_send = CURRENT_DATE")
 			case "YESTERDAY":
-				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
+				query = query.Where("date_send = CURRENT_DATE - INTERVAL '1 DAY'")
 			case "LAST7DAY":
 				query = query.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 			case "LAST30DAY":
@@ -60,32 +94,60 @@ func (r *BaseModel) GetApiPinReport(o entity.DisplayPinReport) ([]entity.ApiPinR
 			default:
 				query = query.Where("date_send = ?", o.DateRange)
 			}
+		} else {
+			query = query.Where("date_send = CURRENT_DATE")
 		}
-
-		rows, _ = query.Order("date_send").Rows()
 	} else {
-		rows, _ = query.Rows()
+		query = query.Where("date_send = CURRENT_DATE")
 	}
 
-	defer rows.Close()
-
-	var (
-		ss []entity.ApiPinReport
-	)
-
-	for rows.Next() {
-
-		var s entity.ApiPinReport
-
-		// ScanRows scans a row into a struct
-		r.DB.ScanRows(rows, &s)
-
-		ss = append(ss, s)
+	if err := query.Count(&totalRows).Error; err != nil {
+		return []entity.ApiPinReport{}, 0, err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(ss)))
+	if o.OrderColumn != "" {
+		dir := "ASC"
+		if strings.ToUpper(o.OrderDir) == "DESC" {
+			dir = "DESC"
+		}
+	
+		switch o.OrderColumn {
+		case "saaf":
+			query = query.Order(fmt.Sprintf("(payout_af * total_postback) %s", dir))
+		case "sbaf":
+			query = query.Order(fmt.Sprintf("(payout_adn * total_postback) %s", dir))
+		case "price_per_mo":
+			query = query.Order(fmt.Sprintf("(CASE WHEN total_mo > 0 THEN (payout_af * total_postback) / total_mo ELSE 0 END) %s", dir))
+		case "waki_revenue":
+			query = query.Order(fmt.Sprintf("((payout_af * total_postback) - (payout_adn * total_postback)) %s", dir))
+		default:
+			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
+		}
+	} else {
+		query = query.Order("date_send DESC").Order("id DESC")
+	}	
 
-	return ss, rows.Err()
+	if err := query.
+		Limit(o.PageSize).
+		Offset((o.Page - 1) * o.PageSize).
+		Find(&ss).Error; err != nil {
+		return []entity.ApiPinReport{}, 0, err
+	}
+
+	return ss, totalRows, nil
+}
+
+func (r *BaseModel) EditPOAFAPIReport(o entity.ApiPinReport) error {
+
+	dateOnly := o.DateSend.Format("2006-01-02")
+
+	result := r.DB.Model(&o).
+		Where("date_send = ? AND campaign_id = ?", dateOnly, o.CampaignId).
+		Updates(entity.ApiPinReport{PayoutAF: o.PayoutAF})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
 }
 
 func (r *BaseModel) PinPerformanceReport(o entity.ApiPinPerformance) int {

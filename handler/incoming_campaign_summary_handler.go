@@ -22,7 +22,7 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 		case "spending":
 			dataIndicators = append(dataIndicators, "spending", "target_daily_budget")
 		default:
-			dataIndicators = append(dataIndicators, "traffic", "spending_to_adnets", "target_daily_budget", "budget_usage")
+			dataIndicators = append(dataIndicators, "traffic", "budget_usage", "target_daily_budget", "total_spending")
 		}
 
 	}

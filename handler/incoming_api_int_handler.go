@@ -620,26 +620,17 @@ func (h *IncomingHandler) GetURLServiceInSummaryLanding(c *fiber.Ctx) error {
 	c.Accepts("application/x-www-form-urlencoded")
 	c.AcceptsCharsets("utf-8", "iso-8859-1")
 
-	/* request := new(entity.SummaryLanding)
+	q := c.Queries()
+	event_date := q["event_date"]
+	with_limit, _ := strconv.Atoi(q["with_limit"])
 
-	if err := c.QueryParser(request); err != nil {
-
-		c.Set("Content-Type", "application/json")
-
-		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
-			Code:    fiber.StatusBadRequest,
-			Message: "parameters not complete or different setup",
-		})
-
-	} else { */
-
-	if sl, err := h.DS.GetURLServiceFromSummaryLanding(); err != nil {
+	if sl, err := h.DS.GetURLServiceFromSummaryLanding(event_date, with_limit); err != nil {
 
 		c.Set("Content-Type", "application/json")
 
 		return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{
 			Code:    fiber.StatusNotFound,
-			Message: "No data at 1 hour ago",
+			Message: "",
 		})
 	} else {
 		c.Set("Content-Type", "application/json")

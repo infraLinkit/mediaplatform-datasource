@@ -613,3 +613,96 @@ func (h *IncomingHandler) GetDataArpu(c *fiber.Ctx) error {
 		Data:    result.Data,
 	})
 }
+
+func (h *IncomingHandler) GetURLServiceInSummaryLanding(c *fiber.Ctx) error {
+
+	c.Accepts("application/json")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	/* request := new(entity.SummaryLanding)
+
+	if err := c.QueryParser(request); err != nil {
+
+		c.Set("Content-Type", "application/json")
+
+		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusBadRequest,
+			Message: "parameters not complete or different setup",
+		})
+
+	} else { */
+
+	if sl, err := h.DS.GetURLServiceFromSummaryLanding(); err != nil {
+
+		c.Set("Content-Type", "application/json")
+
+		return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "No data at 1 hour ago",
+		})
+	} else {
+		c.Set("Content-Type", "application/json")
+
+		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{
+			Code:    fiber.StatusOK,
+			Message: "OK",
+			Data:    sl,
+		})
+	}
+
+	//}
+}
+
+func (h *IncomingHandler) UpdateResponseURLServiceInSummaryLanding(c *fiber.Ctx) error {
+
+	c.Accepts("application/json")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	var (
+		request []entity.SummaryLanding
+		err     error
+	)
+
+	if err = json.Unmarshal(c.Body(), &request); err != nil {
+		c.Set("Content-Type", "application/json")
+
+		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusBadRequest,
+			Message: "parameters not complete or different setup",
+		})
+	} else {
+
+		err_count := 0
+		for _, v := range request {
+			err = h.DS.UpdateResponseTimeURLService(entity.SummaryLanding{
+				URLServiceKey:          v.URLServiceKey,
+				ResponseUrlServiceTime: v.ResponseUrlServiceTime,
+			})
+
+			if err != nil {
+				err_count++
+			}
+		}
+
+		if err_count > 0 {
+
+			c.Set("Content-Type", "application/json")
+
+			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusOK,
+				Message: fmt.Sprintf("OK with failed update %d", err_count),
+			})
+
+		} else {
+
+			c.Set("Content-Type", "application/json")
+
+			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusOK,
+				Message: "OK",
+			})
+		}
+	}
+}

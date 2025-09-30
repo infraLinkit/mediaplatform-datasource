@@ -287,6 +287,9 @@ func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
 
 	m := c.Queries()
 
+	now := time.Now()
+	curdate_time, _ := time.Parse("2006-01-02", now.In(cfg.TZ).Format("2006-01-02"))
+
 	mo, _ := strconv.Atoi(m["mo"])
 	postback, _ := strconv.Atoi(m["postback"])
 	sbaf, _ := strconv.ParseFloat(m["sbaf"], 64)
@@ -301,7 +304,7 @@ func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
 		Adnet:         strings.ToUpper(m["adnet"]),
 		Service:       strings.ToUpper(m["service"]),
 		Operator:      strings.ToUpper(m["telco"]),
-		DateSend:      helper.GetCurrentTime(cfg.TZ, time.RFC3339),
+		DateSend:      curdate_time,
 		PayoutAdn:     payout_adn,
 		PayoutAF:      payout_af,
 		TotalMO:       mo,

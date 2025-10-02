@@ -244,15 +244,19 @@ func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
 	cfgDataConfig, _ := json.Marshal(cfgCmp)
 	h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
 
-	today := helper.GetCurrentTime(h.Config.TZ, "2006-01-02") // sudah time.Time
-	var reqDate time.Time
-	if s.SummaryDate.IsZero() {
-		reqDate = today
-	} else {
-		reqDate = s.SummaryDate
-	}
+	now := time.Now().In(h.Config.TZ)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, h.Config.TZ)
 
-	if s.SummaryDate.IsZero() || s.SummaryDate.Equal(today) {
+	summaryLocal := s.SummaryDate.In(h.Config.TZ)
+	summaryLocal = time.Date(
+		summaryLocal.Year(),
+		summaryLocal.Month(),
+		summaryLocal.Day(),
+		0, 0, 0, 0,
+		h.Config.TZ,
+	)
+	
+	if s.SummaryDate.IsZero() || summaryLocal.Equal(today) {
 		h.DS.EditSettingCampaignDetail(entity.CampaignDetail{
 			PO:            o.PO,
 			MOCapping:     o.MOCapping,
@@ -272,7 +276,7 @@ func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
 
 	pos, _ := strconv.ParseFloat(strings.TrimSpace(o.PO), 64)
 	h.DS.EditSettingSummaryCampaign(entity.SummaryCampaign{
-		SummaryDate:   reqDate,
+		SummaryDate:   s.SummaryDate,
 		PO:            pos,
 		MOLimit:       o.MOCapping,
 		RatioSend:     o.RatioSend,

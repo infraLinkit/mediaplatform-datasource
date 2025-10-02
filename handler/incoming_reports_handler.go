@@ -120,7 +120,7 @@ func (h *IncomingHandler) EditPOAFAPIReport(c *fiber.Ctx) error {
 
 
 		h.DS.EditPOAFAPIReport(entity.ApiPinReport{
-			DateSend:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			DateSend:      o.DateSend,
 			PayoutAF:      o.PayoutAF,
 			CampaignId:    o.CampaignId,
 		})

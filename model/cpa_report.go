@@ -13,11 +13,25 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 	var rows *sql.Rows
 	var err error
 	var total_rows int64
-
-	query := r.DB.Model(&entity.SummaryCampaign{})
-	query = query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
-	query = query.Where("mo_received > 0")
-	query = query.Where("company IN ?", allowedCompanies)
+	
+	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
+		summary_campaigns.*,
+		CASE 
+			WHEN LOWER(client_type) = 'external' 
+				THEN (mo_received * poaf) 
+			ELSE (total_waki_agency_fee + (po * postback) + technical_fee) 
+		END AS saaf,
+		(po * postback) AS sbaf,
+		(
+			CASE 
+				WHEN LOWER(client_type) = 'external' 
+					THEN (mo_received * poaf) 
+				ELSE (total_waki_agency_fee + (po * postback) + technical_fee) 
+			END - (po * postback)
+		) AS revenue
+	`).Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS").
+	   Where("mo_received > 0").
+	   Where("company IN ?", allowedCompanies)
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
@@ -82,10 +96,29 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		if strings.ToUpper(o.OrderDir) == "DESC" {
 			dir = "DESC"
 		}
-
-		if o.OrderColumn == "waki_revenue" {
-			query = query.Order(fmt.Sprintf("(saaf - sbaf) %s", dir))
-		} else {
+	
+		switch o.OrderColumn {
+		case "saaf":
+			query = query.Order(fmt.Sprintf(`
+				CASE 
+					WHEN LOWER(client_type) = 'external' 
+						THEN (mo_received * poaf) 
+					ELSE (total_waki_agency_fee + (po * postback) + technical_fee) 
+				END %s
+			`, dir))
+		case "sbaf":
+			query = query.Order(fmt.Sprintf("(po * postback) %s", dir))
+		case "revenue":
+			query = query.Order(fmt.Sprintf(`
+				(
+					CASE 
+						WHEN LOWER(client_type) = 'external' 
+							THEN (mo_received * poaf) 
+						ELSE (total_waki_agency_fee + (po * postback) + technical_fee) 
+					END - (po * postback)
+				) %s
+			`, dir))
+		default:
 			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
 		}
 	} else {
@@ -198,10 +231,15 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 	var rows *sql.Rows
 	var err error
 
-	query := r.DB.Model(&entity.SummaryCampaign{})
-	query = query.Where("campaign_objective = ?", "MAINSTREAM").
-		Where("mo_received > 0").
-		Where("company IN ?", allowedCompanies)
+	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
+		summary_campaigns.*,
+		(poaf * postback) AS saaf,
+		(po * postback) AS sbaf,
+		(CASE WHEN mo_received > 0 THEN (poaf * postback) / mo_received ELSE 0 END) AS price_per_mo,
+		((poaf * postback) - (po * postback)) AS revenue
+	`).Where("campaign_objective = ?", "MAINSTREAM").
+	   Where("mo_received > 0").
+	   Where("company IN ?", allowedCompanies)
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
@@ -273,60 +311,20 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		if strings.ToUpper(o.OrderDir) == "DESC" {
 			dir = "DESC"
 		}
-		query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
-	} else if o.DataBasedOn != "" {
-		switch strings.ToUpper(o.DataBasedOn) {
-		case "HIGHEST_PIXEL_RECEIVED":
-			query = query.Order("mo_received DESC")
-		case "HIGHEST_PIXEL_SEND":
-			query = query.Order("postback DESC")
-		case "HIGHEST_PRICE_PER_POSTBACK":
-			query = query.Order("po DESC")
-		case "HIGHEST_COST_PER_CONVERSION":
-			query = query.Order("cost_per_conversion DESC")
-		case "HIGHEST_AGENCY_FEE":
-			query = query.Order("agency_fee DESC")
-		case "HIGHEST_SPENDING_TO_ADNETS":
-			query = query.Order("sbaf DESC")
-		case "HIGHEST_TOTAL_WAKI_AGENCY_FEE":
-			query = query.Order("total_waki_agency_fee DESC")
-		case "HIGHEST_TOTAL_SPENDING":
-			query = query.Order("saaf DESC")
-		case "HIGHEST_ECPA":
-			query = query.Order("cpa DESC")
-		case "HIGHEST_LANDING":
-			query = query.Order("landing DESC")
-		case "HIGHEST_POSTBACK":
-			query = query.Order("cr_postback DESC")
-		case "HIGHEST_MO":
-			query = query.Order("cr_mo DESC")
-		case "LOWEST_PIXEL_RECEIVED":
-			query = query.Order("mo_received ASC")
-		case "LOWEST_PIXEL_SEND":
-			query = query.Order("postback ASC")
-		case "LOWEST_PRICE_PER_POSTBACK":
-			query = query.Order("po ASC")
-		case "LOWEST_COST_PER_CONVERSION":
-			query = query.Order("cost_per_conversion ASC")
-		case "LOWEST_AGENCY_FEE":
-			query = query.Order("agency_fee ASC")
-		case "LOWEST_SPENDING_TO_ADNETS":
-			query = query.Order("sbaf ASC")
-		case "LOWEST_TOTAL_WAKI_AGENCY_FEE":
-			query = query.Order("total_waki_agency_fee ASC")
-		case "LOWEST_TOTAL_SPENDING":
-			query = query.Order("saaf ASC")
-		case "LOWEST_ECPA":
-			query = query.Order("cpa ASC")
-		case "LOWEST_LANDING":
-			query = query.Order("landing ASC")
-		case "LOWEST_POSTBACK":
-			query = query.Order("cr_postback ASC")
-		case "LOWEST_MO":
-			query = query.Order("cr_mo ASC")
+	
+		switch o.OrderColumn {
+		case "saaf":
+			query = query.Order(fmt.Sprintf("(poaf * postback) %s", dir))
+		case "sbaf":
+			query = query.Order(fmt.Sprintf("(po * postback) %s", dir))
+		case "price_per_mo":
+			query = query.Order(fmt.Sprintf("(CASE WHEN mo_received > 0 THEN (poaf * postback) / mo_received ELSE 0 END) %s", dir))
+		case "revenue":
+			query = query.Order(fmt.Sprintf("((poaf * postback) - (po * postback)) %s", dir))
+		default:
+			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
 		}
 	} else {
-		// default order
 		query = query.Order("summary_date DESC").Order("id DESC")
 	}
 

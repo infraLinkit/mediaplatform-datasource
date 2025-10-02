@@ -14,7 +14,7 @@ version image :
 - infralinkit/mediaplatform-datasource-server:1.6.9
 ----------
 correlation : 
-- https://linkit360.atlassian.net/browse/WR-245
+- https://linkit360.atlassian.net/browse/WR-xxx
 ----------
 
 UP DATE : 2025-10-01

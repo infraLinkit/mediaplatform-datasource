@@ -668,28 +668,23 @@ func (h *IncomingHandler) UpdateResponseURLServiceInSummaryLanding(c *fiber.Ctx)
 		q := c.Queries()
 		event_date := q["event_date"]
 
-		err_count := 0
-		for _, v := range request {
-			err = h.DS.UpdateResponseTimeURLService(event_date, entity.SummaryLanding{
-				URLServiceKey:          v.URLServiceKey,
-				ResponseUrlServiceTime: v.ResponseUrlServiceTime,
-			})
-
-			if err != nil {
-				err_count++
-			}
-		}
-
-		if err_count > 0 {
+		if event_date == "" {
 
 			c.Set("Content-Type", "application/json")
 
-			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
-				Code:    fiber.StatusOK,
-				Message: fmt.Sprintf("OK with failed update %d", err_count),
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "Failed update, event_date is null",
 			})
 
 		} else {
+
+			for _, v := range request {
+				h.DS.UpdateResponseTimeURLService(event_date, entity.SummaryLanding{
+					URLServiceKey:          v.URLServiceKey,
+					ResponseUrlServiceTime: v.ResponseUrlServiceTime,
+				})
+			}
 
 			c.Set("Content-Type", "application/json")
 

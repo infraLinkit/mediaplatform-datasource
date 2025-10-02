@@ -444,8 +444,8 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 						}
 					case "SPC-MVLS":
 
-						campIdRemover := strings.NewReplacer(dc.URLServiceKey+"-", "")
-						msisdn := campIdRemover.Replace(p.AffSub)
+						//campIdRemover := strings.NewReplacer(dc.URLServiceKey+"-", "")
+						//msisdn := campIdRemover.Replace(p.AffSub)
 
 						isPX = true
 
@@ -468,8 +468,8 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							URL:               dc.APIURL,
 							URLType:           dc.URLType,
 							Pixel:             "NA",
-							Msisdn:            msisdn,
-							TrxId:             "NA",
+							Msisdn:            p.Msisdn,
+							TrxId:             p.Trxid,
 							Token:             "NA",
 							IsUsed:            false,
 							Browser:           "NA",

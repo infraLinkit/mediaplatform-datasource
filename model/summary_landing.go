@@ -15,9 +15,9 @@ func (r *BaseModel) GetURLServiceFromSummaryLanding(event_date string, with_limi
 	query := r.DB.Model(&entity.SummaryLanding{}).Select("url_service_key", "country", "operator", "partner", "adnet", "service", "url_service", "response_url_service_time")
 
 	switch event_date {
-	case "1 HOUR AGO":
+	case "1HOURAGO":
 		query.Where("summary_date_hour <= NOW() - INTERVAL '1 hour'")
-	case "1 DAY AGO":
+	case "1DAYAGO":
 		query.Where("summary_date_hour <= NOW() - INTERVAL '1 days'")
 	default:
 		query.Where("DATE(summary_date_hour) = '" + event_date + "'")
@@ -49,13 +49,23 @@ func (r *BaseModel) GetURLServiceFromSummaryLanding(event_date string, with_limi
 
 }
 
-func (r *BaseModel) UpdateResponseTimeURLService(o entity.SummaryLanding) error {
+func (r *BaseModel) UpdateResponseTimeURLService(event_date string, o entity.SummaryLanding) error {
 
-	result := r.DB.Model(&o).
-		Where("summary_date_hour <= NOW() - INTERVAL '1 hour' AND url_service_key = ?", o.URLServiceKey).
-		Updates(entity.SummaryLanding{ResponseUrlServiceTime: o.ResponseUrlServiceTime})
+	query := r.DB.Model(&o).
+		Where("url_service_key = ?", o.URLServiceKey)
 
-	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+	switch event_date {
+	case "1HOURAGO":
+		query.Where("summary_date_hour <= NOW() - INTERVAL '1 hour'")
+	case "1DAYAGO":
+		query.Where("summary_date_hour <= NOW() - INTERVAL '1 days'")
+	default:
+		query.Where("DATE(summary_date_hour) = '" + event_date + "'")
+	}
 
-	return result.Error
+	query.Updates(entity.SummaryLanding{ResponseUrlServiceTime: o.ResponseUrlServiceTime})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", query.RowsAffected, query.Error))
+
+	return query.Error
 }

@@ -1,3 +1,22 @@
+UP DATE : 2025-10-02
+===
+
+DS
+===
+Author : Wilie
+----------
+description : 
+----------
+- Total Load time (Report redirection time tools)
+- Add wildcard trxid={trxid} parameter for postback method=SPC-MVLS
+----------
+version image : 
+- infralinkit/mediaplatform-datasource-server:1.6.9
+----------
+correlation : 
+- https://linkit360.atlassian.net/browse/WR-245
+----------
+
 UP DATE : 2025-10-01
 ===
 

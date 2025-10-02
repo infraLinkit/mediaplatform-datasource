@@ -442,7 +442,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 						} else {
 							px, isPX = h.DS.GetPx(pxData)
 						}
-					case "SPC-MVLS":
+					case "SPC-MVLS", "SPC-TFCS", "SPC":
 
 						//campIdRemover := strings.NewReplacer(dc.URLServiceKey+"-", "")
 						//msisdn := campIdRemover.Replace(p.AffSub)
@@ -509,6 +509,31 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 						}
 
 						h.DS.NewPixel(px)
+
+						h.DS.UpdateSummaryFromLandingPixelStorage(
+							entity.IncSummaryCampaign{
+								SummaryDate:   px.Pxdate,
+								URLServiceKey: px.URLServiceKey,
+								Country:       px.Country,
+								Operator:      px.Operator,
+								Partner:       px.Partner,
+								Service:       px.Service,
+								Adnet:         px.Adnet,
+								CampaignId:    px.CampaignId,
+							})
+
+						h.DS.UpdateSummaryFromLandingPixelStorageHour(
+							entity.IncSummaryCampaignHour{
+								SummaryDateHour: px.Pxdate,
+								URLServiceKey:   px.URLServiceKey,
+								Country:         px.Country,
+								Operator:        px.Operator,
+								Partner:         px.Partner,
+								Service:         px.Service,
+								Adnet:           px.Adnet,
+								CampaignId:      px.CampaignId,
+							})
+
 					}
 
 					if !isPX && p.Method == "" {

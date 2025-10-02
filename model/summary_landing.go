@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
@@ -64,5 +65,32 @@ func (r *BaseModel) UpdateResponseTimeURLService(event_date string, o entity.Sum
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
+	return result.Error
+}
+
+func (r *BaseModel) UpdateSummaryFromLandingPixelStorage(o entity.IncSummaryCampaign) error {
+
+	//result := DB.Model(&o).Where("summary_date = CURRENT_DATE AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).Update("landing", gorm.Expr("landing + ?", 1))
+
+	result := r.DB.Exec("UPDATE inc_summary_campaigns SET landing = landing + 1 WHERE summary_date = CURRENT_DATE AND url_service_key = ?", o.URLServiceKey)
+
+	//result := DB.Exec("UPDATE summary_campaigns SET landing = landing + 1 WHERE summary_date = ? AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) UpdateSummaryFromLandingPixelStorageHour(o entity.IncSummaryCampaignHour) error {
+	o.SummaryDateHour = o.SummaryDateHour.Truncate(time.Hour)
+
+	result := r.DB.Exec(`
+		UPDATE inc_summary_campaign_hours
+		SET landing = landing + 1
+		WHERE summary_date_hour = ? AND url_service_key = ?`,
+		o.SummaryDateHour, o.URLServiceKey,
+	)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 	return result.Error
 }

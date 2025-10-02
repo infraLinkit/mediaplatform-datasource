@@ -261,6 +261,9 @@ func formatQueryIndicatorsRedirection(selects []string, dataType string) []strin
 		}
 	}
 
+	formatted = append(formatted,
+		"(AVG(response_time) + AVG(response_url_service_time)) AS total_load_time")
+
 	return formatted
 }
 

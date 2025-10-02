@@ -218,35 +218,41 @@ func (h *IncomingHandler) UpdateStatusCampaign(c *fiber.Ctx) error {
 }
 
 func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
-
 	o := new(entity.CampaignDetail)
-
 	if err := c.BodyParser(&o); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	s := new(entity.SummaryCampaign)
+	_ = c.BodyParser(&s)
+
+	h.Logs.Debug(fmt.Sprintf("campaign detail : %#v ...", o))
+	h.Logs.Debug(fmt.Sprintf("summary campaign : %#v ...", s))
+
+	cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+	cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+	mocappingChanged := o.MOCapping != cfgCmp.MOCapping
+
+	cfgCmp.PO = o.PO
+	cfgCmp.RatioSend = o.RatioSend
+	cfgCmp.RatioReceive = o.RatioReceive
+	cfgCmp.MOCapping = o.MOCapping
+	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+	if mocappingChanged {
+		cfgCmp.StatusCapping = false
+	}
+	cfgDataConfig, _ := json.Marshal(cfgCmp)
+	h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+
+	today := helper.GetCurrentTime(h.Config.TZ, "2006-01-02") // sudah time.Time
+	var reqDate time.Time
+	if s.SummaryDate.IsZero() {
+		reqDate = today
 	} else {
+		reqDate = s.SummaryDate
+	}
 
-		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
-
-		// Update to redis with key
-		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
-		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
-		mocappingChanged := o.MOCapping != cfgCmp.MOCapping
-
-		cfgCmp.PO = o.PO
-		cfgCmp.RatioSend = o.RatioSend
-		cfgCmp.RatioReceive = o.RatioReceive
-		cfgCmp.MOCapping = o.MOCapping
-		cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
-
-		if mocappingChanged {
-			cfgCmp.StatusCapping = false
-		}
-
-		cfgDataConfig, _ := json.Marshal(cfgCmp)
-
-		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
-
-		// Update to database
+	if s.SummaryDate.IsZero() || s.SummaryDate.Equal(today) {
 		h.DS.EditSettingCampaignDetail(entity.CampaignDetail{
 			PO:            o.PO,
 			MOCapping:     o.MOCapping,
@@ -262,26 +268,25 @@ func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
 			CampaignId:    o.CampaignId,
 			StatusCapping:  bool(mocappingChanged),
 		})
-
-		pos, _ := strconv.ParseFloat(strings.TrimSpace(o.PO), 64)
-
-		h.DS.EditSettingSummaryCampaign(entity.SummaryCampaign{
-			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-			PO:            pos,
-			MOLimit:       o.MOCapping,
-			RatioSend:     o.RatioSend,
-			RatioReceive:  o.RatioReceive,
-			URLServiceKey: o.URLServiceKey,
-			Country:       cfgCmp.Country,
-			Operator:      cfgCmp.Operator,
-			Partner:       cfgCmp.Partner,
-			Adnet:         cfgCmp.Adnet,
-			Service:       cfgCmp.Service,
-			CampaignId:    o.CampaignId,
-		})
-
-		return c.Status(fiber.StatusOK).Send([]byte("OK"))
 	}
+
+	pos, _ := strconv.ParseFloat(strings.TrimSpace(o.PO), 64)
+	h.DS.EditSettingSummaryCampaign(entity.SummaryCampaign{
+		SummaryDate:   reqDate,
+		PO:            pos,
+		MOLimit:       o.MOCapping,
+		RatioSend:     o.RatioSend,
+		RatioReceive:  o.RatioReceive,
+		URLServiceKey: o.URLServiceKey,
+		Country:       cfgCmp.Country,
+		Operator:      cfgCmp.Operator,
+		Partner:       cfgCmp.Partner,
+		Adnet:         cfgCmp.Adnet,
+		Service:       cfgCmp.Service,
+		CampaignId:    o.CampaignId,
+	})
+
+	return c.Status(fiber.StatusOK).Send([]byte("OK"))
 }
 
 func (h *IncomingHandler) DelCampaign(c *fiber.Ctx) error {
@@ -514,13 +519,13 @@ func (h *IncomingHandler) EditPOAF(c *fiber.Ctx) error {
 		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
 
 		h.DS.EditPOAFIncSummaryCampaign(entity.IncSummaryCampaign{
-			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			SummaryDate:   o.SummaryDate,
 			POAF: 		   o.POAF,
 			URLServiceKey: o.URLServiceKey,
 		})
 
 		h.DS.EditPOAFSummaryCampaign(entity.SummaryCampaign{
-			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			SummaryDate:   o.SummaryDate,
 			POAF:          o.POAF,
 			URLServiceKey: o.URLServiceKey,
 		})

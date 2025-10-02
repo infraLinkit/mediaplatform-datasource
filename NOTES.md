@@ -12,6 +12,9 @@ description :
 ----------
 version image : 
 - infralinkit/mediaplatform-datasource-server:1.6.9
+- infralinkit/mediaplatform-datasource-server:1.7.1
+- infralinkit/mediaplatform-datasource-server:1.7.2
+- infralinkit/mediaplatform-datasource-server:1.7.3
 ----------
 correlation : 
 - https://linkit360.atlassian.net/browse/WR-xxx

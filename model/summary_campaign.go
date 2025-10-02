@@ -30,8 +30,13 @@ func (r *BaseModel) DelSummaryCampaign(o entity.SummaryCampaign) error {
 
 func (r *BaseModel) EditSettingSummaryCampaign(o entity.SummaryCampaign) error {
 
+	summaryDate := o.SummaryDate
+	if summaryDate.IsZero() {
+		summaryDate = time.Now()
+	}
+
 	result := r.DB.Model(&o).
-		Where("summary_date = ? AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Where("summary_date = ? AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?", summaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
 		Updates(entity.SummaryCampaign{PO: o.PO, MOLimit: o.MOLimit, RatioSend: o.RatioSend, RatioReceive: o.RatioReceive})
 
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))

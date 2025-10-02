@@ -14,6 +14,8 @@ type (
 		URLServiceKey string `json:"urlservicekey"`
 		AffSub        string `json:"aff_sub"`
 		Method        string `json:"method"`
+		Msisdn        string `json:"msisdn"`
+		Trxid         string `json:"trxid"`
 	}
 
 	PostbackData struct {
@@ -32,6 +34,8 @@ func NewDataPostback(c *fiber.Ctx) *PostbackReceive {
 		CookieKey:     CookieKey,
 		URLServiceKey: m["urlservicekey"],
 		AffSub:        m["aff_sub"],
+		Msisdn:        m["msisdn"],
+		Trxid:         m["trxid"],
 	}
 }
 
@@ -62,6 +66,8 @@ func NewDataPostbackV2(c *fiber.Ctx) *PostbackReceive {
 		CookieKey: CookieKey,
 		AffSub:    m["aff_sub"],
 		Method:    strings.ToUpper(m["method"]),
+		Msisdn:    m["msisdn"],
+		Trxid:     m["trxid"],
 	}
 }
 

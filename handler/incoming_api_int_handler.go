@@ -665,9 +665,12 @@ func (h *IncomingHandler) UpdateResponseURLServiceInSummaryLanding(c *fiber.Ctx)
 		})
 	} else {
 
+		q := c.Queries()
+		event_date := q["event_date"]
+
 		err_count := 0
 		for _, v := range request {
-			err = h.DS.UpdateResponseTimeURLService(entity.SummaryLanding{
+			err = h.DS.UpdateResponseTimeURLService(event_date, entity.SummaryLanding{
 				URLServiceKey:          v.URLServiceKey,
 				ResponseUrlServiceTime: v.ResponseUrlServiceTime,
 			})

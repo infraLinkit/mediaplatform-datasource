@@ -498,7 +498,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							CampaignObjective: dc.Objective,
 							Channel:           dc.Channel,
 							Currency:          dc.Currency,
-							PostbackMethod:    dc.PostbackMethod,
+							PostbackMethod:    p.Method,
 							LandingTime:       helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
 							LandedTime:        float64(0),
 							HttpStatus:        200,
@@ -508,7 +508,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							IsUnique:          false,
 						}
 
-						h.DS.NewPixel(px)
+						px.ID = h.DS.NewPixel(px)
 
 						h.DS.UpdateSummaryFromLandingPixelStorage(
 							entity.IncSummaryCampaign{

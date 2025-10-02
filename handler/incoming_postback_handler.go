@@ -508,31 +508,31 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							IsUnique:          false,
 						}
 
-						if cnt := h.DS.NewPixel(px); cnt > 0 {
-							h.DS.UpdateSummaryFromLandingPixelStorage(
-								entity.IncSummaryCampaign{
-									SummaryDate:   px.Pxdate,
-									URLServiceKey: px.URLServiceKey,
-									Country:       px.Country,
-									Operator:      px.Operator,
-									Partner:       px.Partner,
-									Service:       px.Service,
-									Adnet:         px.Adnet,
-									CampaignId:    px.CampaignId,
-								})
+						h.DS.NewPixel(px)
 
-							h.DS.UpdateSummaryFromLandingPixelStorageHour(
-								entity.IncSummaryCampaignHour{
-									SummaryDateHour: px.Pxdate,
-									URLServiceKey:   px.URLServiceKey,
-									Country:         px.Country,
-									Operator:        px.Operator,
-									Partner:         px.Partner,
-									Service:         px.Service,
-									Adnet:           px.Adnet,
-									CampaignId:      px.CampaignId,
-								})
-						}
+						h.DS.UpdateSummaryFromLandingPixelStorage(
+							entity.IncSummaryCampaign{
+								SummaryDate:   px.Pxdate,
+								URLServiceKey: px.URLServiceKey,
+								Country:       px.Country,
+								Operator:      px.Operator,
+								Partner:       px.Partner,
+								Service:       px.Service,
+								Adnet:         px.Adnet,
+								CampaignId:    px.CampaignId,
+							})
+
+						h.DS.UpdateSummaryFromLandingPixelStorageHour(
+							entity.IncSummaryCampaignHour{
+								SummaryDateHour: px.Pxdate,
+								URLServiceKey:   px.URLServiceKey,
+								Country:         px.Country,
+								Operator:        px.Operator,
+								Partner:         px.Partner,
+								Service:         px.Service,
+								Adnet:           px.Adnet,
+								CampaignId:      px.CampaignId,
+							})
 
 					}
 

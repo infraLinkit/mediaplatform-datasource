@@ -3,6 +3,26 @@ UP DATE : 2025-10-02
 
 DS
 ===
+Author : Fadhil
+----------
+description : 
+----------
+- Fix Cannot change previous day's payout and ratio CPA, API Report, Mainstream Report
+- Mainstream Report adjustment
+- Fix total load time redirection time tools
+----------
+version image : 
+- infralinkit/mediaplatform-datasource-server:1.7.5
+----------
+correlation : 
+- https://linkit360.atlassian.net/browse/WR-189
+----------
+
+UP DATE : 2025-10-02
+===
+
+DS
+===
 Author : Wilie
 ----------
 description : 

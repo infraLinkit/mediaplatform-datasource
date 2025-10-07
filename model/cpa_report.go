@@ -227,9 +227,10 @@ func (r *BaseModel) FindLatestSummaryCampaignByUniqueKey(service, adnet, operato
 	return s, result.Error
 }
 
-func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, error) {
+func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, int64, error) {
 	var rows *sql.Rows
 	var err error
+	var total_rows int64
 
 	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
 		summary_campaigns.*,
@@ -328,9 +329,16 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		query = query.Order("summary_date DESC").Order("id DESC")
 	}
 
-	rows, err = query.Rows()
+	query.Unscoped().Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	}
+
+	rows, err = query_limit.Rows()
 	if err != nil {
-		return []entity.SummaryCampaign{}, err
+		return []entity.SummaryCampaign{}, 0, err
 	}
 	defer rows.Close()
 
@@ -342,7 +350,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 	}
 
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-	return ss, rows.Err()
+	return ss, total_rows, rows.Err()
 }
 
 func (r *BaseModel) FindSummaryCampaign(id int) (entity.SummaryCampaign, error) {

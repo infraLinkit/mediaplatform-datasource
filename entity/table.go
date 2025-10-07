@@ -911,17 +911,17 @@ type (
 		Service         string    `gorm:"not null;size:50;uniqueIndex:idx_summary_unique" json:"service"`
 
 		URLCampaign      string  `gorm:"not null;size:255" json:"url_campaign"`
-		ResponseTime     float64 `gorm:"not null;length:20" json:"response_time"`
-		TotalLoadTime    float64 `gorm:"not null;length:20" json:"total_load_time"`
+		ResponseTime     float64 `gorm:"type:double precision;default:0" json:"response_time"`
+		TotalLoadTime    float64 `gorm:"type:double precision;default:0" json:"total_load_time"`
 		Landing          int     `gorm:"default:0" json:"landing"`
-		SuccessRate      float64 `gorm:"default:0" json:"success_rate"`
+		SuccessRate      float64 `gorm:"type:double precision;default:0" json:"success_rate"`
 		ClickIOS         int     `gorm:"default:0" json:"click_ios"`
 		ClickAndroid     int     `gorm:"default:0" json:"click_android"`
 		ClickOperator    int     `gorm:"default:0" json:"click_operator"`
 		ClickNonOperator int     `gorm:"default:0" json:"click_non_operator"`
 
 		URLService             string  `gorm:"not null;size:255;default:NA" json:"url_service"`
-		ResponseUrlServiceTime float64 `gorm:"not null;length:20;default:0" json:"response_url_service_time"`
+		ResponseUrlServiceTime float64 `gorm:"type:double precision;default:0" json:"response_url_service_time"`
 
 		CreatedAt time.Time
 		UpdatedAt time.Time

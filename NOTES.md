@@ -9,12 +9,14 @@ description :
 ----------
 - Fix Total Load Time redirection
 - Fix data type summary_landings table
+- Fix Display Mainstream Report
 ----------
 version image : 
 - infralinkit/mediaplatform-datasource-server:1.7.7
 - infralinkit/mediaplatform-datasource-server:1.7.8
 - infralinkit/mediaplatform-datasource-server:1.7.9
 - infralinkit/mediaplatform-datasource-server:1.8.1
+- infralinkit/mediaplatform-datasource-server:1.8.2
 ----------
 correlation : 
 - https://linkit360.atlassian.net/browse/WR-189

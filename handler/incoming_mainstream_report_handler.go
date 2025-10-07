@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -9,7 +9,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
-	"github.com/infraLinkit/mediaplatform-datasource/helper"
 )
 
 // const PAGESIZE int = 10
@@ -56,6 +55,7 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 		DateRange:     m["date_range"],
 		DateBefore:    m["date_before"],
 		DateAfter:     m["date_after"],
+		Reload:        m["reload"],
 		OrderColumn:    m["order_column"],
 		OrderDir:       m["order_dir"],
 	}
@@ -66,47 +66,41 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport, allowedCompanies[]string) entity.ReturnResponse {
-	adnetKey := strings.Join(fe.Adnets, ",")
-	key := "temp_key_api_mainstream_report" +
-		"_" + fe.CampaignId +
-		"_" + fe.CampaignName +
-		"_" + fe.UrlServiceKey +
-		"_" + fe.Country +
-		"_" + fe.ClientType +
-		"_" + fe.Company +
-		"_" + fe.Operator +
-		"_" + fe.Partner +
-		"_" + fe.Channel +
-		"_" + fe.Agency +
-		"_" + fe.Aggregator +
-		"_" + adnetKey +
-		"_" + fe.Service +
-		"_" + fe.DataBasedOn +
-		"_" + fe.DateRange +
-		"_" + fe.DateBefore +
-		"_" + fe.DateAfter +
-		"_" + fe.OrderColumn + 
-		"_" + fe.OrderDir + 
-		"_" + strconv.Itoa(fe.Page) +
-		"_" + strconv.Itoa(fe.PageSize) + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport, allowedCompanies []string) entity.ReturnResponse {
+
 	var (
-		err                     error
-		x                       int
-		isempty                 bool
-		mainstreamreport        []entity.SummaryCampaign
-		displaymainstreamreport []entity.SummaryCampaign
+		err        error
+		total_data int64
+		mainstreamreport []entity.SummaryCampaign
 	)
 
-	if mainstreamreport, isempty = h.DS.RGetDisplayMainstreamReport(key, "$"); isempty {
-		mainstreamreport, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies)
-		s, _ := json.Marshal(mainstreamreport)
-
-		h.DS.SetData(key, "$", string(s))
-		h.DS.SetExpireData(key, 60)
+	if fe.Action != "" || fe.Reload == "true" {
+		fmt.Println("-----", fe.Reload, "-----")
+		mainstreamreport, total_data, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies)
+	} else {
+		mainstreamreport, total_data, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies)
 	}
 
-	if err != nil {
+	if err == nil {
+
+		if mainstreamreport == nil {
+			mainstreamreport = []entity.SummaryCampaign{}
+		}
+
+		return entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Draw:            fe.Draw,
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            mainstreamreport,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	} else {
+
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusNotFound,
 			Rsp: entity.GlobalResponse{
@@ -114,44 +108,5 @@ func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.D
 				Message: "empty",
 			},
 		}
-	}
-
-	pagesize := fe.PageSize
-	if pagesize == 0 {
-		pagesize = PAGESIZE
-	}
-
-	if fe.Page >= 2 {
-		x = pagesize * (fe.Page - 1)
-	} else {
-		x = 0
-	}
-
-	for i := x; i < len(mainstreamreport) && i < x+pagesize; i++ {
-		displaymainstreamreport = append(displaymainstreamreport, mainstreamreport[i])
-	}
-	if displaymainstreamreport == nil {
-		return entity.ReturnResponse{
-			HttpStatus: fiber.StatusOK,
-			Rsp: entity.GlobalResponseWithDataTable{
-				Draw:            fe.Draw,
-				Code:            fiber.StatusOK,
-				Message:         config.OK_DESC,
-				Data:            []entity.SummaryCampaign{},
-				RecordsTotal:    len(mainstreamreport),
-				RecordsFiltered: len(mainstreamreport),
-			},
-		}
-	}
-	return entity.ReturnResponse{
-		HttpStatus: fiber.StatusOK,
-		Rsp: entity.GlobalResponseWithDataTable{
-			Draw:            fe.Draw,
-			Code:            fiber.StatusOK,
-			Message:         config.OK_DESC,
-			Data:            displaymainstreamreport,
-			RecordsTotal:    len(mainstreamreport),
-			RecordsFiltered: len(mainstreamreport),
-		},
 	}
 }

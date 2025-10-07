@@ -14,6 +14,7 @@ version image :
 - infralinkit/mediaplatform-datasource-server:1.7.7
 - infralinkit/mediaplatform-datasource-server:1.7.8
 - infralinkit/mediaplatform-datasource-server:1.7.9
+- infralinkit/mediaplatform-datasource-server:1.8.1
 ----------
 correlation : 
 - https://linkit360.atlassian.net/browse/WR-189

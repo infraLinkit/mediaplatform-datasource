@@ -11,7 +11,6 @@ description :
 - Fix data type summary_landings table
 ----------
 version image : 
-- infralinkit/mediaplatform-datasource-server:1.7.6
 - infralinkit/mediaplatform-datasource-server:1.7.7
 - infralinkit/mediaplatform-datasource-server:1.7.8
 - infralinkit/mediaplatform-datasource-server:1.7.9

@@ -15,10 +15,16 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 	var total_rows int64
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
-	// fmt.Println(query)
-	query = query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
+
+	if o.CampaignObjective != "" {
+		query = query.Where("campaign_objective = ?", o.CampaignObjective)
+	} else {
+		query = query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
+	}
+
 	query = query.Where("mo_received > 0")
 	query = query.Where("company IN ?", allowedCompanies)
+
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)

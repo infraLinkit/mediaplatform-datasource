@@ -14,6 +14,7 @@ import (
 )
 
 type PHttp struct {
+	DialTimeout        time.Duration
 	Timeout            time.Duration
 	KeepAlive          time.Duration
 	IsDisableKeepAlive bool
@@ -80,7 +81,7 @@ func HttpClient(p PHttp) *http.Client {
 		Proxy: http.ProxyFromEnvironment,
 		Dial: (&net.Dialer{
 			// Modify the time to wait for a connection to establish
-			Timeout:   1 * time.Second,
+			Timeout:   p.DialTimeout * time.Second,
 			KeepAlive: p.KeepAlive * time.Second,
 		}).Dial,
 		TLSHandshakeTimeout: 10 * time.Second,

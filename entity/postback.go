@@ -16,6 +16,7 @@ type (
 		Method        string `json:"method"`
 		Msisdn        string `json:"msisdn"`
 		Trxid         string `json:"trxid"`
+		SubKeyword    string `json:"subkeyword"`
 	}
 
 	PostbackData struct {
@@ -36,6 +37,7 @@ func NewDataPostback(c *fiber.Ctx) *PostbackReceive {
 		AffSub:        m["aff_sub"],
 		Msisdn:        m["msisdn"],
 		Trxid:         m["trxid"],
+		SubKeyword:    m["subkeyword"],
 	}
 }
 
@@ -63,11 +65,12 @@ func NewDataPostbackV2(c *fiber.Ctx) *PostbackReceive {
 	CookieKey := helper.Concat("-", helper.GetIpAddress(c), m["aff_sub"])
 
 	return &PostbackReceive{
-		CookieKey: CookieKey,
-		AffSub:    m["aff_sub"],
-		Method:    strings.ToUpper(m["method"]),
-		Msisdn:    m["msisdn"],
-		Trxid:     m["trxid"],
+		CookieKey:  CookieKey,
+		AffSub:     m["aff_sub"],
+		Method:     strings.ToUpper(m["method"]),
+		Msisdn:     m["msisdn"],
+		Trxid:      m["trxid"],
+		SubKeyword: m["subkeyword"],
 	}
 }
 

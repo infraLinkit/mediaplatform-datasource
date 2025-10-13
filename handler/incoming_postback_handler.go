@@ -462,7 +462,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							ShortCode:         dc.ShortCode,
 							Adnet:             dc.Adnet,
 							Keyword:           dc.Keyword,
-							Subkeyword:        dc.SubKeyword,
+							Subkeyword:        p.SubKeyword,
 							IsBillable:        dc.IsBillable,
 							Plan:              dc.Plan,
 							URL:               dc.APIURL,

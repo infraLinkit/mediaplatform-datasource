@@ -411,7 +411,8 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 		err        error
 		total_data int64
 		// isempty    bool
-		cpareport []entity.SummaryCampaign
+		cpareport            []entity.SummaryCampaign
+		TotalSummaryCampaign entity.TotalSummaryCampaign
 		// displaycpareport []entity.SummaryCampaign
 	)
 
@@ -420,12 +421,12 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 
 	if fe.Action != "" || fe.Reload == "true" {
 		fmt.Println("-----", fe.Reload, "-----")
-		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 	} else {
 
 		// if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
 
-		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 
 		// s, _ := json.Marshal(cpareport)
 
@@ -475,6 +476,7 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
 				Data:            cpareport,
+				TotalSummary:    TotalSummaryCampaign,
 				RecordsTotal:    int(total_data),
 				RecordsFiltered: int(total_data),
 			},
@@ -545,12 +547,12 @@ func (h *IncomingHandler) ExportCpaReportExtraNoLimit(c *fiber.Ctx, fe entity.Di
 	allowedCompanies, _ := c.Locals("companies").([]string)
 
 	if fe.Action != "" {
-		cpareport, _, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+		cpareport, _, _, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 	} else {
 
 		if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
 
-			cpareport, _, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+			cpareport, _, _, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 
 			s, _ := json.Marshal(cpareport)
 

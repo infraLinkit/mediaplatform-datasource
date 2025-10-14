@@ -608,23 +608,7 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 				}
 			}
 		}
-		/*
-			rows, err = query.Select(`
-				adnet,
-				MAX(summary_date) as summary_date,
-				country,
-				operator,
-				SUM(traffic) as landing,
-				SUM(cr_postback) as cr_postback,
-				short_code,
-				url_after,
-				SUM(postback) as conversion1,
-				SUM(sbaf) as cost1,
-				NULL as conversion2,
-				NULL as cost2
-			`).Group("adnet, country, operator, short_code, url_after").
-				Rows()
-		*/
+
 		rows, err = query.Select(`
 			adnet,
 			summary_date,

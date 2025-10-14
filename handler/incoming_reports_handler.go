@@ -423,47 +423,10 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 		fmt.Println("-----", fe.Reload, "-----")
 		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 	} else {
-
-		// if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
-
 		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
-
-		// s, _ := json.Marshal(cpareport)
-
-		// h.DS.SetData(key, "$", string(s))
-		// h.DS.SetExpireData(key, 60)
-		// }
 	}
 
 	if err == nil {
-
-		// pagesize := fe.PageSize
-		// if pagesize == 0 {
-		// 	pagesize = PAGESIZE
-		// }
-		// if fe.Page >= 2 {
-		// 	x = pagesize * (fe.Page - 1)
-		// } else {
-		// 	x = 0
-		// }
-
-		// for i := x; i < len(cpareport) && i < x+pagesize; i++ {
-
-		// 	displaycpareport = append(displaycpareport, cpareport[i])
-		// }
-		// if displaycpareport == nil {
-		// 	return entity.ReturnResponse{
-		// 		HttpStatus: fiber.StatusOK,
-		// 		Rsp: entity.GlobalResponseWithDataTable{
-		// 			Draw:            fe.Draw,
-		// 			Code:            fiber.StatusOK,
-		// 			Message:         config.OK_DESC,
-		// 			Data:            []entity.SummaryCampaign{},
-		// 			RecordsTotal:    len(cpareport),
-		// 			RecordsFiltered: len(cpareport),
-		// 		},
-		// 	}
-		// }
 
 		if cpareport == nil {
 			cpareport = []entity.SummaryCampaign{}

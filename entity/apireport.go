@@ -58,6 +58,7 @@ type (
 		Operator       string `form:"operator" json:"operator"`
 		CampaignType   string `form:"campaign_type" json:"campaign_type"`
 		CampaignId     string `form:"campaign_id" json:"campaign_id"`
+		CampaignName   string `form:"campaign_name" json:"campaign_name"`
 		StatusPostback string `form:"status_postback" json:"status_postback"`
 		Pixel          string `form:"pixel" json:"pixel"`
 		Page           int    `form:"page" json:"page"`

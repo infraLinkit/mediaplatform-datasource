@@ -69,6 +69,11 @@ func MapUrls(obj App3rdParty) *fiber.App {
 		Rmqp:   obj.Rmqp,
 	})
 
+	// DASHBOARD
+	dashboard := f.Group("/dashboard")
+	dashboard.Get("get-data", h.AuthMiddleware, h.DisplayDashboardData)
+	dashboard.Get("get-top-campaign", h.AuthMiddleware, h.DisplayDashboardTopCampaign)
+	dashboard.Get("get-report-list", h.AuthMiddleware, h.DisplayDashboardReport)
 	// V1
 	v1 := f.Group("/v1") // v1
 

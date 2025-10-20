@@ -19,7 +19,7 @@ type (
 
 	SummaryDashboard struct {
 		TotalMO                 int     `json:"total_mo"`
-		ActiveAdnet             int     `json:"active_adnet"`
+		TotalActiveAdnet        int     `json:"total_active_adnet"`
 		TotalSpending           float64 `json:"total_spending"`
 		TotalS2SSpending        float64 `json:"total_s2s_spending"`
 		TotalAPISpending        float64 `json:"total_api_spending"`
@@ -27,12 +27,36 @@ type (
 		TotalDSPSpending        float64 `json:"total_dsp_spending"`
 	}
 
+	SummaryDashboardReportDetail struct {
+		Date             string  `json:"date"`
+		MOReceived       int     `json:"mo_received"`
+		MOSent           int     `json:"mo_sent"`
+		SpendingToAdnets float64 `json:"spending_to_adnets"`
+		Spending         float64 `json:"spending"`
+		WAKIRevenue      float64 `json:"waki_revenue"`
+	}
+
+	SummaryDashboardReport struct {
+		DateRange string                         `json:"date_range"`
+		DateList  []string                       `json:"date_list"`
+		Detail    []SummaryDashboardReportDetail `json:"detail"`
+	}
+
 	SummaryMODetail struct {
 		DateNow string `json:"date_now"`
 	}
 
 	TopCampaign struct {
-		Campaign string `json:"campaign"`
+		CampaignID  string  `json:"campaign_id"`
+		Country     string  `json:"country"`
+		CountryName string  `json:"country_name"`
+		Landing     int     `json:"landing"`
+		MO          int     `json:"mo_received"`
+		Postback    int     `json:"postback"`
+		CRMO        float64 `json:"cr_mo"`
+		CRPostback  float64 `json:"cr_postback"`
+		URL         string  `json:"url"`
+		ECPA        string  `json:"e_cpa"`
 	}
 
 	SummaryTopBestCampaign struct {

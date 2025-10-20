@@ -144,15 +144,15 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		_ = t_query.Select("SUM(landing) as landing,"+
 			"SUM(mo_received) as mo_received,"+
 			"SUM(postback) as postback,"+
-			"SUM(po) as price_per_postback,"+
+			"AVG(po) as price_per_postback,"+
 			"SUM(cost_per_conversion) as cost_per_conversion,"+
 			"SUM(total_waki_agency_fee) as total_waki_agency_fee,"+
 			"SUM(sbaf) as spending_to_adnet,"+
 			"SUM(saaf) as spending,"+
 			"SUM(technical_fee) as technical_fee,"+
 			"SUM(saaf)-SUM(sbaf) as waki_revenue,"+
-			"ROUND(AVG(cr_mo)::numeric,5) as avg_cr_mo,"+
-			"ROUND(AVG(cr_postback)::numeric,5) as avg_cr_postback,"+
+			"CASE WHEN SUM(landing)>0 THEN ROUND(SUM(mo_received)/SUM(landing)::numeric,5) ELSE 0 END as cr_mo,"+
+			"CASE WHEN SUM(landing)>0 THEN ROUND(SUM(postback)/SUM(landing)::numeric,5) ELSE 0 END as cr_postback,"+
 			"ROUND(AVG(cpa)::numeric,5) as avg_cpa").Row().Scan(
 			&TotalSummaryCampaign.Landing,
 			&TotalSummaryCampaign.MoReceived,

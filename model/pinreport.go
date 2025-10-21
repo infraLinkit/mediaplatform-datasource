@@ -264,6 +264,9 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
 		}
+		if o.CampaignName != "" {
+			query = query.Where("campaign_name = ?", o.CampaignName)
+		}
 		if o.CampaignType == "mainstream" {
 			if o.Agency != "" {
 				query = query.Where("adnet = ?", o.Agency)

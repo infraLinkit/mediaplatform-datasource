@@ -240,6 +240,7 @@ func (h *IncomingHandler) DisplayConversionLogReport(c *fiber.Ctx) error {
 		CampaignType:   m["campaign_type"],
 		StatusPostback: m["status_postback"],
 		CampaignId:     m["campaign_id"],
+		CampaignName:   m["campaign_name"],
 		DateRange:      m["date_range"],
 		DateStart:      m["date_start"],
 		DateEnd:        m["date_end"],

@@ -552,3 +552,38 @@ func (m *BaseModel) UpdateMainstreamGroup(mainstreamGroup *entity.MainstreamGrou
 func (m *BaseModel) DeleteMainstreamGroup(id uint) error {
 	return m.DB.Delete(&entity.MainstreamGroup{}, id).Error
 }
+
+func (r *BaseModel) GetDomainService(o entity.GlobalRequestFromDataTable) ([]entity.DomainService, int64, error) {
+
+	var (
+		rows       *sql.Rows
+		total_rows int64
+	)
+
+	// Apply filters, minus the pagination constraints
+	query := r.DB.Model(&entity.DomainService{})
+	if o.Search != "" {
+		search_value := strings.Trim(o.Search, " ")
+		query = query.Where("name ILIKE ?", "%"+search_value+"%")
+	}
+
+	// Get the total count after applying filters
+	query.Unscoped().Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	}
+
+	rows, _ = query_limit.Order("name").Rows()
+	defer rows.Close()
+
+	var ss []entity.DomainService
+	for rows.Next() {
+		var s entity.DomainService
+		r.DB.ScanRows(rows, &s)
+		ss = append(ss, s)
+	}
+
+	return ss, total_rows, rows.Err()
+}

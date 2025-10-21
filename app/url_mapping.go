@@ -218,6 +218,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	countryService.Post("/mainstream-group", h.CreateMainstreamGroup).Name("Create MainStreamGroup")
 	countryService.Put("/mainstream-group/:id", h.UpdateMainstreamGroup).Name("Update MainStreamGroup")
 	countryService.Delete("/mainstream-group/:id", h.DeleteMainstreamGroup).Name("Delete MainStreamGroup")
+	countryService.Get("/domain-service", h.DisplayDomainService).Name("Show Domain Service")
 
 	ipRange := management.Group("/ipranges")
 	ipRange.Get("/", h.GetIPRangeFiles).Name(" Display IP Ranges List List")

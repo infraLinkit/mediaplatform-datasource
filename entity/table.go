@@ -119,6 +119,7 @@ type (
 		NonTargetURL              string    `gorm:"type:text;default:NA" json:"non_target_url"`
 		EnableIpRanges            bool      `gorm:"not null;default:false" json:"enable_ip_ranges"`
 		ConversionName            string    `gorm:"size:50;default:NA" json:"conversion_name"`
+		DomainService 			  string 	`gorm:"type:varchar(80)" json:"domain_service"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}
@@ -894,6 +895,7 @@ type (
 		Agency       string `gorm:"type:varchar(80)" json:"agency" `
 		Service      string `gorm:"type:varchar(80)" json:"service" `
 		UniqueDomain string `gorm:"type:varchar(80)" json:"unique_domain"`
+		DomainService string `gorm:"type:varchar(80)" json:"domain_service"`
 	}
 
 	SummaryLanding struct {
@@ -988,6 +990,11 @@ type (
 		// Relations
 		User    User    `gorm:"foreignKey:UserID;references:ID"`
 		Company Company `gorm:"foreignKey:CompanyID;references:ID"`
+	}
+
+	DomainService struct {
+		ID  uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name string `gorm:"type:varchar(80)" json:"name"`
 	}
 )
 

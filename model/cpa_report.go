@@ -9,11 +9,14 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
-func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, int64, error) {
+func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, int64, entity.TotalSummaryCampaign, error) {
 	var rows *sql.Rows
 	var err error
 	var total_rows int64
-	
+	var TotalSummaryCampaign entity.TotalSummaryCampaign
+
+	t_query := r.DB.Model(&entity.SummaryCampaign{})
+
 	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
 		summary_campaigns.*,
 		CASE 
@@ -29,66 +32,91 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 				ELSE (total_waki_agency_fee + (po * postback) + technical_fee) 
 			END - (po * postback)
 		) AS revenue
-	`).Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS").
-	   Where("mo_received > 0").
-	   Where("company IN ?", allowedCompanies)
+	`).Where("mo_received > 0").Where("company IN ?", allowedCompanies)
+
+	if o.CampaignObjective != "" {
+		query.Where("campaign_objective = ? ", o.CampaignObjective)
+		t_query.Where("campaign_objective = ? ", o.CampaignObjective)
+	} else {
+		query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
+		t_query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
+	}
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
+			t_query = t_query.Where("campaign_id = ?", o.CampaignId)
 		}
 		if o.UrlServiceKey != "" {
 			query = query.Where("url_service_key = ?", o.UrlServiceKey)
+			t_query = t_query.Where("url_service_key = ?", o.UrlServiceKey)
 		}
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
+			t_query = t_query.Where("country = ?", o.Country)
 		}
 		if o.Company != "" {
 			query = query.Where("company = ?", o.Company)
+			t_query = t_query.Where("country = ?", o.Country)
 		}
 		if o.ClientType != "" {
 			query = query.Where("client_type = ?", o.ClientType)
+			t_query = t_query.Where("client_type = ?", o.ClientType)
 		}
 		if o.Operator != "" {
 			query = query.Where("operator = ?", o.Operator)
+			t_query = t_query.Where("operator = ?", o.Operator)
 		}
 		if o.CampaignName != "" {
 			query = query.Where("campaign_name = ?", o.CampaignName)
+			t_query = t_query.Where("campaign_name = ?", o.CampaignName)
 		}
 		if o.Partner != "" {
 			query = query.Where("partner = ?", o.Partner)
+			t_query = t_query.Where("partner = ?", o.Partner)
 		}
 		if len(o.Adnets) > 0 {
 			query = query.Where("adnet IN ?", o.Adnets)
+			t_query = t_query.Where("adnet IN ?", o.Adnets)
 		}
 		if o.Service != "" {
 			query = query.Where("service = ?", o.Service)
+			t_query = t_query.Where("service = ?", o.Service)
 		}
-		
+
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
 				query = query.Where("summary_date = CURRENT_DATE")
+				t_query = t_query.Where("summary_date = CURRENT_DATE")
 			case "YESTERDAY":
 				query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
+				t_query = t_query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
 			case "LAST7DAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+				t_query = t_query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 			case "LAST30DAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+				t_query = t_query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
 			case "THISMONTH":
 				query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+				t_query = t_query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
 			case "LASTMONTH":
 				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+				t_query = t_query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
 				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
+				t_query = t_query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
 			default:
 				query = query.Where("summary_date = ?", o.DateRange)
+				t_query = t_query.Where("summary_date = ?", o.DateRange)
 			}
 		} else {
 			query = query.Where("summary_date = CURRENT_DATE")
+			t_query = t_query.Where("summary_date = CURRENT_DATE")
 		}
 	} else {
-		query = query.Where("summary_date = CURRENT_DATE")
+		t_query = t_query.Where("summary_date = CURRENT_DATE")
 	}
 
 	if o.OrderColumn != "" {
@@ -96,7 +124,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		if strings.ToUpper(o.OrderDir) == "DESC" {
 			dir = "DESC"
 		}
-	
+
 		switch o.OrderColumn {
 		case "saaf":
 			query = query.Order(fmt.Sprintf(`
@@ -134,7 +162,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 
 	rows, err = query_limit.Rows()
 	if err != nil {
-		return []entity.SummaryCampaign{}, 0, err
+		return []entity.SummaryCampaign{}, 0, entity.TotalSummaryCampaign{}, err
 	}
 	defer rows.Close()
 
@@ -145,9 +173,63 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		ss = append(ss, s)
 	}
 
+	// GET TOTAL HEADER
+	/*summary_campaigns.*,
+	CASE
+		WHEN LOWER(client_type) = 'external'
+			THEN (mo_received * poaf)
+		ELSE (total_waki_agency_fee + (po * postback) + technical_fee)
+	END AS saaf,
+	(po * postback) AS sbaf,
+	(
+		CASE
+			WHEN LOWER(client_type) = 'external'
+				THEN (mo_received * poaf)
+			ELSE (total_waki_agency_fee + (po * postback) + technical_fee)
+		END - (po * postback)
+	) AS revenue*/
+	if total_rows > 0 {
+		// COUNT THE SUMMARIZE
+		_ = t_query.Select(
+			`SUM(landing) as landing,
+			 SUM(mo_received) as mo_received,
+			 SUM(postback) as postback,
+			 AVG(po) as price_per_postback,
+			 SUM(cost_per_conversion) as cost_per_conversion,
+			 SUM(total_waki_agency_fee) as total_waki_agency_fee,
+			 SUM(po * postback) as spending_to_adnet, --SBAF
+			 SUM(CASE
+					WHEN LOWER(client_type) = 'external'
+						THEN (mo_received * poaf)
+					ELSE (total_waki_agency_fee + (po * postback) + technical_fee)
+				END) as spending, --SAAF
+			 SUM(technical_fee) as technical_fee,
+			 SUM(CASE
+					WHEN LOWER(client_type) = 'external'
+						THEN (mo_received * poaf)
+					ELSE (total_waki_agency_fee + (po * postback) + technical_fee)
+				END) - SUM(po * postback) as waki_revenue, -- SAAF - SBAF
+			 CASE WHEN SUM(landing)>0 THEN ROUND(SUM(mo_received)/SUM(landing)::numeric,5) ELSE 0 END as cr_mo,
+			 CASE WHEN SUM(landing)>0 THEN ROUND(SUM(postback)/SUM(landing)::numeric,5) ELSE 0 END as cr_postback,
+			 ROUND(AVG(cpa)::numeric,5) as avg_cpa`).Row().Scan(
+			&TotalSummaryCampaign.Landing,
+			&TotalSummaryCampaign.MoReceived,
+			&TotalSummaryCampaign.Postback,
+			&TotalSummaryCampaign.PO,
+			&TotalSummaryCampaign.CostPerConversion,
+			&TotalSummaryCampaign.TotalWakiAgencyFee,
+			&TotalSummaryCampaign.SBAF,
+			&TotalSummaryCampaign.SAAF,
+			&TotalSummaryCampaign.TechnicalFee,
+			&TotalSummaryCampaign.WakiRevenue,
+			&TotalSummaryCampaign.CrMO,
+			&TotalSummaryCampaign.CrPostback,
+			&TotalSummaryCampaign.ECPA)
+	}
+
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
 
-	return ss, total_rows, rows.Err()
+	return ss, total_rows, TotalSummaryCampaign, rows.Err()
 }
 
 func (r *BaseModel) CreateCpaReport(s entity.SummaryCampaign) error {
@@ -239,8 +321,8 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		(CASE WHEN mo_received > 0 THEN (poaf * postback) / mo_received ELSE 0 END) AS price_per_mo,
 		((poaf * postback) - (po * postback)) AS revenue
 	`).Where("campaign_objective = ?", "MAINSTREAM").
-	   Where("mo_received > 0").
-	   Where("company IN ?", allowedCompanies)
+		Where("mo_received > 0").
+		Where("company IN ?", allowedCompanies)
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
@@ -274,8 +356,8 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 			query = query.Where("LOWER(partner) = LOWER(?)", o.Partner)
 		}
 		if len(o.Adnets) > 0 {
-            query = query.Where("adnet IN ?", o.Adnets)
-        }
+			query = query.Where("adnet IN ?", o.Adnets)
+		}
 		if o.Service != "" {
 			query = query.Where("LOWER(service) = LOWER(?)", o.Service)
 		}
@@ -312,7 +394,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		if strings.ToUpper(o.OrderDir) == "DESC" {
 			dir = "DESC"
 		}
-	
+
 		switch o.OrderColumn {
 		case "saaf":
 			query = query.Order(fmt.Sprintf("(poaf * postback) %s", dir))

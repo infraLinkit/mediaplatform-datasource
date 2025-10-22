@@ -13,28 +13,28 @@ import (
 
 type (
 	DisplayPinReport struct { // api report
-		ID                int       `form:"id" json:"id"`
-		DateSend       time.Time `form:"date_send" json:"date_send"`
-		CampaignId        string    `form:"campaign_id" json:"campaign_id"`
-		Channel           string    `form:"channel" json:"channel"`
-		Country           string    `form:"country" json:"country"`
-		Operator          string    `form:"operator" json:"operator"`
-		Partner           string    `form:"partner" json:"partner"`
-		Agency            string    `form:"agency" json:"agency"`
-		Aggregator        string    `form:"aggregator" json:"aggregator"`
-		Adnets 			  []string  `form:"adnet" json:"adnet"`
-		Service           string    `form:"service" json:"service"`
-		Company           string    `form:"company" json:"company"`
-		PageSize          int       `form:"page_size" json:"page_size"`
-		Page              int       `form:"page" json:"page"`
-		Action            string    `form:"action" json:"action"`
-		DateRange         string    `form:"date_range" json:"date_range"`
-		DateBefore        string    `form:"date_before" json:"date_before"`
-		DateAfter         string    `form:"date_after" json:"date_after"`
-		Draw              int       `form:"draw" json:"draw"`
-		Reload            string    `form:"draw" json:"reload"`
-		OrderColumn   string `form:"order_column" json:"order_column"`
-		OrderDir      string `form:"order_dir" json:"order_dir"`
+		ID          int       `form:"id" json:"id"`
+		DateSend    time.Time `form:"date_send" json:"date_send"`
+		CampaignId  string    `form:"campaign_id" json:"campaign_id"`
+		Channel     string    `form:"channel" json:"channel"`
+		Country     string    `form:"country" json:"country"`
+		Operator    string    `form:"operator" json:"operator"`
+		Partner     string    `form:"partner" json:"partner"`
+		Agency      string    `form:"agency" json:"agency"`
+		Aggregator  string    `form:"aggregator" json:"aggregator"`
+		Adnets      []string  `form:"adnet" json:"adnet"`
+		Service     string    `form:"service" json:"service"`
+		Company     string    `form:"company" json:"company"`
+		PageSize    int       `form:"page_size" json:"page_size"`
+		Page        int       `form:"page" json:"page"`
+		Action      string    `form:"action" json:"action"`
+		DateRange   string    `form:"date_range" json:"date_range"`
+		DateBefore  string    `form:"date_before" json:"date_before"`
+		DateAfter   string    `form:"date_after" json:"date_after"`
+		Draw        int       `form:"draw" json:"draw"`
+		Reload      string    `form:"draw" json:"reload"`
+		OrderColumn string    `form:"order_column" json:"order_column"`
+		OrderDir    string    `form:"order_dir" json:"order_dir"`
 	}
 
 	DisplayPinPerformanceReport struct {
@@ -83,7 +83,7 @@ type (
 		Partner           string    `form:"partner" json:"partner"`
 		Agency            string    `form:"agency" json:"agency"`
 		Aggregator        string    `form:"aggregator" json:"aggregator"`
-		Adnets 			  []string  `form:"adnet" json:"adnet"`
+		Adnets            []string  `form:"adnet" json:"adnet"`
 		Service           string    `form:"service" json:"service"`
 		DataBasedOn       string    `form:"data_based_on" json:"data_based_on"`
 		Cost              float64   `form:"cost" json:"cost"`
@@ -103,8 +103,25 @@ type (
 		DateAfter         string    `form:"date_after" json:"date_after"`
 		Draw              int       `form:"draw" json:"draw"`
 		Reload            string    `form:"draw" json:"reload"`
-		OrderColumn   string `form:"order_column" json:"order_column"`
-		OrderDir      string `form:"order_dir" json:"order_dir"`
+		OrderColumn       string    `form:"order_column" json:"order_column"`
+		OrderDir          string    `form:"order_dir" json:"order_dir"`
+		CampaignObjective string    `form:"order_dir" json:"campaign_objective"`
+	}
+
+	TotalSummaryCampaign struct {
+		MoReceived         int     `json:"mo_received"`
+		Postback           int     `json:"postback"`
+		PO                 float64 `json:"po"`
+		CostPerConversion  float64 `json:"cost_per_conversion"`
+		TotalWakiAgencyFee float64 `json:"total_waki_agency_fee"`
+		SBAF               float64 `json:"sbaf"`
+		SAAF               float64 `json:"saaf"`
+		TechnicalFee       float64 `json:"technical_fee"`
+		Landing            int     `json:"landing"`
+		CrMO               float64 `json:"cr_mo"`
+		CrPostback         float64 `json:"cr_postback"`
+		WakiRevenue        float64 `json:"waki_revenue"`
+		ECPA               float64 `json:"e_cpa"`
 	}
 
 	CostReport struct {
@@ -295,8 +312,8 @@ func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
 	postback, _ := strconv.Atoi(m["postback"])
 	sbaf, _ := strconv.ParseFloat(m["sbaf"], 64)
 	saaf, _ := strconv.ParseFloat(m["saaf"], 64)
-	payout_adn, _:= strconv.ParseFloat(m["payout_adn"], 64) 
-	payout_af, _:= strconv.ParseFloat(m["payout_af"], 64)
+	payout_adn, _ := strconv.ParseFloat(m["payout_adn"], 64)
+	payout_af, _ := strconv.ParseFloat(m["payout_af"], 64)
 
 	pin := ApiPinReport{
 		CampaignId:    strings.ToUpper(m["campaign_id"]),

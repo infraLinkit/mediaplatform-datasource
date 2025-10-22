@@ -9,9 +9,10 @@ type (
 	}
 
 	GlobalResponseWithData struct {
-		Code    int         `json:"code" xml:"code"`
-		Message string      `json:"message" xml:"message"`
-		Data    interface{} `json:"data" xml:"data"`
+		Code         int         `json:"code" xml:"code"`
+		Message      string      `json:"message" xml:"message"`
+		Data         interface{} `json:"data" xml:"data"`
+		TotalSummary interface{} `json:"total_summary" xml:"total_summary"`
 	}
 
 	GlobalResponseWithDataTable struct {
@@ -19,6 +20,7 @@ type (
 		Code            int         `json:"code" xml:"code"`
 		Message         string      `json:"message" xml:"message"`
 		Data            interface{} `json:"data" xml:"data"`
+		TotalSummary    interface{} `json:"total_summary" xml:"total_summary"`
 		RecordsTotal    int         `json:"recordsTotal" xml:"recordsTotal"`
 		RecordsFiltered int         `json:"recordsFiltered" xml:"recordsFiltered"`
 	}

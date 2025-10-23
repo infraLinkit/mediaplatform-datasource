@@ -246,7 +246,7 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	query = query.Where("is_used = ?", "true")
 
 	if o.CampaignType == "mainstream" {
-		query = query.Where("campaign_objective = ?", "MAINSTREAM").Where("status_postback = ?", "true")
+		query = query.Where("campaign_objective = ?", "MAINSTREAM")
 	} else {
 		query = query.Where("campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
 	}
@@ -268,6 +268,9 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 			query = query.Where("campaign_name = ?", o.CampaignName)
 		}
 		if o.CampaignType == "mainstream" {
+			if o.StatusPostback != "" {
+				query = query.Where("status_postback = ?", o.StatusPostback)
+			}
 			if o.Agency != "" {
 				query = query.Where("adnet = ?", o.Agency)
 			}

@@ -553,6 +553,15 @@ func (m *BaseModel) DeleteMainstreamGroup(id uint) error {
 	return m.DB.Delete(&entity.MainstreamGroup{}, id).Error
 }
 
+func (m *BaseModel) FindMainstreamGroupByID(id uint) (*entity.MainstreamGroup, error) {
+	var mainstreamGroup entity.MainstreamGroup
+	if err := m.DB.First(&mainstreamGroup, id).Error; err != nil {
+		return nil, err
+	}
+	return &mainstreamGroup, nil
+}
+
+
 func (r *BaseModel) GetDomainService(o entity.GlobalRequestFromDataTable) ([]entity.DomainService, int64, error) {
 
 	var (

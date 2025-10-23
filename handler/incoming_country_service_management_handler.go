@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -1267,6 +1269,16 @@ func (h *IncomingHandler) DisplayChannel(c *fiber.Ctx) error {
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
+func formatDomainKey(domain string) string {
+	domain = strings.ToLower(domain)
+	domain = strings.TrimPrefix(domain, "https://")
+	domain = strings.TrimPrefix(domain, "http://")
+	domain = strings.TrimPrefix(domain, "www.")
+	domain = strings.TrimSuffix(domain, "/")
+	return strings.ReplaceAll(domain, ".", "_")
+}
+
+
 func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")
@@ -1293,6 +1305,19 @@ func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 		})
 	}
 
+	redisKey := "domain_services"
+	path := "$"
+	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+
+	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
+
+	cfgDomain[domainKey] = map[string]string{
+		"name": mainstreamGroup.DomainService,
+	}
+
+	cfgData, _ := json.Marshal(cfgDomain)
+	h.DS.SetData(redisKey, path, string(cfgData))
+
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 
 }
@@ -1316,15 +1341,46 @@ func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
 		})
 	}
 
+	redisKey := "domain_services"
+	path := "$"
+	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+
+	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
+	cfgDomain[domainKey] = map[string]string{
+		"name": mainstreamGroup.DomainService,
+	}
+
+	cfgData, _ := json.Marshal(cfgDomain)
+	h.DS.SetData(redisKey, path, string(cfgData))
+
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
 
 func (h *IncomingHandler) DeleteMainstreamGroup(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params("id"))
+
+	mainstreamGroup, err := h.DS.FindMainstreamGroupByID(uint(id))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "MainstreamGroup not found",
+		})
+	}
+
 	if err := h.DS.DeleteMainstreamGroup(uint(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to delete mainstreamGroup",
 		})
+	}
+
+	redisKey := "domain_services"
+	path := "$"
+	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+
+	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
+	if cfgDomain != nil {
+		delete(cfgDomain, domainKey)
+		cfgData, _ := json.Marshal(cfgDomain)
+		h.DS.SetData(redisKey, path, string(cfgData))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})

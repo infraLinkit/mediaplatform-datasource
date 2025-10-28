@@ -1308,15 +1308,22 @@ func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 	redisKey := "domain_services"
 	path := "$"
 	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+	renderName := strings.ToLower(mainstreamGroup.DomainService)
 
 	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
 
-	cfgDomain[domainKey] = map[string]string{
-		"name": mainstreamGroup.DomainService,
+	newItem := entity.DomainServices{
+		Domain: domainKey,
+		Render: renderName,
 	}
 
-	cfgData, _ := json.Marshal(cfgDomain)
-	h.DS.SetData(redisKey, path, string(cfgData))
+	cfgDomain = append(cfgDomain, newItem)
+	cfgData := map[string]interface{}{
+		"data": cfgDomain,
+	}
+
+	jsonData, _ := json.Marshal(cfgData)
+	h.DS.SetData(redisKey, path, string(jsonData))
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 
@@ -1344,14 +1351,31 @@ func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
 	redisKey := "domain_services"
 	path := "$"
 	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+	renderName := strings.ToLower(mainstreamGroup.DomainService)
 
 	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
-	cfgDomain[domainKey] = map[string]string{
-		"name": mainstreamGroup.DomainService,
+
+	updated := false
+	for i, v := range cfgDomain {
+		if v.Domain == domainKey {
+			cfgDomain[i].Render = renderName
+			updated = true
+			break
+		}
 	}
 
-	cfgData, _ := json.Marshal(cfgDomain)
-	h.DS.SetData(redisKey, path, string(cfgData))
+	if !updated {
+		cfgDomain = append(cfgDomain, entity.DomainServices{
+			Domain: domainKey,
+			Render: renderName,
+		})
+	}
+
+	cfgData := map[string]interface{}{
+		"data": cfgDomain,
+	}
+	jsonData, _ := json.Marshal(cfgData)
+	h.DS.SetData(redisKey, path, string(jsonData))
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
@@ -1377,10 +1401,19 @@ func (h *IncomingHandler) DeleteMainstreamGroup(c *fiber.Ctx) error {
 	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
 
 	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
-	if cfgDomain != nil {
-		delete(cfgDomain, domainKey)
-		cfgData, _ := json.Marshal(cfgDomain)
-		h.DS.SetData(redisKey, path, string(cfgData))
+	if len(cfgDomain) > 0 {
+		filtered := make([]entity.DomainServices, 0)
+		for _, v := range cfgDomain {
+			if v.Domain != domainKey {
+				filtered = append(filtered, v)
+			}
+		}
+
+		cfgData := map[string]interface{}{
+			"data": filtered,
+		}
+		jsonData, _ := json.Marshal(cfgData)
+		h.DS.SetData(redisKey, path, string(jsonData))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})

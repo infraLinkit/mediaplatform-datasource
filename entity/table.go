@@ -119,7 +119,7 @@ type (
 		NonTargetURL              string    `gorm:"type:text;default:NA" json:"non_target_url"`
 		EnableIpRanges            bool      `gorm:"not null;default:false" json:"enable_ip_ranges"`
 		ConversionName            string    `gorm:"size:50;default:NA" json:"conversion_name"`
-		DomainService 			  string 	`gorm:"type:varchar(80)" json:"domain_service"`
+		DomainService             string    `gorm:"type:varchar(80)" json:"domain_service"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}
@@ -405,6 +405,26 @@ type (
 		UpdatedAt         time.Time
 	}
 
+	SummaryDashboard struct {
+		gorm.Model
+		Date                    time.Time `gorm:"type:date;primaryKey" json:"date"`
+		Adnet                   string    `gorm:"length:20;primaryKey" json:"adnet"`
+		Company                 string    `gorm:"length:200;primaryKey" json:"company"`
+		TotalMO                 int       `gorm:"length:20;default:0" json:"total_mo"`
+		TotalActiveAdnet        int       `gorm:"length:20;default:0" json:"total_active_adnet"`
+		TotalSpending           float64   `gorm:"type:double precision;default:0" json:"total_spending"`
+		TotalS2sSpending        float64   `gorm:"type:double precision;default:0" json:"total_s2s_spending"`
+		TotalSmsSpending        float64   `gorm:"type:double precision;default:0" json:"total_sms_spending"`
+		TotalMainstreamSpending float64   `gorm:"type:double precision;default:0" json:"total_mainstream_spending"`
+	}
+
+	SummaryAPIDashboard struct {
+		gorm.Model
+		Date    time.Time `gorm:"type:date;primaryKey" json:"date"`
+		TotalMO int       `gorm:"length:20;default:0" json:"total_mo"`
+		Sbaf    float64   `gorm:"type:double precision;default:0" json:"sbaf"`
+	}
+
 	SummaryCampaign struct {
 		gorm.Model
 		ID                       int       `gorm:"primaryKey;autoIncrement" json:"id"`
@@ -625,7 +645,7 @@ type (
 		CampaignId    string    `gorm:"size:50;uniqueIndex:idx_pin_unique" json:"campaign_id"`
 		CreatedAt     time.Time
 		UpdatedAt     time.Time
-	}	
+	}
 
 	ApiPinPerformance struct {
 		gorm.Model
@@ -857,8 +877,10 @@ type (
 		IsRemnant    string         `gorm:"type:bool;default:false" json:"is_remnant" form:"is_remnant"`
 		Lastupdate   time.Time      `gorm:"type:timestamp" json:"lastupdate"`
 		IsDummyPixel string         `gorm:"type:bool;default:false" json:"is_dummy_pixel"`
+		IsDsp        string         `gorm:"type:bool;default:false" json:"is_dsp"`
 		CcEmail      pq.StringArray `gorm:"type:text[]" json:"cc_email"`
 	}
+
 	Audit struct {
 		ID            uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		UserType      string `gorm:"type:varchar(255)" json:"user_type"`
@@ -889,12 +911,12 @@ type (
 	}
 
 	MainstreamGroup struct {
-		ID           uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-		Name         string `gorm:"type:varchar(254)" json:"name" `
-		Channel      string `gorm:"type:varchar(80)" json:"channel"  `
-		Agency       string `gorm:"type:varchar(80)" json:"agency" `
-		Service      string `gorm:"type:varchar(80)" json:"service" `
-		UniqueDomain string `gorm:"type:varchar(80)" json:"unique_domain"`
+		ID            uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name          string `gorm:"type:varchar(254)" json:"name" `
+		Channel       string `gorm:"type:varchar(80)" json:"channel"  `
+		Agency        string `gorm:"type:varchar(80)" json:"agency" `
+		Service       string `gorm:"type:varchar(80)" json:"service" `
+		UniqueDomain  string `gorm:"type:varchar(80)" json:"unique_domain"`
 		DomainService string `gorm:"type:varchar(80)" json:"domain_service"`
 	}
 
@@ -993,7 +1015,7 @@ type (
 	}
 
 	DomainService struct {
-		ID  uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Name string `gorm:"type:varchar(80)" json:"name"`
 	}
 )

@@ -1502,8 +1502,8 @@ func (h *IncomingHandler) DisplayDomainService(c *fiber.Ctx) error {
 	}
 
 	var (
-		errResponse  error
-		total_data   int64
+		errResponse         error
+		total_data          int64
 		domain_service_list []entity.DomainService
 	)
 
@@ -1537,4 +1537,41 @@ func (h *IncomingHandler) DisplayDomainService(c *fiber.Ctx) error {
 	}
 
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
+func (h *IncomingHandler) UpdateDSPAdnetStatus(c *fiber.Ctx) error {
+
+	var params struct {
+		ID     string "id"
+		Status string "status"
+	}
+
+	var adnet_list entity.AdnetList
+
+	if formErr := c.BodyParser(&params); formErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   formErr.Error(),
+		})
+	}
+
+	fmt.Println("PARAMS ", params)
+
+	adnet_list, _ = h.DS.GetAdnet(params.ID)
+
+	if params.Status == "1" || params.Status == "true" {
+		adnet_list.IsDsp = "true"
+	} else {
+		adnet_list.IsDsp = "false"
+	}
+
+	fmt.Println("adnet_list ", adnet_list)
+
+	if err := h.DS.UpdateAdnetList(&adnet_list); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update adnet_list",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }

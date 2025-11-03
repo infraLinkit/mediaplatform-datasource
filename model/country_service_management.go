@@ -373,6 +373,26 @@ func (m *BaseModel) DeleteAdnetList(id uint) error {
 	return m.DB.Delete(&entity.AdnetList{}, id).Error
 }
 
+func (r *BaseModel) GetAdnet(id string) (entity.AdnetList, error) {
+
+	query := r.DB.Model(&entity.AdnetList{})
+	query.Where("id = ?", id)
+
+	rows, err := query.Rows()
+
+	if err != nil {
+		return entity.AdnetList{}, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var s entity.AdnetList
+		r.DB.ScanRows(rows, &s)
+		return s, nil
+	}
+	return entity.AdnetList{}, nil
+}
+
 func (r *BaseModel) GetAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.AdnetList, int64, error) {
 
 	var (
@@ -552,6 +572,15 @@ func (m *BaseModel) UpdateMainstreamGroup(mainstreamGroup *entity.MainstreamGrou
 func (m *BaseModel) DeleteMainstreamGroup(id uint) error {
 	return m.DB.Delete(&entity.MainstreamGroup{}, id).Error
 }
+
+func (m *BaseModel) FindMainstreamGroupByID(id uint) (*entity.MainstreamGroup, error) {
+	var mainstreamGroup entity.MainstreamGroup
+	if err := m.DB.First(&mainstreamGroup, id).Error; err != nil {
+		return nil, err
+	}
+	return &mainstreamGroup, nil
+}
+
 
 func (r *BaseModel) GetDomainService(o entity.GlobalRequestFromDataTable) ([]entity.DomainService, int64, error) {
 

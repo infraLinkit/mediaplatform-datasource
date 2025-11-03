@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -1267,6 +1269,16 @@ func (h *IncomingHandler) DisplayChannel(c *fiber.Ctx) error {
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
+func formatDomainKey(domain string) string {
+	domain = strings.ToLower(domain)
+	domain = strings.TrimPrefix(domain, "https://")
+	domain = strings.TrimPrefix(domain, "http://")
+	domain = strings.TrimPrefix(domain, "www.")
+	domain = strings.TrimSuffix(domain, "/")
+	return strings.ReplaceAll(domain, ".", "_")
+}
+
+
 func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")
@@ -1293,6 +1305,26 @@ func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 		})
 	}
 
+	redisKey := "domain_services"
+	path := "$"
+	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+	renderName := strings.ToLower(mainstreamGroup.DomainService)
+
+	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
+
+	newItem := entity.DomainServices{
+		Domain: domainKey,
+		Render: renderName,
+	}
+
+	cfgDomain = append(cfgDomain, newItem)
+	cfgData := map[string]interface{}{
+		"data": cfgDomain,
+	}
+
+	jsonData, _ := json.Marshal(cfgData)
+	h.DS.SetData(redisKey, path, string(jsonData))
+
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 
 }
@@ -1316,15 +1348,72 @@ func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
 		})
 	}
 
+	redisKey := "domain_services"
+	path := "$"
+	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+	renderName := strings.ToLower(mainstreamGroup.DomainService)
+
+	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
+
+	updated := false
+	for i, v := range cfgDomain {
+		if v.Domain == domainKey {
+			cfgDomain[i].Render = renderName
+			updated = true
+			break
+		}
+	}
+
+	if !updated {
+		cfgDomain = append(cfgDomain, entity.DomainServices{
+			Domain: domainKey,
+			Render: renderName,
+		})
+	}
+
+	cfgData := map[string]interface{}{
+		"data": cfgDomain,
+	}
+	jsonData, _ := json.Marshal(cfgData)
+	h.DS.SetData(redisKey, path, string(jsonData))
+
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
 
 func (h *IncomingHandler) DeleteMainstreamGroup(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params("id"))
+
+	mainstreamGroup, err := h.DS.FindMainstreamGroupByID(uint(id))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "MainstreamGroup not found",
+		})
+	}
+
 	if err := h.DS.DeleteMainstreamGroup(uint(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to delete mainstreamGroup",
 		})
+	}
+
+	redisKey := "domain_services"
+	path := "$"
+	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+
+	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
+	if len(cfgDomain) > 0 {
+		filtered := make([]entity.DomainServices, 0)
+		for _, v := range cfgDomain {
+			if v.Domain != domainKey {
+				filtered = append(filtered, v)
+			}
+		}
+
+		cfgData := map[string]interface{}{
+			"data": filtered,
+		}
+		jsonData, _ := json.Marshal(cfgData)
+		h.DS.SetData(redisKey, path, string(jsonData))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
@@ -1413,8 +1502,8 @@ func (h *IncomingHandler) DisplayDomainService(c *fiber.Ctx) error {
 	}
 
 	var (
-		errResponse  error
-		total_data   int64
+		errResponse         error
+		total_data          int64
 		domain_service_list []entity.DomainService
 	)
 
@@ -1448,4 +1537,41 @@ func (h *IncomingHandler) DisplayDomainService(c *fiber.Ctx) error {
 	}
 
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
+func (h *IncomingHandler) UpdateDSPAdnetStatus(c *fiber.Ctx) error {
+
+	var params struct {
+		ID     string "id"
+		Status string "status"
+	}
+
+	var adnet_list entity.AdnetList
+
+	if formErr := c.BodyParser(&params); formErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   formErr.Error(),
+		})
+	}
+
+	fmt.Println("PARAMS ", params)
+
+	adnet_list, _ = h.DS.GetAdnet(params.ID)
+
+	if params.Status == "1" || params.Status == "true" {
+		adnet_list.IsDsp = "true"
+	} else {
+		adnet_list.IsDsp = "false"
+	}
+
+	fmt.Println("adnet_list ", adnet_list)
+
+	if err := h.DS.UpdateAdnetList(&adnet_list); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update adnet_list",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }

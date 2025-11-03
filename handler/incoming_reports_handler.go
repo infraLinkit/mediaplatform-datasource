@@ -30,31 +30,31 @@ func (h *IncomingHandler) DisplayPinReport(c *fiber.Ctx) error {
 	}
 	draw, _ := strconv.Atoi(m["draw"])
 	var adnets []string
-    for k, v := range m {
-        if strings.HasPrefix(k, "adnet[") {
-            adnets = append(adnets, v)
-        }
-    }
+	for k, v := range m {
+		if strings.HasPrefix(k, "adnet[") {
+			adnets = append(adnets, v)
+		}
+	}
 	fe := entity.DisplayPinReport{
-		DateSend:  time.Time{},
-		CampaignId:   m["campaign_id"],
-		Country:      m["country"],
-		Company:      m["company"],
-		Operator:     m["operator"],
-		Partner:      m["partner"],
-		Aggregator:   m["aggregator"],
-		Adnets:       adnets,
-		Service:      m["service"],
-		Draw:         draw,
-		Page:         page,
-		PageSize:     pageSize,
-		Action:       m["action"],
-		DateRange:    m["date_range"],
-		DateBefore:   m["date_before"],
-		DateAfter:    m["date_after"],
-		Reload:       m["reload"],
-		OrderColumn:  m["order_column"],
-		OrderDir:     m["order_dir"],
+		DateSend:    time.Time{},
+		CampaignId:  m["campaign_id"],
+		Country:     m["country"],
+		Company:     m["company"],
+		Operator:    m["operator"],
+		Partner:     m["partner"],
+		Aggregator:  m["aggregator"],
+		Adnets:      adnets,
+		Service:     m["service"],
+		Draw:        draw,
+		Page:        page,
+		PageSize:    pageSize,
+		Action:      m["action"],
+		DateRange:   m["date_range"],
+		DateBefore:  m["date_before"],
+		DateAfter:   m["date_after"],
+		Reload:      m["reload"],
+		OrderColumn: m["order_column"],
+		OrderDir:    m["order_dir"],
 	}
 
 	allowedCompanies, _ := c.Locals("companies").([]string)
@@ -67,7 +67,7 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 	var (
 		err        error
 		total_data int64
-		apireport []entity.ApiPinReport
+		apireport  []entity.ApiPinReport
 	)
 
 	if fe.Action != "" || fe.Reload == "true" {
@@ -118,11 +118,10 @@ func (h *IncomingHandler) EditPOAFAPIReport(c *fiber.Ctx) error {
 
 		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
 
-
 		h.DS.EditPOAFAPIReport(entity.ApiPinReport{
-			DateSend:      o.DateSend,
-			PayoutAF:      o.PayoutAF,
-			CampaignId:    o.CampaignId,
+			DateSend:   o.DateSend,
+			PayoutAF:   o.PayoutAF,
+			CampaignId: o.CampaignId,
 		})
 
 		return c.Status(fiber.StatusOK).Send([]byte("OK"))
@@ -390,11 +389,11 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 	}
 	draw, _ := strconv.Atoi(m["draw"])
 	var adnets []string
-    for k, v := range m {
-        if strings.HasPrefix(k, "adnet[") {
-            adnets = append(adnets, v)
-        }
-    }
+	for k, v := range m {
+		if strings.HasPrefix(k, "adnet[") {
+			adnets = append(adnets, v)
+		}
+	}
 	fe := entity.DisplayCPAReport{
 		SummaryDate:  time.Time{},
 		CampaignId:   m["campaign_id"],
@@ -432,55 +431,18 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 		err        error
 		total_data int64
 		// isempty    bool
-		cpareport []entity.SummaryCampaign
+		cpareport            []entity.SummaryCampaign
+		TotalSummaryCampaign entity.TotalSummaryCampaign
 		// displaycpareport []entity.SummaryCampaign
 	)
 
 	if fe.Action != "" || fe.Reload == "true" {
-		fmt.Println("-----", fe.Reload, "-----")
-		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 	} else {
-
-		// if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
-
-		cpareport, total_data, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
-
-		// s, _ := json.Marshal(cpareport)
-
-		// h.DS.SetData(key, "$", string(s))
-		// h.DS.SetExpireData(key, 60)
-		// }
+		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 	}
 
 	if err == nil {
-
-		// pagesize := fe.PageSize
-		// if pagesize == 0 {
-		// 	pagesize = PAGESIZE
-		// }
-		// if fe.Page >= 2 {
-		// 	x = pagesize * (fe.Page - 1)
-		// } else {
-		// 	x = 0
-		// }
-
-		// for i := x; i < len(cpareport) && i < x+pagesize; i++ {
-
-		// 	displaycpareport = append(displaycpareport, cpareport[i])
-		// }
-		// if displaycpareport == nil {
-		// 	return entity.ReturnResponse{
-		// 		HttpStatus: fiber.StatusOK,
-		// 		Rsp: entity.GlobalResponseWithDataTable{
-		// 			Draw:            fe.Draw,
-		// 			Code:            fiber.StatusOK,
-		// 			Message:         config.OK_DESC,
-		// 			Data:            []entity.SummaryCampaign{},
-		// 			RecordsTotal:    len(cpareport),
-		// 			RecordsFiltered: len(cpareport),
-		// 		},
-		// 	}
-		// }
 
 		if cpareport == nil {
 			cpareport = []entity.SummaryCampaign{}
@@ -493,6 +455,7 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
 				Data:            cpareport,
+				TotalSummary:    TotalSummaryCampaign,
 				RecordsTotal:    int(total_data),
 				RecordsFiltered: int(total_data),
 			},
@@ -520,11 +483,11 @@ func (h *IncomingHandler) ExportCpaButton(c *fiber.Ctx) error {
 
 	page, _ := strconv.Atoi(m["page"])
 	var adnets []string
-    for k, v := range m {
-        if strings.HasPrefix(k, "adnet[") {
-            adnets = append(adnets, v)
-        }
-    }
+	for k, v := range m {
+		if strings.HasPrefix(k, "adnet[") {
+			adnets = append(adnets, v)
+		}
+	}
 	fe := entity.DisplayCPAReport{
 		SummaryDate:  time.Time{},
 		CampaignId:   m["campaign_id"],
@@ -562,22 +525,22 @@ func (h *IncomingHandler) ExportCpaReportExtraNoLimit(c *fiber.Ctx, fe entity.Di
 	key := "temp_key_api_cpa_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
-		err       error
-		cpareport []entity.SummaryCampaign
-		isempty   bool
+		err                  error
+		cpareport            []entity.SummaryCampaign
+		isempty              bool
+		TotalSummaryCampaign entity.TotalSummaryCampaign
 		// displaycpareport []entity.SummaryCampaign
 	)
 
-	
 	allowedCompanies, _ := c.Locals("companies").([]string)
 
 	if fe.Action != "" {
-		cpareport, _, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+		cpareport, _, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 	} else {
 
 		if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
 
-			cpareport, _, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+			cpareport, _, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
 
 			s, _ := json.Marshal(cpareport)
 
@@ -587,13 +550,13 @@ func (h *IncomingHandler) ExportCpaReportExtraNoLimit(c *fiber.Ctx, fe entity.Di
 	}
 
 	if err == nil {
-
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithData{
-				Code:    fiber.StatusOK,
-				Message: config.OK_DESC,
-				Data:    cpareport,
+				Code:         fiber.StatusOK,
+				Message:      config.OK_DESC,
+				Data:         cpareport,
+				TotalSummary: TotalSummaryCampaign,
 			},
 		}
 
@@ -649,7 +612,7 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.DisplayCostReport, v string, allowedAdnets[]string) entity.ReturnResponse {
+func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.DisplayCostReport, v string, allowedAdnets []string) entity.ReturnResponse {
 	key := "temp_key_api_cost_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 	keydetail := "temp_key_api_cost_report_detail_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
@@ -755,7 +718,7 @@ func (h *IncomingHandler) ExportCostButton(c *fiber.Ctx) error {
 	})
 }
 
-func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.DisplayCostReport, allowedAdnets[]string) entity.ReturnResponse {
+func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.DisplayCostReport, allowedAdnets []string) entity.ReturnResponse {
 	key := "temp_key_api_cost_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (

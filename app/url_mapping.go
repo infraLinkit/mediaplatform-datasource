@@ -75,6 +75,11 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	// V1
 	v1 := f.Group("/v1") // v1
 
+	dashboard := f.Group("/dashboard")
+	dashboard.Get("get-data", h.AuthMiddleware, h.DisplayDashboardData)
+	dashboard.Get("get-top-campaign", h.AuthMiddleware, h.DisplayDashboardTopCampaign)
+	dashboard.Get("get-report-list", h.AuthMiddleware, h.DisplayDashboardReport)
+
 	// Postback
 	v1.Get("/postback/:urlservicekey/", h.Postback)
 	v1.Get("/postback", h.PostbackV3)
@@ -219,6 +224,8 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	countryService.Put("/mainstream-group/:id", h.UpdateMainstreamGroup).Name("Update MainStreamGroup")
 	countryService.Delete("/mainstream-group/:id", h.DeleteMainstreamGroup).Name("Delete MainStreamGroup")
 	countryService.Get("/domain-service", h.DisplayDomainService).Name("Show Domain Service")
+
+	countryService.Post("/edit-adnet-dsp-status", h.UpdateDSPAdnetStatus).Name("Edit DSP Status")
 
 	ipRange := management.Group("/ipranges")
 	ipRange.Get("/", h.GetIPRangeFiles).Name(" Display IP Ranges List List")

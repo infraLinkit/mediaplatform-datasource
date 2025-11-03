@@ -729,3 +729,29 @@ func (h *BaseModel) GetDataJSON(key string) (map[string]interface{}, error) {
 	}
 	return nil, errors.New("no data found or empty JSON")
 }
+
+func (h *BaseModel) GetDomainServices(key string, path string) ([]entity.DomainServices, error) {
+	ctx := context.Background()
+
+	var tempCfg [][]map[string][]entity.DomainServices
+	var result []entity.DomainServices
+
+	if err := rueidis.DecodeSliceOfJSON(
+		h.R.Conn().Do(ctx, h.R.Conn().B().JsonMget().Key(key).Path(path).Build()),
+		&tempCfg,
+	); err != nil {
+		h.Logs.Warn(fmt.Sprintf("Key (%s) not found, creating empty list ...", key))
+		h.R.Conn().Do(ctx, h.R.Conn().B().JsonSet().Key(key).Path("$").Value(`{"data":[]}`).Build())
+		return result, nil
+	}
+
+	if len(tempCfg) > 0 && len(tempCfg[0]) > 0 {
+		result = tempCfg[0][0]["data"]
+	}
+
+	if result == nil {
+		result = []entity.DomainServices{}
+	}
+
+	return result, nil
+}

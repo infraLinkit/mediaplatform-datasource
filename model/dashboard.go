@@ -270,9 +270,10 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 	}
 
 	query = query.Where("summary_date IN ? ", date_list)
-	query.Where("adnet IN ?", allowedAdnets)
-	query.Where("company IN ?", allowedCompanies)
-
+	/*
+		query.Where("adnet IN ?", allowedAdnets)
+		query.Where("company IN ?", allowedCompanies)
+	*/
 	where := ""
 
 	for _, date := range date_list {
@@ -283,8 +284,10 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 	}
 
 	query_last_month.Where("summary_date IN(" + strings.TrimSuffix(where, ",") + ")")
-	query_last_month.Where("adnet IN ?", allowedAdnets)
-	query_last_month.Where("company IN ?", allowedCompanies)
+	/*
+		query_last_month.Where("adnet IN ?", allowedAdnets)
+		query_last_month.Where("company IN ?", allowedCompanies)
+	*/
 
 	var dsp struct {
 		Code  string "code"
@@ -321,14 +324,14 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 		where_non_dsp = " AND adnet IN (" + strings.TrimSuffix(where_non_dsp, ",") + ")"
 	}
 
-	fmt.Println("where_non_dsp ", where_non_dsp)
+	//fmt.Println("where_non_dsp ", where_non_dsp)
 
 	rows, err = query.Select(
 		`summary_date as date,
 		 SUM(mo_received) as total_mo,
 		 COUNT(DISTINCT adnet) as total_active_adnet,
 		 SUM(sbaf) as total_spending,
-		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') ` + where_non_dsp + ` THEN sbaf ELSE 0 END) as total_s2s_spending,
+		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') THEN sbaf ELSE 0 END) as total_s2s_spending,
 		 0 as total_api_spending,
 		 SUM(CASE WHEN campaign_objective IN('MAINSTREAM') THEN sbaf ELSE 0 END) as total_mainstream_spending,
 		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') ` + where_dsp + ` THEN sbaf ELSE 0 END) as total_dsp_spending
@@ -370,7 +373,7 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 		 SUM(mo_received) as total_mo,
 		 COUNT(DISTINCT adnet) as total_active_adnet,
 		 SUM(sbaf) as total_spending,
-		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') ` + where_non_dsp + ` THEN sbaf ELSE 0 END) as total_s2s_spending,
+		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') THEN sbaf ELSE 0 END) as total_s2s_spending,
 		 0 as total_api_spending,
 		 SUM(CASE WHEN campaign_objective IN('MAINSTREAM') THEN sbaf ELSE 0 END) as total_mainstream_spending,
 		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') ` + where_dsp + ` THEN sbaf ELSE 0 END) as total_dsp_spending

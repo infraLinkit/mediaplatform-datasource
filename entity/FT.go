@@ -11,15 +11,16 @@ type (
 	}
 
 	DataSingleURL struct {
-		SingleURLServiceKey string                `json:"single_url_service_key"`
+		SingleURLServiceKey string                `json:"single_urlservicekey"`
 		Country             string                `json:"country"`
+		Objective			string				  `json:"objective"`
 		MCC                 string                `json:"mcc"`
-		URLServiceKeyChilds []URLServiceKeyChilds `json:"url_service_key_childs"`
+		Data 				[]URLServiceKeyChilds `json:"data"`
 	}
 
 	URLServiceKeyChilds struct {
+		URLServiceKey string `json:"urlservicekey"`
 		Operator      string `json:"operator"`
-		URLServiceKey string `json:"url_service_key"`
 	}
 
 	DataCampaignAction struct {
@@ -33,7 +34,7 @@ type (
 		IsDelCamp    bool   `json:"is_del_camp"`
 		CPCR         string `json:"cost_per_conversion"`
 		AgencyFee    string `json:"agency_fee"`
-		//MCC          string       `json:"mcc"`
+		MCC          string       `json:"mcc"`
 		DataConfig []DataConfig `json:"data"`
 	}
 
@@ -138,6 +139,9 @@ type (
 		EnableIpRanges            bool    `json:"enable_ip_ranges"`
 		ConversionName            string  `json:"conversion_name"`
 		DomainService 			  string  `json:"domain_service"`
+		CampaignDetailName 		  string  `json:"campaign_detail_name"`
+		Prefix 			  		  string  `json:"prefix"`
+		CountryDialingCode		  string  `json:"country_dialing_code"`
 	}
 
 	//'{"id":1,"urlservicekey":"idtelgempastelmbv","campaign_id":"ID01","country":"ID","partner":"pass","operator":"telkomsel","aggregator":"telesat","service":"gazy","short_code":"1234","adnet":"mbv","keyword":"gazy","subkeyword":"","is_billable":false,"plan":"","traffic":0,"landing":0,"click":0,"redirect":0,"traffic_data":[],"landing_data":[],"click_data":[],"redirect_data":[]}'

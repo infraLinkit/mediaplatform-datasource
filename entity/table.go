@@ -120,6 +120,9 @@ type (
 		EnableIpRanges            bool      `gorm:"not null;default:false" json:"enable_ip_ranges"`
 		ConversionName            string    `gorm:"size:50;default:NA" json:"conversion_name"`
 		DomainService 			  string 	`gorm:"type:varchar(80)" json:"domain_service"`
+		CampaignDetailName 		  string 	`gorm:"type:varchar(80)" json:"campaign_detail_name"`
+		Prefix 					  string 	`gorm:"type:varchar(80)" json:"prefix"`
+		CountryDialingCode 		  string 	`gorm:"type:varchar(80)" json:"country_dialing_code"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}

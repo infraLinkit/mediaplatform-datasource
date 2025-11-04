@@ -373,6 +373,26 @@ func (m *BaseModel) DeleteAdnetList(id uint) error {
 	return m.DB.Delete(&entity.AdnetList{}, id).Error
 }
 
+func (r *BaseModel) GetAdnet(id string) (entity.AdnetList, error) {
+
+	query := r.DB.Model(&entity.AdnetList{})
+	query.Where("id = ?", id)
+
+	rows, err := query.Rows()
+
+	if err != nil {
+		return entity.AdnetList{}, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		var s entity.AdnetList
+		r.DB.ScanRows(rows, &s)
+		return s, nil
+	}
+	return entity.AdnetList{}, nil
+}
+
 func (r *BaseModel) GetAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.AdnetList, int64, error) {
 
 	var (

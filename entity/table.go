@@ -407,15 +407,30 @@ type (
 
 	SummaryDashboard struct {
 		gorm.Model
-		Date                    time.Time `gorm:"type:date;primaryKey" json:"date"`
-		Adnet                   string    `gorm:"length:20;primaryKey" json:"adnet"`
-		Company                 string    `gorm:"length:200;primaryKey" json:"company"`
-		TotalMO                 int       `gorm:"length:20;default:0" json:"total_mo"`
-		TotalActiveAdnet        int       `gorm:"length:20;default:0" json:"total_active_adnet"`
-		TotalSpending           float64   `gorm:"type:double precision;default:0" json:"total_spending"`
-		TotalS2sSpending        float64   `gorm:"type:double precision;default:0" json:"total_s2s_spending"`
-		TotalSmsSpending        float64   `gorm:"type:double precision;default:0" json:"total_sms_spending"`
-		TotalMainstreamSpending float64   `gorm:"type:double precision;default:0" json:"total_mainstream_spending"`
+		ID                int       `gorm:"autoIncrement:false" json:"id"`
+		SummaryDate       time.Time `gorm:"type:date;primaryKey" json:"summary_date"`
+		Adnet             string    `gorm:"length:100;primaryKey" json:"adnet"`
+		Company           string    `gorm:"length:200;primaryKey" json:"company"`
+		TotalMO           int       `gorm:"length:20;default:0" json:"total_mo"`
+		TotalCpaMO        int       `gorm:"length:20;default:0" json:"total_cpa_mo"`
+		TotalSmsMO        int       `gorm:"length:20;default:0" json:"total_sms_mo"`
+		TotalMainstreamMO int       `gorm:"length:20;default:0" json:"total_mainstream_mo"`
+
+		TotalPostback           int `gorm:"length:20;default:0" json:"total_postback"`
+		TotalCPAPostback        int `gorm:"length:20;default:0" json:"total_cpa_postback"`
+		TotalSMSPostback        int `gorm:"length:20;default:0" json:"total_sms_postback"`
+		TotalMainstreamPostback int `gorm:"length:20;default:0" json:"total_mainstream_postback"`
+
+		TotalSpending           float64 `gorm:"type:double precision;default:0" json:"total_spending"`
+		TotalCPASpending        float64 `gorm:"type:double precision;default:0" json:"total_cpa_spending"`
+		TotalSMSSpending        float64 `gorm:"type:double precision;default:0" json:"total_sms_spending"`
+		TotalMainstreamSpending float64 `gorm:"type:double precision;default:0" json:"total_mainstream_spending"`
+
+		TotalSaaf           float64   `gorm:"type:double precision;default:0" json:"total_saaf"`
+		TotalCPASaaf        float64   `gorm:"type:double precision;default:0" json:"total_cpa_saaf"`
+		TotalSMSSaaf        float64   `gorm:"type:double precision;default:0" json:"total_sms_saaf"`
+		TotalMainstreamSaaf float64   `gorm:"type:double precision;default:0" json:"total_mainstream_saaf"`
+		UpdatedAt           time.Time `gorm:"type:timestamp" json:"updated_at"`
 	}
 
 	SummaryAPIDashboard struct {
@@ -1002,10 +1017,11 @@ type (
 	}
 
 	UserCompany struct {
-		ID        int  `gorm:"primaryKey" json:"id"`
-		UserID    int  `json:"user_id"`
-		CompanyID int  `json:"company_id"`
-		Status    bool `json:"status"`
+		gorm.Model
+		ID        int  `gorm:"primaryKey;autoIncrement" json:"id"`
+		UserID    int  `gorm:"length:20" json:"user_id"`
+		CompanyID int  `gorm:"length:20" json:"company_id"`
+		Status    bool `gorm:"not null" json:"status"`
 		CreatedAt time.Time
 		UpdatedAt time.Time
 

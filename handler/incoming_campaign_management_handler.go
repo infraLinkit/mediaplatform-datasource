@@ -452,6 +452,40 @@ func (h *IncomingHandler) UpdateGoogleSheet(c *fiber.Ctx) error {
 	}
 }
 
+func (h *IncomingHandler) UpdateGoogleSheetBillable(c *fiber.Ctx) error {
+
+	o := new(entity.CampaignDetail)
+
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	} else {
+
+		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+		// Update to redis with key
+		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+		cfgCmp.GoogleSheetBillable = o.GoogleSheetBillable
+
+		cfgDataConfig, _ := json.Marshal(cfgCmp)
+
+		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+
+		err = h.DS.UpdateGoogleSheetBillableCampaignDetail(entity.CampaignDetail{
+			GoogleSheetBillable:               o.GoogleSheetBillable,
+			URLServiceKey:             o.URLServiceKey,
+			CampaignId:                o.CampaignId,
+		})
+
+		if err != nil {
+			h.Logs.Error(fmt.Sprintf("failed updating db: %v", err))
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed save to db"})
+		}
+
+		return c.Status(fiber.StatusOK).Send([]byte("OK"))
+	}
+}
+
 func (h *IncomingHandler) EditMOCappingServiceS2S(c *fiber.Ctx) error {
 	o := new(entity.CampaignDetail)
 	if err := c.BodyParser(o); err != nil {

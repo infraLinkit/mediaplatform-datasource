@@ -13,6 +13,7 @@ import (
 	"github.com/mikhail-bigun/fiberlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
+	"google.golang.org/api/sheets/v4"
 	"gorm.io/gorm"
 )
 
@@ -23,6 +24,7 @@ type App3rdParty struct {
 	R      *rueidis.Storage
 	RCP    *redis.Client
 	Rmqp   rmqp.AMQP
+	GS     *sheets.Service
 }
 
 func MapUrls(obj App3rdParty) *fiber.App {
@@ -70,6 +72,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 		RCP:    obj.RCP,
 		DB:     obj.DB,
 		Rmqp:   obj.Rmqp,
+		GS:     obj.GS,
 	})
 
 	// V1
@@ -83,6 +86,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	// Postback
 	v1.Get("/postback/:urlservicekey/", h.Postback)
 	v1.Get("/postback", h.PostbackV3)
+	v1.Get("/postback_billed", h.PostbackBilled)
 
 	// Report
 	rpt := v1.Group("/report") // Report

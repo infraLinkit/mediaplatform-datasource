@@ -32,6 +32,7 @@ var serverCmd = &cobra.Command{
 			R:      c.R,
 			RCP:    c.RCP,
 			Rmqp:   c.Rmqp,
+			GS:     c.GS,
 		})
 
 		log.Fatal(router.Listen(":" + c.Config.AppApiPort))

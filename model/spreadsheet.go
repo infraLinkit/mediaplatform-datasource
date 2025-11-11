@@ -8,18 +8,21 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-func (r *BaseModel) UpdateGoogleSheetPixel(ps entity.PixelStorage) {
+func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelStorage, conversion_name string) {
 	sheetId, err := GetSpreadsheetID(ps.GoogleSheet)
 	if err != nil {
 		r.Logs.Info(fmt.Sprintf("Google sheet link not valid for campaign ID:  %#v\n", ps.CampaignId))
 		r.Logs.Info(fmt.Sprintf("Google sheet link :  %#v ", ps.GoogleSheet))
-		return
 	}
 
-	resp, err := r.GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:E7").Do()
+	/* prop, err := GS.Spreadsheets.Get(sheetId).Fields("properties.title").Context(context.Background()).Do()
+	if err != nil {
+		Logs.Error(fmt.Sprintf("Failed to read title: %#v\n", err))
+	} */
+
+	resp, err := GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:E7").Do()
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("Failed to read sheet: %#v\n", err))
-		return
 	}
 
 	if len(resp.Values) < 7 {
@@ -35,23 +38,24 @@ func (r *BaseModel) UpdateGoogleSheetPixel(ps entity.PixelStorage) {
 				{"Google Click ID", "Conversion Name", "Conversion Time", "Conversion Value", "Conversion Currency"},
 			},
 		}
-		_, err := r.GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:E7", header).ValueInputOption("RAW").Do()
+		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:E7", header).ValueInputOption("RAW").Do()
 		if err != nil {
 			r.Logs.Error(fmt.Sprintf("Failed to insert header: %#v\n", err))
-			return
 		}
 	}
 
 	values := &sheets.ValueRange{
 		Values: [][]interface{}{{
 			ps.Pixel,
-			ps.CampaignName,
+			//ps.CampaignName,
+			//prop.Properties.Title,
+			conversion_name,
 			ps.PixelUsedDate,
 			1,
 			ps.Currency,
 		}},
 	}
-	_, err = r.GS.Spreadsheets.Values.Append(sheetId, "Sheet1!A:E", values).ValueInputOption("USER_ENTERED").Do()
+	_, err = GS.Spreadsheets.Values.Append(sheetId, "Sheet1!A:E", values).ValueInputOption("USER_ENTERED").Do()
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("Google sheet input failed error:  %#v\n", err))
 	}

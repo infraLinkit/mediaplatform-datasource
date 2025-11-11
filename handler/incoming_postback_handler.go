@@ -610,3 +610,70 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 		}
 	}
 }
+
+func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	h.Logs.Debug(fmt.Sprintf("Receive request postback billed %#v ...\n", c.AllParams()))
+
+	// Parse Postback Data
+	p := entity.NewDataPostbackV2(c)
+	//p.URLServiceKey = c.Params("urlservicekey")
+
+	// Validate Parameters
+	if v := p.ValidateParamsV2(h.Logs); v.Code == fiber.StatusBadRequest {
+
+		return c.Status(v.Code).JSON(entity.GlobalResponse{Code: v.Code, Message: v.Message})
+
+	} else {
+
+		if c.Cookies(p.CookieKey) != "" {
+
+			return c.Status(fiber.StatusForbidden).JSON(entity.GlobalResponse{Code: fiber.StatusForbidden, Message: "forbidden access"})
+
+		} else {
+			// Setup cookie if double requested within n-hour
+			c.Cookie(&fiber.Cookie{
+				Name:     p.CookieKey,
+				Value:    "1",
+				Expires:  time.Now().Add(3 * time.Second),
+				HTTPOnly: true,
+				SameSite: "lax",
+			})
+
+			if !strings.Contains(p.AffSub, "-") {
+
+				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Invalid pixel format, pixel : " + p.AffSub})
+
+			} else {
+
+				dataraw := strings.Split(p.AffSub, "-")
+				p.URLServiceKey = helper.Concat("-", dataraw[0], dataraw[1])
+
+				if dc, err := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$"); err == nil {
+
+					apiurl := strings.NewReplacer(p.URLServiceKey+"-", "")
+					pixel := apiurl.Replace(p.AffSub)
+
+					h.DS.UpdateGoogleSheetPixel(h.GS, entity.PixelStorage{
+						CampaignId:    dc.CampaignId,
+						GoogleSheet:   dc.GoogleSheetBillable,
+						Pixel:         pixel,
+						PixelUsedDate: helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+						Currency:      dc.Currency,
+					}, dc.ConversionName)
+
+					return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "OK"})
+
+				} else {
+
+					return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Campaign ID not found"})
+
+				}
+			}
+		}
+	}
+}

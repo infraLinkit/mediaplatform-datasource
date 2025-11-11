@@ -7,6 +7,7 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/model"
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
+	"google.golang.org/api/sheets/v4"
 	"gorm.io/gorm"
 )
 
@@ -19,6 +20,7 @@ type (
 		R      *rueidis.Storage
 		RCP    *redis.Client
 		DS     *model.BaseModel
+		GS     *sheets.Service
 	}
 )
 
@@ -40,5 +42,6 @@ func NewIncomingHandler(obj IncomingHandler) *IncomingHandler {
 		RCP:    obj.RCP,
 		Rmqp:   obj.Rmqp,
 		DS:     b,
+		GS:     obj.GS,
 	}
 }

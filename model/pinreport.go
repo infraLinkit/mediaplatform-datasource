@@ -246,7 +246,7 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	query = query.Where("is_used = ?", "true")
 
 	if o.CampaignType == "mainstream" {
-		query = query.Where("campaign_objective = ?", "MAINSTREAM")
+		query = query.Where("campaign_objective LIKE ?", "%MAINSTREAM%")
 	} else {
 		query = query.Where("campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
 	}

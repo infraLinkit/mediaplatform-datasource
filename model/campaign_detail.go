@@ -280,6 +280,20 @@ func (r *BaseModel) UpdateGoogleSheetCampaignDetail(o entity.CampaignDetail) err
 	return result.Error
 }
 
+func (r *BaseModel) UpdateGoogleSheetBillableCampaignDetail(o entity.CampaignDetail) error {
+
+	result := r.DB.Exec(`
+		UPDATE campaign_details 
+		SET google_sheet_billable = ? 
+		WHERE url_service_key = ? AND campaign_id = ?`,
+		o.GoogleSheetBillable, o.URLServiceKey, o.CampaignId,
+	)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
 func (r *BaseModel) GetCampaignDetailByStatusAndCapped(o entity.CampaignDetail, useStatus bool) ([]entity.CampaignDetail, error) {
 
 	rows, _ := r.DB.Model(&entity.CampaignDetail{}).Where("is_active = ? AND status_capping = true", o.IsActive).Rows()

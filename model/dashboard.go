@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -39,6 +38,7 @@ func GetDaysInMonth(year int, month time.Month) int {
 }
 
 func (r *BaseModel) GetReport(country string, operator string, client_type string, partner string, service string, campaign_objective string, date_range string, date_before string, date_after string, allowedAdnets []string, allowedCompanies []string) (entity.SummaryDashboardReport, error) {
+
 	query := r.DB.Model(&entity.SummaryCampaign{})
 
 	// GROUP BY BASED ON DATE_RANGE TYPE
@@ -62,6 +62,30 @@ func (r *BaseModel) GetReport(country string, operator string, client_type strin
 	case "MONTHLY":
 		query = query.Where("summary_date BETWEEN TO_DATE(?, 'YYYY-MM') AND TO_DATE(?, 'YYYY-MM') + INTERVAL '1 month' - INTERVAL '1 day' ", date_before, date_after)
 		select_date = "TO_CHAR(summary_date,'YYYY-MM') as date, "
+	}
+
+	if country != "" {
+		query.Where("country = ?", country)
+	}
+
+	if operator != "" {
+		query.Where("operator = ?", operator)
+	}
+
+	if partner != "" {
+		query.Where("partner = ?", partner)
+	}
+
+	if client_type != "" {
+		query.Where("client_type = ?", client_type)
+	}
+
+	if service != "" {
+		query.Where("client_type = ?", service)
+	}
+
+	if campaign_objective != "" {
+		query.Where("campaign_objective = ?", campaign_objective)
 	}
 
 	rows, err := query.Select(select_date +
@@ -120,7 +144,6 @@ func (r *BaseModel) GetReport(country string, operator string, client_type strin
 
 		date_list_result = uniqueStrings(date_list_result)
 
-		//fmt.Println("DATE LIST ", date_list_result)
 		SummaryDashboardReport.DateList = date_list_result
 
 		return SummaryDashboardReport, nil
@@ -144,8 +167,6 @@ func (r *BaseModel) GetCampaign(order_type string, order_by string, offset strin
 	if order_type == "WORST" {
 		desc = "ASC"
 	}
-
-	fmt.Println("ORDER BY ", order_by)
 
 	switch order_by {
 	case "MO_RECEIVED":
@@ -219,8 +240,16 @@ func (r *BaseModel) GetCampaign(order_type string, order_by string, offset strin
 
 func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, date_after string, allowedAdnets []string, allowedCompanies []string) (entity.SummaryDashboardData, error) {
 
-	query := r.DB.Model(&entity.SummaryCampaign{})
-	query_last_month := r.DB.Model(&entity.SummaryCampaign{})
+	/*
+		// OLD VERSION QUERY TO SUMMARYCAMPAIGNS
+		query := r.DB.Model(&entity.SummaryCampaign{})
+		query_last_month := r.DB.Model(&entity.SummaryCampaign{})
+	*/
+
+	// NEW VERSION QUERY TO SUMMARYDASHBOARD
+	query := r.DB.Model(&entity.SummaryDashboard{})
+	query_last_month := r.DB.Model(&entity.SummaryDashboard{})
+	// -------------------------------------
 
 	var SummaryDashboard entity.SummaryDashboardData
 
@@ -270,9 +299,10 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 	}
 
 	query = query.Where("summary_date IN ? ", date_list)
-	query.Where("adnet IN ?", allowedAdnets)
-	query.Where("company IN ?", allowedCompanies)
-
+	/*
+		query.Where("adnet IN ?", allowedAdnets)
+		query.Where("company IN ?", allowedCompanies)
+	*/
 	where := ""
 
 	for _, date := range date_list {
@@ -283,8 +313,10 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 	}
 
 	query_last_month.Where("summary_date IN(" + strings.TrimSuffix(where, ",") + ")")
-	query_last_month.Where("adnet IN ?", allowedAdnets)
-	query_last_month.Where("company IN ?", allowedCompanies)
+	/*
+		query_last_month.Where("adnet IN ?", allowedAdnets)
+		query_last_month.Where("company IN ?", allowedCompanies)
+	*/
 
 	var dsp struct {
 		Code  string "code"
@@ -321,17 +353,28 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 		where_non_dsp = " AND adnet IN (" + strings.TrimSuffix(where_non_dsp, ",") + ")"
 	}
 
-	fmt.Println("where_non_dsp ", where_non_dsp)
+	/*
+		rows, err = query.Select(
+			`summary_date as date,
+			 SUM(mo_received) as total_mo,
+			 COUNT(DISTINCT adnet) as total_active_adnet,
+			 SUM(sbaf) as total_spending,
+			 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') THEN sbaf ELSE 0 END) as total_s2s_spending,
+			 0 as total_api_spending,
+			 SUM(CASE WHEN campaign_objective IN('MAINSTREAM') THEN sbaf ELSE 0 END) as total_mainstream_spending,
+			 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') ` + where_dsp + ` THEN sbaf ELSE 0 END) as total_dsp_spending
+			`).Group("summary_date").Order("summary_date ASC").Rows()
+	*/
 
 	rows, err = query.Select(
 		`summary_date as date,
-		 SUM(mo_received) as total_mo,
-		 COUNT(DISTINCT adnet) as total_active_adnet,
-		 SUM(sbaf) as total_spending,
-		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') ` + where_non_dsp + ` THEN sbaf ELSE 0 END) as total_s2s_spending,
+		 SUM(total_mo) as total_mo,
+		 COUNT(adnet) as total_active_adnet,
+		 SUM(total_spending) as total_spending,
+		 SUM(total_cpa_spending+total_sms_spending)-SUM(CASE WHEN TRUE ` + where_dsp + ` THEN total_cpa_spending+total_sms_spending ELSE 0 END) as total_s2s_spending,
 		 0 as total_api_spending,
-		 SUM(CASE WHEN campaign_objective IN('MAINSTREAM') THEN sbaf ELSE 0 END) as total_mainstream_spending,
-		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') ` + where_dsp + ` THEN sbaf ELSE 0 END) as total_dsp_spending
+		 SUM(total_mainstream_spending) as total_mainstream_spending,
+		 SUM(CASE WHEN TRUE ` + where_dsp + ` THEN total_cpa_spending+total_sms_spending ELSE 0 END) as total_dsp_spending
 		`).Group("summary_date").Order("summary_date ASC").Rows()
 
 	if err == nil {
@@ -361,19 +404,18 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 			SummaryDashboard.TotalAPISpending += total_spending_api
 			SummaryDashboard.TotalSpending += total_spending_api
 			ss = append(ss, s)
-
 		}
 
 		// GET 1 MONTH PRIOR DATA
 		rows, _ = query_last_month.Select(
 			`summary_date as date,
-		 SUM(mo_received) as total_mo,
-		 COUNT(DISTINCT adnet) as total_active_adnet,
-		 SUM(sbaf) as total_spending,
-		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') ` + where_non_dsp + ` THEN sbaf ELSE 0 END) as total_s2s_spending,
+		 SUM(total_mo) as total_mo,
+		 COUNT(adnet) as total_active_adnet,
+		 SUM(total_spending) as total_spending,
+		 SUM(total_cpa_spending+total_sms_spending)-SUM(CASE WHEN TRUE ` + where_dsp + ` THEN total_cpa_spending+total_sms_spending ELSE 0 END) as total_s2s_spending,
 		 0 as total_api_spending,
-		 SUM(CASE WHEN campaign_objective IN('MAINSTREAM') THEN sbaf ELSE 0 END) as total_mainstream_spending,
-		 SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS') ` + where_dsp + ` THEN sbaf ELSE 0 END) as total_dsp_spending
+		 SUM(total_mainstream_spending) as total_mainstream_spending,
+		 SUM(CASE WHEN TRUE ` + where_dsp + ` THEN total_cpa_spending+total_sms_spending ELSE 0 END) as total_dsp_spending
 		`).Group("summary_date").Order("summary_date ASC").Rows()
 
 		defer rows.Close()
@@ -388,42 +430,61 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 
 		SummaryDashboard.DateList = date_list
 		var DetailChartData []entity.DetailChartData
-		var DetailChart entity.DetailChartData
 
 		for _, date := range SummaryDashboard.DateList {
+			var DetailChart entity.DetailChartData
+			var last_date string
+
+			t, _ := time.Parse("2006-01-02", date)
+
+			m1 := t.AddDate(0, -1, 0).Month().String()
+			m2, _ := time.Parse("2006-01-02", date)
+
+			if m1 == m2.Month().String() {
+				last_date = ""
+			} else {
+				last_date = t.AddDate(0, -1, 0).Format("2006-01-02")
+			}
 
 			DetailChart.Date = date
+			DetailChart.LastMonthDate = last_date
 			DetailChart.TotalMO = 0
 			DetailChart.TotalSpending = 0
 			DetailChart.LastMonthTotalMO = 0
 			DetailChart.LastMonthTotalSpending = 0
-			DetailChart.LastMonthDate = ""
+
+			// ADD WITH API
+			total_spending_api := 0.0
+			total_mo := 0
+			api_query := r.DB.Model(&entity.ApiPinReport{})
+			api_query.Where("date_send = ? ", date)
+
+			err = api_query.Select("date_send,SUM(sbaf),SUM(total_mo)").Limit(1).Row().Scan(&total_spending_api, &total_mo)
+
+			if err == nil {
+				DetailChart.TotalMO += total_mo
+				DetailChart.TotalSpending += total_spending_api
+			}
+
+			if last_date != "" {
+
+				total_spending_api = 0.0
+				total_mo = 0
+				api_query = r.DB.Model(&entity.ApiPinReport{})
+				api_query.Where("date_send = ? ", last_date)
+
+				err = api_query.Select("date_send,SUM(sbaf),SUM(total_mo)").Limit(1).Row().Scan(&total_spending_api, &total_mo)
+
+				if err == nil {
+					DetailChart.LastMonthTotalMO += total_mo
+					DetailChart.LastMonthTotalSpending += total_spending_api
+				}
+			}
 
 			for _, detail := range ss {
-
 				if date == detail.Date {
 					DetailChart.TotalMO = detail.TotalMO
 					DetailChart.TotalSpending = detail.TotalSpending
-				}
-
-				for _, last_detail := range sl {
-					prev_date, _ := time.Parse("2006-01-02", last_detail.Date)
-					prev_date = prev_date.AddDate(0, 1, 0)
-					if date == prev_date.Format("2006-01-02") {
-						DetailChart.LastMonthTotalMO = last_detail.TotalMO
-						DetailChart.LastMonthTotalSpending = last_detail.TotalSpending
-						DetailChart.LastMonthDate = prev_date.Format("2006-01-02")
-						// ADD WITH API
-						total_spending_api := 0.0
-						total_mo := 0
-						api_query := r.DB.Model(&entity.ApiPinReport{})
-						api_query.Where("date_send = ? ", date)
-						_ = api_query.Select("SUM(sbaf),SUM(total_mo)").Limit(1).Row().Scan(&total_spending_api, &total_mo)
-
-						DetailChart.LastMonthTotalSpending += total_spending_api
-						DetailChart.LastMonthTotalMO += total_mo
-						break
-					}
 				}
 			}
 

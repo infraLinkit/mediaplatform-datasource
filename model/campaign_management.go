@@ -69,7 +69,7 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
         }
         if o.CampaignType != "" {
             if o.CampaignType == "mainstream" {
-                query = query.Where("campaigns.campaign_objective = ?", "MAINSTREAM")
+                query = query.Where("campaigns.campaign_objective LIKE ?", "%MAINSTREAM%")
             } else {
                 query = query.Where("campaigns.campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
             }
@@ -160,9 +160,9 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 		campaign_details.is_billable`
 
 	// Add cc_email only if campaign objective is not MAINSTREAM
-	if campaignObjective != "MAINSTREAM" {
-		selectClause += `,
-			adnet_lists.cc_email`
+	if !strings.Contains(campaignObjective, "MAINSTREAM") {
+    selectClause += `,
+        adnet_lists.cc_email`
 	} else {
 		selectClause += `,
 			NULL AS cc_email`
@@ -173,7 +173,7 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 		Joins("INNER JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id")
 
 	// Only join adnet_lists if campaign objective is not MAINSTREAM
-	if campaignObjective != "MAINSTREAM" {
+	if !strings.Contains(campaignObjective, "MAINSTREAM") {
 		query = query.Joins("INNER JOIN adnet_lists ON adnet_lists.code = campaign_details.adnet")
 	}
 
@@ -207,7 +207,7 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 		}
 
 		// Handle cc_email based on campaign objective
-		if campaignObjective != "MAINSTREAM" {
+		if !strings.Contains(campaignObjective, "MAINSTREAM"){
 			if ccEmail != nil {
 				// Convert string to pq.StringArray if needed
 				if ccEmailStr, ok := ccEmail.(string); ok {

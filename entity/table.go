@@ -113,6 +113,7 @@ type (
 		KeyMainstream             string    `gorm:"size:50;default:NA" json:"key_mainstream"`
 		Channel                   string    `gorm:"size:50;default:NA" json:"channel"`
 		GoogleSheet               string    `gorm:"type:text;default:NA" json:"google_sheet"`
+		GoogleSheetBillable       string    `gorm:"type:text;default:NA" json:"google_sheet_billable"`
 		Currency                  string    `gorm:"size:10;default:NA" json:"currency"`
 		MCC                       string    `gorm:"size:10;default:NA" json:"mcc"`
 		ClickableAnywhere         bool      `gorm:"not null;default:false" json:"clickable_anywhere"`

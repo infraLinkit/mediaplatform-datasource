@@ -132,6 +132,7 @@ type (
 		KeyMainstream             string  `json:"key_mainstream"`
 		Channel                   string  `json:"channel"`
 		GoogleSheet               string  `json:"google_sheet"`
+		GoogleSheetBillable       string  `json:"google_sheet_billable"`
 		Currency                  string  `json:"currency"`
 		MCC                       string  `json:"mcc"`
 		ClickableAnywhere         bool    `json:"clickable_anywhere"`

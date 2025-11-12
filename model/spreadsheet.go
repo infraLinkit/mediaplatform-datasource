@@ -26,25 +26,25 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 		Logs.Error(fmt.Sprintf("Failed to read title: %#v\n", err))
 	} */
 
-	resp, err := GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:E8").Do()
+	resp, err := GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:F1").Do()
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("Failed to read sheet: %#v\n", err))
 	}
 
-	if len(resp.Values) < 7 {
+	if len(resp.Values) == 0 {
 		header := &sheets.ValueRange{
-			Range: "Sheet1!A1:E8",
+			Range: "Sheet1!A1:F7",
 			Values: [][]interface{}{
 				{"#### INSTRUCTIONS ####"},
 				{"# IMPORTANT: Remember to set the TimeZone value in the \"parameters\" row and/or in your Conversion Time column"},
 				{"# For instructions on how to setup your data, visit http://goo.gl/T1C5Ov"},
-				{}, // empty row
+				{},
 				{"#### TEMPLATE ####"},
 				{"Parameters: TimeZone=+0700"},
 				{"Google Click ID", "Time", "MSISDN", "Status", "StatusCode", "StatusDetail"},
 			},
 		}
-		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:E8", header).ValueInputOption("RAW").Do()
+		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:F7", header).ValueInputOption("RAW").Do()
 		if err != nil {
 			r.Logs.Error(fmt.Sprintf("Failed to insert header: %#v\n", err))
 		}
@@ -60,7 +60,7 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 			s.StatusDetail,
 		}},
 	}
-	_, err = GS.Spreadsheets.Values.Append(sheetId, "Sheet1!A:E", values).ValueInputOption("USER_ENTERED").Do()
+	_, err = GS.Spreadsheets.Values.Append(sheetId, "Sheet1!A:H", values).ValueInputOption("USER_ENTERED").InsertDataOption("INSERT_ROWS").Do()
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("Google sheet input failed error:  %#v\n", err))
 	}

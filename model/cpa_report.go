@@ -33,6 +33,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 			END - (po * postback)
 		) AS revenue
 	`).Where("mo_received > 0").Where("company IN ?", allowedCompanies)
+	t_query.Where("mo_received > 0")
 
 	if o.CampaignObjective != "" {
 		query.Where("campaign_objective = ? ", o.CampaignObjective)

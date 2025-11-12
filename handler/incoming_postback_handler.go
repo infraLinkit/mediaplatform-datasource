@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
+	"github.com/infraLinkit/mediaplatform-datasource/model"
 	"github.com/wiliehidayat87/rmqp"
 )
 
@@ -663,8 +664,12 @@ func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
 						GoogleSheet:   dc.GoogleSheetBillable,
 						Pixel:         pixel,
 						PixelUsedDate: helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-						Currency:      dc.Currency,
-					}, dc.ConversionName)
+						Msisdn:        p.Msisdn,
+					}, model.StatusData{
+						Status:       p.Status,
+						StatusCode:   p.StatusCode,
+						StatusDetail: p.StatusDetail,
+					})
 
 					return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "OK"})
 

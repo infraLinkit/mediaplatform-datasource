@@ -8,7 +8,13 @@ import (
 	"google.golang.org/api/sheets/v4"
 )
 
-func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelStorage, conversion_name string) {
+type StatusData struct {
+	Status       string
+	StatusCode   string
+	StatusDetail string
+}
+
+func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelStorage, s StatusData) {
 	sheetId, err := GetSpreadsheetID(ps.GoogleSheet)
 	if err != nil {
 		r.Logs.Info(fmt.Sprintf("Google sheet link not valid for campaign ID:  %#v\n", ps.CampaignId))
@@ -35,7 +41,7 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 				{}, // empty row
 				{"#### TEMPLATE ####"},
 				{"Parameters: TimeZone=+0700"},
-				{"Google Click ID", "Conversion Name", "Conversion Time", "Conversion Value", "Conversion Currency"},
+				{"Google Click ID", "Time", "MSISDN", "Status", "StatusCode", "StatusDetail"},
 			},
 		}
 		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:E7", header).ValueInputOption("RAW").Do()
@@ -47,12 +53,11 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 	values := &sheets.ValueRange{
 		Values: [][]interface{}{{
 			ps.Pixel,
-			//ps.CampaignName,
-			//prop.Properties.Title,
-			conversion_name,
 			ps.PixelUsedDate,
-			1,
-			ps.Currency,
+			ps.Msisdn,
+			s.Status,
+			s.StatusCode,
+			s.StatusDetail,
 		}},
 	}
 	_, err = GS.Spreadsheets.Values.Append(sheetId, "Sheet1!A:E", values).ValueInputOption("USER_ENTERED").Do()

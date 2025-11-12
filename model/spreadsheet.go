@@ -26,14 +26,14 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 		Logs.Error(fmt.Sprintf("Failed to read title: %#v\n", err))
 	} */
 
-	resp, err := GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:E7").Do()
+	resp, err := GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:E8").Do()
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("Failed to read sheet: %#v\n", err))
 	}
 
 	if len(resp.Values) < 7 {
 		header := &sheets.ValueRange{
-			Range: "Sheet1!A1:E7",
+			Range: "Sheet1!A1:E8",
 			Values: [][]interface{}{
 				{"#### INSTRUCTIONS ####"},
 				{"# IMPORTANT: Remember to set the TimeZone value in the \"parameters\" row and/or in your Conversion Time column"},
@@ -44,7 +44,7 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 				{"Google Click ID", "Time", "MSISDN", "Status", "StatusCode", "StatusDetail"},
 			},
 		}
-		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:E7", header).ValueInputOption("RAW").Do()
+		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:E8", header).ValueInputOption("RAW").Do()
 		if err != nil {
 			r.Logs.Error(fmt.Sprintf("Failed to insert header: %#v\n", err))
 		}

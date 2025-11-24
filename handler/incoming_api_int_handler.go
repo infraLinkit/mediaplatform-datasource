@@ -531,6 +531,7 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 		campaign.URLServiceKey,
 	)
 	if err == nil && existing.ID > 0 {
+
 		// Update jika ada
 		campaign.ID = existing.ID
 		if err := h.DS.UpdateCpaReport(campaign); err != nil {
@@ -541,11 +542,13 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 		}
 		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "Updated"})
 	} else {
+
 		// Cari referensi (latest)
 		latest, err := h.DS.FindLatestSummaryCampaignByUniqueKey(
 			campaign.Service,
 			campaign.Adnet,
 			campaign.Operator,
+			campaign.Partner,
 		)
 		if err == nil && latest.ID > 0 {
 			// Copy data lama, timpa field dari FE, lalu create
@@ -572,6 +575,7 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 			}
 			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "Created from latest"})
 		} else {
+
 			// Tidak ada referensi, create langsung dari FE
 			if err := h.DS.CreateCpaReport(campaign); err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

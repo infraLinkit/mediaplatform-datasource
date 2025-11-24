@@ -302,9 +302,9 @@ func (r *BaseModel) FindSummaryCampaignByUniqueKey(
 	return s, result.Error
 }
 
-func (r *BaseModel) FindLatestSummaryCampaignByUniqueKey(service, adnet, operator string) (entity.SummaryCampaign, error) {
+func (r *BaseModel) FindLatestSummaryCampaignByUniqueKey(service, adnet, operator string, partner string) (entity.SummaryCampaign, error) {
 	var s entity.SummaryCampaign
-	result := r.DB.Where("LOWER(service) = LOWER(?) AND LOWER(adnet) = LOWER(?) AND LOWER(operator) = LOWER(?)", service, adnet, operator).
+	result := r.DB.Where("LOWER(service) = LOWER(?) AND LOWER(adnet) = LOWER(?) AND LOWER(operator) = LOWER(?) AND LOWER(partner)=LOWER(?)", service, adnet, operator, partner).
 		Order("summary_date DESC").
 		First(&s)
 	return s, result.Error

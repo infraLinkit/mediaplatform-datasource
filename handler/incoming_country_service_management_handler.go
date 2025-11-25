@@ -1575,3 +1575,131 @@ func (h *IncomingHandler) UpdateDSPAdnetStatus(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
+
+func (h *IncomingHandler) CreateCompanyGroup(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	var companyGroup entity.CompanyGroup
+
+	if errForm := c.BodyParser(&companyGroup); errForm != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	if errValidation := validate.Struct(companyGroup); errValidation != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Validation error",
+			"errors":  errValidation.Error(),
+		})
+	}
+
+	if errCreate := h.DS.CreateCompanyGroup(&companyGroup); errCreate != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create companyGroup",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+
+}
+
+func (h *IncomingHandler) UpdateCompanyGroup(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var companyGroup entity.CompanyGroup
+
+	if formErr := c.BodyParser(&companyGroup); formErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   formErr.Error(),
+		})
+	}
+
+	companyGroup.ID = uint(id)
+
+	if err := h.DS.UpdateCompanyGroup(&companyGroup); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update companyGroup",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DeleteCompanyGroup(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteCompanyGroup(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete companyGroup",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DisplayCompanyGroup(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil {
+		pageSize = 10
+	}
+	orderColumn := m["order_column"]
+	orderDir := m["order_dir"]
+
+	draw, _ := strconv.Atoi(m["draw"])
+	fe := entity.GlobalRequestFromDataTableCompany{
+		Page:        page,
+		Action:      m["action"],
+		Draw:        draw,
+		PageSize:    pageSize,
+		Search:      m["search[value]"],
+		OrderColumn: orderColumn,
+		OrderDir:    orderDir,
+	}
+
+	var (
+		errResponse  error
+		total_data   int64
+		company_group_list []entity.CompanyGroup
+	)
+
+	// key := "temp_key_api_companyGroup_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	// need to add redis mechanism here
+	company_group_list, total_data, errResponse = h.DS.GetCompanyGroup(fe)
+
+	r := entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
+	}
+
+	if errResponse == nil {
+
+		r = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            company_group_list,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	}
+
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}

@@ -844,6 +844,11 @@ type (
 		Name string `gorm:"type:text" json:"name"`
 	}
 
+	CompanyGroup struct {
+		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name string `gorm:"type:text" json:"name"`
+	}
+
 	Domain struct {
 		ID  uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Url string `gorm:"type:varchar(80)" json:"url"`

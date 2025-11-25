@@ -233,6 +233,11 @@ func MapUrls(obj App3rdParty) *fiber.App {
 
 	countryService.Post("/edit-adnet-dsp-status", h.UpdateDSPAdnetStatus).Name("Edit DSP Status")
 
+	countryService.Get("/company-group", h.DisplayCompanyGroup).Name("Display Company Group")
+	countryService.Post("/company-group", h.CreateCompanyGroup).Name("Create Company Group")
+	countryService.Put("/company-group/:id", h.UpdateCompanyGroup).Name("Update Company Group")
+	countryService.Delete("/company-group/:id", h.DeleteCompanyGroup).Name("Delete Company Group")
+
 	ipRange := management.Group("/ipranges")
 	ipRange.Get("/", h.GetIPRangeFiles).Name(" Display IP Ranges List List")
 	ipRange.Post("/upload", h.UploadIPRangeRows).Name("Upload IP Ranges CSV")

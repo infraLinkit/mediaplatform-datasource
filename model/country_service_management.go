@@ -110,6 +110,41 @@ func (r *BaseModel) GetCountry(o entity.GlobalRequestFromDataTable) ([]entity.Co
 	return ss, total_rows, rows.Err()
 }
 
+func (r *BaseModel) GetContinent(o entity.GlobalRequestFromDataTable) ([]entity.Continent, int64, error) {
+
+	var (
+		rows       *sql.Rows
+		total_rows int64
+	)
+
+	// Apply filters, minus the pagination constraints
+	query := r.DB.Model(&entity.Country{})
+	if o.Search != "" {
+		search_value := strings.Trim(o.Search, " ")
+		query = query.Where("name ILIKE ?", "%"+search_value+"%")
+	}
+
+	// Get the total count after applying filters
+	query.Unscoped().Count(&total_rows)
+
+	query_limit := query.Limit(o.PageSize)
+	if o.Page > 0 {
+		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	}
+
+	rows, _ = query_limit.Order("name").Rows()
+	defer rows.Close()
+
+	var ss []entity.Continent
+	for rows.Next() {
+		var s entity.Continent
+		r.DB.ScanRows(rows, &s)
+		ss = append(ss, s)
+	}
+
+	return ss, total_rows, rows.Err()
+}
+
 func (m *BaseModel) CreateCompany(company *entity.Company) error {
 	return m.DB.Create(company).Error
 }

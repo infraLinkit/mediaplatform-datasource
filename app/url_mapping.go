@@ -182,6 +182,13 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	userlog.Get("/", h.DisplayUserLogList).Name(" Display User Log List")
 	userlog.Get("/:id", h.DisplayUserLogHistory).Name(" Display User Log History")
 
+	budgetio := management.Group("/budget-io")
+	budgetio.Post("/", h.CreateBudgetIO).Name("Create BudgetIO")
+	budgetio.Get("/budgetiolist", h.AuthMiddleware, h.DisplayBudgetIO).Name("Budget IO List")
+	budgetio.Get("/budgetiolistall", h.AuthMiddleware, h.DisplayBudgetIOAll).Name("Budget IO List All")
+	budgetio.Get("/budgetioapproved", h.AuthMiddleware, h.DisplayBudgetIOApproved).Name("Budget IO List All")
+	budgetio.Get("/budgetioapprovedall", h.AuthMiddleware, h.DisplayBudgetIOApprovedAll).Name("Budget IO List All")
+
 	//  Country and Service Management
 	countryService := management.Group("/country-service")
 	countryService.Get("/email", h.DisplayEmail).Name("Display Email")
@@ -193,6 +200,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	countryService.Post("/country", h.CreateCountry).Name("Create Country")
 	countryService.Put("/country/:id", h.UpdateCountry).Name("Update Country")
 	countryService.Delete("/country/:id", h.DeleteCountry).Name("Delete Country")
+	countryService.Get("/continent", h.DisplayCountry).Name("Display Continent")
 	countryService.Get("/company", h.DisplayCompany).Name("Create Company")
 	countryService.Post("/company", h.CreateCompany).Name("Create Company")
 	countryService.Put("/company/:id", h.UpdateCompany).Name("Update Company")

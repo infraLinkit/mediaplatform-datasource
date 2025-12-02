@@ -1,8 +1,9 @@
 package handler
 
 import (
+	"math"
 	"strconv"
-    
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
@@ -401,3 +402,179 @@ func (h *IncomingHandler) DisplayBudgetIOExtraApproved(c *fiber.Ctx, fe entity.D
 		}
 	}
 }
+
+func (h *IncomingHandler) DisplaySummaryBudgetIO(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, err := strconv.Atoi(m["page_size"])
+	if err != nil {
+		pageSize = PAGESIZE
+	}
+	draw, _ := strconv.Atoi(m["draw"])
+
+	fe := entity.DisplaySummaryBudgetIO{
+		Continent:    m["continent"],
+		Country:      m["country"],
+		Company:      m["company"],
+		Partner:      m["partner"],
+		Draw:         draw,
+		Page:         page,
+		PageSize:     pageSize,
+		Action:       m["action"],
+		DateRange:    m["date_range"],
+		DateBefore:   m["date_before"],
+		DateAfter:    m["date_after"],
+		Reload:       m["reload"],
+		OrderColumn:  m["order_column"],
+		OrderDir:     m["order_dir"],
+	}
+
+	r := h.DisplaySummaryBudgetIOExtra(c, fe)
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
+func (h *IncomingHandler) DisplaySummaryBudgetIOExtra(c *fiber.Ctx, fe entity.DisplaySummaryBudgetIO) entity.ReturnResponse {
+	var (
+		err        error
+		total_data int64
+		budgetio   []entity.SummaryBudgetIO
+	)
+
+	budgetio, total_data, err = h.DS.GetDisplaySummaryBudgetIO(fe)
+
+	if err != nil {
+		return entity.ReturnResponse{
+			HttpStatus: fiber.StatusNotFound,
+			Rsp: entity.GlobalResponse{
+				Code:    fiber.StatusNotFound,
+				Message: "empty",
+			},
+		}
+	}
+
+	if budgetio == nil {
+		budgetio = []entity.SummaryBudgetIO{}
+	}
+
+	// Mapping ke ContinentReport format
+	mapped := MapSummaryBudgetIOToContinentReport(budgetio)
+
+	return entity.ReturnResponse{
+		HttpStatus: fiber.StatusOK,
+		Rsp: entity.GlobalResponseWithDataTable{
+			Draw:            fe.Draw,
+			Code:            fiber.StatusOK,
+			Message:         config.OK_DESC,
+			Data:            mapped,
+			RecordsTotal:    int(total_data),
+			RecordsFiltered: len(mapped),
+		},
+	}
+}
+
+func MapSummaryBudgetIOToContinentReport(data []entity.SummaryBudgetIO) []entity.ContinentReport {
+	// map[month][continent][country] => SummaryBudgetIO aggregated
+	continentMap := make(map[string]map[string]map[string]*entity.SummaryBudgetIO)
+
+	for _, d := range data {
+		month := d.Month
+		continent := d.Continent
+		country := d.Country
+
+		if continentMap[month] == nil {
+			continentMap[month] = make(map[string]map[string]*entity.SummaryBudgetIO)
+		}
+		if continentMap[month][continent] == nil {
+			continentMap[month][continent] = make(map[string]*entity.SummaryBudgetIO)
+		}
+
+		if existing, ok := continentMap[month][continent][country]; ok {
+			// jika sudah ada, sum nilai-nilai numeric
+			existing.TotalMonthlySpendTarget += d.TotalMonthlySpendTarget
+			existing.ActualWeek1 += d.ActualWeek1
+			existing.ActualWeek2 += d.ActualWeek2
+			existing.ActualWeek3 += d.ActualWeek3
+			existing.ActualWeek4 += d.ActualWeek4
+		} else {
+			// baru, simpan pointer agar bisa diupdate
+			copy := d
+			continentMap[month][continent][country] = &copy
+		}
+	}
+
+	var reports []entity.ContinentReport
+
+	for month, continents := range continentMap {
+		for continent, countries := range continents {
+			var contRep entity.ContinentReport
+			contRep.Continent = continent
+			contRep.Month = month
+			contRep.TotalIOTargetContinent = 0
+			contRep.TotalActualCostContinent = 0
+
+			for _, c := range countries {
+				totalActual := c.ActualWeek1 + c.ActualWeek2 + c.ActualWeek3 + c.ActualWeek4
+				kpi := func(a float64) int {
+					if c.TotalMonthlySpendTarget == 0 {
+						return 0
+					}
+					return int(math.Round(a / ((c.TotalMonthlySpendTarget / 30) * 7) * 100))
+				}
+
+				countryRep := entity.CountryReport{
+					Country:                c.Country,
+					ActualCostWeek1Country: int(c.ActualWeek1),
+					KPIWeek1Country:        kpi(c.ActualWeek1),
+					ActualCostWeek2Country: int(c.ActualWeek2),
+					KPIWeek2Country:        kpi(c.ActualWeek2),
+					ActualCostWeek3Country: int(c.ActualWeek3),
+					KPIWeek3Country:        kpi(c.ActualWeek3),
+					ActualCostWeek4Country: int(c.ActualWeek4),
+					KPIWeek4Country:        kpi(c.ActualWeek4),
+					TotalActualCostCountry: int(totalActual),
+					TotalIOTargetCountry:   int(c.TotalMonthlySpendTarget),
+					BudgetUsageCountry:     int(math.Round(totalActual / c.TotalMonthlySpendTarget * 100)),
+				}
+
+				contRep.Countries = append(contRep.Countries, countryRep)
+
+				// Tambahkan ke continent total
+				contRep.ActualCostWeek1Continent += int(c.ActualWeek1)
+				contRep.ActualCostWeek2Continent += int(c.ActualWeek2)
+				contRep.ActualCostWeek3Continent += int(c.ActualWeek3)
+				contRep.ActualCostWeek4Continent += int(c.ActualWeek4)
+				contRep.TotalIOTargetContinent += int(c.TotalMonthlySpendTarget)
+			}
+
+			// KPI continent
+			kpiCont := func(a int) int {
+				if contRep.TotalIOTargetContinent == 0 {
+					return 0
+				}
+				return int(math.Round(float64(a) / ((float64(contRep.TotalIOTargetContinent) / 30) * 7) * 100))
+			}
+
+			contRep.KPIWeek1Continent = kpiCont(contRep.ActualCostWeek1Continent)
+			contRep.KPIWeek2Continent = kpiCont(contRep.ActualCostWeek2Continent)
+			contRep.KPIWeek3Continent = kpiCont(contRep.ActualCostWeek3Continent)
+			contRep.KPIWeek4Continent = kpiCont(contRep.ActualCostWeek4Continent)
+
+			contRep.TotalActualCostContinent = contRep.ActualCostWeek1Continent + contRep.ActualCostWeek2Continent +
+				contRep.ActualCostWeek3Continent + contRep.ActualCostWeek4Continent
+
+			if contRep.TotalIOTargetContinent != 0 {
+				contRep.BudgetUsageContinent = int(math.Round(float64(contRep.TotalActualCostContinent) / float64(contRep.TotalIOTargetContinent) * 100))
+			}
+
+			reports = append(reports, contRep)
+		}
+	}
+
+	return reports
+}
+

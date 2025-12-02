@@ -1069,6 +1069,29 @@ type (
 		UpdatedAt          time.Time
 	}
 
+	SummaryBudgetIO struct {
+		gorm.Model
+		ID                     int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		Month                  string    `gorm:"size:20;default:NA" json:"month"`        // format YYYY-MM
+		Country                string    `gorm:"size:50;default:NA" json:"country"`
+		Continent              string    `gorm:"size:50;default:NA" json:"continent"`
+		Company				   string	 `gorm:"size:50;default:NA" json:"company"`
+		Partner				   string	 `gorm:"size:50;default:NA" json:"partner"`
+		TotalMonthlySpendTarget float64   `gorm:"type:double precision;default:0" json:"total_monthly_spend_target"`
+		ActualWeek1            float64   `gorm:"type:double precision;default:0" json:"actual_week_1"`
+		ActualWeek2            float64   `gorm:"type:double precision;default:0" json:"actual_week_2"`
+		ActualWeek3            float64   `gorm:"type:double precision;default:0" json:"actual_week_3"`
+		ActualWeek4            float64   `gorm:"type:double precision;default:0" json:"actual_week_4"`
+
+		GMV                    float64   `gorm:"type:double precision;default:0" json:"gmv"`
+		LTV                    float64   `gorm:"type:double precision;default:0" json:"ltv"`
+		ROAS                   float64   `gorm:"type:double precision;default:0" json:"roas"`
+		ROI                    float64   `gorm:"type:double precision;default:0" json:"roi"`
+
+		CreatedAt              time.Time `json:"created_at"`
+		UpdatedAt              time.Time `json:"updated_at"`
+	}
+
 
 	UserCompany struct {
 		gorm.Model

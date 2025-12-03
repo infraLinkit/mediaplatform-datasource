@@ -747,3 +747,21 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 
 	return results, total_rows, rows.Err()
 }
+
+func (r *BaseModel) GetSummaryReportById(id []string) ([]entity.SummaryCampaign, error) {
+	query := r.DB.Model(&entity.SummaryCampaign{}).Where("mo_received > 0 AND id IN ?", id)
+	rows, err := query.Rows()
+
+	if err != nil {
+		return []entity.SummaryCampaign{}, err
+	}
+
+	var results []entity.SummaryCampaign
+	for rows.Next() {
+		var s entity.SummaryCampaign
+		r.DB.ScanRows(rows, &s)
+		results = append(results, s)
+	}
+
+	return results, nil
+}

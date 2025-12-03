@@ -321,7 +321,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		(po * postback) AS sbaf,
 		(CASE WHEN mo_received > 0 THEN (poaf * postback) / mo_received ELSE 0 END) AS price_per_mo,
 		((poaf * postback) - (po * postback)) AS revenue
-	`).Where("campaign_objective = ?", "MAINSTREAM").
+	`).Where("campaign_objective LIKE ?", "%MAINSTREAM%").
 		Where("mo_received > 0").
 		Where("company IN ?", allowedCompanies)
 

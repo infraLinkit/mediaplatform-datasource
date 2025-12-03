@@ -113,13 +113,17 @@ type (
 		KeyMainstream             string    `gorm:"size:50;default:NA" json:"key_mainstream"`
 		Channel                   string    `gorm:"size:50;default:NA" json:"channel"`
 		GoogleSheet               string    `gorm:"type:text;default:NA" json:"google_sheet"`
+		GoogleSheetBillable       string    `gorm:"type:text;default:NA" json:"google_sheet_billable"`
 		Currency                  string    `gorm:"size:10;default:NA" json:"currency"`
 		MCC                       string    `gorm:"size:10;default:NA" json:"mcc"`
 		ClickableAnywhere         bool      `gorm:"not null;default:false" json:"clickable_anywhere"`
 		NonTargetURL              string    `gorm:"type:text;default:NA" json:"non_target_url"`
 		EnableIpRanges            bool      `gorm:"not null;default:false" json:"enable_ip_ranges"`
 		ConversionName            string    `gorm:"size:50;default:NA" json:"conversion_name"`
-		DomainService             string    `gorm:"type:varchar(80)" json:"domain_service"`
+		DomainService 			      string 	  `gorm:"type:varchar(80)" json:"domain_service"`
+		CampaignDetailName 		    string 	  `gorm:"type:varchar(80)" json:"campaign_detail_name"`
+		Prefix 					          string 	  `gorm:"type:varchar(80)" json:"prefix"`
+		CountryDialingCode 		    string 	  `gorm:"type:varchar(80)" json:"country_dialing_code"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}
@@ -832,12 +836,21 @@ type (
 		Name              string `gorm:"type:varchar(80)" json:"name"  validate:"unique,required,max=80"`
 		NumericCode       string `gorm:"type:varchar(10)" json:"numeric_code" form:"numeric_code"  validate:"required,max=10"`
 		MobileCountryCode string `gorm:"type:varchar(10)" json:"mobile_country_code" form:"mobile_country_code"  validate:"required,max=10"`
+		Continent		  string `gorm:"type:varchar(80)" json:"continent"  validate:"max=80"`
 		IsActive          string `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
 	}
 
 	Company struct {
 		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Name string `gorm:"type:text" json:"name"`
+	}
+
+	CompanyGroup struct {
+		ID   		uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name 		string `gorm:"type:text" json:"name"`
+		Company     string `gorm:"size:255;default:NA" json:"company"`
+		Country     string `gorm:"size:255;default:NA" json:"country"`
+		Partner     string `gorm:"size:255;default:NA" json:"partner"`
 	}
 
 	Domain struct {
@@ -1015,6 +1028,70 @@ type (
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
+
+	Continent struct {
+		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name string `gorm:"type:varchar(80)" json:"name" `
+	}
+
+	BudgetIO struct {
+		gorm.Model
+		ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		Status             string    `gorm:"default:'submitted'" json:"status"`
+		
+		VerifiedAt         time.Time `gorm:"default:NULL" json:"verified_at"`
+
+		SubmittedBy		   string    `gorm:"size:255;default:NA" json:"submitted_by"`
+		ApprovedBy		   string    `gorm:"size:255;default:NA" json:"approved_by"`
+
+		IOID               string    `gorm:"size:255;default:NA" json:"io_id"`
+		CampaignType       string    `gorm:"size:100;default:NA" json:"campaign_type"`
+		Month              string    `gorm:"size:20;default:NA" json:"month"`
+		Country            string    `gorm:"size:10;default:NA" json:"country"`
+		CountryName        string    `gorm:"size:255;default:NA" json:"country_name"`
+		Continent          string    `gorm:"size:50;default:NA" json:"continent"`
+		CompanyGroupName   string    `gorm:"size:255;default:NA" json:"company_group_name"`
+		Company            string    `gorm:"size:255;default:NA" json:"company"`
+		Partner            string    `gorm:"size:255;default:NA" json:"partner"`
+
+		TargetCAC          float64   `gorm:"type:double precision" json:"target_cac"`
+		TargetROI          int	    `gorm:"type:int" json:"target_roi"`
+		MonthlyMOTarget    float64	`gorm:"type:double precision" json:"monthly_mo_target"`
+		MonthlySpendTarget float64	`gorm:"type:double precision" json:"monthly_spend_target"`
+
+		CPName             string    `gorm:"size:255;default:NA" json:"cp_name"`
+		PICName            string    `gorm:"size:255;default:NA" json:"pic_name"`
+		ContactEmail       string    `gorm:"size:255;default:NA" json:"contact_email"`
+		CPBusinessPICName  string    `gorm:"size:255;default:NA" json:"business_pic_name"`
+		Signature     	   string    `gorm:"type:text" json:"signature"`
+
+		CreatedAt          time.Time
+		UpdatedAt          time.Time
+	}
+
+	SummaryBudgetIO struct {
+		gorm.Model
+		ID                     int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		Month                  string    `gorm:"size:20;default:NA" json:"month"`        // format YYYY-MM
+		Country                string    `gorm:"size:50;default:NA" json:"country"`
+		Continent              string    `gorm:"size:50;default:NA" json:"continent"`
+		Company				   string	 `gorm:"size:50;default:NA" json:"company"`
+		Partner				   string	 `gorm:"size:50;default:NA" json:"partner"`
+		TotalMonthlySpendTarget float64   `gorm:"type:double precision;default:0" json:"total_monthly_spend_target"`
+		ActualWeek1            float64   `gorm:"type:double precision;default:0" json:"actual_week_1"`
+		ActualWeek2            float64   `gorm:"type:double precision;default:0" json:"actual_week_2"`
+		ActualWeek3            float64   `gorm:"type:double precision;default:0" json:"actual_week_3"`
+		ActualWeek4            float64   `gorm:"type:double precision;default:0" json:"actual_week_4"`
+
+		GMV                    float64   `gorm:"type:double precision;default:0" json:"gmv"`
+		LTV                    float64   `gorm:"type:double precision;default:0" json:"ltv"`
+		ROAS                   float64   `gorm:"type:double precision;default:0" json:"roas"`
+		ROI                    float64   `gorm:"type:double precision;default:0" json:"roi"`
+
+		CreatedAt              time.Time `json:"created_at"`
+		UpdatedAt              time.Time `json:"updated_at"`
+	}
+
 
 	UserCompany struct {
 		gorm.Model

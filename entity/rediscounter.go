@@ -9,3 +9,8 @@ type RedisCounter struct {
 	OS         string `json:"os"`
 	IsOperator bool   `json:"is_operator"`
 }
+
+type DomainServices struct {
+	Domain string `json:"domain"`
+	Render string `json:"render"`
+}

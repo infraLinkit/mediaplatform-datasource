@@ -13,6 +13,7 @@ import (
 	"github.com/mikhail-bigun/fiberlogrus"
 	"github.com/sirupsen/logrus"
 	"github.com/wiliehidayat87/rmqp"
+	"google.golang.org/api/sheets/v4"
 	"gorm.io/gorm"
 )
 
@@ -23,6 +24,7 @@ type App3rdParty struct {
 	R      *rueidis.Storage
 	RCP    *redis.Client
 	Rmqp   rmqp.AMQP
+	GS     *sheets.Service
 }
 
 func MapUrls(obj App3rdParty) *fiber.App {
@@ -70,6 +72,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 		RCP:    obj.RCP,
 		DB:     obj.DB,
 		Rmqp:   obj.Rmqp,
+		GS:     obj.GS,
 	})
 
 	// V1
@@ -83,6 +86,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	// Postback
 	v1.Get("/postback/:urlservicekey/", h.Postback)
 	v1.Get("/postback", h.PostbackV3)
+	v1.Get("/postback_billed", h.PostbackBilled)
 
 	// Report
 	rpt := v1.Group("/report") // Report
@@ -105,6 +109,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/defaultinput/", h.DisplayDefaultInput).Name("Default Input for cpa n mainstream")
 	rpt.Get("/redirectiontime", h.DisplayRedirectionTime).Name("Redirection Time")
 	rpt.Post("/resend-data", h.ResendData).Name("Resend Data")
+	rpt.Get("/ioreport", h.DisplaySummaryBudgetIO).Name("IO Report")
 
 	// API Internal
 	internal := v1.Group("/int") // Internal API
@@ -141,9 +146,11 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	campaign.Post("/delcampaign", h.DelCampaign).Name("Edit capping campaign on campaign_details")
 	campaign.Post("/updatekeymainstream", h.UpdateKeyMainstream).Name("Update key mainstream campaign on campaign_details")
 	campaign.Post("/updategooglesheet", h.UpdateGoogleSheet).Name("Update google sheet campaign on campaign_details")
+	campaign.Post("/updategooglesheetbillable", h.UpdateGoogleSheetBillable).Name("Update google sheet billable campaign on campaign_details")
 	campaign.Post("/editmocappingservices2s", h.EditMOCappingServiceS2S).Name("Update mocappingservices2s campaign on campaign_details")
 	campaign.Post("/editpoaf", h.EditPOAF).Name("Edit poaf")
 	campaign.Post("/editcampaignmanagementdetail", h.EditCampaignManagementDetail).Name("Edit campaign on campaign_details")
+	campaign.Post("/updatecampaignmanagement", h.UpdateCampaign).Name("Edit campaign on form")
 
 	// Menu
 	menu := management.Group("/menu") // Menu
@@ -177,6 +184,13 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	userlog.Get("/", h.DisplayUserLogList).Name(" Display User Log List")
 	userlog.Get("/:id", h.DisplayUserLogHistory).Name(" Display User Log History")
 
+	budgetio := management.Group("/budget-io")
+	budgetio.Post("/", h.CreateBudgetIO).Name("Create BudgetIO")
+	budgetio.Get("/budgetiolist", h.AuthMiddleware, h.DisplayBudgetIO).Name("Budget IO List")
+	budgetio.Get("/budgetiolistall", h.AuthMiddleware, h.DisplayBudgetIOAll).Name("Budget IO List All")
+	budgetio.Get("/budgetioapproved", h.AuthMiddleware, h.DisplayBudgetIOApproved).Name("Budget IO List All")
+	budgetio.Get("/budgetioapprovedall", h.AuthMiddleware, h.DisplayBudgetIOApprovedAll).Name("Budget IO List All")
+
 	//  Country and Service Management
 	countryService := management.Group("/country-service")
 	countryService.Get("/email", h.DisplayEmail).Name("Display Email")
@@ -188,6 +202,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	countryService.Post("/country", h.CreateCountry).Name("Create Country")
 	countryService.Put("/country/:id", h.UpdateCountry).Name("Update Country")
 	countryService.Delete("/country/:id", h.DeleteCountry).Name("Delete Country")
+	countryService.Get("/continent", h.DisplayCountry).Name("Display Continent")
 	countryService.Get("/company", h.DisplayCompany).Name("Create Company")
 	countryService.Post("/company", h.CreateCompany).Name("Create Company")
 	countryService.Put("/company/:id", h.UpdateCompany).Name("Update Company")
@@ -227,6 +242,11 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	countryService.Get("/domain-service", h.DisplayDomainService).Name("Show Domain Service")
 
 	countryService.Post("/edit-adnet-dsp-status", h.UpdateDSPAdnetStatus).Name("Edit DSP Status")
+
+	countryService.Get("/company-group", h.DisplayCompanyGroup).Name("Display Company Group")
+	countryService.Post("/company-group", h.CreateCompanyGroup).Name("Create Company Group")
+	countryService.Put("/company-group/:id", h.UpdateCompanyGroup).Name("Update Company Group")
+	countryService.Delete("/company-group/:id", h.DeleteCompanyGroup).Name("Delete Company Group")
 
 	ipRange := management.Group("/ipranges")
 	ipRange.Get("/", h.GetIPRangeFiles).Name(" Display IP Ranges List List")

@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -328,6 +330,66 @@ func (h *IncomingHandler) DeleteCompany(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DisplayContinent(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil {
+		pageSize = 10
+	}
+	draw, _ := strconv.Atoi(m["draw"])
+	fe := entity.GlobalRequestFromDataTable{
+		Page:     page,
+		Action:   m["action"],
+		Draw:     draw,
+		PageSize: pageSize,
+		Search:   m["search[value]"],
+	}
+
+	var (
+		errResponse  error
+		total_data   int64
+		continent_list []entity.Continent
+	)
+
+	// key := "temp_key_api_continent_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	// need to add redis mechanism here
+	continent_list, total_data, errResponse = h.DS.GetContinent(fe)
+
+	r := entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
+	}
+
+	if errResponse == nil {
+
+		r = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            continent_list,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	}
+
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
 func (h *IncomingHandler) DisplayCompany(c *fiber.Ctx) error {
@@ -1267,6 +1329,16 @@ func (h *IncomingHandler) DisplayChannel(c *fiber.Ctx) error {
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
+func formatDomainKey(domain string) string {
+	domain = strings.ToLower(domain)
+	domain = strings.TrimPrefix(domain, "https://")
+	domain = strings.TrimPrefix(domain, "http://")
+	domain = strings.TrimPrefix(domain, "www.")
+	domain = strings.TrimSuffix(domain, "/")
+	return strings.ReplaceAll(domain, ".", "_")
+}
+
+
 func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")
@@ -1293,6 +1365,26 @@ func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 		})
 	}
 
+	redisKey := "domain_services"
+	path := "$"
+	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+	renderName := strings.ToLower(mainstreamGroup.DomainService)
+
+	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
+
+	newItem := entity.DomainServices{
+		Domain: domainKey,
+		Render: renderName,
+	}
+
+	cfgDomain = append(cfgDomain, newItem)
+	cfgData := map[string]interface{}{
+		"data": cfgDomain,
+	}
+
+	jsonData, _ := json.Marshal(cfgData)
+	h.DS.SetData(redisKey, path, string(jsonData))
+
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 
 }
@@ -1316,15 +1408,72 @@ func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
 		})
 	}
 
+	redisKey := "domain_services"
+	path := "$"
+	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+	renderName := strings.ToLower(mainstreamGroup.DomainService)
+
+	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
+
+	updated := false
+	for i, v := range cfgDomain {
+		if v.Domain == domainKey {
+			cfgDomain[i].Render = renderName
+			updated = true
+			break
+		}
+	}
+
+	if !updated {
+		cfgDomain = append(cfgDomain, entity.DomainServices{
+			Domain: domainKey,
+			Render: renderName,
+		})
+	}
+
+	cfgData := map[string]interface{}{
+		"data": cfgDomain,
+	}
+	jsonData, _ := json.Marshal(cfgData)
+	h.DS.SetData(redisKey, path, string(jsonData))
+
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
 
 func (h *IncomingHandler) DeleteMainstreamGroup(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Params("id"))
+
+	mainstreamGroup, err := h.DS.FindMainstreamGroupByID(uint(id))
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"message": "MainstreamGroup not found",
+		})
+	}
+
 	if err := h.DS.DeleteMainstreamGroup(uint(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to delete mainstreamGroup",
 		})
+	}
+
+	redisKey := "domain_services"
+	path := "$"
+	domainKey := formatDomainKey(mainstreamGroup.UniqueDomain)
+
+	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
+	if len(cfgDomain) > 0 {
+		filtered := make([]entity.DomainServices, 0)
+		for _, v := range cfgDomain {
+			if v.Domain != domainKey {
+				filtered = append(filtered, v)
+			}
+		}
+
+		cfgData := map[string]interface{}{
+			"data": filtered,
+		}
+		jsonData, _ := json.Marshal(cfgData)
+		h.DS.SetData(redisKey, path, string(jsonData))
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
@@ -1485,4 +1634,132 @@ func (h *IncomingHandler) UpdateDSPAdnetStatus(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) CreateCompanyGroup(c *fiber.Ctx) error {
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	var companyGroup entity.CompanyGroup
+
+	if errForm := c.BodyParser(&companyGroup); errForm != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+		})
+	}
+
+	if errValidation := validate.Struct(companyGroup); errValidation != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Validation error",
+			"errors":  errValidation.Error(),
+		})
+	}
+
+	if errCreate := h.DS.CreateCompanyGroup(&companyGroup); errCreate != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to create companyGroup",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+
+}
+
+func (h *IncomingHandler) UpdateCompanyGroup(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	var companyGroup entity.CompanyGroup
+
+	if formErr := c.BodyParser(&companyGroup); formErr != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid request body",
+			"error":   formErr.Error(),
+		})
+	}
+
+	companyGroup.ID = uint(id)
+
+	if err := h.DS.UpdateCompanyGroup(&companyGroup); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to update companyGroup",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DeleteCompanyGroup(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Params("id"))
+	if err := h.DS.DeleteCompanyGroup(uint(id)); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"message": "Failed to delete companyGroup",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+}
+
+func (h *IncomingHandler) DisplayCompanyGroup(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil {
+		pageSize = 10
+	}
+	orderColumn := m["order_column"]
+	orderDir := m["order_dir"]
+
+	draw, _ := strconv.Atoi(m["draw"])
+	fe := entity.GlobalRequestFromDataTableCompany{
+		Page:        page,
+		Action:      m["action"],
+		Draw:        draw,
+		PageSize:    pageSize,
+		Search:      m["search[value]"],
+		OrderColumn: orderColumn,
+		OrderDir:    orderDir,
+	}
+
+	var (
+		errResponse  error
+		total_data   int64
+		company_group_list []entity.CompanyGroup
+	)
+
+	// key := "temp_key_api_companyGroup_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	// need to add redis mechanism here
+	company_group_list, total_data, errResponse = h.DS.GetCompanyGroup(fe)
+
+	r := entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
+	}
+
+	if errResponse == nil {
+
+		r = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            company_group_list,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	}
+
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }

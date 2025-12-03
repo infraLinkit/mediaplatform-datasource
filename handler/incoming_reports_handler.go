@@ -7,10 +7,13 @@ import (
 	"strings"
 	"time"
 
+	"net/url"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
+	"github.com/wiliehidayat87/rmqp"
 )
 
 const PAGESIZE int = 10
@@ -878,4 +881,77 @@ func (h *IncomingHandler) DisplayDefaultInput(c *fiber.Ctx) error {
 			TargetDailyBudget: targetDailyBudget,
 		},
 	})
+}
+
+func (h *IncomingHandler) ResendData(c *fiber.Ctx) error {
+
+	var ids []string
+	total, _ := strconv.Atoi(c.FormValue("total"))
+
+	for i := 0; i < total; i++ {
+		ids = append(ids, c.FormValue("id["+strconv.Itoa(i)+"]"))
+		//fmt.Printf("Current iteration: %d\n", i)
+	}
+
+	baseURL := h.Config.APILINKITDashboard
+
+	reports, _ := h.DS.GetSummaryReportById(ids)
+	errorCounter := 0
+
+	for _, sc := range reports {
+		q := url.Values{
+			"date":           {sc.SummaryDate.Format("2006-10-02")},
+			"campaign_id":    {sc.URLServiceKey},
+			"publisher":      {sc.Adnet},
+			"adnet":          {sc.Adnet},
+			"operator":       {sc.Partner},
+			"adn":            {sc.ShortCode},
+			"client":         {sc.Partner},
+			"aggregator":     {sc.Aggregator},
+			"country":        {sc.Country},
+			"service":        {sc.Service},
+			"mo_received":    {strconv.Itoa(sc.MoReceived)},
+			"mo_postback":    {strconv.Itoa(sc.Postback)},
+			"total_mo":       {strconv.Itoa(sc.MoReceived)},
+			"total_postback": {strconv.Itoa(sc.Postback)},
+			"landing":        {strconv.Itoa(sc.Traffic)},
+			"cr_mo_received": {strconv.FormatFloat(sc.CrMO, 'f', 2, 64)},
+			"cr_mo_postback": {strconv.FormatFloat(sc.CrPostback, 'f', 2, 64)},
+			"url_campaign":   {sc.URLAfter},
+			"url_service":    {sc.URLBefore},
+			"sbaf":           {strconv.FormatFloat(sc.SBAF, 'f', 2, 64)},
+			"saaf":           {strconv.FormatFloat(sc.SAAF, 'f', 2, 64)},
+			"spending":       {strconv.FormatFloat(sc.SAAF, 'f', 2, 64)},
+			"campaign":       {sc.CampaignObjective},
+			"payout":         {strconv.FormatFloat(sc.PO, 'f', 2, 64)},
+			"price_per_mo":   {strconv.FormatFloat(sc.PricePerMO, 'f', 2, 64)},
+		}
+
+		fullURL := fmt.Sprintf("%s?%s", baseURL, q.Encode())
+		message := `{"url":"` + fullURL + `"}`
+		published := h.Rmqp.PublishMsg(rmqp.PublishItems{
+			ExchangeName: "E_RESENDCAMPAIGNDATA",
+			QueueName:    "Q_RESENDCAMPAIGNDATA",
+			ContentType:  "application/json",
+			Payload:      message, // Send the properly formatted JSON
+			Priority:     0,
+		})
+
+		if !published {
+			errorCounter++
+			h.Logs.Debug(fmt.Sprintf("[x] Failed published: Data: %s ...", message))
+			//fmt.Println(fmt.Sprintf("[x] Failed published: Data: %s ...", message))
+		} else {
+			h.Logs.Debug(fmt.Sprintf("[v] Published: Data: %s ...", message))
+			//fmt.Println(fmt.Sprintf("[v] Published: Data: %s ...", message))
+		}
+		//fmt.Println(message)
+
+	}
+
+	if errorCounter > 0 {
+		return c.Status(fiber.StatusOK).SendString(`{"status":"NOK","error":"Some data not published"}`)
+	}
+
+	return c.Status(fiber.StatusOK).SendString(`{"status":"OK","error":""}`)
 }

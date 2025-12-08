@@ -90,8 +90,13 @@ func (p *PostbackReceive) ValidateParamsV2(Logs *logrus.Logger) GlobalResponse {
 		return GlobalResponse{Code: fiber.StatusBadRequest, Message: "pixel empty"}
 
 	} else {
-		Logs.Debug("All traffic service is valid ...\n")
 
-		return GlobalResponse{Code: fiber.StatusOK, Message: ""}
+		if strings.Contains(p.AffSub, "{pixel}") || strings.Contains(p.AffSub, "[pixel]") {
+			return GlobalResponse{Code: fiber.StatusBadRequest, Message: "pixel invalid"}
+		} else {
+			Logs.Debug("All traffic service is valid ...\n")
+
+			return GlobalResponse{Code: fiber.StatusOK, Message: ""}
+		}
 	}
 }

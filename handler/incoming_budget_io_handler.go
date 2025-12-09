@@ -439,46 +439,43 @@ func (h *IncomingHandler) DisplaySummaryBudgetIO(c *fiber.Ctx) error {
 }
 
 func (h *IncomingHandler) DisplaySummaryBudgetIOExtra(c *fiber.Ctx, fe entity.DisplaySummaryBudgetIO) entity.ReturnResponse {
-	var (
-		err        error
-		total_data int64
-		budgetio   []entity.SummaryBudgetIO
-	)
+    var (
+        err      error
+        budgetio []entity.SummaryBudgetIO
+    )
 
-	budgetio, total_data, err = h.DS.GetDisplaySummaryBudgetIO(fe)
+    budgetio, _, err = h.DS.GetDisplaySummaryBudgetIO(fe)
 
-	if err != nil {
-		return entity.ReturnResponse{
-			HttpStatus: fiber.StatusNotFound,
-			Rsp: entity.GlobalResponse{
-				Code:    fiber.StatusNotFound,
-				Message: "empty",
-			},
-		}
-	}
+    if err != nil {
+        return entity.ReturnResponse{
+            HttpStatus: fiber.StatusNotFound,
+            Rsp: entity.GlobalResponse{
+                Code:    fiber.StatusNotFound,
+                Message: "empty",
+            },
+        }
+    }
 
-	if budgetio == nil {
-		budgetio = []entity.SummaryBudgetIO{}
-	}
+    if budgetio == nil {
+        budgetio = []entity.SummaryBudgetIO{}
+    }
 
-	// Mapping ke ContinentReport format
-	mapped := MapSummaryBudgetIOToContinentReport(budgetio)
+    mapped := MapSummaryBudgetIOToContinentReport(budgetio)
 
-	return entity.ReturnResponse{
-		HttpStatus: fiber.StatusOK,
-		Rsp: entity.GlobalResponseWithDataTable{
-			Draw:            fe.Draw,
-			Code:            fiber.StatusOK,
-			Message:         config.OK_DESC,
-			Data:            mapped,
-			RecordsTotal:    int(total_data),
-			RecordsFiltered: len(mapped),
-		},
-	}
+    return entity.ReturnResponse{
+        HttpStatus: fiber.StatusOK,
+        Rsp: entity.GlobalResponseWithDataTable{
+            Draw:    fe.Draw,
+            Code:    fiber.StatusOK,
+            Message: config.OK_DESC,
+            Data:    mapped,
+            RecordsTotal: len(mapped),
+            RecordsFiltered: len(mapped),
+        },
+    }
 }
 
 func MapSummaryBudgetIOToContinentReport(data []entity.SummaryBudgetIO) []entity.ContinentReport {
-	// map[month][continent][country] => SummaryBudgetIO aggregated
 	continentMap := make(map[string]map[string]map[string]*entity.SummaryBudgetIO)
 
 	for _, d := range data {
@@ -494,14 +491,12 @@ func MapSummaryBudgetIOToContinentReport(data []entity.SummaryBudgetIO) []entity
 		}
 
 		if existing, ok := continentMap[month][continent][country]; ok {
-			// jika sudah ada, sum nilai-nilai numeric
 			existing.TotalMonthlySpendTarget += d.TotalMonthlySpendTarget
 			existing.ActualWeek1 += d.ActualWeek1
 			existing.ActualWeek2 += d.ActualWeek2
 			existing.ActualWeek3 += d.ActualWeek3
 			existing.ActualWeek4 += d.ActualWeek4
 		} else {
-			// baru, simpan pointer agar bisa diupdate
 			copy := d
 			continentMap[month][continent][country] = &copy
 		}
@@ -519,44 +514,42 @@ func MapSummaryBudgetIOToContinentReport(data []entity.SummaryBudgetIO) []entity
 
 			for _, c := range countries {
 				totalActual := c.ActualWeek1 + c.ActualWeek2 + c.ActualWeek3 + c.ActualWeek4
-				kpi := func(a float64) int {
+				kpi := func(a float64) float64 {
 					if c.TotalMonthlySpendTarget == 0 {
 						return 0
 					}
-					return int(math.Round(a / ((c.TotalMonthlySpendTarget / 30) * 7) * 100))
+					return float64(math.Round(a / ((c.TotalMonthlySpendTarget / 30) * 7) * 100))
 				}
 
 				countryRep := entity.CountryReport{
 					Country:                c.Country,
-					ActualCostWeek1Country: int(c.ActualWeek1),
+					ActualCostWeek1Country: float64(c.ActualWeek1),
 					KPIWeek1Country:        kpi(c.ActualWeek1),
-					ActualCostWeek2Country: int(c.ActualWeek2),
+					ActualCostWeek2Country: float64(c.ActualWeek2),
 					KPIWeek2Country:        kpi(c.ActualWeek2),
-					ActualCostWeek3Country: int(c.ActualWeek3),
+					ActualCostWeek3Country: float64(c.ActualWeek3),
 					KPIWeek3Country:        kpi(c.ActualWeek3),
-					ActualCostWeek4Country: int(c.ActualWeek4),
+					ActualCostWeek4Country: float64(c.ActualWeek4),
 					KPIWeek4Country:        kpi(c.ActualWeek4),
-					TotalActualCostCountry: int(totalActual),
-					TotalIOTargetCountry:   int(c.TotalMonthlySpendTarget),
-					BudgetUsageCountry:     int(math.Round(totalActual / c.TotalMonthlySpendTarget * 100)),
+					TotalActualCostCountry: float64(totalActual),
+					TotalIOTargetCountry:   float64(c.TotalMonthlySpendTarget),
+					BudgetUsageCountry:     float64(math.Round(totalActual / c.TotalMonthlySpendTarget * 100)),
 				}
 
 				contRep.Countries = append(contRep.Countries, countryRep)
 
-				// Tambahkan ke continent total
-				contRep.ActualCostWeek1Continent += int(c.ActualWeek1)
-				contRep.ActualCostWeek2Continent += int(c.ActualWeek2)
-				contRep.ActualCostWeek3Continent += int(c.ActualWeek3)
-				contRep.ActualCostWeek4Continent += int(c.ActualWeek4)
-				contRep.TotalIOTargetContinent += int(c.TotalMonthlySpendTarget)
+				contRep.ActualCostWeek1Continent += float64(c.ActualWeek1)
+				contRep.ActualCostWeek2Continent += float64(c.ActualWeek2)
+				contRep.ActualCostWeek3Continent += float64(c.ActualWeek3)
+				contRep.ActualCostWeek4Continent += float64(c.ActualWeek4)
+				contRep.TotalIOTargetContinent += float64(c.TotalMonthlySpendTarget)
 			}
 
-			// KPI continent
-			kpiCont := func(a int) int {
+			kpiCont := func(a float64) float64 {
 				if contRep.TotalIOTargetContinent == 0 {
 					return 0
 				}
-				return int(math.Round(float64(a) / ((float64(contRep.TotalIOTargetContinent) / 30) * 7) * 100))
+				return float64(math.Round(float64(a) / ((float64(contRep.TotalIOTargetContinent) / 30) * 7) * 100))
 			}
 
 			contRep.KPIWeek1Continent = kpiCont(contRep.ActualCostWeek1Continent)
@@ -568,7 +561,7 @@ func MapSummaryBudgetIOToContinentReport(data []entity.SummaryBudgetIO) []entity
 				contRep.ActualCostWeek3Continent + contRep.ActualCostWeek4Continent
 
 			if contRep.TotalIOTargetContinent != 0 {
-				contRep.BudgetUsageContinent = int(math.Round(float64(contRep.TotalActualCostContinent) / float64(contRep.TotalIOTargetContinent) * 100))
+				contRep.BudgetUsageContinent = float64(math.Round(float64(contRep.TotalActualCostContinent) / float64(contRep.TotalIOTargetContinent) * 100))
 			}
 
 			reports = append(reports, contRep)

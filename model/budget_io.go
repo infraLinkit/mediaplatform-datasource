@@ -341,62 +341,51 @@ func (r *BaseModel) GetDisplayBudgetIOApprovedAll(o entity.DisplayBudgetIO) ([]e
 }
 
 func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) ([]entity.SummaryBudgetIO, int64, error) {
-	var rows *sql.Rows
-	var err error
-	var total_rows int64
 
-	query := r.DB.Model(&entity.SummaryBudgetIO{})
+    query := r.DB.Model(&entity.SummaryBudgetIO{})
 
+    if o.Action == "Search" {
+        if o.Country != "" {
+            query = query.Where("country = ?", o.Country)
+        }
+        if o.Partner != "" {
+            query = query.Where("partner = ?", o.Partner)
+        }
+        if o.Continent != "" {
+            query = query.Where("continent = ?", o.Continent)
+        }
 
-	if o.Action == "Search" {
-		if o.Country != "" {
-			query = query.Where("country = ?", o.Country)
-		}
-		if o.Partner != "" {
-			query = query.Where("partner = ?", o.Partner)
-		}
-		if o.Continent != "" {
-			query = query.Where("continent = ?", o.Continent)
-		}
+        if o.DateRange != "" {
+            query = query.Where("month = ?", o.DateRange)
+        } else {
+            query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
+        }
+    }
 
-		if o.DateRange != "" {
-			query = query.Where("month = ?", o.DateRange)
-		} else {
-			query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
-		}
-	}
+    if o.OrderColumn != "" {
+        dir := "ASC"
+        if strings.ToUpper(o.OrderDir) == "DESC" {
+            dir = "DESC"
+        }
+        query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
+    } else {
+        query = query.Order("month DESC, id DESC")
+    }
 
-	if o.OrderColumn != "" {
-		dir := "ASC"
-		if strings.ToUpper(o.OrderDir) == "DESC" {
-			dir = "DESC"
-		}
-		query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
-	} else {
-		query = query.Order("month DESC, id DESC")
-	}
+    rows, err := query.Rows()
+    if err != nil {
+        return []entity.SummaryBudgetIO{}, 0, err
+    }
+    defer rows.Close()
 
-	query.Unscoped().Count(&total_rows)
+    var ss []entity.SummaryBudgetIO
+    for rows.Next() {
+        var s entity.SummaryBudgetIO
+        r.DB.ScanRows(rows, &s)
+        ss = append(ss, s)
+    }
 
-	query_limit := query.Limit(o.PageSize)
-	if o.Page > 0 {
-		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
-	}
+    r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
 
-	rows, err = query_limit.Rows()
-	if err != nil {
-		return []entity.SummaryBudgetIO{}, 0, err
-	}
-	defer rows.Close()
-
-	var ss []entity.SummaryBudgetIO
-	for rows.Next() {
-		var s entity.SummaryBudgetIO
-		r.DB.ScanRows(rows, &s)
-		ss = append(ss, s)
-	}
-
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-
-	return ss, total_rows, rows.Err()
+    return ss, int64(len(ss)), rows.Err()
 }

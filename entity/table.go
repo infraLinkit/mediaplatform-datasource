@@ -1072,6 +1072,7 @@ type (
 	SummaryBudgetIO struct {
 		gorm.Model
 		ID                     int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		CampaignType       	   string    `gorm:"size:100;default:NA" json:"campaign_type"`
 		Month                  string    `gorm:"size:20;default:NA" json:"month"`        // format YYYY-MM
 		Country                string    `gorm:"size:50;default:NA" json:"country"`
 		Continent              string    `gorm:"size:50;default:NA" json:"continent"`

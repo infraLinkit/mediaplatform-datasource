@@ -401,6 +401,8 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 					case "ADNETCODE":
 
 						var key string
+
+						breaking := false
 						iter := h.RCP.Scan(0, p.URLServiceKey+"*", 0).Iterator()
 
 						if err := iter.Err(); err == nil {
@@ -416,12 +418,14 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 
 							if err = json.Unmarshal(px_byte, &px); err == nil {
 								h.RCP.Del(px.Pixel)
-							} else {
-								return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotAcceptable, Message: "Invalid pixel format or this pixel not found, pixel : " + p.AffSub})
+								breaking = true
 							}
+						}
 
-						} else {
+						if !breaking {
 							px, isPX = h.DS.GetByAdnetCode(pxData)
+						} else {
+							return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotAcceptable, Message: "Invalid pixel format or this pixel not found, pixel : " + p.AffSub})
 						}
 
 					case "TOKEN":
@@ -429,7 +433,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 					case "JSON-MSISDN", "XML-MSISDN", "HTML-MSISDN":
 						px, isPX = h.DS.GetPxByMsisdn(pxData)
 					case "PIXEL":
-						if g := h.RCP.Get(p.AffSub); g.Err() == nil {
+						if g := h.RCP.Get(p.AffSub); g.Val() != "" {
 
 							isPX = true
 

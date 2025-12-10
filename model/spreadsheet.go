@@ -14,7 +14,7 @@ type StatusData struct {
 	StatusDetail string
 }
 
-func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelStorage, s StatusData) {
+func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelStorage, conversion_name string) {
 	sheetId, err := GetSpreadsheetID(ps.GoogleSheet)
 	if err != nil {
 		r.Logs.Info(fmt.Sprintf("Google sheet link not valid for campaign ID:  %#v\n", ps.CampaignId))
@@ -26,14 +26,14 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 		Logs.Error(fmt.Sprintf("Failed to read title: %#v\n", err))
 	} */
 
-	resp, err := GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:F1").Do()
+	resp, err := GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:D1").Do()
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("Failed to read sheet: %#v\n", err))
 	}
 
 	if len(resp.Values) == 0 {
 		header := &sheets.ValueRange{
-			Range: "Sheet1!A1:F7",
+			Range: "Sheet1!A1:D7",
 			Values: [][]interface{}{
 				{"#### INSTRUCTIONS ####"},
 				{"# IMPORTANT: Remember to set the TimeZone value in the \"parameters\" row and/or in your Conversion Time column"},
@@ -41,10 +41,10 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 				{},
 				{"#### TEMPLATE ####"},
 				{"Parameters: TimeZone=+0700"},
-				{"Google Click ID", "Time", "MSISDN", "Status", "StatusCode", "StatusDetail"},
+				{"Google Click ID", "Conversion Name", "Conversion Time", "MSISDN"},
 			},
 		}
-		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:F7", header).ValueInputOption("RAW").Do()
+		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:D7", header).ValueInputOption("RAW").Do()
 		if err != nil {
 			r.Logs.Error(fmt.Sprintf("Failed to insert header: %#v\n", err))
 		}
@@ -53,14 +53,12 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 	values := &sheets.ValueRange{
 		Values: [][]interface{}{{
 			ps.Pixel,
+			conversion_name,
 			ps.PixelUsedDate,
 			ps.Msisdn,
-			s.Status,
-			s.StatusCode,
-			s.StatusDetail,
 		}},
 	}
-	_, err = GS.Spreadsheets.Values.Append(sheetId, "Sheet1!A:H", values).ValueInputOption("USER_ENTERED").InsertDataOption("INSERT_ROWS").Do()
+	_, err = GS.Spreadsheets.Values.Append(sheetId, "Sheet1!A:D", values).ValueInputOption("USER_ENTERED").InsertDataOption("INSERT_ROWS").Do()
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("Google sheet input failed error:  %#v\n", err))
 	}

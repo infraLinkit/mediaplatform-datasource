@@ -491,13 +491,13 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 				query = query.Where("summary_date = CURRENT_DATE")
 			case "YESTERDAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
-			case "LAST 7 DAYS":
+			case "LAST7DAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
-			case "LAST 30 DAYS":
+			case "LAST30DAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
-			case "THIS MONTH":
+			case "THISMONTH":
 				query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
-			case "LAST MONTH":
+			case "LASTMONTH":
 				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
 				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)

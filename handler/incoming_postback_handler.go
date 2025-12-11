@@ -668,7 +668,7 @@ func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
 						Pixel:         pixel,
 						PixelUsedDate: helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
 						Msisdn:        p.Msisdn,
-					}, dc.ConversionName)
+					}, dc.ConversionName, p.Desc)
 
 					return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "OK"})
 

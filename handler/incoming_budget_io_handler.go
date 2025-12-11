@@ -33,6 +33,7 @@ func (h *IncomingHandler) CreateBudgetIO(c *fiber.Ctx) error {
 			ContactEmail:      req.ContactEmail,
 			CPBusinessPICName: req.CPBusinessPICName,
 			Signature:         req.Signature,
+			SubmittedBy: 	   req.SubmittedBy,	
 
 			IOID:               row.IOID,
 			CampaignType:       row.CampaignType,
@@ -43,6 +44,7 @@ func (h *IncomingHandler) CreateBudgetIO(c *fiber.Ctx) error {
 			CompanyGroupName:   row.CompanyGroupName,
 			Company:            row.Company,
 			Partner:            row.Partner,
+			Service:            row.Service,
 			TargetCAC:          row.TargetCAC,
 			TargetROI:          row.TargetROI,
 			MonthlyMOTarget:    row.MonthlyMOTarget,

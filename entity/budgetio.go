@@ -23,6 +23,7 @@ type (
 		CompanyGroupName   string  `json:"company_group_name"`
 		Company            string  `json:"company"`
 		Partner            string  `json:"partner"`
+		Service            string  `json:"service"`
 		TargetCAC          float64 `json:"target_cac"`
 		TargetROI          int     `json:"target_roi"`
 		MonthlyMOTarget    float64 `json:"monthly_mo_target"`
@@ -46,6 +47,7 @@ type (
 		CompanyGroupName string `json:"company_group_name"`
 		Company          string `json:"company"`
 		Partner          string `json:"partner"`
+		Service          string `json:"service"`
 
 		TargetCAC          float64 `json:"target_cac"`
 		TargetROI          int     `json:"target_roi"`
@@ -133,6 +135,7 @@ type (
 		Country   string `json:"country"`
 		Company   string `json:"company"`
 		Partner   string `json:"partner"`
+		Service   string `json:"service"`
 
 		TotalMonthlySpendTarget float64 `json:"total_monthly_spend_target"`
 		ActualWeek1             float64 `json:"actual_week_1"`

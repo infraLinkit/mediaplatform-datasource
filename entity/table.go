@@ -1053,6 +1053,7 @@ type (
 		CompanyGroupName   string    `gorm:"size:255;default:NA" json:"company_group_name"`
 		Company            string    `gorm:"size:255;default:NA" json:"company"`
 		Partner            string    `gorm:"size:255;default:NA" json:"partner"`
+		Service            string    `gorm:"size:255;default:NA" json:"service"`
 
 		TargetCAC          float64   `gorm:"type:double precision" json:"target_cac"`
 		TargetROI          int	    `gorm:"type:int" json:"target_roi"`
@@ -1078,6 +1079,7 @@ type (
 		Continent              string    `gorm:"size:50;default:NA" json:"continent"`
 		Company				   string	 `gorm:"size:50;default:NA" json:"company"`
 		Partner				   string	 `gorm:"size:50;default:NA" json:"partner"`
+		Service				   string	 `gorm:"size:50;default:NA" json:"service"`
 		TotalMonthlySpendTarget float64   `gorm:"type:double precision;default:0" json:"total_monthly_spend_target"`
 		ActualWeek1            float64   `gorm:"type:double precision;default:0" json:"actual_week_1"`
 		ActualWeek2            float64   `gorm:"type:double precision;default:0" json:"actual_week_2"`

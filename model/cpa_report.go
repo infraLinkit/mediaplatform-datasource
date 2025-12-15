@@ -584,7 +584,7 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 
 	return results, total_rows, rows.Err()
 }
-func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]entity.CostReport, int64, error) {
+func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport, allowedAdnets []string) ([]entity.CostReport, int64, error) {
 	var (
 		rows       *sql.Rows
 		err        error
@@ -593,6 +593,7 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	query = query.Where("mo_received > 0")
+	query = query.Where("adnet IN ?", allowedAdnets)
 
 	if o.Action == "Search" {
 
@@ -618,44 +619,28 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport) ([]en
 		}
 
 		if o.DateRange != "" {
-			today := time.Now()
+			//today := time.Now()
 			switch o.DateRange {
-			case "Today":
+			case "TODAY":
 				query = query.Where("summary_date = CURRENT_DATE")
-			case "Yesterday":
-				query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
-			case "Last 7 Days":
-				query = query.Where("summary_date >= CURRENT_DATE - INTERVAL '6 DAY'")
-			case "Last 30 Days":
-				query = query.Where("summary_date >= CURRENT_DATE - INTERVAL '29 DAY'")
-			case "This Month":
-				query = query.Where("EXTRACT(YEAR FROM summary_date) = ? AND EXTRACT(MONTH FROM summary_date) = ?", today.Year(), int(today.Month()))
-			case "Last Month":
-				lastMonth := today.AddDate(0, -1, 0)
-				query = query.Where("EXTRACT(YEAR FROM summary_date) = ? AND EXTRACT(MONTH FROM summary_date) = ?", lastMonth.Year(), int(lastMonth.Month()))
-			case "Custom Range":
-				if o.DateBefore != "" && o.DateAfter != "" {
-					query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
-				}
+			case "YESTERDAY":
+				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
+			case "LAST7DAY":
+				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+			case "LAST30DAY":
+				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+			case "THISMONTH":
+				query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+			case "LASTMONTH":
+				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+			case "CUSTOMRANGE":
+				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
+			case "ALLDATERANGE":
+			default:
+				query = query.Where("summary_date = ?", o.DateRange)
 			}
 		}
-		/*
-			rows, err = query.Select(`
-				adnet,
-				MAX(summary_date) as summary_date,
-				country,
-				operator,
-				SUM(traffic) as landing,
-				SUM(cr_postback) as cr_postback,
-				short_code,
-				url_after,
-				SUM(postback) as conversion1,
-				SUM(sbaf) as cost1,
-				NULL as conversion2,
-				NULL as cost2
-			`).Group("adnet, country, operator, short_code, url_after").
-				Rows()
-		*/
+
 		rows, err = query.Select(`
 			adnet,
 			summary_date,

@@ -444,7 +444,14 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							h.RCP.Del(p.AffSub)
 
 						} else {
-							px, isPX = h.DS.GetPx(pxData)
+
+							switch dc.Partner {
+							case "ID-XLSMART-LINKIT":
+								px, isPX = h.DS.SpecialGetPx(pxData)
+							default:
+								px, isPX = h.DS.GetPx(pxData)
+							}
+
 						}
 					case "SPC-MVLS", "SPC-TFCS", "SPC":
 

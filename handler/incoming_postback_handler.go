@@ -688,3 +688,55 @@ func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
 		}
 	}
 }
+
+func (h *IncomingHandler) InquiryCampID(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	h.Logs.Debug(fmt.Sprintf("Inquiry Camp ID %#v ...\n", c.AllParams()))
+
+	request := new(entity.InquiryCampID)
+
+	if err := c.QueryParser(request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "check mandatory param : urlservicekey"})
+	} else {
+
+		CookieKey := helper.Concat("-", helper.GetIpAddress(c), request.URLServiceKey)
+
+		if c.Cookies(CookieKey) != "" {
+
+			return c.Status(fiber.StatusForbidden).JSON(entity.GlobalResponse{Code: fiber.StatusForbidden, Message: "forbidden access"})
+
+		} else {
+			// Setup cookie if double requested within n-hour
+			c.Cookie(&fiber.Cookie{
+				Name:     CookieKey,
+				Value:    "1",
+				Expires:  time.Now().Add(30 * time.Minute),
+				HTTPOnly: true,
+				SameSite: "lax",
+			})
+
+			if dc, err := h.DS.GetDataConfig(helper.Concat("-", request.URLServiceKey, "configIdx"), "$"); err == nil {
+
+				return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.InquiryCampID{
+					URLServiceKey: dc.URLServiceKey,
+					Country:       dc.Country,
+					Operator:      dc.Operator,
+					Partner:       dc.Partner,
+					Aggregator:    dc.Aggregator,
+					Adnet:         dc.Adnet,
+					Service:       dc.Service,
+					URLLanding:    dc.URLWarpLanding,
+					URLService:    dc.URLService,
+				}})
+
+			} else {
+
+				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "url service key / campaign id not found"})
+			}
+		}
+	}
+}

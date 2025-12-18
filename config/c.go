@@ -98,6 +98,8 @@ type (
 		GSClient                               string
 		GSUniversalDomain                      string
 		CronResetCapping                       string
+		StartGetIntervalDatePXS                int
+		EndGetIntervalDatePXS                  int
 	}
 
 	Setup struct {
@@ -131,6 +133,8 @@ func InitCfg() *Cfg {
 	send_to_linkit_dashboard, _ := strconv.ParseBool(os.Getenv("SEND_TO_LINKIT_DASHBOARD"))
 	get_data_arpu, _ := strconv.ParseBool(os.Getenv("GET_DATA_ARPU"))
 	get_success_fp, _ := strconv.ParseBool(os.Getenv("GET_SUCCESS_FP"))
+	start_get_interval_date_pxs, _ := strconv.Atoi(os.Getenv("STARTGETINTERVALDATEPXS"))
+	end_get_interval_date_pxs, _ := strconv.Atoi(os.Getenv("ENDGETINTERVALDATEPXS"))
 
 	cfg := &Cfg{
 		AppDockerVer:                           os.Getenv("APP_DOCKER_VER"),
@@ -194,6 +198,8 @@ func InitCfg() *Cfg {
 		GSClient:                               os.Getenv("GSCLIENT"),
 		GSUniversalDomain:                      os.Getenv("GSUNIVERSAL_DOMAIN"),
 		CronResetCapping:                       os.Getenv("CRONRESETCAPPING"),
+		StartGetIntervalDatePXS:                start_get_interval_date_pxs,
+		EndGetIntervalDatePXS:                  end_get_interval_date_pxs,
 	}
 
 	return cfg

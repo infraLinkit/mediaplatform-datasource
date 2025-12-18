@@ -92,7 +92,7 @@ func (r *BaseModel) UpdatePixelById(o entity.PixelStorage) error {
 	return result.Error
 }
 
-func (r *BaseModel) SpecialGetPx(o entity.PixelStorage) (entity.PixelStorage, bool) {
+func (r *BaseModel) SpecialGetPx(o entity.PixelStorage, si int, ei int) (entity.PixelStorage, bool) {
 
 	start := o.Pxdate
 	var (
@@ -102,7 +102,7 @@ func (r *BaseModel) SpecialGetPx(o entity.PixelStorage) (entity.PixelStorage, bo
 		tbl          string
 	)
 
-	for x := 0; x >= -5; x-- {
+	for x := si; x >= ei; x-- {
 
 		SQL := `SELECT * FROM {TBL} WHERE url_service_key = '{CAMPAIGNID}' AND date(pxdate) = '{DATE}' AND pixel = '{PIXEL}' AND is_used = false AND is_unique = false`
 

@@ -423,8 +423,15 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 
 						if !breaking {
 							px, isPX = h.DS.GetByAdnetCode(pxData)
-						} else {
-							return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotAcceptable, Message: "Invalid pixel format or this pixel not found, pixel : " + p.AffSub})
+
+							if !isPX {
+								return c.Status(fiber.StatusNotFound).JSON(
+									entity.GlobalResponse{
+										Code: fiber.StatusNotFound,
+										Message: "Invalid pixel format or this pixel not found, pixel : " + p.AffSub,
+									},
+								)
+							}
 						}
 
 					case "TOKEN":

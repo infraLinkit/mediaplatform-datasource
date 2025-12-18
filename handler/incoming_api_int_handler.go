@@ -149,6 +149,7 @@ func (h *IncomingHandler) TrxPinReport(c *fiber.Ctx) error {
 
 	pin := entity.NewInstanceTrxPinReport(c, h.Config)
 	r := pin.ValidateParams(h.Logs)
+
 	if r.HttpStatus == 200 {
 		h.DS.PinReport(*pin)
 	}
@@ -165,10 +166,21 @@ func (h *IncomingHandler) TrxPerformancePinReport(c *fiber.Ctx) error {
 	pin := entity.NewInstanceTrxPinPerfonrmanceReport(c, h.Config)
 	r := pin.ValidateParams(h.Logs)
 	if r.HttpStatus == 200 {
-		h.DS.PinPerformanceReport(*pin)
+
+		entity.BuildPinPerformanceLogic(pin)
+
+		if err := h.DS.UpsertPinPerformance(pin); err != nil {
+			return c.Status(500).JSON(fiber.Map{
+				"code":    500,
+				"message": err.Error(),
+			})
+		}
 	}
 
-	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+	return c.JSON(entity.GlobalResponse{
+		Code:    fiber.StatusOK,
+		Message: config.OK_DESC,
+	})
 }
 
 func (h *IncomingHandler) UpdateRatio(c *fiber.Ctx) error {

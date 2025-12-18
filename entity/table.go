@@ -677,13 +677,13 @@ type (
 		Service             string    `gorm:"not null;size:50" json:"service"`
 		PinRequest          int       `gorm:"length:20;default:0" json:"pin_request"`
 		UniquePinRequest    int       `gorm:"length:20;default:0" json:"unique_pin_request"`
-		PinSent             int       `gorm:"length:20;default:0" json:"pin_sent"`
+		PinSuccess          int       `gorm:"length:20;default:0" json:"pin_success"`
 		PinFailed           int       `gorm:"length:20;default:0" json:"pin_failed"`
-		VerifyRequest       int       `gorm:"length:20;default:0" json:"verify_request"`
-		VerifyRequestUnique int       `gorm:"length:20;default:0" json:"verify_request_unique"`
+		PinVerifyRequest       int       `gorm:"length:20;default:0" json:"pin_verify_request"`
+		PinVerifyRequestUnique int       `gorm:"length:20;default:0" json:"pin_verify_request_unique"`
 		PinOK               int       `gorm:"length:20;default:0" json:"pin_ok"`
 		PinNotOK            int       `gorm:"length:20;default:0" json:"pin_not_ok"`
-		PinOkSendAdnet      int       `gorm:"length:20;default:0" json:"pin_ok_send_adnet"`
+		PinOkRatio          int       `gorm:"length:20;default:0" json:"pin_ok_ratio"`
 		CPA                 float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cpa"`
 		CPAWaki             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cpa_waki"`
 		EstimatedARPU       float64   `gorm:"type:double precision;not null;length:20;default:0" json:"estimated_arpu"`

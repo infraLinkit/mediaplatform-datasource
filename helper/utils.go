@@ -265,3 +265,32 @@ func CompressGzip(f string) string {
 
 	return gzf
 }
+
+func GetDateFromInt(loc *time.Location, dateInt int64) time.Time {
+	t := time.Unix(dateInt, 0)
+	return t.In(loc)
+}
+
+func ParseVendorDateSend(loc *time.Location, raw string) time.Time {
+
+	fallback := time.Date(1970, 1, 1, 12, 0, 0, 0, loc)
+
+	if len(raw) < 8 {
+		return fallback
+	}
+
+	datePart := raw[:8]
+
+	t, err := time.ParseInLocation("20060102", datePart, loc)
+	if err != nil {
+		return fallback
+	}
+
+	return time.Date(
+		t.Year(),
+		t.Month(),
+		t.Day(),
+		12, 0, 0, 0,
+		loc,
+	)
+}

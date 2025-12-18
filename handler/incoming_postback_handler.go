@@ -447,7 +447,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 
 							switch dc.Partner {
 							case "ID-XLSMART-LINKIT":
-								px, isPX = h.DS.SpecialGetPx(pxData)
+								px, isPX = h.DS.SpecialGetPx(pxData, h.Config.StartGetIntervalDatePXS, h.Config.EndGetIntervalDatePXS)
 							default:
 								px, isPX = h.DS.GetPx(pxData)
 							}

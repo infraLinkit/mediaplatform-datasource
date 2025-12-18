@@ -60,13 +60,12 @@ func (h *IncomingHandler) DisplayPinReport(c *fiber.Ctx) error {
 		OrderDir:    m["order_dir"],
 	}
 
-	allowedCompanies, _ := c.Locals("companies").([]string)
 
-	r := h.DisplayPinReportExtra(c, fe, allowedCompanies)
+	r := h.DisplayPinReportExtra(c, fe)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayPinReport, allowedCompanies []string) entity.ReturnResponse {
+func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayPinReport) entity.ReturnResponse {
 	var (
 		err        error
 		total_data int64
@@ -75,10 +74,10 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 
 	if fe.Action != "" || fe.Reload == "true" {
 		fmt.Println("-----", fe.Reload, "-----")
-		apireport, total_data, err = h.DS.GetDisplayPinReport(fe, allowedCompanies)
+		apireport, total_data, err = h.DS.GetDisplayPinReport(fe)
 	} else {
 
-		apireport, total_data, err = h.DS.GetDisplayPinReport(fe, allowedCompanies)
+		apireport, total_data, err = h.DS.GetDisplayPinReport(fe)
 	}
 
 	if err == nil {
@@ -111,24 +110,25 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 	}
 }
 
-func (h *IncomingHandler) EditPOAFAPIReport(c *fiber.Ctx) error {
+func (h *IncomingHandler) EditPayoutAPIReport(c *fiber.Ctx) error {
 
 	o := new(entity.ApiPinReport)
 
-	if err := c.BodyParser(&o); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	} else {
-
-		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
-
-		h.DS.EditPOAFAPIReport(entity.ApiPinReport{
-			DateSend:   o.DateSend,
-			PayoutAF:   o.PayoutAF,
-			CampaignId: o.CampaignId,
+	if err := c.BodyParser(o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
 		})
-
-		return c.Status(fiber.StatusOK).Send([]byte("OK"))
 	}
+
+	h.Logs.Debug(fmt.Sprintf("payload : %#v", o))
+
+	if err := h.DS.EditPayoutAPIReport(*o); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).SendString("OK")
 }
 
 func (h *IncomingHandler) DisplayPinPerformanceReport(c *fiber.Ctx) error {

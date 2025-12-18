@@ -15,35 +15,86 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (r *BaseModel) PinReport(o entity.ApiPinReport) int {
-    result := r.DB.Clauses(clause.OnConflict{
-        Columns: []clause.Column{
-            {Name: "date_send"},
-            {Name: "country"},
-            {Name: "adnet"},
-            {Name: "operator"},
-            {Name: "service"},
-            {Name: "campaign_id"},
-        },
-        DoUpdates: clause.AssignmentColumns([]string{
-            "payout_adn",
-            "payout_af",
-            "total_mo",
-            "total_postback",
-            "sbaf",
-            "saaf",
-            "price_per_mo",
-            "waki_revenue",
-            "updated_at",
-        }),
-    }).Create(&o)
+func (r *BaseModel) getLastPayout(country, operator, adnet, service, campaignID string, dateSend time.Time) (float64, float64) {
 
-    r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+	var prev entity.ApiPinReport
 
-    return int(o.ID)
+	err := r.DB.
+		Select("payout_adn, payout_af").
+		Where(
+			`country = ?
+			 AND operator = ?
+			 AND adnet = ?
+			 AND service = ?
+			 AND campaign_id = ?
+			 AND date_send < ?`,
+			country, operator, adnet, service, campaignID, dateSend,
+		).
+		Order("date_send DESC").
+		Limit(1).
+		First(&prev).Error
+
+	if err != nil {
+		return 0, 0
+	}
+
+	return prev.PayoutAdn, prev.PayoutAF
 }
 
-func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedCompanies []string) ([]entity.ApiPinReport, int64, error) {
+func (r *BaseModel) PinReport(o entity.ApiPinReport) int {
+
+	if o.PayoutAdn == 0 && o.PayoutAF == 0 {
+		prevAdn, prevAF := r.getLastPayout(
+			o.Country,
+			o.Operator,
+			o.Adnet,
+			o.Service,
+			o.CampaignId,
+			o.DateSend,
+		)
+		o.PayoutAdn = prevAdn
+		o.PayoutAF = prevAF
+	}
+
+	entity.BuildPinReportCalculation(&o)
+
+	result := r.DB.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "date_send"},
+			{Name: "country"},
+			{Name: "adnet"},
+			{Name: "operator"},
+			{Name: "service"},
+			{Name: "campaign_id"},
+		},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"payout_adn",
+			"payout_af",
+			"total_mo",
+			"total_postback",
+			"sbaf",
+			"saaf",
+			"price_per_mo",
+			"waki_revenue",
+			"updated_at",
+		}),
+	}).Create(&o)
+
+	r.Logs.Debugf(
+		"[PIN_REPORT] affected=%d error=%v | %s %s %s %s %s",
+		result.RowsAffected,
+		result.Error,
+		o.DateSend.Format("2006-01-02"),
+		o.Country,
+		o.Operator,
+		o.Adnet,
+		o.Service,
+	)
+
+	return int(o.ID)
+}
+
+func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.ApiPinReport, int64, error) {
 	var totalRows int64
 	var ss []entity.ApiPinReport
 
@@ -53,7 +104,7 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedCompan
 		(payout_adn * total_postback) AS sbaf,
 		(CASE WHEN total_mo > 0 THEN (payout_af * total_postback) / total_mo ELSE 0 END) AS price_per_mo,
 		((payout_af * total_postback) - (payout_adn * total_postback)) AS waki_revenue
-	`).Where("company IN ?", allowedCompanies)
+	`)
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
@@ -137,17 +188,158 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedCompan
 	return ss, totalRows, nil
 }
 
-func (r *BaseModel) EditPOAFAPIReport(o entity.ApiPinReport) error {
+func (r *BaseModel) EditPayoutAPIReport(o entity.ApiPinReport) error {
 
 	dateOnly := o.DateSend.Format("2006-01-02")
 
-	result := r.DB.Model(&o).
-		Where("date_send = ? AND campaign_id = ?", dateOnly, o.CampaignId).
-		Updates(entity.ApiPinReport{PayoutAF: o.PayoutAF})
+	var existing entity.ApiPinReport
 
-	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+	err := r.DB.
+		Where(`
+			date_send = ? AND
+			country = ? AND
+			operator = ? AND
+			service = ? AND
+			adnet = ?
+		`,
+			dateOnly,
+			o.Country,
+			o.Operator,
+			o.Service,
+			o.Adnet,
+		).
+		First(&existing).Error
+
+	if err != nil {
+		return err
+	}
+
+	if o.PayoutAF == 0 {
+		o.PayoutAF = existing.PayoutAF
+	}
+	if o.PayoutAdn == 0 {
+		o.PayoutAdn = existing.PayoutAdn
+	}
+
+	o.TotalPostback = existing.TotalPostback
+	o.TotalMO = existing.TotalMO
+
+	entity.BuildPinReportCalculation(&o)
+
+	result := r.DB.
+		Model(&entity.ApiPinReport{}).
+		Where(`
+			date_send = ? AND
+			country = ? AND
+			operator = ? AND
+			service = ? AND
+			adnet = ?
+		`,
+			dateOnly,
+			o.Country,
+			o.Operator,
+			o.Service,
+			o.Adnet,
+		).
+		Updates(map[string]interface{}{
+			"payout_af":     o.PayoutAF,
+			"payout_adn":    o.PayoutAdn,
+			"sbaf":         o.SBAF,
+			"saaf":         o.SAAF,
+			"price_per_mo":  o.PricePerMO,
+			"waki_revenue":  o.WakiRevenue,
+		})
+
+	r.Logs.Debug(fmt.Sprintf(
+		"affected: %d, error: %#v",
+		result.RowsAffected,
+		result.Error,
+	))
 
 	return result.Error
+}
+
+func (r *BaseModel) getPrevCPA(country, operator, adnet, service string, dateSend time.Time) (float64, float64) {
+
+	var prev entity.ApiPinPerformance
+
+	err := r.DB.
+		Select("cpa, cpa_waki").
+		Where(
+			"country = ? AND operator = ? AND adnet = ? AND service = ? AND date_send < ?",
+			country, operator, adnet, service, dateSend,
+		).
+		Order("date_send DESC").
+		Limit(1).
+		First(&prev).Error
+
+	if err != nil {
+		return 0, 0
+	}
+
+	return prev.CPA, prev.CPAWaki
+}
+
+func (r *BaseModel) UpsertPinPerformance(o *entity.ApiPinPerformance) error {
+
+	if o.CPA == 0 && o.CPAWaki == 0 {
+		prevCPA, prevCPAWaki := r.getPrevCPA(
+			o.Country,
+			o.Operator,
+			o.Adnet,
+			o.Service,
+			o.DateSend,
+		)
+		o.CPA = prevCPA
+		o.CPAWaki = prevCPAWaki
+	}
+
+	result := r.DB.Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "date_send"},
+			{Name: "country"},
+			{Name: "operator"},
+			{Name: "adnet"},
+			{Name: "service"},
+		},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"pin_request",
+			"unique_pin_request",
+			"pin_sent",
+			"pin_failed",
+			"verify_request",
+			"verify_request_unique",
+			"pin_ok",
+			"pin_not_ok",
+			"pin_ok_send_adnet",
+			"charged_mo",
+			"subs_cr",
+			"adnet_cr",
+			"cac",
+			"paid_cac",
+			"total_spending",
+			"saaf",
+			"sbaf",
+			"estimated_arpu",
+			"updated_at",
+		}),
+	}).Create(o)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	r.Logs.Debugf(
+		"[PIN_PERFORMANCE] affected=%d %s %s %s %s %s",
+		result.RowsAffected,
+		o.DateSend.Format("2006-01-02"),
+		o.Country,
+		o.Operator,
+		o.Adnet,
+		o.Service,
+	)
+
+	return nil
 }
 
 func (r *BaseModel) PinPerformanceReport(o entity.ApiPinPerformance) int {

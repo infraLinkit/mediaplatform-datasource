@@ -305,26 +305,36 @@ func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
 
 	m := c.Queries()
 
-	now := time.Now()
-	curdate_time, _ := time.Parse("2006-01-02", now.In(cfg.TZ).Format("2006-01-02"))
-
 	mo, _ := strconv.Atoi(m["mo"])
 	postback, _ := strconv.Atoi(m["postback"])
+
 	sbaf, _ := strconv.ParseFloat(m["sbaf"], 64)
 	saaf, _ := strconv.ParseFloat(m["saaf"], 64)
-	payout_adn, _ := strconv.ParseFloat(m["payout_adn"], 64)
-	payout_af, _ := strconv.ParseFloat(m["payout_af"], 64)
+	payoutAdn, _ := strconv.ParseFloat(m["payout_adn"], 64)
+	payoutAF, _ := strconv.ParseFloat(m["payout_af"], 64)
+
+	country := strings.ToUpper(m["country"])
+	if country == "UAE" {
+		country = "AE"
+	}
+
+	var dateSend time.Time
+	if m["date_send"] == "" {
+		dateSend = time.Now().In(cfg.TZ)
+	} else {
+		dateSend = helper.ParseVendorDateSend(cfg.TZ, m["date_send"])
+	}
 
 	pin := ApiPinReport{
 		CampaignId:    strings.ToUpper(m["campaign_id"]),
-		Country:       strings.ToUpper(m["country"]),
+		Country:       country,
 		Company:       strings.ToUpper(m["company"]),
 		Adnet:         strings.ToUpper(m["adnet"]),
 		Service:       strings.ToUpper(m["service"]),
-		Operator:      strings.ToUpper(m["telco"]),
-		DateSend:      curdate_time,
-		PayoutAdn:     payout_adn,
-		PayoutAF:      payout_af,
+		Operator:      strings.ToUpper(m["operator"]),
+		DateSend:      dateSend,
+		PayoutAdn:     payoutAdn,
+		PayoutAF:      payoutAF,
 		TotalMO:       mo,
 		TotalPostback: postback,
 		SBAF:          sbaf,
@@ -332,6 +342,19 @@ func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
 	}
 
 	return &pin
+}
+
+func BuildPinReportCalculation(o *ApiPinReport) {
+	o.SBAF = float64(o.TotalPostback) * o.PayoutAdn
+	o.SAAF = float64(o.TotalPostback) * o.PayoutAF
+
+	if o.TotalMO > 0 {
+		o.PricePerMO = o.SAAF / float64(o.TotalMO)
+	} else {
+		o.PricePerMO = 0
+	}
+
+	o.WakiRevenue = o.SAAF - o.SBAF
 }
 
 func (t *ApiPinReport) ValidateParams(Logs *logrus.Logger) ReturnResponse {
@@ -352,14 +375,6 @@ func (t *ApiPinReport) ValidateParams(Logs *logrus.Logger) ReturnResponse {
 
 		return ReturnResponse{HttpStatus: fiber.StatusBadRequest, Rsp: GlobalResponse{Code: fiber.StatusBadRequest, Message: "Parameter Operator is mandatory"}}
 
-	} else if t.CampaignId == "" {
-
-		return ReturnResponse{HttpStatus: fiber.StatusBadRequest, Rsp: GlobalResponse{Code: fiber.StatusBadRequest, Message: "Parameter Campaign ID is mandatory"}}
-
-	} else if t.Company == "" {
-
-		return ReturnResponse{HttpStatus: fiber.StatusBadRequest, Rsp: GlobalResponse{Code: fiber.StatusBadRequest, Message: "Parameter Company is mandatory"}}
-
 	} else {
 
 		return ReturnResponse{HttpStatus: fiber.StatusOK, Rsp: GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC}}
@@ -370,33 +385,70 @@ func (t *ApiPinReport) ValidateParams(Logs *logrus.Logger) ReturnResponse {
 func NewInstanceTrxPinPerfonrmanceReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinPerformance {
 	m := c.Queries()
 
+	var dateSend time.Time
+	if m["date_send"] == "" {
+		dateSend = time.Now().In(cfg.TZ)
+	} else {
+		dateSend = helper.ParseVendorDateSend(cfg.TZ, m["date_send"])
+	}
+
 	pinRequest, _ := strconv.Atoi(m["pin_request"])
-	uniquePinRequest, _ := strconv.Atoi(m["unique_pin_request"])
+	uniquePinRequest, _ := strconv.Atoi(m["pin_request_unique"])
 	pinSent, _ := strconv.Atoi(m["pin_sent"])
 	pinFailed, _ := strconv.Atoi(m["pin_failed"])
-	verifyRequest, _ := strconv.Atoi(m["verify_request"])
-	verifyRequestUnique, _ := strconv.Atoi(m["verify_request_unique"])
+	verifyRequest, _ := strconv.Atoi(m["pin_verify_request"])
+	verifyRequestUnique, _ := strconv.Atoi(m["pin_verify_request_unique"])
 	pinOK, _ := strconv.Atoi(m["pin_ok"])
 	pinNotOK, _ := strconv.Atoi(m["pin_not_ok"])
-	pinOkSendAdnet, _ := strconv.Atoi(m["pin_ok_send_adnet"])
+	pinOkRatio, _ := strconv.Atoi(m["pin_ok_ratio"])
+	chargedMO, _ := strconv.Atoi(m["charged_mo"])
 
 	pin := ApiPinPerformance{
 		Adnet:               m["adnet"],
 		Country:             m["country"],
+		Company:             m["company"],
 		Service:             m["service"],
-		Operator:            m["telco"],
-		DateSend:            helper.GetCurrentTime(cfg.TZ, time.RFC3339),
+		Operator:            m["operator"],
+		DateSend:            dateSend,
 		PinRequest:          pinRequest,
 		UniquePinRequest:    uniquePinRequest,
-		PinSent:             pinSent,
+		PinSuccess:          pinSent,
 		PinFailed:           pinFailed,
-		VerifyRequest:       verifyRequest,
-		VerifyRequestUnique: verifyRequestUnique,
+		PinVerifyRequest:       verifyRequest,
+		PinVerifyRequestUnique: verifyRequestUnique,
 		PinOK:               pinOK,
 		PinNotOK:            pinNotOK,
-		PinOkSendAdnet:      pinOkSendAdnet,
+		PinOkRatio:          pinOkRatio,
+		ChargedMO:           float64(chargedMO),
 	}
+
 	return &pin
+}
+
+func BuildPinPerformanceLogic(pin *ApiPinPerformance) {
+
+	// subs_cr
+	if pin.PinVerifyRequest > 0 {
+		pin.SubsCR = float64(pin.PinOK) / float64(pin.PinVerifyRequest)
+	}
+
+	// CAC (cpa_per_po)
+	if pin.PinOK > 0 {
+		pin.CAC = pin.CPAWaki * float64(pin.PinOkRatio) / float64(pin.PinOK)
+	}
+
+	// total_spend
+	pin.TotalSpending = pin.CAC * float64(pin.PinOkRatio)
+
+	// paid_cpa
+	if pin.ChargedMO > 0 {
+		pin.PaidCAC = pin.CPAWaki * float64(pin.PinOkRatio) / pin.ChargedMO
+	}
+
+	// e_cpa
+	if pin.PinOkRatio > 0 {
+		pin.AdnetCR = pin.CPAWaki
+	}
 }
 
 func (t *ApiPinPerformance) ValidateParams(Logs *logrus.Logger) ReturnResponse {
@@ -446,13 +498,13 @@ func NewInstancePinPerformance(c *fiber.Ctx, cfg *config.Cfg) *ApiPinPerformance
 		Service:             m["service"],
 		PinRequest:          toInt("pin_request"),
 		UniquePinRequest:    toInt("unique_pin_request"),
-		PinSent:             toInt("pin_sent"),
+		PinSuccess:          toInt("pin_success"),
 		PinFailed:           toInt("pin_failed"),
-		VerifyRequest:       toInt("verify_request"),
-		VerifyRequestUnique: toInt("verify_request_unique"),
+		PinVerifyRequest:       toInt("pin_verify_request"),
+		PinVerifyRequestUnique: toInt("pin_verify_request_unique"),
 		PinOK:               toInt("pin_ok"),
 		PinNotOK:            toInt("pin_not_ok"),
-		PinOkSendAdnet:      toInt("pin_ok_send_adnet"),
+		PinOkRatio:          toInt("pin_ok_ratio"),
 		CPA:                 toFloat("cpa"),
 		CPAWaki:             toFloat("cpa_waki"),
 		EstimatedARPU:       toFloat("estimated_arpu"),

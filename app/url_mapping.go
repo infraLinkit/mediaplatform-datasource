@@ -92,7 +92,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	// Report
 	rpt := v1.Group("/report") // Report
 	//rpt.Get("/report/", h.Report).Name("Report API")
-	rpt.Get("/pinreport", h.AuthMiddleware, h.DisplayPinReport).Name("Pin Report Summary FE")
+	rpt.Get("/pinreport", h.DisplayPinReport).Name("Pin Report Summary FE")
 	rpt.Get("/datasentapiperformance", h.DisplayPinPerformanceReport).Name("Pin Performance Api Report Summary FE")
 	rpt.Get("/cpareportlist", h.AuthMiddleware, h.DisplayCPAReport).Name("Receive Pin CPA Report Transactional")
 	rpt.Get("/costreport/:v", h.AuthMiddleware, h.DisplayCostReport).Name("Receive Pin Cost Report / detail Transactional")
@@ -120,8 +120,8 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	internal.Put("/updatepostback/:v/", h.UpdatePostback).Name("Update Postback Transactional")
 	internal.Put("/updateagencycost/:v", h.UpdateAgencyCost).Name("Update Agency fee and cost per conversion in db")
 	internal.Put("/updatestatusalert/:v", h.UpdateStatusAlert).Name("Update Status Alert in db")
-	internal.Get("/pinreport/", h.TrxPinReport).Name("Receive Pin Report Transactional")
-	internal.Post("/pinreport/editpoaf", h.EditPOAFAPIReport).Name("Edit poaf api report")
+	internal.Get("/datasentapipinreport/", h.TrxPinReport).Name("Receive Pin Report Transactional")
+	internal.Post("/pinreport/editpayout", h.EditPayoutAPIReport).Name("Edit payout api report")
 	internal.Get("/datasentapiperformance/", h.TrxPerformancePinReport).Name("Receive Pin API Performance Report Transactional")
 	internal.Get("/exportcpa/", h.AuthMiddleware, h.ExportCpaButton).Name("Export CPA-Report Button")
 	internal.Get("/exportcost/", h.ExportCostButton).Name("Export Cost-Report Button")

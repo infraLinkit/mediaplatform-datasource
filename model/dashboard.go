@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -36,6 +35,68 @@ func GetDaysInMonth(year int, month time.Month) int {
 
 	// 3. The Day component of the last day is the number of days in the month.
 	return lastOfCurrentMonth.Day()
+}
+
+func (r *BaseModel) CreateSummaryDashboard(s entity.SummaryCampaign) error {
+	SQL := `
+	INSERT INTO summary_dashboards(summary_date,adnet,company,total_mo,total_postback,total_cpa_mo,total_sms_mo,
+		total_mainstream_mo,total_cpa_postback,total_sms_postback,total_mainstream_postback,
+		total_spending,total_cpa_spending,total_sms_spending,total_mainstream_spending,
+		total_saaf,total_cpa_saaf,total_sms_saaf,total_mainstream_saaf,updated_at)
+		SELECT 
+		summary_date as date,
+		adnet,
+		company,
+		SUM(mo_received) as total_mo,
+		SUM(postback) as total_postback,
+		SUM(CASE WHEN campaign_objective='CPA' THEN mo_received ELSE 0 END) as total_cpa_mo,
+		SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN mo_received ELSE 0 END) as total_sms_mo,
+		SUM(CASE WHEN campaign_objective='MAINSTREAM' THEN mo_received ELSE 0 END) as total_mainstream_mo,
+
+		SUM(CASE WHEN campaign_objective='CPA' THEN postback ELSE 0 END) as total_cpa_postback,
+		SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN postback ELSE 0 END) as total_sms_postback,
+		SUM(CASE WHEN campaign_objective='MAINSTREAM' THEN postback ELSE 0 END) as total_mainstream_postback,
+
+		SUM(sbaf) as total_spending,
+		SUM(CASE WHEN campaign_objective='CPA' THEN sbaf ELSE 0 END) as total_cpa_spending,
+		SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf ELSE 0 END) as total_sms_spending,
+		SUM(CASE WHEN campaign_objective='MAINSTREAM' THEN sbaf ELSE 0 END) as total_mainstream_spending,
+
+		SUM(saaf) as total_saaf,
+		SUM(CASE WHEN campaign_objective='CPA' THEN saaf ELSE 0 END) as total_cpa_saaf,
+		SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf ELSE 0 END) as total_sms_saaf,
+		SUM(CASE WHEN campaign_objective='MAINSTREAM' THEN saaf ELSE 0 END) as total_mainstream_saaf,
+		NOW() FROM summary_campaigns WHERE 
+		DATE(summary_date) = DATE(?) AND  
+		adnet = ? AND 
+		company = ? 
+		GROUP BY date, adnet, company
+		ON CONFLICT(summary_date,adnet,company) DO UPDATE SET
+		updated_at=NOW(),
+		total_mo=EXCLUDED.total_mo,
+		total_postback=EXCLUDED.total_postback,
+		total_cpa_mo=EXCLUDED.total_cpa_mo,
+		total_sms_mo=EXCLUDED.total_sms_mo,
+		total_mainstream_mo=EXCLUDED.total_mainstream_mo,
+		total_cpa_postback=EXCLUDED.total_cpa_postback,
+		total_sms_postback=EXCLUDED.total_sms_postback,
+		total_mainstream_postback=EXCLUDED.total_mainstream_postback,
+		total_spending=EXCLUDED.total_spending,
+		total_cpa_spending=EXCLUDED.total_cpa_spending,
+		total_sms_spending=EXCLUDED.total_sms_spending,
+		total_mainstream_spending=EXCLUDED.total_mainstream_spending,
+		total_saaf=EXCLUDED.total_saaf,
+		total_cpa_saaf=EXCLUDED.total_cpa_saaf,
+		total_sms_saaf=EXCLUDED.total_sms_saaf,
+		total_mainstream_saaf=EXCLUDED.total_mainstream_saaf
+		`
+	query := r.DB.Model(&entity.SummaryDashboard{})
+	result := query.Exec(SQL, s.SummaryDate, s.Adnet, s.Company)
+
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
 
 func (r *BaseModel) GetReport(country string, operator string, client_type string, partner string, service string, campaign_objective string, date_range string, date_before string, date_after string, allowedAdnets []string, allowedCompanies []string) (entity.SummaryDashboardReport, error) {
@@ -290,7 +351,7 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 			date_list = append(date_list, newDate.Format("2006-01-02"))
 		}
 
-		fmt.Println("DATE LIST: ", date_list)
+		//fmt.Println("DATE LIST: ", date_list)
 
 	case "CUSTOMRANGE":
 		start, _ := time.Parse("2006-01-02", date_before)

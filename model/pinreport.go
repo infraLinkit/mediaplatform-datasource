@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -259,69 +260,184 @@ func (r *BaseModel) EditPayoutAPIReport(o entity.ApiPinReport) error {
 	return result.Error
 }
 
-func (r *BaseModel) getPrevCPA(country, operator, adnet, service string, dateSend time.Time) (float64, float64) {
+func (r *BaseModel) EditCpaAPIPerformanceReport(o entity.ApiPinPerformance) error {
 
-	var prev entity.ApiPinPerformance
+	dateOnly := o.DateSend.Format("2006-01-02")
 
-	err := r.DB.
-		Select("cpa, cpa_waki").
-		Where(
-			"country = ? AND operator = ? AND adnet = ? AND service = ? AND date_send < ?",
-			country, operator, adnet, service, dateSend,
-		).
-		Order("date_send DESC").
-		Limit(1).
-		First(&prev).Error
-
-	if err != nil {
-		return 0, 0
+	var existing entity.ApiPinPerformance
+	if err := r.DB.Where(`
+		date_send = ? AND
+		country = ? AND
+		operator = ? AND
+		service = ? AND
+		adnet = ?
+	`,
+		dateOnly,
+		o.Country,
+		o.Operator,
+		o.Service,
+		o.Adnet,
+	).First(&existing).Error; err != nil {
+		return err
 	}
 
-	return prev.CPA, prev.CPAWaki
-}
+	if o.CPA == 0 {
+		o.CPA = existing.CPA
+	}
+	if o.CPAWaki == 0 {
+		o.CPAWaki = existing.CPAWaki
+	}
 
-func (r *BaseModel) UpsertPinPerformance(o *entity.ApiPinPerformance) error {
+	o.PinOkRatio = existing.PinOkRatio
+	o.PinOK = existing.PinOK
+	o.ChargedMO = existing.ChargedMO
 
-	if o.CPA == 0 && o.CPAWaki == 0 {
-		prevCPA, prevCPAWaki := r.getPrevCPA(
+	entity.BuildAPIPerformanceReportCalculation(&o)
+
+
+	result := r.DB.
+		Model(&entity.ApiPinPerformance{}).
+		Where(`
+			date_send = ? AND
+			country = ? AND
+			operator = ? AND
+			service = ? AND
+			adnet = ?
+		`,
+			dateOnly,
 			o.Country,
 			o.Operator,
-			o.Adnet,
 			o.Service,
-			o.DateSend,
-		)
-		o.CPA = prevCPA
-		o.CPAWaki = prevCPAWaki
+			o.Adnet,
+		).
+		Updates(map[string]interface{}{
+			"cpa":     o.CPA,
+			"cpa_waki":    o.CPAWaki,
+			"total_spending":         o.TotalSpending,
+			"total_spending_after_waki":         o.TotalSpendingAfterWaki,
+			"cac":  o.CAC,
+			"paid_cac":  o.PaidCAC,
+		})
+
+	r.Logs.Debug(fmt.Sprintf(
+		"affected: %d, error: %#v",
+		result.RowsAffected,
+		result.Error,
+	))
+
+	return result.Error
+}
+
+func (r *BaseModel) EditArpuAPIPerformanceReport(o entity.ApiPinPerformance) error {
+
+	dateOnly := o.DateSend.Format("2006-01-02")
+
+	result := r.DB.
+		Model(&entity.ApiPinPerformance{}).
+		Where(`
+			date_send = ? AND
+			country = ? AND
+			operator = ? AND
+			service = ? AND
+			adnet = ?
+		`,
+			dateOnly,
+			o.Country,
+			o.Operator,
+			o.Service,
+			o.Adnet,
+		).
+		Updates(map[string]interface{}{
+			"estimated_arpu": o.EstimatedARPU,
+			"updated_at":     time.Now(),
+		})
+
+	r.Logs.Debug(fmt.Sprintf(
+		"affected: %d, error: %#v",
+		result.RowsAffected,
+		result.Error,
+	))
+
+	if result.Error != nil {
+		return result.Error
 	}
 
+	if result.RowsAffected == 0 {
+		return errors.New("no data updated (data not found)")
+	}
+
+	return nil
+}
+
+func (r *BaseModel) UpsertApiPerformanceReport(o *entity.ApiPinPerformance) error {
+
+	// Ambil sum saaf, total_mo & total_postback dari api_pin_reports
+	var saafSum float64
+	r.DB.Model(&entity.ApiPinReport{}).
+		Select("saaf").
+		Where("country=? AND operator=? AND adnet=? AND service=? AND date_send=?",
+			o.Country, o.Operator, o.Adnet, o.Service, o.DateSend).
+		Scan(&saafSum)
+	o.SAAF = saafSum
+
+	// Ambil estimated ARPU dari api_performance_reports
+	var estimatedARPU float64
+	r.DB.Model(&entity.ApiPinPerformance{}).
+		Select("estimated_arpu").
+		Where("country=? AND operator=? AND adnet=? AND service=? AND date_send=?",
+			o.Country, o.Operator, o.Adnet, o.Service, o.DateSend).
+		Scan(&estimatedARPU)
+	o.EstimatedARPU = estimatedARPU
+
+	// Ambil prev CPA & CPA after waki
+	var prev struct {
+		CPA     float64
+		CPAWaki float64
+	}
+	r.DB.Raw(`SELECT cpa, cpa_waki 
+		FROM api_pin_performances
+		WHERE country=? AND operator=? AND service=? AND adnet=? LIMIT 1`,
+		o.Country, o.Operator, o.Service, o.Adnet).Scan(&prev)
+
+	if o.CPA == 0 && o.CPAWaki == 0 {
+		o.CPA = prev.CPA
+		o.CPAWaki = prev.CPAWaki
+	}
+
+	// Hitung semua field
+	o.CpaPerPO = 0
+	o.TotalSpending = 0
+	o.TotalSpendingAfterWaki = 0
+	o.PaidCAC = 0
+	o.CAC = 0
+	o.SubsCR = 0
+
+	if o.PinOK > 0 && o.SAAF > 0 {
+		o.CpaPerPO = o.SAAF / float64(o.PinOK)
+	}
+
+	if o.PinOkRatio > 0 {
+		o.TotalSpending = o.CPA * float64(o.PinOkRatio)
+		o.TotalSpendingAfterWaki = o.CPAWaki * float64(o.PinOkRatio)
+		o.CAC = o.TotalSpendingAfterWaki / float64(o.PinOK)
+		if o.ChargedMO > 0 {
+			o.PaidCAC = o.TotalSpendingAfterWaki / o.ChargedMO
+		}
+	}
+
+	if o.PinVerifyRequest > 0 {
+		o.SubsCR = float64(o.PinOK) / float64(o.PinVerifyRequest)
+		o.AdnetCR = float64(o.PinOkRatio) / float64(o.PinVerifyRequest)
+	}
+
+	// Upsert ke api_performance_reports
 	result := r.DB.Clauses(clause.OnConflict{
-		Columns: []clause.Column{
-			{Name: "date_send"},
-			{Name: "country"},
-			{Name: "operator"},
-			{Name: "adnet"},
-			{Name: "service"},
-		},
+		Columns:   []clause.Column{{Name: "date_send"}, {Name: "country"}, {Name: "operator"}, {Name: "adnet"}, {Name: "service"}},
 		DoUpdates: clause.AssignmentColumns([]string{
-			"pin_request",
-			"unique_pin_request",
-			"pin_sent",
-			"pin_failed",
-			"verify_request",
-			"verify_request_unique",
-			"pin_ok",
-			"pin_not_ok",
-			"pin_ok_send_adnet",
-			"charged_mo",
-			"subs_cr",
-			"adnet_cr",
-			"cac",
-			"paid_cac",
-			"total_spending",
-			"saaf",
-			"sbaf",
-			"estimated_arpu",
-			"updated_at",
+			"pin_request", "unique_pin_request", "pin_success", "pin_failed", "pin_verify_request",
+			"pin_verify_request_unique", "pin_ok", "pin_not_ok", "pin_ok_ratio", "saaf",
+			"cac", "total_spending", "paid_cac", "subs_cr", "adnet_cr", "estimated_arpu", "cpa", "cpa_waki",
+			"cpa_per_po", "total_spend_after_waki", "updated_at",
 		}),
 	}).Create(o)
 
@@ -329,15 +445,8 @@ func (r *BaseModel) UpsertPinPerformance(o *entity.ApiPinPerformance) error {
 		return result.Error
 	}
 
-	r.Logs.Debugf(
-		"[PIN_PERFORMANCE] affected=%d %s %s %s %s %s",
-		result.RowsAffected,
-		o.DateSend.Format("2006-01-02"),
-		o.Country,
-		o.Operator,
-		o.Adnet,
-		o.Service,
-	)
+	fmt.Printf("[API_PERFORMANCE] inserted/updated %s %s %s %s\n",
+		o.DateSend.Format("2006-01-02"), o.Country, o.Operator, o.Adnet)
 
 	return nil
 }
@@ -403,7 +512,7 @@ func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceRep
 		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
 	}
 
-	rows, _ = query_limit.Order("date_send").Rows()
+	rows, _ = query_limit.Order("subs_cr").Rows()
 	defer rows.Close()
 
 	var ss []entity.ApiPinPerformance

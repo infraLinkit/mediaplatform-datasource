@@ -167,9 +167,7 @@ func (h *IncomingHandler) TrxPerformancePinReport(c *fiber.Ctx) error {
 	r := pin.ValidateParams(h.Logs)
 	if r.HttpStatus == 200 {
 
-		entity.BuildPinPerformanceLogic(pin)
-
-		if err := h.DS.UpsertPinPerformance(pin); err != nil {
+		if err := h.DS.UpsertApiPerformanceReport(pin); err != nil {
 			return c.Status(500).JSON(fiber.Map{
 				"code":    500,
 				"message": err.Error(),

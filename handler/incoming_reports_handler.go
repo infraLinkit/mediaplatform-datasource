@@ -215,6 +215,53 @@ func (h *IncomingHandler) DisplayPinPerformanceReportExtra(c *fiber.Ctx, fe enti
 	}
 }
 
+func (h *IncomingHandler) EditCpaAPIPerformanceReport(c *fiber.Ctx) error {
+
+	o := new(entity.ApiPinPerformance)
+
+	if err := c.BodyParser(o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	h.Logs.Debug(fmt.Sprintf("payload : %#v", o))
+
+	if err := h.DS.EditCpaAPIPerformanceReport(*o); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).SendString("OK")
+}
+
+func (h *IncomingHandler) EditArpuAPIPerformanceReport(c *fiber.Ctx) error {
+
+	o := new(entity.ApiPinPerformance)
+
+	if err := c.BodyParser(o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	o.Country = strings.ToUpper(o.Country)
+	o.Operator = strings.ToUpper(o.Operator)
+	o.Service = strings.ToUpper(o.Service)
+	o.Adnet = strings.ToUpper(o.Adnet)
+
+	h.Logs.Debug(fmt.Sprintf("payload : %#v", o))
+
+	if err := h.DS.EditArpuAPIPerformanceReport(*o); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.Status(fiber.StatusOK).SendString("OK")
+}
+
 func (h *IncomingHandler) DisplayConversionLogReport(c *fiber.Ctx) error {
 
 	c.Set("Content-Type", "application/x-www-form-urlencoded")

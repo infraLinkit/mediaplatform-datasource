@@ -122,6 +122,8 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	internal.Get("/datasentapipinreport/", h.TrxPinReport).Name("Receive Pin Report Transactional")
 	internal.Post("/pinreport/editpayout", h.EditPayoutAPIReport).Name("Edit payout api report")
 	internal.Get("/datasentapiperformance/", h.TrxPerformancePinReport).Name("Receive Pin API Performance Report Transactional")
+	internal.Post("/pinperformance/editcpa", h.EditCpaAPIPerformanceReport).Name("Edit cpa api performance report")
+	internal.Post("/pinperformance/editarpu", h.EditArpuAPIPerformanceReport).Name("Edit arpu api performance report")
 	internal.Get("/exportcpa/", h.AuthMiddleware, h.ExportCpaButton).Name("Export CPA-Report Button")
 	internal.Get("/exportcost/", h.ExportCostButton).Name("Export Cost-Report Button")
 	internal.Get("/exportcostdetail/", h.ExportCostDetailButton).Name("Export Cost-Report-Detail Button")

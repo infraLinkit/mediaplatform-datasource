@@ -357,6 +357,17 @@ func BuildPinReportCalculation(o *ApiPinReport) {
 	o.WakiRevenue = o.SAAF - o.SBAF
 }
 
+func BuildAPIPerformanceReportCalculation(o *ApiPinPerformance) {
+	if o.PinOkRatio > 0 {
+		o.TotalSpending = o.CPA * float64(o.PinOkRatio)
+		o.TotalSpendingAfterWaki = o.CPAWaki * float64(o.PinOkRatio)
+		o.CAC = o.TotalSpendingAfterWaki / float64(o.PinOK)
+		if o.ChargedMO > 0 {
+			o.PaidCAC = o.TotalSpendingAfterWaki / o.ChargedMO
+		}
+	}
+}
+
 func (t *ApiPinReport) ValidateParams(Logs *logrus.Logger) ReturnResponse {
 
 	if t.Adnet == "" {
@@ -394,12 +405,12 @@ func NewInstanceTrxPinPerfonrmanceReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinP
 
 	pinRequest, _ := strconv.Atoi(m["pin_request"])
 	uniquePinRequest, _ := strconv.Atoi(m["pin_request_unique"])
-	pinSent, _ := strconv.Atoi(m["pin_sent"])
+	pinSent, _ := strconv.Atoi(m["pin_success"])
 	pinFailed, _ := strconv.Atoi(m["pin_failed"])
 	verifyRequest, _ := strconv.Atoi(m["pin_verify_request"])
 	verifyRequestUnique, _ := strconv.Atoi(m["pin_verify_request_unique"])
 	pinOK, _ := strconv.Atoi(m["pin_ok"])
-	pinNotOK, _ := strconv.Atoi(m["pin_not_ok"])
+	pinNotOK, _ := strconv.Atoi(m["pin_notok"])
 	pinOkRatio, _ := strconv.Atoi(m["pin_ok_ratio"])
 	chargedMO, _ := strconv.Atoi(m["charged_mo"])
 
@@ -425,31 +436,6 @@ func NewInstanceTrxPinPerfonrmanceReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinP
 	return &pin
 }
 
-func BuildPinPerformanceLogic(pin *ApiPinPerformance) {
-
-	// subs_cr
-	if pin.PinVerifyRequest > 0 {
-		pin.SubsCR = float64(pin.PinOK) / float64(pin.PinVerifyRequest)
-	}
-
-	// CAC (cpa_per_po)
-	if pin.PinOK > 0 {
-		pin.CAC = pin.CPAWaki * float64(pin.PinOkRatio) / float64(pin.PinOK)
-	}
-
-	// total_spend
-	pin.TotalSpending = pin.CAC * float64(pin.PinOkRatio)
-
-	// paid_cpa
-	if pin.ChargedMO > 0 {
-		pin.PaidCAC = pin.CPAWaki * float64(pin.PinOkRatio) / pin.ChargedMO
-	}
-
-	// e_cpa
-	if pin.PinOkRatio > 0 {
-		pin.AdnetCR = pin.CPAWaki
-	}
-}
 
 func (t *ApiPinPerformance) ValidateParams(Logs *logrus.Logger) ReturnResponse {
 
@@ -515,16 +501,6 @@ func NewInstancePinPerformance(c *fiber.Ctx, cfg *config.Cfg) *ApiPinPerformance
 		AdnetCR:             toFloat("adnet_cr"),
 		CAC:                 toFloat("cac"),
 		PaidCAC:             toFloat("paid_cac"),
-		CrMO:                toFloat("cr_mo"),
-		CrPostback:          toFloat("cr_postback"),
-		Landing:             toInt("landing"),
-		ROI:                 toFloat("roi"),
-		Arpu90:              toFloat("arpu90"),
-		BillingRateFP:       toFloat("billing_rate_fp"),
-		Ratio:               toFloat("ratio"),
-		PricePerPostback:    toFloat("price_per_postback"),
-		CostPerConversion:   toFloat("cost_per_conversion"),
-		AgencyFee:           toFloat("agency_fee"),
 		TotalWakiAgencyFee:  toFloat("total_waki_agency_fee"),
 		TotalSpending:       toFloat("total_spending"),
 		// ClientType:          m["client_type"],

@@ -437,7 +437,7 @@ func (r *BaseModel) UpsertApiPerformanceReport(o *entity.ApiPinPerformance) erro
 			"pin_request", "unique_pin_request", "pin_success", "pin_failed", "pin_verify_request",
 			"pin_verify_request_unique", "pin_ok", "pin_not_ok", "pin_ok_ratio", "saaf",
 			"cac", "total_spending", "paid_cac", "subs_cr", "adnet_cr", "estimated_arpu", "cpa", "cpa_waki",
-			"cpa_per_po", "total_spend_after_waki", "updated_at",
+			"cpa_per_po", "total_spending_after_waki", "updated_at",
 		}),
 	}).Create(o)
 

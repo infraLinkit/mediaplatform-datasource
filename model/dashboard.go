@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -288,6 +289,9 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 			newDate := time.Date(lastMonth.Year(), lastMonth.Month(), i, 0, 0, 0, 0, time.Local)
 			date_list = append(date_list, newDate.Format("2006-01-02"))
 		}
+
+		fmt.Println("DATE LIST: ", date_list)
+
 	case "CUSTOMRANGE":
 		start, _ := time.Parse("2006-01-02", date_before)
 		end, _ := time.Parse("2006-01-02", date_after)

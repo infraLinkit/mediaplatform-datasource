@@ -646,19 +646,100 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 func (r *BaseModel) GetPerformanceReport(o entity.PerformaceReportParams) ([]entity.PerformanceReport, int64, error) {
 
 	var (
-		rows       *sql.Rows
-		total_rows int64
+		rows      *sql.Rows
+		totalRows int64
+		dateStart time.Time
+		dateEnd   time.Time
 	)
 
-	// Apply filters, minus the pagination constraints
+	now := time.Now()
+
+	if o.DateRange != "" {
+		switch strings.ToUpper(o.DateRange) {
+
+		case "TODAY":
+			dateStart = now
+			dateEnd = now
+
+		case "YESTERDAY":
+			dateStart = now.AddDate(0, 0, -1)
+			dateEnd = dateStart
+
+		case "LAST7DAY":
+			dateStart = now.AddDate(0, 0, -7)
+			dateEnd = now
+
+		case "LAST30DAY":
+			dateStart = now.AddDate(0, 0, -30)
+			dateEnd = now
+
+		case "THISMONTH":
+			dateStart = time.Date(
+				now.Year(), now.Month(), 1,
+				0, 0, 0, 0, now.Location(),
+			)
+			dateEnd = now
+
+		case "LASTMONTH":
+			first := time.Date(
+				now.Year(), now.Month()-1, 1,
+				0, 0, 0, 0, now.Location(),
+			)
+			dateStart = first
+			dateEnd = first.AddDate(0, 1, -1)
+
+		case "CUSTOMRANGE":
+			var err error
+
+			if o.DateBefore == "" || o.DateAfter == "" {
+				return nil, 0, fmt.Errorf("date_before and date_after are required")
+			}
+
+			dateStart, err = time.Parse("2006-01-02", o.DateBefore)
+			if err != nil {
+				return nil, 0, fmt.Errorf("invalid date_before: %v", err)
+			}
+
+			dateEnd, err = time.Parse("2006-01-02", o.DateAfter)
+			if err != nil {
+				return nil, 0, fmt.Errorf("invalid date_after: %v", err)
+			}
+
+		default:
+			dateStart = now
+			dateEnd = now
+		}
+	} else {
+		dateStart = now
+		dateEnd = now
+	}
+
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	query = query.Where("mo_received > 0")
-	query.Select(`country, company, client_type, campaign_name, partner, operator, service, adnet, SUM(mo_received) AS pixel_received, SUM(postback) as pixel_send, SUM(cr_postback) as cr_postback,
-	SUM(cr_mo) as cr_mo, SUM(landing) as landing, MAX(ratio_send) as ratio_send, MAX(ratio_receive) as ratio_receive,SUM(po) as price_per_postback,SUM(cost_per_conversion) as cost_per_conversion,
-	SUM(agency_fee) as agency_fee, SUM(postback*po) as spending_to_adnets, SUM(total_waki_agency_fee), SUM(total_waki_agency_fee + po*postback) as total_spending,sum(cpa) as e_cpa,
-	SUM(total_fp) as total_fp,SUM(success_fp) as success_fp`)
+
+	query.Select(`
+		country, company, client_type, campaign_name, partner,
+		operator, service, adnet,
+		SUM(mo_received) AS pixel_received,
+		SUM(postback) AS pixel_send,
+		SUM(cr_postback) AS cr_postback,
+		SUM(cr_mo) AS cr_mo,
+		SUM(landing) AS landing,
+		MAX(ratio_send) AS ratio_send,
+		MAX(ratio_receive) AS ratio_receive,
+		SUM(po) AS price_per_postback,
+		SUM(cost_per_conversion) AS cost_per_conversion,
+		SUM(agency_fee) AS agency_fee,
+		SUM(postback * po) AS spending_to_adnets,
+		SUM(total_waki_agency_fee),
+		SUM(total_waki_agency_fee + po * postback) AS total_spending,
+		SUM(cpa) AS e_cpa,
+		SUM(total_fp) AS total_fp,
+		SUM(success_fp) AS success_fp
+	`)
 
 	if o.Action == "Search" {
+
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
 		}
@@ -669,7 +750,7 @@ func (r *BaseModel) GetPerformanceReport(o entity.PerformaceReportParams) ([]ent
 			query = query.Where("partner = ?", o.Partner)
 		}
 		if o.Company != "" {
-			query = query.Where("company= ?", o.Company)
+			query = query.Where("company = ?", o.Company)
 		}
 		if o.CampaignType != "" {
 			query = query.Where("campaign_objective = ?", o.CampaignType)
@@ -689,41 +770,42 @@ func (r *BaseModel) GetPerformanceReport(o entity.PerformaceReportParams) ([]ent
 		if o.Service != "" {
 			query = query.Where("service = ?", o.Service)
 		}
-	}
-	now := time.Now()
-	dateStart, errStart := time.Parse("2006-01-02", o.DateStart)
-	dateEnd, errEnd := time.Parse("2006-01-02", o.DateEnd)
-	if errStart != nil {
-		dateStart = now
-	}
-	if errEnd != nil {
-		dateEnd = now
-	}
 
-	query = query.Where("summary_date BETWEEN ? AND ?", dateStart, dateEnd)
+		query = query.Where(
+			"summary_date BETWEEN ? AND ?",
+			dateStart,
+			dateEnd,
+		)
+	}
 
 	query.Group("country, company, client_type, campaign_name, partner, operator, service, adnet")
 
-	// Get the total count after applying filters
-	query.Unscoped().Count(&total_rows)
+	query.Unscoped().Count(&totalRows)
 
-	query_limit := query.Limit(o.PageSize)
+	if o.PageSize > 0 {
+		query = query.Limit(o.PageSize)
+	}
 	if o.Page > 0 {
-		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+		query = query.Offset((o.Page - 1) * o.PageSize)
 	}
 
-	rows, _ = query_limit.Order("country").Rows()
+	rows, err := query.Order("country").Rows()
+	if err != nil {
+		return nil, 0, err
+	}
 	defer rows.Close()
 
-	var ss []entity.PerformanceReport
+	var result []entity.PerformanceReport
+
 	for rows.Next() {
 		var s entity.PerformanceReport
 		r.DB.ScanRows(rows, &s)
 		r.GetARPUReport(&s, dateStart, dateEnd)
-		ss = append(ss, s)
+
+		result = append(result, s)
 	}
 
-	return ss, total_rows, rows.Err()
+	return result, totalRows, rows.Err()
 }
 
 func (r *BaseModel) GetDistinctPerformanceReport(o entity.SummaryCampaign) ([]entity.SummaryCampaign, error) {

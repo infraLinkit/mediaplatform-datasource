@@ -194,6 +194,9 @@ type (
 		Action       string `form:"action" json:"action"`
 		DateStart    string `form:"date_before" json:"date_start"`
 		DateEnd      string `form:"date_after" json:"date_end"`
+		DateRange    string `form:"date_range" json:"date_range"`
+		DateBefore   string `form:"date_before" json:"date_before"`
+		DateAfter    string `form:"date_after" json:"date_after"`
 		Draw         int    `form:"draw" json:"draw"`
 	}
 

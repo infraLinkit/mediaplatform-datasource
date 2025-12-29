@@ -333,6 +333,9 @@ func (h *IncomingHandler) DisplayPerformanceReport(c *fiber.Ctx) error {
 		Service:      m["service"],
 		DateStart:    m["date_start"],
 		DateEnd:      m["date_end"],
+		DateRange:    m["date_range"],
+		DateBefore:   m["date_before"],
+		DateAfter:    m["date_after"],
 	}
 
 	var (

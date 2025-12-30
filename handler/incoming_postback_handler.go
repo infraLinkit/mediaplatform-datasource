@@ -383,6 +383,14 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 
 				if dc, err := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$"); err == nil {
 
+					if !dc.IsActive {
+						return c.Status(fiber.StatusForbidden).JSON(entity.GlobalResponse{
+							Code:    fiber.StatusForbidden,
+							Message: "Campaign is currently inactive",
+						})
+					}
+
+
 					var (
 						px_byte []byte
 						px      entity.PixelStorage

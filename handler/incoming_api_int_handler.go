@@ -518,6 +518,7 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 			"errors":  errForm.Error(),
 		})
 	}
+	//fmt.Println("BODY CAMPAIGN URL SERVICE : ", campaign.URLServiceKey)
 
 	campaign.SuccessFP = 0
 	campaign.PO = 0
@@ -550,6 +551,11 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 				"error":   err.Error(),
 			})
 		}
+
+		/*
+			ADD SUMMARY DASHBOARD
+		*/
+		h.DS.CreateSummaryDashboard(campaign)
 		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "Updated"})
 	} else {
 
@@ -583,6 +589,8 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 					"errors":  err.Error(),
 				})
 			}
+
+			h.DS.CreateSummaryDashboard(campaign)
 			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "Created from latest"})
 		} else {
 
@@ -593,6 +601,7 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 					"errors":  err.Error(),
 				})
 			}
+			h.DS.CreateSummaryDashboard(campaign)
 			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "Created"})
 		}
 	}

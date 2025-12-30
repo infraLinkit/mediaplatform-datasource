@@ -54,7 +54,7 @@ func (r *BaseModel) GetToken(o entity.PixelStorage) (entity.PixelStorage, bool) 
 func (r *BaseModel) GetByAdnetCode(o entity.PixelStorage) (entity.PixelStorage, bool) {
 
 	result := r.DB.Model(&o).
-		Where("url_service_key = ? AND date(pxdate) = CURRENT_DATE AND pixel = ? AND is_used = false AND is_unique = false", o.URLServiceKey, o.Pixel).
+		Where("url_service_key = ? AND date(pxdate) = CURRENT_DATE AND pixel LIKE ? AND is_used = false AND is_unique = false", o.URLServiceKey, "%"+o.Pixel+"%").
 		First(&o)
 
 	b := errors.Is(result.Error, gorm.ErrRecordNotFound)

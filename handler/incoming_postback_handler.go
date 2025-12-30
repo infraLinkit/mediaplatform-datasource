@@ -390,10 +390,9 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 						})
 					}
 
-
 					var (
-						px_byte []byte
-						px      entity.PixelStorage
+						//px_byte []byte
+						px entity.PixelStorage
 					)
 					isPX := false
 
@@ -407,7 +406,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 					switch p.Method {
 					case "ADNETCODE":
 
-						var key string
+						/* var key string
 
 						breaking := false
 						iter := h.RCP.Scan(0, p.URLServiceKey+"*", 0).Iterator()
@@ -429,10 +428,10 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							}
 						}
 
-						if !breaking {
-							px, isPX = h.DS.GetByAdnetCode(pxData)
+						if !breaking { */
+						px, isPX = h.DS.GetByAdnetCode(pxData)
 
-							if !isPX {
+						/* if !isPX {
 								return c.Status(fiber.StatusNotFound).JSON(
 									entity.GlobalResponse{
 										Code: fiber.StatusNotFound,
@@ -440,7 +439,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 									},
 								)
 							}
-						}
+						} */
 
 					case "TOKEN":
 						px, isPX = h.DS.GetToken(pxData)

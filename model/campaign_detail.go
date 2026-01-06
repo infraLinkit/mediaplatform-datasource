@@ -326,6 +326,32 @@ func (r *BaseModel) ResetCappingCampaignByCapped(o entity.CampaignDetail) error 
 	return result.Error
 }
 
+func (r *BaseModel) GetUrlServiceKeyByService(o entity.CampaignDetail) ([]string, error) {
+	var keys []string
+
+	err := r.DB.
+		Table("campaign_details").
+		Select("url_service_key").
+		Where(`
+			country = ? AND
+			operator = ? AND
+			partner = ? AND
+			service = ?
+		`, o.Country, o.Operator, o.Partner, o.Service).
+		Pluck("url_service_key", &keys).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range keys {
+		keys[i] = keys[i] + "-configIdx"
+	}
+
+	return keys, nil
+}
+
+
 func (r *BaseModel) UpdateMOCappingS2S(o entity.CampaignDetail) error {
 	result := r.DB.Exec(`
 		UPDATE campaign_details cd

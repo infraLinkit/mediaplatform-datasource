@@ -494,9 +494,10 @@ func (h *IncomingHandler) EditMOCappingServiceS2S(c *fiber.Ctx) error {
 
 	h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
 
-	keys, err := h.DS.ScanKeys("*-configIdx")
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Gagal ambil key Redis"})
+	keys, err := h.DS.GetUrlServiceKeyByService(*o)
+	if err != nil || len(keys) == 0 {
+		return c.Status(fiber.StatusNotFound).
+			JSON(fiber.Map{"error": "Data not found"})
 	}
 
 	updated := false
@@ -508,12 +509,11 @@ func (h *IncomingHandler) EditMOCappingServiceS2S(c *fiber.Ctx) error {
 			continue
 		}
 
-		country := data["country"]
-		operator := data["operator"]
-		partner := data["partner"]
-		service := data["service"]
+		if data["country"] == o.Country &&
+			data["operator"] == o.Operator &&
+			data["partner"] == o.Partner &&
+			data["service"] == o.Service {
 
-		if country == o.Country && operator == o.Operator && partner == o.Partner && service == o.Service {
 			h.DS.SetData(key, "$.mo_capping_service", strconv.Itoa(o.MOCappingService))
 			h.DS.SetData(key, "$.status_capping", strconv.FormatBool(false))
 			updated = true

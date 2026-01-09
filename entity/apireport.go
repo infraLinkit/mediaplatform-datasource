@@ -137,11 +137,15 @@ type (
 		Cost1       float64   `json:"cost1"`
 		Conversion2 float64   `json:"conversion2"`
 		Cost2       float64   `json:"cost2"`
+
+		Saaf1 float64 `json:"saaf1"`
+		Saaf2 float64 `json:"saaf2"`
 	}
 
 	DisplayCostReport struct {
 		SummaryDate  time.Time `json:"summary_date"`
 		Adnet        string    `json:"adnet"`
+		Adnets       []string  `json:"adnets"`
 		Country      string    `json:"country"`
 		Operator     string    `json:"operator"`
 		Landing      float64   `json:"landing"`

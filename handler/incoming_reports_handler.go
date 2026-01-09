@@ -448,27 +448,28 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 		}
 	}
 	fe := entity.DisplayCPAReport{
-		SummaryDate:  time.Time{},
-		CampaignId:   m["campaign_id"],
-		CampaignName: m["campaign_name"],
-		Country:      m["country"],
-		ClientType:   m["client_type"],
-		Company:      m["company"],
-		Operator:     m["operator"],
-		Partner:      m["partner"],
-		Aggregator:   m["aggregator"],
-		Adnets:       adnets,
-		Service:      m["service"],
-		Draw:         draw,
-		Page:         page,
-		PageSize:     pageSize,
-		Action:       m["action"],
-		DateRange:    m["date_range"],
-		DateBefore:   m["date_before"],
-		DateAfter:    m["date_after"],
-		Reload:       m["reload"],
-		OrderColumn:  m["order_column"],
-		OrderDir:     m["order_dir"],
+		SummaryDate:       time.Time{},
+		CampaignId:        m["campaign_id"],
+		CampaignName:      m["campaign_name"],
+		Country:           m["country"],
+		ClientType:        m["client_type"],
+		Company:           m["company"],
+		Operator:          m["operator"],
+		Partner:           m["partner"],
+		Aggregator:        m["aggregator"],
+		Adnets:            adnets,
+		Service:           m["service"],
+		Draw:              draw,
+		Page:              page,
+		PageSize:          pageSize,
+		Action:            m["action"],
+		DateRange:         m["date_range"],
+		DateBefore:        m["date_before"],
+		DateAfter:         m["date_after"],
+		Reload:            m["reload"],
+		OrderColumn:       m["order_column"],
+		OrderDir:          m["order_dir"],
+		CampaignObjective: m["campaign_objective"],
 	}
 
 	allowedCompanies, _ := c.Locals("companies").([]string)
@@ -630,6 +631,7 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 	c.Accepts("application/x-www-form-urlencoded")
 	c.AcceptsCharsets("utf-8", "iso-8859-1")
 
+	//fmt.Println("GO FUCK !")
 	m := c.Queries()
 
 	page, errPage := strconv.Atoi(m["page"])
@@ -644,8 +646,18 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 	draw, _ := strconv.Atoi(m["draw"])
 	v := c.Params("v")
 
+	var adnets []string
+	for k, v := range m {
+		if strings.HasPrefix(k, "adnet[") {
+			adnets = append(adnets, v)
+		}
+	}
+
+	//fmt.Println("V: ", adnets)
+
 	fe := entity.DisplayCostReport{
 		Adnet:        m["adnet"],
+		Adnets:       adnets,
 		Country:      m["country"],
 		Operator:     m["operator"],
 		CampaignType: m["campaign_type"],

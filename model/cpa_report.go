@@ -53,6 +53,8 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		t_query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
 	}
 
+	fmt.Println("o.CampaignObjective: ", o.CampaignObjective)
+
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("campaign_id = ?", o.CampaignId)
@@ -483,9 +485,14 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 		total_rows int64
 	)
 
+	fmt.Println("o: ", o)
+
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	query = query.Where("mo_received > 0")
 	query = query.Where("adnet IN ?", allowedAdnets)
+	if len(o.Adnets) > 0 {
+		query = query.Where("adnet IN ?", o.Adnets)
+	}
 
 	if o.Action == "Search" {
 
@@ -518,17 +525,17 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 		}
 
 		/*
-		SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf 
-			 		  ELSE po * postback
-				 END) as spending_to_adnet, -- sbaf
-			 SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
-			 		  ELSE
-						CASE
-							WHEN LOWER(client_type) = 'external'
-								THEN (mo_received * poaf)
-							ELSE (total_waki_agency_fee + (po * postback) + technical_fee)
-						END
-				 END) as spending,
+			SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf
+				 		  ELSE po * postback
+					 END) as spending_to_adnet, -- sbaf
+				 SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
+				 		  ELSE
+							CASE
+								WHEN LOWER(client_type) = 'external'
+									THEN (mo_received * poaf)
+								ELSE (total_waki_agency_fee + (po * postback) + technical_fee)
+							END
+					 END) as spending,
 		*/
 		rows, err = query.Select(`
 			adnet,
@@ -679,19 +686,19 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport, allow
 		}
 
 		/*
-		adnet,
-			SUM(postback) as conversion1,
-			SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf
-				ELSE po * postback END) as cost1,
-			NULL as conversion2,
-			NULL as cost2, -- API
-			SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
-				ELSE CASE WHEN LOWER(client_type) = 'external' THEN (mo_received * poaf)
-					 ELSE
-					 	(total_waki_agency_fee + (po * postback) + technical_fee)
-					 END 
-				END) as saaf1,
-			NULL as saaf2 -- API
+			adnet,
+				SUM(postback) as conversion1,
+				SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf
+					ELSE po * postback END) as cost1,
+				NULL as conversion2,
+				NULL as cost2, -- API
+				SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
+					ELSE CASE WHEN LOWER(client_type) = 'external' THEN (mo_received * poaf)
+						 ELSE
+						 	(total_waki_agency_fee + (po * postback) + technical_fee)
+						 END
+					END) as saaf1,
+				NULL as saaf2 -- API
 		*/
 		rows, err = query.Select(`
 			adnet,

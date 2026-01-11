@@ -635,6 +635,17 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid action"})
 	}
 
+	tx := h.DB.Begin()
+	if tx.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).
+			JSON(fiber.Map{"error": "failed to begin transaction"})
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
 	gs, err := h.DS.GetDataConfig("global_setting", "$")
 	if err != nil {
 		gset, _ := json.Marshal(entity.GlobalSetting{
@@ -709,13 +720,32 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 		var campaign_detail_id int
 		if dc.URLServiceKey == "NEW_KEY" {
 
-			h.DB.Raw("SELECT pg_sequence_last_value('public.campaign_details_id_seq')").Scan(&campaign_detail_id)
+			var dummy int
+			if err := tx.Raw(`
+				SELECT 1 
+				FROM campaign_details
+				WHERE country = ?
+				  AND operator = ?
+				  AND service = ?
+				  AND partner = ?
+				  AND adnet = ?
+				FOR UPDATE
+			`, country, operator, service, partner, adnet).Scan(&dummy).Error; err != nil {
+				tx.Rollback()
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
 
-			campaign_detail_id = campaign_detail_id + 1
+			if err := tx.Raw(
+				"SELECT nextval('public.campaign_details_id_seq')",
+			).Scan(&campaign_detail_id).Error; err != nil {
+				tx.Rollback()
+				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+			}
 
-			dc.URLServiceKey = h.CampaignLandingId(campaign_detail_id, entity.DataConfig{
-				Country: country,
-			})
+			dc.URLServiceKey = h.CampaignLandingId(
+				campaign_detail_id,
+				entity.DataConfig{Country: country},
+			)
 		}
 
 		cfgRediskey := helper.Concat("-", dc.URLServiceKey, "configIdx")
@@ -957,7 +987,7 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 			technical_fee, _ := strconv.ParseFloat(strings.TrimSpace(gs.TechnicalFee), 64)
 
 			h.DS.NewCampaignDetail(entity.CampaignDetail{
-				ID:                        dc.Id,
+				ID:  					   campaign_detail_id,		
 				URLServiceKey:             dc.URLServiceKey,
 				CampaignId:                obj.CampaignId,
 				Country:                   country,
@@ -1064,6 +1094,11 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 
 			h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
 		}
+	}
+
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Campaign updated successfully"})

@@ -146,7 +146,7 @@ func (cd *CampaignDetail) AfterSave(db *gorm.DB) {
 		fmt.Println("--> Global Hook: A record is about to be updated!")
 		// You can access the data being created:
 		// model := db.Statement.Dest
-		if _, ok := db.Statement.Dest.(*PixelStorage); ok {
+		if _, ok := db.Statement.Dest.(*CampaignDetail); ok {
 
 			cd.SummaryContainer(db)
 		}

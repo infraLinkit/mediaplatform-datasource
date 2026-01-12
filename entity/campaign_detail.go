@@ -160,6 +160,8 @@ func (cd *CampaignDetail) SummaryContainer(db *gorm.DB) {
 	db.Model(&Campaign{}).
 		Where("id = ?", cd.CampaignId).First(&c)
 
+	curdate_time, _ := time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
+
 	db.Clauses(clause.OnConflict{
 		Columns: []clause.Column{
 			{Name: "summary_date"},
@@ -172,10 +174,10 @@ func (cd *CampaignDetail) SummaryContainer(db *gorm.DB) {
 			{Name: "service"},
 			{Name: "adnet"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{
-			"updated_at": time.Now(),
+			"updated_at": curdate_time,
 		}),
 	}).Create(&IncSummaryCampaign{
-		SummaryDate:       time.Now(),
+		SummaryDate:       curdate_time,
 		URLServiceKey:     cd.URLServiceKey,
 		CampaignId:        cd.CampaignId,
 		CampaignObjective: c.CampaignObjective,
@@ -190,7 +192,7 @@ func (cd *CampaignDetail) SummaryContainer(db *gorm.DB) {
 		MoReceived:        0,
 		Postback:          0,
 		POAF:              0,
-		CreatedAt:         time.Now(),
+		CreatedAt:         curdate_time,
 	})
 
 	pos, _ := strconv.ParseFloat(strings.TrimSpace(cd.PO), 64)
@@ -207,11 +209,11 @@ func (cd *CampaignDetail) SummaryContainer(db *gorm.DB) {
 			{Name: "service"},
 			{Name: "adnet"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{
-			"updated_at": time.Now(),
+			"updated_at": curdate_time,
 		}),
 	}).Create(&SummaryCampaign{
 		Status:             cd.IsActive,
-		SummaryDate:        time.Now(),
+		SummaryDate:        curdate_time,
 		CampaignId:         cd.CampaignId,
 		CampaignName:       c.Name,
 		Company:            c.Advertiser,

@@ -24,110 +24,6 @@ type (
 		UpdatedAt time.Time
 	}
 
-	CampaignDetail struct {
-		gorm.Model
-		ID                        int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		URLServiceKey             string    `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
-		CampaignId                string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
-		Country                   string    `gorm:"not null;size:50" json:"country"`
-		Operator                  string    `gorm:"not null;size:50" json:"operator"`
-		Partner                   string    `gorm:"not null;size:50" json:"partner"`
-		Aggregator                string    `gorm:"not null;size:50" json:"aggregator"`
-		Adnet                     string    `gorm:"not null;size:50" json:"adnet"`
-		Service                   string    `gorm:"not null;size:50" json:"service"`
-		Keyword                   string    `gorm:"not null;size:50" json:"keyword"`
-		Subkeyword                string    `gorm:"not null;size:50" json:"subkeyword"`
-		IsBillable                bool      `gorm:"not null;size:50" json:"is_billable"`
-		Plan                      string    `gorm:"not null;size:50" json:"plan"`
-		PO                        string    `gorm:"size:50" json:"po"`
-		Cost                      string    `gorm:"not null;size:50" json:"cost"`
-		PubId                     string    `gorm:"not null;size:50" json:"pubid"`
-		ShortCode                 string    `gorm:"not null;size:50" json:"short_code"`
-		DeviceType                string    `gorm:"not null;size:50" json:"device_type"`
-		OS                        string    `gorm:"not null;size:50" json:"os"`
-		URLType                   string    `gorm:"not null;size:50;default:wap" json:"url_type"`
-		ClickType                 int       `gorm:"not null;length:1;default:1" json:"click_type"`
-		ClickDelay                int       `gorm:"not null;length:1;default:1" json:"click_delay"`
-		ClientType                string    `gorm:"not null;size:50" json:"client_type"`
-		TrafficSource             bool      `gorm:"not null;default:false" json:"traffic_source"`
-		UniqueClick               bool      `gorm:"not null;default:false" json:"unique_click"`
-		URLBanner                 string    `gorm:"type:text;default:NA" json:"url_banner"`
-		URLLanding                string    `gorm:"size:255;default:NA" json:"url_landing"`
-		URLWarpLanding            string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
-		URLService                string    `gorm:"size:255;default:NA" json:"url_service"`
-		URLTFCORSmartlink         string    `gorm:"size:255;default:NA" json:"url_tfc_or_smartlink"`
-		GlobPost                  bool      `gorm:"not null;default:false" json:"glob_post"`
-		URLGlobPost               string    `gorm:"size:255;default:NA" json:"url_glob_post"`
-		CustomIntegration         string    `gorm:"size:30;default:NA" json:"custom_integration"`
-		IpAddress                 []string  `gorm:"type:text[]"`
-		IsActive                  bool      `gorm:"not null;default:true" json:"is_active"`
-		MOCapping                 int       `gorm:"not null;length:10;default:0" json:"mo_capping"`
-		MOCappingService          int       `gorm:"not null;length:10;default:0" json:"mo_capping_service"`
-		CounterMOCapping          int       `gorm:"not null;length:10;default:0" json:"counter_mo_capping"`
-		CounterMOCappingService   int       `gorm:"not null;length:10;default:0" json:"counter_mo_capping_service"`
-		StatusCapping             bool      `gorm:"not null;default:false" json:"status_capping"`
-		KPIUpperLimitCapping      int       `gorm:"not null;length:20;default:1" json:"kpi_upper_limit_capping"`
-		IsMachineLearningCapping  bool      `gorm:"not null;default:false" json:"is_machine_learning_capping"`
-		RatioSend                 int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
-		RatioReceive              int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
-		CounterMORatio            int       `gorm:"not null;length:10;default:0" json:"counter_mo_ratio"`
-		StatusRatio               bool      `gorm:"not null;default:false" json:"status_ratio"`
-		KPIUpperLimitRatioSend    int       `gorm:"not null;length:10;default:1" json:"kpi_upper_limit_ratio_send"`
-		KPIUpperLimitRatioReceive int       `gorm:"not null;length:10;default:4" json:"kpi_upper_limit_ratio_receive"`
-		IsMachineLearningRatio    bool      `gorm:"not null;default:false" json:"is_machine_learning_ratio"`
-		APIURL                    string    `gorm:"size:255;default:NA" json:"api_url"`
-		LastUpdate                time.Time `json:"last_update"`
-		LastUpdateCapping         time.Time `json:"last_update_capping"`
-		CostPerConversion         float64   `gorm:"type:double precision" json:"cost_per_conversion"`
-		AgencyFee                 float64   `gorm:"type:double precision" json:"agency_fee"`
-		TargetDailyBudget         float64   `gorm:"type:double precision" json:"target_daily_budget"`
-		TechnicalFee              float64   `gorm:"type:double precision" json:"technical_fee"`
-		URLPostback               string    `gorm:"size:255;default:NA" json:"url_postback"`
-		MainstreamLpType          string    `gorm:"size:50;default:NA" json:"mainstream_lp_type"`
-		Title                     string    `gorm:"type:text;default:NA" json:"title"`
-		TitleOriginal             string    `gorm:"type:text;default:NA" json:"title_original"`
-		TitleColor                string    `gorm:"size:50;default:NA" json:"title_color"`
-		TitleStyle                string    `gorm:"size:50;default:NA" json:"title_style"`
-		TitlePageType             string    `gorm:"size:50;default:NA" json:"title_page_type"`
-		TitleFontSize             string    `gorm:"size:50;default:NA" json:"title_font_size"`
-		SubTitle                  string    `gorm:"type:text;default:NA" json:"sub_title"`
-		SubTitleOriginal          string    `gorm:"type:text;default:NA" json:"sub_title_original"`
-		SubTitleColor             string    `gorm:"size:50;default:NA" json:"sub_title_color"`
-		SubTitleStyle             string    `gorm:"size:50;default:NA" json:"sub_title_style"`
-		SubTitlePageType          string    `gorm:"size:50;default:NA" json:"sub_title_page_type"`
-		SubTitleFontSize          string    `gorm:"size:50;default:NA" json:"sub_title_font_size"`
-		BackgroundURL             string    `gorm:"type:text;default:NA" json:"background_url"`
-		BackgroundColor           string    `gorm:"size:50;default:NA" json:"background_color"`
-		LogoURL                   string    `gorm:"type:text;default:NA" json:"logo_url"`
-		URLBannerOriginal         string    `gorm:"type:text;default:NA" json:"url_banner_original"`
-		Tnc                       string    `gorm:"type:text;default:NA" json:"tnc"`
-		TncOriginal               string    `gorm:"type:text;default:NA" json:"tnc_original"`
-		TncColor                  string    `gorm:"size:50;default:NA" json:"tnc_color"`
-		TncStyle                  string    `gorm:"size:50;default:NA" json:"tnc_style"`
-		TncPageType               string    `gorm:"size:50;default:NA" json:"tnc_page_type"`
-		TncFontSize               string    `gorm:"size:50;default:NA" json:"tnc_font_size"`
-		ButtonSubscribe           string    `gorm:"type:text;default:NA" json:"button_subscribe"`
-		ButtonSubscribeOriginal   string    `gorm:"type:text;default:NA" json:"button_subscribe_original"`
-		ButtonSubscribeColor      string    `gorm:"size:100;default:NA" json:"button_subscribe_color"`
-		StatusSubmitKeyMainstream bool      `gorm:"not null;default:false" json:"status_submit_key_mainstream"`
-		KeyMainstream             string    `gorm:"size:50;default:NA" json:"key_mainstream"`
-		Channel                   string    `gorm:"size:50;default:NA" json:"channel"`
-		GoogleSheet               string    `gorm:"type:text;default:NA" json:"google_sheet"`
-		GoogleSheetBillable       string    `gorm:"type:text;default:NA" json:"google_sheet_billable"`
-		Currency                  string    `gorm:"size:10;default:NA" json:"currency"`
-		MCC                       string    `gorm:"size:10;default:NA" json:"mcc"`
-		ClickableAnywhere         bool      `gorm:"not null;default:false" json:"clickable_anywhere"`
-		NonTargetURL              string    `gorm:"type:text;default:NA" json:"non_target_url"`
-		EnableIpRanges            bool      `gorm:"not null;default:false" json:"enable_ip_ranges"`
-		ConversionName            string    `gorm:"size:50;default:NA" json:"conversion_name"`
-		DomainService 			      string 	  `gorm:"type:varchar(80)" json:"domain_service"`
-		CampaignDetailName 		    string 	  `gorm:"type:varchar(80)" json:"campaign_detail_name"`
-		Prefix 					          string 	  `gorm:"type:varchar(80)" json:"prefix"`
-		CountryDialingCode 		    string 	  `gorm:"type:varchar(80)" json:"country_dialing_code"`
-		CreatedAt                 time.Time
-		UpdatedAt                 time.Time
-	}
-
 	LpDesignType struct {
 		gorm.Model
 		ID                int    `gorm:"primaryKey;autoIncrement" json:"id"`
@@ -500,28 +396,6 @@ type (
 		UpdatedAt                time.Time
 	}
 
-	IncSummaryCampaign struct {
-		gorm.Model
-		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		SummaryDate       time.Time `gorm:"type:date;uniqueIndex:idx_incsumunique" json:"summary_date"`
-		URLServiceKey     string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"urlservicekey"`
-		CampaignId        string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"campaign_id"`
-		CampaignObjective string    `gorm:"uniqueIndex:idx_incsumunique;size:50;default:NA" json:"campaign_objective"`
-		Country           string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"country"`
-		Operator          string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"operator"`
-		Partner           string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"partner"`
-		Aggregator        string    `gorm:"not null;size:50" json:"aggregator"`
-		Adnet             string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"adnet"`
-		Service           string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"service"`
-		ShortCode         string    `gorm:"not null;size:50" json:"short_code"`
-		Landing           int       `gorm:"length:20;default:0" json:"landing"`
-		MoReceived        int       `gorm:"length:20;default:0" json:"mo_received"`
-		Postback          int       `gorm:"length:20;default:0" json:"postback"`
-		POAF              float64   `gorm:"type:double precision;default:0" json:"po_af"`
-		CreatedAt         time.Time
-		UpdatedAt         time.Time
-	}
-
 	IncSummaryCampaignHour struct {
 		gorm.Model
 		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`
@@ -668,36 +542,36 @@ type (
 
 	ApiPinPerformance struct {
 		gorm.Model
-		ID                  int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		DateSend            time.Time `gorm:"type:date;uniqueIndex:idx_pin_performance_unique" json:"date_send"`
-		Country             string    `gorm:"not null;size:50;uniqueIndex:idx_pin_performance_unique" json:"country"`
-		Company             string    `gorm:"not null;size:50" json:"company"`
-		Adnet               string    `gorm:"not null;size:50;uniqueIndex:idx_pin_performance_unique" json:"adnet"`
-		Operator            string    `gorm:"not null;size:50;uniqueIndex:idx_pin_performance_unique" json:"operator"`
-		Service             string    `gorm:"not null;size:50;uniqueIndex:idx_pin_performance_unique" json:"service"`
-		PinRequest          int       `gorm:"length:20;default:0" json:"pin_request"`
-		UniquePinRequest    int       `gorm:"length:20;default:0" json:"unique_pin_request"`
-		PinSuccess          int       `gorm:"length:20;default:0" json:"pin_success"`
-		PinFailed           int       `gorm:"length:20;default:0" json:"pin_failed"`
+		ID                     int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		DateSend               time.Time `gorm:"type:date;uniqueIndex:idx_pin_performance_unique" json:"date_send"`
+		Country                string    `gorm:"not null;size:50;uniqueIndex:idx_pin_performance_unique" json:"country"`
+		Company                string    `gorm:"not null;size:50" json:"company"`
+		Adnet                  string    `gorm:"not null;size:50;uniqueIndex:idx_pin_performance_unique" json:"adnet"`
+		Operator               string    `gorm:"not null;size:50;uniqueIndex:idx_pin_performance_unique" json:"operator"`
+		Service                string    `gorm:"not null;size:50;uniqueIndex:idx_pin_performance_unique" json:"service"`
+		PinRequest             int       `gorm:"length:20;default:0" json:"pin_request"`
+		UniquePinRequest       int       `gorm:"length:20;default:0" json:"unique_pin_request"`
+		PinSuccess             int       `gorm:"length:20;default:0" json:"pin_success"`
+		PinFailed              int       `gorm:"length:20;default:0" json:"pin_failed"`
 		PinVerifyRequest       int       `gorm:"length:20;default:0" json:"pin_verify_request"`
 		PinVerifyRequestUnique int       `gorm:"length:20;default:0" json:"pin_verify_request_unique"`
-		PinOK               int       `gorm:"length:20;default:0" json:"pin_ok"`
-		PinNotOK            int       `gorm:"length:20;default:0" json:"pin_not_ok"`
-		PinOkRatio          int       `gorm:"length:20;default:0" json:"pin_ok_ratio"`
-		CPA                 float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cpa"`
-		CPAWaki             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cpa_waki"`
-		EstimatedARPU       float64   `gorm:"type:double precision;not null;length:20;default:0" json:"estimated_arpu"`
-		SBAF                float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
-		SAAF                float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
-		ChargedMO           float64   `gorm:"type:double precision;not null;length:20;default:0" json:"charged_mo"`
-		SubsCR              float64   `gorm:"type:double precision;not null;length:20;default:0" json:"subs_cr"`
-		AdnetCR             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"adnet_cr"`
-		CAC                 float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cac"`
-		PaidCAC             float64   `gorm:"type:double precision;not null;length:20;default:0" json:"paid_cac"`
+		PinOK                  int       `gorm:"length:20;default:0" json:"pin_ok"`
+		PinNotOK               int       `gorm:"length:20;default:0" json:"pin_not_ok"`
+		PinOkRatio             int       `gorm:"length:20;default:0" json:"pin_ok_ratio"`
+		CPA                    float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cpa"`
+		CPAWaki                float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cpa_waki"`
+		EstimatedARPU          float64   `gorm:"type:double precision;not null;length:20;default:0" json:"estimated_arpu"`
+		SBAF                   float64   `gorm:"type:double precision;not null;length:20;default:0" json:"sbaf"`
+		SAAF                   float64   `gorm:"type:double precision;not null;length:20;default:0" json:"saaf"`
+		ChargedMO              float64   `gorm:"type:double precision;not null;length:20;default:0" json:"charged_mo"`
+		SubsCR                 float64   `gorm:"type:double precision;not null;length:20;default:0" json:"subs_cr"`
+		AdnetCR                float64   `gorm:"type:double precision;not null;length:20;default:0" json:"adnet_cr"`
+		CAC                    float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cac"`
+		PaidCAC                float64   `gorm:"type:double precision;not null;length:20;default:0" json:"paid_cac"`
 		TotalSpending          float64   `gorm:"type:double precision;not null;length:20;default:0" json:"total_spending"`
 		TotalWakiAgencyFee     float64   `gorm:"type:double precision;not null;length:20;default:0" json:"total_waki_agency_fee"`
 		CpaPerPO               float64   `gorm:"type:double precision;not null;length:20;default:0" json:"cpa_per_po"`
-		TotalSpendingAfterWaki    float64   `gorm:"type:double precision;not null;length:20;default:0" json:"total_spending_after_waki"`
+		TotalSpendingAfterWaki float64   `gorm:"type:double precision;not null;length:20;default:0" json:"total_spending_after_waki"`
 		CreatedAt              time.Time
 		UpdatedAt              time.Time
 	}
@@ -826,7 +700,7 @@ type (
 		Name              string `gorm:"type:varchar(80)" json:"name"  validate:"unique,required,max=80"`
 		NumericCode       string `gorm:"type:varchar(10)" json:"numeric_code" form:"numeric_code"  validate:"required,max=10"`
 		MobileCountryCode string `gorm:"type:varchar(10)" json:"mobile_country_code" form:"mobile_country_code"  validate:"required,max=10"`
-		Continent		  string `gorm:"type:varchar(80)" json:"continent"  validate:"max=80"`
+		Continent         string `gorm:"type:varchar(80)" json:"continent"  validate:"max=80"`
 		IsActive          string `gorm:"type:bool;default:true" json:"is_active" form:"is_active" `
 	}
 
@@ -836,11 +710,11 @@ type (
 	}
 
 	CompanyGroup struct {
-		ID   		uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-		Name 		string `gorm:"type:text" json:"name"`
-		Company     string `gorm:"size:255;default:NA" json:"company"`
-		Country     string `gorm:"size:255;default:NA" json:"country"`
-		Partner     string `gorm:"size:255;default:NA" json:"partner"`
+		ID      uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name    string `gorm:"type:text" json:"name"`
+		Company string `gorm:"size:255;default:NA" json:"company"`
+		Country string `gorm:"size:255;default:NA" json:"country"`
+		Partner string `gorm:"size:255;default:NA" json:"partner"`
 	}
 
 	Domain struct {
@@ -1026,65 +900,64 @@ type (
 
 	BudgetIO struct {
 		gorm.Model
-		ID                 int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		Status             string    `gorm:"default:'submitted'" json:"status"`
-		
-		VerifiedAt         time.Time `gorm:"default:NULL" json:"verified_at"`
+		ID     int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		Status string `gorm:"default:'submitted'" json:"status"`
 
-		SubmittedBy		   string    `gorm:"size:255;default:NA" json:"submitted_by"`
-		ApprovedBy		   string    `gorm:"size:255;default:NA" json:"approved_by"`
+		VerifiedAt time.Time `gorm:"default:NULL" json:"verified_at"`
 
-		IOID               string    `gorm:"size:255;default:NA" json:"io_id"`
-		CampaignType       string    `gorm:"size:100;default:NA" json:"campaign_type"`
-		Month              string    `gorm:"size:20;default:NA" json:"month"`
-		Country            string    `gorm:"size:10;default:NA" json:"country"`
-		CountryName        string    `gorm:"size:255;default:NA" json:"country_name"`
-		Continent          string    `gorm:"size:50;default:NA" json:"continent"`
-		CompanyGroupName   string    `gorm:"size:255;default:NA" json:"company_group_name"`
-		Company            string    `gorm:"size:255;default:NA" json:"company"`
-		Partner            string    `gorm:"size:255;default:NA" json:"partner"`
-		Service            string    `gorm:"size:255;default:NA" json:"service"`
+		SubmittedBy string `gorm:"size:255;default:NA" json:"submitted_by"`
+		ApprovedBy  string `gorm:"size:255;default:NA" json:"approved_by"`
 
-		TargetCAC          float64   `gorm:"type:double precision" json:"target_cac"`
-		TargetROI          int	    `gorm:"type:int" json:"target_roi"`
-		MonthlyMOTarget    float64	`gorm:"type:double precision" json:"monthly_mo_target"`
-		MonthlySpendTarget float64	`gorm:"type:double precision" json:"monthly_spend_target"`
+		IOID             string `gorm:"size:255;default:NA" json:"io_id"`
+		CampaignType     string `gorm:"size:100;default:NA" json:"campaign_type"`
+		Month            string `gorm:"size:20;default:NA" json:"month"`
+		Country          string `gorm:"size:10;default:NA" json:"country"`
+		CountryName      string `gorm:"size:255;default:NA" json:"country_name"`
+		Continent        string `gorm:"size:50;default:NA" json:"continent"`
+		CompanyGroupName string `gorm:"size:255;default:NA" json:"company_group_name"`
+		Company          string `gorm:"size:255;default:NA" json:"company"`
+		Partner          string `gorm:"size:255;default:NA" json:"partner"`
+		Service          string `gorm:"size:255;default:NA" json:"service"`
 
-		CPName             string    `gorm:"size:255;default:NA" json:"cp_name"`
-		PICName            string    `gorm:"size:255;default:NA" json:"pic_name"`
-		ContactEmail       string    `gorm:"size:255;default:NA" json:"contact_email"`
-		CPBusinessPICName  string    `gorm:"size:255;default:NA" json:"business_pic_name"`
-		Signature     	   string    `gorm:"type:text" json:"signature"`
+		TargetCAC          float64 `gorm:"type:double precision" json:"target_cac"`
+		TargetROI          int     `gorm:"type:int" json:"target_roi"`
+		MonthlyMOTarget    float64 `gorm:"type:double precision" json:"monthly_mo_target"`
+		MonthlySpendTarget float64 `gorm:"type:double precision" json:"monthly_spend_target"`
 
-		CreatedAt          time.Time
-		UpdatedAt          time.Time
+		CPName            string `gorm:"size:255;default:NA" json:"cp_name"`
+		PICName           string `gorm:"size:255;default:NA" json:"pic_name"`
+		ContactEmail      string `gorm:"size:255;default:NA" json:"contact_email"`
+		CPBusinessPICName string `gorm:"size:255;default:NA" json:"business_pic_name"`
+		Signature         string `gorm:"type:text" json:"signature"`
+
+		CreatedAt time.Time
+		UpdatedAt time.Time
 	}
 
 	SummaryBudgetIO struct {
 		gorm.Model
-		ID                     int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		CampaignType       	   string    `gorm:"size:100;default:NA" json:"campaign_type"`
-		Month                  string    `gorm:"size:20;default:NA" json:"month"`        // format YYYY-MM
-		Country                string    `gorm:"size:50;default:NA" json:"country"`
-		Continent              string    `gorm:"size:50;default:NA" json:"continent"`
-		Company				   string	 `gorm:"size:50;default:NA" json:"company"`
-		Partner				   string	 `gorm:"size:50;default:NA" json:"partner"`
-		Service				   string	 `gorm:"size:50;default:NA" json:"service"`
-		TotalMonthlySpendTarget float64   `gorm:"type:double precision;default:0" json:"total_monthly_spend_target"`
-		ActualWeek1            float64   `gorm:"type:double precision;default:0" json:"actual_week_1"`
-		ActualWeek2            float64   `gorm:"type:double precision;default:0" json:"actual_week_2"`
-		ActualWeek3            float64   `gorm:"type:double precision;default:0" json:"actual_week_3"`
-		ActualWeek4            float64   `gorm:"type:double precision;default:0" json:"actual_week_4"`
+		ID                      int     `gorm:"primaryKey;autoIncrement" json:"id"`
+		CampaignType            string  `gorm:"size:100;default:NA" json:"campaign_type"`
+		Month                   string  `gorm:"size:20;default:NA" json:"month"` // format YYYY-MM
+		Country                 string  `gorm:"size:50;default:NA" json:"country"`
+		Continent               string  `gorm:"size:50;default:NA" json:"continent"`
+		Company                 string  `gorm:"size:50;default:NA" json:"company"`
+		Partner                 string  `gorm:"size:50;default:NA" json:"partner"`
+		Service                 string  `gorm:"size:50;default:NA" json:"service"`
+		TotalMonthlySpendTarget float64 `gorm:"type:double precision;default:0" json:"total_monthly_spend_target"`
+		ActualWeek1             float64 `gorm:"type:double precision;default:0" json:"actual_week_1"`
+		ActualWeek2             float64 `gorm:"type:double precision;default:0" json:"actual_week_2"`
+		ActualWeek3             float64 `gorm:"type:double precision;default:0" json:"actual_week_3"`
+		ActualWeek4             float64 `gorm:"type:double precision;default:0" json:"actual_week_4"`
 
-		GMV                    float64   `gorm:"type:double precision;default:0" json:"gmv"`
-		LTV                    float64   `gorm:"type:double precision;default:0" json:"ltv"`
-		ROAS                   float64   `gorm:"type:double precision;default:0" json:"roas"`
-		ROI                    float64   `gorm:"type:double precision;default:0" json:"roi"`
+		GMV  float64 `gorm:"type:double precision;default:0" json:"gmv"`
+		LTV  float64 `gorm:"type:double precision;default:0" json:"ltv"`
+		ROAS float64 `gorm:"type:double precision;default:0" json:"roas"`
+		ROI  float64 `gorm:"type:double precision;default:0" json:"roi"`
 
-		CreatedAt              time.Time `json:"created_at"`
-		UpdatedAt              time.Time `json:"updated_at"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
 	}
-
 
 	UserCompany struct {
 		gorm.Model
@@ -1107,9 +980,9 @@ type (
 )
 
 // Hook table campaign_details
-func (o *CampaignDetail) AfterUpdate(tx *gorm.DB) (err error) {
+/* func (o *CampaignDetail) AfterUpdate(tx *gorm.DB) (err error) {
 	if o.CounterMOCapping >= o.MOCapping {
 		tx.Model(&CampaignDetail{}).Where("id = ?", o.ID).Update("last_update_capping", o.LastUpdate)
 	}
 	return
-}
+} */

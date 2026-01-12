@@ -294,3 +294,12 @@ func ParseVendorDateSend(loc *time.Location, raw string) time.Time {
 		loc,
 	)
 }
+
+func InArray(needle string, haystack []string) bool {
+	for _, v := range haystack {
+		if v == needle {
+			return true
+		}
+	}
+	return false
+}

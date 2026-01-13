@@ -22,8 +22,8 @@ var serverCmd = &cobra.Command{
 		c.DB.AutoMigrate(&entity.SummaryDashboard{}, &entity.Campaign{}, &entity.CampaignDetail{}, &entity.MO{}, &entity.PixelStorage{}, &entity.Postback{}, &entity.SummaryCampaign{}, &entity.DataClicked{}, &entity.DataLanding{}, &entity.DataRedirect{}, &entity.DataTraffic{}, &entity.ApiPinReport{}, &entity.ApiPinPerformance{}, &entity.Menu{}, &entity.Country{}, &entity.Continent{}, &entity.Company{}, &entity.CompanyGroup{}, &entity.Domain{}, &entity.Operator{}, &entity.Partner{}, &entity.Service{}, &entity.AdnetList{}, &entity.SummaryMo{}, &entity.SummaryCr{}, &entity.SummaryCapping{}, &entity.SummaryRatio{}, &entity.Role{}, &entity.Permission{}, &entity.User{}, &entity.CcEmail{}, &entity.Email{}, &entity.DetailUser{}, &entity.UserAdnet{}, &entity.LpDesignType{}, &entity.Agency{}, &entity.Channel{}, &entity.MainstreamGroup{}, &entity.SummaryLanding{}, &entity.IPRangeCsvRow{}, &entity.IPRange{}, &entity.IncSummaryCampaign{}, &entity.IncSummaryCampaignHour{}, &entity.SummaryTraffic{}, &entity.BudgetIO{}, &entity.SummaryBudgetIO{}, &entity.UserCompany{}, &entity.DomainService{})
 
 		// Register GORM Hooks
-		c.DB.Use(&entity.IncSummaryCampaign{})
-		c.DB.Use(&entity.CampaignDetail{})
+		//c.DB.Use(&entity.IncSummaryCampaign{})
+		//c.DB.Use(&entity.CampaignDetail{})
 
 		c.Rmqp.SetUpChannel("direct", true, cfg.RabbitMQPixelStorageExchangeName, true, cfg.RabbitMQPixelStorageQueueName)
 		c.Rmqp.SetUpChannel("direct", true, cfg.RabbitMQRatioExchangeName, true, cfg.RabbitMQRatioQueueName)

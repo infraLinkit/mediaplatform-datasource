@@ -1,13 +1,9 @@
 package entity
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type (
@@ -117,8 +113,14 @@ type (
 )
 
 // HOOK or Trigger
+func (cd *CampaignDetail) AfterUpdate(db *gorm.DB) {
+	if cd.CounterMOCapping >= cd.MOCapping {
+		db.Model(&CampaignDetail{}).Where("id = ?", cd.ID).Update("last_update_capping", cd.LastUpdate)
+	}
+}
+
 // Important Create Name Func per hook entity!, Name returns the name of the plugin
-func (cd *CampaignDetail) Name() string {
+/* func (cd *CampaignDetail) Name() string {
 	return "campaign_detail_trigger"
 }
 
@@ -126,8 +128,8 @@ func (cd *CampaignDetail) Name() string {
 func (cd *CampaignDetail) Initialize(db *gorm.DB) error {
 	// Register a callback before the standard Create operation
 
-	db.Callback().Create().After("gorm:insert").Register(cd.Name(), cd.AfterUpdate)
-	db.Callback().Update().After("gorm:update").Register(cd.Name(), cd.AfterSave)
+	//db.Callback().Create().After("gorm:insert").Register(cd.Name(), cd.AfterUpdate)
+	db.Callback().Update().After("gorm:update").Register("campaign_detail_trigger", cd.AfterSave)
 
 	return nil
 }
@@ -143,40 +145,33 @@ func (cd *CampaignDetail) AfterUpdate(db *gorm.DB) {
 func (cd *CampaignDetail) AfterSave(db *gorm.DB) {
 
 	if db.Error == nil {
-		fmt.Println("--> Global Hook: A record is about to be updated!")
 		// You can access the data being created:
 		// model := db.Statement.Dest
-		if _, ok := db.Statement.Dest.(*CampaignDetail); ok {
+		//if _, ok := db.Statement.Dest.(*CampaignDetail); ok {
 
-			cd.SummaryContainer(db)
-		}
+		cd.SummaryContainer(db)
+		//}
 	}
 }
 
-func (cd *CampaignDetail) SummaryContainer(db *gorm.DB) {
+func (cd *CampaignDetail) SummaryContainer(tx *gorm.DB) {
 
-	var c Campaign
+	var (
+		c  Campaign
+		o  IncSummaryCampaign
+		sc SummaryCampaign
+	)
 
-	db.Model(&Campaign{}).
+	fmt.Printf("--> Campaign Detail AfterSave Hook, %#v\n", cd)
+
+	tx.Model(&Campaign{}).
 		Where("id = ?", cd.CampaignId).First(&c)
 
 	curdate_time, _ := time.Parse("2006-01-02", time.Now().Format("2006-01-02"))
 
-	db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{
-			{Name: "summary_date"},
-			{Name: "url_service_key"},
-			{Name: "campaign_id"},
-			{Name: "campaign_objective"},
-			{Name: "country"},
-			{Name: "operator"},
-			{Name: "partner"},
-			{Name: "service"},
-			{Name: "adnet"}},
-		DoUpdates: clause.Assignments(map[string]interface{}{
-			"updated_at": curdate_time,
-		}),
-	}).Create(&IncSummaryCampaign{
+	pos, _ := strconv.ParseFloat(strings.TrimSpace(cd.PO), 64)
+
+	o = IncSummaryCampaign{
 		SummaryDate:       curdate_time,
 		URLServiceKey:     cd.URLServiceKey,
 		CampaignId:        cd.CampaignId,
@@ -193,25 +188,9 @@ func (cd *CampaignDetail) SummaryContainer(db *gorm.DB) {
 		Postback:          0,
 		POAF:              0,
 		CreatedAt:         curdate_time,
-	})
+	}
 
-	pos, _ := strconv.ParseFloat(strings.TrimSpace(cd.PO), 64)
-
-	db.Clauses(clause.OnConflict{
-		Columns: []clause.Column{
-			{Name: "summary_date"},
-			{Name: "url_service_key"},
-			{Name: "campaign_id"},
-			{Name: "campaign_objective"},
-			{Name: "country"},
-			{Name: "operator"},
-			{Name: "partner"},
-			{Name: "service"},
-			{Name: "adnet"}},
-		DoUpdates: clause.Assignments(map[string]interface{}{
-			"updated_at": curdate_time,
-		}),
-	}).Create(&SummaryCampaign{
+	sc = SummaryCampaign{
 		Status:             cd.IsActive,
 		SummaryDate:        curdate_time,
 		CampaignId:         cd.CampaignId,
@@ -258,5 +237,22 @@ func (cd *CampaignDetail) SummaryContainer(db *gorm.DB) {
 		CrMO:               0,
 		CrPostback:         0,
 		POAF:               pos,
-	})
-}
+	}
+
+	result := tx.Model(&o).
+		Where("summary_date = '"+o.SummaryDate.Format("2006-01-02")+"' AND url_service_key = ?", o.URLServiceKey).
+		First(&o)
+
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b { // Data Not Found
+
+		result := tx.Create(&o)
+
+		fmt.Printf("NewIncSummaryCampaign :%s-%s, affected: %d, is error : %#v\n", o.URLServiceKey, o.SummaryDate, result.RowsAffected, result.Error)
+
+		result = tx.Create(&sc)
+
+		fmt.Printf("NewSummaryCampaign :%s-%s, affected: %d, is error : %#v\n", o.URLServiceKey, o.SummaryDate, result.RowsAffected, result.Error)
+	}
+} */

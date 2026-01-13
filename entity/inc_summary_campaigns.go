@@ -1,12 +1,8 @@
 package entity
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
 	"time"
 
-	"github.com/infraLinkit/mediaplatform-datasource/helper"
 	"gorm.io/gorm"
 )
 
@@ -36,7 +32,7 @@ type (
 
 // HOOK or Trigger
 // Important Create Name Func per hook entity!, Name returns the name of the plugin
-func (sum *IncSummaryCampaign) Name() string {
+/* func (sum *IncSummaryCampaign) Name() string {
 	return "inc_summary_campaign_trigger_update_landing_mo_postback"
 }
 
@@ -197,4 +193,4 @@ func (sum *IncSummaryCampaign) FormulaCPA(tx *gorm.DB, cd CampaignDetail, c Camp
 	}
 
 	return sc
-}
+} */

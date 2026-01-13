@@ -121,9 +121,9 @@ func (r *BaseModel) DelCampaign(o entity.Campaign) error {
 }
 
 func (r *BaseModel) CountCampaignDetailByCampaignID(o entity.CampaignDetail) (int, error) {
-    var count int64
-    err := r.DB.Model(&entity.CampaignDetail{}).Where("campaign_id = ?", o.CampaignId).Count(&count).Error
-    return int(count), err
+	var count int64
+	err := r.DB.Model(&entity.CampaignDetail{}).Where("campaign_id = ?", o.CampaignId).Count(&count).Error
+	return int(count), err
 }
 
 func (r *BaseModel) DelCampaignDetail(o entity.CampaignDetail) error {
@@ -351,7 +351,6 @@ func (r *BaseModel) GetUrlServiceKeyByService(o entity.CampaignDetail) ([]string
 	return keys, nil
 }
 
-
 func (r *BaseModel) UpdateMOCappingS2S(o entity.CampaignDetail) error {
 	result := r.DB.Exec(`
 		UPDATE campaign_details cd
@@ -418,17 +417,17 @@ func (r *BaseModel) GetMOCappingServiceAndCounter(o entity.CampaignDetail) (int,
 }
 
 func (r *BaseModel) GetCampaignDetailsWithObjectiveByCampaignId(campaignId string) ([]struct {
-    entity.CampaignDetail
-    CampaignObjective string
+	entity.CampaignDetail
+	CampaignObjective string
 }, error) {
-    var results []struct {
-        entity.CampaignDetail
-        CampaignObjective string
-    }
-    err := r.DB.Table("campaign_details").
-        Select("campaign_details.*, campaigns.campaign_objective").
-        Joins("JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
-        Where("campaign_details.campaign_id = ?", campaignId).
-        Scan(&results).Error
-    return results, err
+	var results []struct {
+		entity.CampaignDetail
+		CampaignObjective string
+	}
+	err := r.DB.Table("campaign_details").
+		Select("campaign_details.*, campaigns.campaign_objective").
+		Joins("JOIN campaigns ON campaigns.campaign_id = campaign_details.campaign_id").
+		Where("campaign_details.campaign_id = ?", campaignId).
+		Scan(&results).Error
+	return results, err
 }

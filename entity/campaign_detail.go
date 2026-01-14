@@ -113,9 +113,9 @@ type (
 
 	HistoryCappingKey struct {
 		gorm.Model
-		ID            int    `gorm:"primaryKey;autoIncrement" json:"id"`
-		URLServiceKey string `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
-		CreatedAt     time.Time
+		ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		URLServiceKey string    `gorm:"index:idx_urlservicekey;not null;size:50;uniqueIndex:idx_hck_conflict_key" json:"urlservicekey"`
+		CreatedAt     time.Time `gorm:"uniqueIndex:idx_hck_conflict_key"`
 		UpdatedAt     time.Time
 	}
 )

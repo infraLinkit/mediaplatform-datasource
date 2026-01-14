@@ -110,6 +110,14 @@ type (
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}
+
+	HistoryCappingKey struct {
+		gorm.Model
+		ID            int    `gorm:"primaryKey;autoIncrement" json:"id"`
+		URLServiceKey string `gorm:"index:idx_urlservicekey;not null;size:50" json:"urlservicekey"`
+		CreatedAt     time.Time
+		UpdatedAt     time.Time
+	}
 )
 
 // HOOK or Trigger

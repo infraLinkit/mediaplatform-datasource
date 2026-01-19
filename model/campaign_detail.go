@@ -160,6 +160,34 @@ func (r *BaseModel) EditSettingCampaignDetail(o entity.CampaignDetail) error {
 	return result.Error
 }
 
+func (r *BaseModel) UpdateCampaignPO(o entity.CampaignDetail) error {
+	return r.DB.Model(&entity.CampaignDetail{}).
+		Where("url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
+			o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Update("po", o.PO).Error
+}
+
+func (r *BaseModel) UpdateCampaignRatio(o entity.CampaignDetail) error {
+	return r.DB.Model(&entity.CampaignDetail{}).
+		Where("url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
+			o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Updates(map[string]interface{}{
+			"ratio_send":    o.RatioSend,
+			"ratio_receive": o.RatioReceive,
+		}).Error
+}
+
+func (r *BaseModel) UpdateCampaignMOCapping(o entity.CampaignDetail) error {
+	return r.DB.Model(&entity.CampaignDetail{}).
+		Where("url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
+			o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Updates(map[string]interface{}{
+			"mo_capping":     o.MOCapping,
+			"status_capping": false,
+			"last_update":    o.LastUpdate,
+		}).Error
+}
+
 func (r *BaseModel) UpdateStatusCampaignDetail(o entity.CampaignDetail) error {
 	result := r.DB.Model(&o).
 		Where("url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ?",

@@ -293,6 +293,200 @@ func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).Send([]byte("OK"))
 }
 
+func (h *IncomingHandler) EditCampaignMOCapping(c *fiber.Ctx) error {
+	o := new(entity.CampaignDetail)
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	s := new(entity.SummaryCampaign)
+	_ = c.BodyParser(&s)
+
+	cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+	cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+
+	if o.MOCapping == cfgCmp.MOCapping {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	cfgCmp.MOCapping = o.MOCapping
+	cfgCmp.StatusCapping = false
+	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+
+	cfgData, _ := json.Marshal(cfgCmp)
+
+	now := time.Now().In(h.Config.TZ)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, h.Config.TZ)
+
+	summaryLocal := s.SummaryDate.In(h.Config.TZ)
+	summaryLocal = time.Date(
+		summaryLocal.Year(),
+		summaryLocal.Month(),
+		summaryLocal.Day(),
+		0, 0, 0, 0,
+		h.Config.TZ,
+	)
+
+	if s.SummaryDate.IsZero() || summaryLocal.Equal(today) {
+		h.DS.SetData(cfgRediskey, "$", string(cfgData))
+		h.DS.UpdateCampaignMOCapping(entity.CampaignDetail{
+			MOCapping:     o.MOCapping,
+			StatusCapping: false,
+			LastUpdate:    helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+			URLServiceKey: o.URLServiceKey,
+			Country:       cfgCmp.Country,
+			Operator:      cfgCmp.Operator,
+			Partner:       cfgCmp.Partner,
+			Adnet:         cfgCmp.Adnet,
+			Service:       cfgCmp.Service,
+			CampaignId:    o.CampaignId,
+		})
+	}
+
+	h.DS.UpdateSummaryMOCapping(entity.SummaryCampaign{
+		SummaryDate:   s.SummaryDate,
+		MOLimit:       o.MOCapping,
+		URLServiceKey: o.URLServiceKey,
+		Country:       cfgCmp.Country,
+		Operator:      cfgCmp.Operator,
+		Partner:       cfgCmp.Partner,
+		Adnet:         cfgCmp.Adnet,
+		Service:       cfgCmp.Service,
+		CampaignId:    o.CampaignId,
+	})
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (h *IncomingHandler) EditCampaignRatio(c *fiber.Ctx) error {
+	o := new(entity.CampaignDetail)
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	s := new(entity.SummaryCampaign)
+	_ = c.BodyParser(&s)
+
+	cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+	cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+
+	if o.RatioSend == cfgCmp.RatioSend && o.RatioReceive == cfgCmp.RatioReceive {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	cfgCmp.RatioSend = o.RatioSend
+	cfgCmp.RatioReceive = o.RatioReceive
+	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+
+	cfgData, _ := json.Marshal(cfgCmp)
+
+	now := time.Now().In(h.Config.TZ)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, h.Config.TZ)
+
+	summaryLocal := s.SummaryDate.In(h.Config.TZ)
+	summaryLocal = time.Date(
+		summaryLocal.Year(),
+		summaryLocal.Month(),
+		summaryLocal.Day(),
+		0, 0, 0, 0,
+		h.Config.TZ,
+	)
+
+	if s.SummaryDate.IsZero() || summaryLocal.Equal(today) {
+		h.DS.SetData(cfgRediskey, "$", string(cfgData))
+		h.DS.UpdateCampaignRatio(entity.CampaignDetail{
+			RatioSend:     o.RatioSend,
+			RatioReceive: o.RatioReceive,
+			URLServiceKey: o.URLServiceKey,
+			Country:       cfgCmp.Country,
+			Operator:      cfgCmp.Operator,
+			Partner:       cfgCmp.Partner,
+			Adnet:         cfgCmp.Adnet,
+			Service:       cfgCmp.Service,
+			CampaignId:    o.CampaignId,
+		})
+	}
+
+	h.DS.UpdateSummaryRatio(entity.SummaryCampaign{
+		SummaryDate:   s.SummaryDate,
+		RatioSend:     o.RatioSend,
+		RatioReceive:  o.RatioReceive,
+		URLServiceKey: o.URLServiceKey,
+		Country:       cfgCmp.Country,
+		Operator:      cfgCmp.Operator,
+		Partner:       cfgCmp.Partner,
+		Adnet:         cfgCmp.Adnet,
+		Service:       cfgCmp.Service,
+		CampaignId:    o.CampaignId,
+	})
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (h *IncomingHandler) EditCampaignPO(c *fiber.Ctx) error {
+	o := new(entity.CampaignDetail)
+	if err := c.BodyParser(&o); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	s := new(entity.SummaryCampaign)
+	_ = c.BodyParser(&s)
+
+	cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
+	cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+
+	if o.PO == cfgCmp.PO {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	cfgCmp.PO = o.PO
+	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+
+	cfgData, _ := json.Marshal(cfgCmp)
+
+	now := time.Now().In(h.Config.TZ)
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, h.Config.TZ)
+
+	summaryLocal := s.SummaryDate.In(h.Config.TZ)
+	summaryLocal = time.Date(
+		summaryLocal.Year(),
+		summaryLocal.Month(),
+		summaryLocal.Day(),
+		0, 0, 0, 0,
+		h.Config.TZ,
+	)
+
+	if s.SummaryDate.IsZero() || summaryLocal.Equal(today) {
+		h.DS.SetData(cfgRediskey, "$", string(cfgData))
+		h.DS.UpdateCampaignPO(entity.CampaignDetail{
+			PO:            o.PO,
+			URLServiceKey: o.URLServiceKey,
+			Country:       cfgCmp.Country,
+			Operator:      cfgCmp.Operator,
+			Partner:       cfgCmp.Partner,
+			Adnet:         cfgCmp.Adnet,
+			Service:       cfgCmp.Service,
+			CampaignId:    o.CampaignId,
+		})
+	}
+
+	pos, _ := strconv.ParseFloat(strings.TrimSpace(o.PO), 64)
+
+	h.DS.UpdateSummaryPO(entity.SummaryCampaign{
+		SummaryDate:   s.SummaryDate,
+		PO:            pos,
+		URLServiceKey: o.URLServiceKey,
+		Country:       cfgCmp.Country,
+		Operator:      cfgCmp.Operator,
+		Partner:       cfgCmp.Partner,
+		Adnet:         cfgCmp.Adnet,
+		Service:       cfgCmp.Service,
+		CampaignId:    o.CampaignId,
+	})
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 func (h *IncomingHandler) DelCampaign(c *fiber.Ctx) error {
 
 	o := new(entity.CampaignDetail)

@@ -44,6 +44,60 @@ func (r *BaseModel) EditSettingSummaryCampaign(o entity.SummaryCampaign) error {
 	return result.Error
 }
 
+func (r *BaseModel) UpdateSummaryPO(o entity.SummaryCampaign) error {
+
+	summaryDate := o.SummaryDate
+	if summaryDate.IsZero() {
+		summaryDate = time.Now()
+	}
+
+	result := r.DB.Model(&entity.SummaryCampaign{}).
+		Where("summary_date=? AND url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
+			o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Update("po", o.PO)
+	
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) UpdateSummaryRatio(o entity.SummaryCampaign) error {
+
+	summaryDate := o.SummaryDate
+	if summaryDate.IsZero() {
+		summaryDate = time.Now()
+	}
+
+	result := r.DB.Model(&entity.SummaryCampaign{}).
+		Where("summary_date=? AND url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
+			o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Updates(map[string]interface{}{
+			"ratio_send":    o.RatioSend,
+			"ratio_receive": o.RatioReceive,
+		})
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
+func (r *BaseModel) UpdateSummaryMOCapping(o entity.SummaryCampaign) error {
+
+	summaryDate := o.SummaryDate
+	if summaryDate.IsZero() {
+		summaryDate = time.Now()
+	}
+	
+	result := r.DB.Model(&entity.SummaryCampaign{}).
+		Where("summary_date=? AND url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
+			o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+		Update("mo_limit", o.MOLimit)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
+}
+
 func (r *BaseModel) EditPOAFIncSummaryCampaign(o entity.IncSummaryCampaign) error {
 
 	result := r.DB.Model(&o).

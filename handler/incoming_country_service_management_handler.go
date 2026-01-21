@@ -10,6 +10,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"github.com/infraLinkit/mediaplatform-datasource/helper"
 )
 
 func (h *IncomingHandler) CreateEmail(c *fiber.Ctx) error {
@@ -736,8 +737,16 @@ func (h *IncomingHandler) CreatePartner(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+	filePath := "/app_data/data/mediaplatform/new_partner/partner.txt"
 
+	if err := helper.AppendPartnerToTxt(filePath, strings.ToUpper(partner.Name)); err != nil {
+		h.Logs.Error("failed append partner file: ", err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+		Code:    fiber.StatusOK,
+		Message: config.OK_DESC,
+	})
 }
 
 func (h *IncomingHandler) UpdatePartner(c *fiber.Ctx) error {

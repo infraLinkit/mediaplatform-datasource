@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"io"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -302,4 +303,23 @@ func InArray(needle string, haystack []string) bool {
 		}
 	}
 	return false
+}
+
+func AppendPartnerToTxt(filePath, content string) error {
+	dir := filepath.Dir(filePath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	if _, err := f.WriteString(content + "\n"); err != nil {
+		return err
+	}
+
+	return f.Sync()
 }

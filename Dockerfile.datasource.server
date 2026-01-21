@@ -29,6 +29,6 @@ COPY --from=golang /bin/sh /bin/sh
 
 COPY --from=golang /datasource .
 
-VOLUME ["/app/logs"]
+VOLUME ["/app_data/data/mediaplatform/new_partner", "/app/logs"]
 
 CMD ["/datasource", "server"]

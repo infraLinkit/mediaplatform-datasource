@@ -595,8 +595,8 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 								corId := "RTO" + helper.GetUniqId(h.Config.TZ)
 
 								published := h.Rmqp.PublishMsg(rmqp.PublishItems{
-									ExchangeName: h.Config.RabbitMQRatioExchangeName,
-									QueueName:    h.Config.RabbitMQRatioQueueName,
+									ExchangeName: h.Config.RabbitMQRatioExchangeName + "_" + strings.ToUpper(dc.Partner),
+									QueueName:    h.Config.RabbitMQRatioQueueName + "_" + strings.ToUpper(dc.Partner),
 									ContentType:  h.Config.RabbitMQDataType,
 									CorId:        corId,
 									Payload:      string(bodyReq),

@@ -2,11 +2,14 @@ package model
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -15,6 +18,22 @@ func (r *BaseModel) CheckSumDate(o entity.SummaryCampaign) int {
 	var result int64
 	r.DB.Table("summary_campaigns").Where("summary_date = ? AND url_service_key = ?", o.SummaryDate, o.URLServiceKey).Count(&result)
 	return int(result)
+}
+
+func (r *BaseModel) GetSummaryCampaign(o entity.SummaryCampaign) (entity.SummaryCampaign, bool) {
+
+	result := r.DB.Model(&o).
+		Where("summary_date = ? AND url_service_key = ?", o.SummaryDate, o.URLServiceKey).
+		First(&o)
+
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b {
+		r.Logs.Warn(fmt.Sprintf("Campaign id not found %#v", o))
+		return o, false
+	} else {
+		return o, true
+	}
 }
 
 func (r *BaseModel) DelSummaryCampaign(o entity.SummaryCampaign) error {
@@ -55,7 +74,7 @@ func (r *BaseModel) UpdateSummaryPO(o entity.SummaryCampaign) error {
 		Where("summary_date=? AND url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
 			o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
 		Update("po", o.PO)
-	
+
 	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
 
 	return result.Error
@@ -87,7 +106,7 @@ func (r *BaseModel) UpdateSummaryMOCapping(o entity.SummaryCampaign) error {
 	if summaryDate.IsZero() {
 		summaryDate = time.Now()
 	}
-	
+
 	result := r.DB.Model(&entity.SummaryCampaign{}).
 		Where("summary_date=? AND url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
 			o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
@@ -722,6 +741,81 @@ func formatQueryIndicatorsBudget(selects []string, dataType string) []string {
 	}
 
 	return formattedSelects
+}
+
+func (r *BaseModel) FormulaCPA(sum entity.SummaryCampaign) entity.SummaryCampaign {
+
+	gs, _ := r.GetDataConfig("global_setting", "$")
+
+	// CR conversion to mo received
+	//var cr_mo float64
+	if sum.MoReceived > 0 && sum.Landing > 0 {
+		sum.CrMO, _ = strconv.ParseFloat(fmt.Sprintf("%f", float64(sum.MoReceived)/float64(sum.Landing)), 64)
+	} else {
+		sum.CrMO, _ = strconv.ParseFloat("0", 64)
+	}
+
+	//var cr_postback float64
+	if sum.Postback > 0 && sum.Landing > 0 {
+		sum.CrPostback, _ = strconv.ParseFloat(fmt.Sprintf("%f", float64(sum.Postback)/float64(sum.Landing)), 64)
+	} else {
+		sum.CrPostback, _ = strconv.ParseFloat("0", 64)
+	}
+
+	mo_sent := float64(sum.Postback)
+	//sbaf := payout * mo_sent
+	sum.SBAF = sum.PO * mo_sent //sbaf
+
+	// GET total waki agency fee
+	sum.CostPerConversion, _ = strconv.ParseFloat(strings.TrimSpace(gs.CPCR), 64)
+	//cost_per_conversion := sum.CostPerConversion
+	sum.AgencyFee, _ = strconv.ParseFloat(strings.TrimSpace(gs.AgencyFee), 64)
+	sum.AgencyFee = sum.AgencyFee / 100
+	mo_received := float64(sum.MoReceived)
+	sum.TotalWakiAgencyFee = (sum.CostPerConversion * mo_received) + (sum.AgencyFee * (sum.CostPerConversion + (sum.CostPerConversion * mo_received)))
+
+	// GET SAAF (spending after agency fee)
+	//saaf := total_waki_agency_fee + sbaf
+	//tech_fee, _ := strconv.Atoi(gs.TechnicalFee)
+	sum.TechnicalFee, _ = strconv.ParseFloat(strings.TrimSpace(gs.TechnicalFee), 64)
+	sum.TechnicalFee = sum.TechnicalFee / 100
+
+	sum.TechnicalFee = sum.TechnicalFee * (sum.SBAF + sum.TotalWakiAgencyFee)
+
+	sum.SAAF = sum.TotalWakiAgencyFee + sum.SBAF + sum.TechnicalFee //saaf
+	if strings.ToLower(sum.ClientType) == "external" {
+		sum.SAAF = mo_received * sum.POAF
+	}
+
+	// GET eCPA
+	//cpa := float64(0)
+	if sum.SAAF > 0 && mo_received > 0 {
+		sum.CPA = sum.SAAF / mo_received
+	}
+
+	// Revenue
+	//revenue := float64(0)
+	if sum.SAAF > 0 && sum.SBAF > 0 {
+		sum.Revenue = sum.SAAF - sum.SBAF
+	}
+
+	sum.PricePerMO = sum.SAAF / mo_received
+
+	if sum.Landing == 0 || sum.MoReceived == 0 || sum.Postback == 0 {
+		//price_per_mo_string = "0"
+		sum.PricePerMO = 0
+	}
+
+	return sum
+}
+
+func (r *BaseModel) ReCalculateSummaryCampaign(o entity.SummaryCampaign) error {
+
+	result := r.DB.Exec("UPDATE summary_campaigns SET traffic = ?, landing = ?, mo_received = ?, cr_mo = ?, cr_postback = ?, postback = ?, total_fp = ?, success_fp = ?, billrate = ?, po = ?, sbaf = ?, saaf = ?, cpa = ?, revenue = ?, url_after = ?, url_before = ?, mo_limit = ?, ratio_send = ?, ratio_receive = ?, client_type = ?, cost_per_conversion = ?, agency_fee = ?, total_waki_agency_fee = ?, campaign_name = ?, technical_fee = ?, company = ? WHERE summary_date = '"+o.SummaryDate.Format("2006-01-02")+"' AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ? AND campaign_objective = ?", o.Traffic, o.Landing, o.MoReceived, o.CrMO, o.CrPostback, o.Postback, o.TotalFP, o.SuccessFP, o.Billrate, o.PO, o.SBAF, o.SAAF, o.CPA, o.Revenue, o.URLAfter, o.URLBefore, o.MOLimit, o.RatioSend, o.RatioReceive, o.ClientType, o.CostPerConversion, o.AgencyFee, o.TotalWakiAgencyFee, o.CampaignName, o.TechnicalFee, o.Company, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId, o.CampaignObjective)
+
+	r.Logs.Debug(fmt.Sprintf("ReCalculateSummaryCampaign : %s-%s, affected: %d, is error : %#v", o.URLServiceKey, o.SummaryDate, result.RowsAffected, result.Error))
+
+	return result.Error
 }
 
 /* package model

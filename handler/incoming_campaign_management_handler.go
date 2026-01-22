@@ -25,21 +25,21 @@ func (h *IncomingHandler) DisplayCampaignManagement(c *fiber.Ctx) error {
 	draw, _ := strconv.Atoi(m["draw"])
 
 	fe := entity.DisplayCampaignManagement{
-		Adnet:        m["adnet"],
-		Country:      m["country"],
-		Service:      m["service"],
-		Operator:     m["operator"],
-		Partner:      m["partner"],
-		Status:       m["status"],
-		CampaignName: m["campaign_name"],
-		CampaignType: m["campaign_type"],
-		CampaignId:   m["campaign_id"],
-		Page:         page,
-		Draw:         draw,
-		Action:       m["action"],
-		URLServiceKey:  m["url_service_key"],
-		OrderColumn:    m["order_column"],
-		OrderDir:       m["order_dir"],
+		Adnet:         m["adnet"],
+		Country:       m["country"],
+		Service:       m["service"],
+		Operator:      m["operator"],
+		Partner:       m["partner"],
+		Status:        m["status"],
+		CampaignName:  m["campaign_name"],
+		CampaignType:  m["campaign_type"],
+		CampaignId:    m["campaign_id"],
+		Page:          page,
+		Draw:          draw,
+		Action:        m["action"],
+		URLServiceKey: m["url_service_key"],
+		OrderColumn:   m["order_column"],
+		OrderDir:      m["order_dir"],
 	}
 
 	v := c.Params("v")
@@ -270,7 +270,7 @@ func (h *IncomingHandler) EditCampaign(c *fiber.Ctx) error {
 			Adnet:         cfgCmp.Adnet,
 			Service:       cfgCmp.Service,
 			CampaignId:    o.CampaignId,
-			StatusCapping:  bool(mocappingChanged),
+			StatusCapping: bool(mocappingChanged),
 		})
 	}
 
@@ -396,7 +396,7 @@ func (h *IncomingHandler) EditCampaignRatio(c *fiber.Ctx) error {
 		h.DS.SetData(cfgRediskey, "$", string(cfgData))
 		h.DS.UpdateCampaignRatio(entity.CampaignDetail{
 			RatioSend:     o.RatioSend,
-			RatioReceive: o.RatioReceive,
+			RatioReceive:  o.RatioReceive,
 			URLServiceKey: o.URLServiceKey,
 			Country:       cfgCmp.Country,
 			Operator:      cfgCmp.Operator,
@@ -472,7 +472,7 @@ func (h *IncomingHandler) EditCampaignPO(c *fiber.Ctx) error {
 
 	pos, _ := strconv.ParseFloat(strings.TrimSpace(o.PO), 64)
 
-	h.DS.UpdateSummaryPO(entity.SummaryCampaign{
+	/* h.DS.UpdateSummaryPO(entity.SummaryCampaign{
 		SummaryDate:   s.SummaryDate,
 		PO:            pos,
 		URLServiceKey: o.URLServiceKey,
@@ -482,7 +482,23 @@ func (h *IncomingHandler) EditCampaignPO(c *fiber.Ctx) error {
 		Adnet:         cfgCmp.Adnet,
 		Service:       cfgCmp.Service,
 		CampaignId:    o.CampaignId,
-	})
+	}) */
+
+	if sum, isOK := h.DS.GetSummaryCampaign(entity.SummaryCampaign{
+		SummaryDate:   s.SummaryDate,
+		PO:            pos,
+		URLServiceKey: o.URLServiceKey,
+		Country:       cfgCmp.Country,
+		Operator:      cfgCmp.Operator,
+		Partner:       cfgCmp.Partner,
+		Adnet:         cfgCmp.Adnet,
+		Service:       cfgCmp.Service,
+		CampaignId:    o.CampaignId,
+	}); isOK {
+
+		// Re-calculate summary CPA
+		h.DS.ReCalculateSummaryCampaign(h.DS.FormulaCPA(sum))
+	}
 
 	return c.SendStatus(fiber.StatusOK)
 }
@@ -632,9 +648,9 @@ func (h *IncomingHandler) UpdateGoogleSheet(c *fiber.Ctx) error {
 		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
 
 		err = h.DS.UpdateGoogleSheetCampaignDetail(entity.CampaignDetail{
-			GoogleSheet:               o.GoogleSheet,
-			URLServiceKey:             o.URLServiceKey,
-			CampaignId:                o.CampaignId,
+			GoogleSheet:   o.GoogleSheet,
+			URLServiceKey: o.URLServiceKey,
+			CampaignId:    o.CampaignId,
 		})
 
 		if err != nil {
@@ -666,9 +682,9 @@ func (h *IncomingHandler) UpdateGoogleSheetBillable(c *fiber.Ctx) error {
 		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
 
 		err = h.DS.UpdateGoogleSheetBillableCampaignDetail(entity.CampaignDetail{
-			GoogleSheetBillable:               o.GoogleSheetBillable,
-			URLServiceKey:             o.URLServiceKey,
-			CampaignId:                o.CampaignId,
+			GoogleSheetBillable: o.GoogleSheetBillable,
+			URLServiceKey:       o.URLServiceKey,
+			CampaignId:          o.CampaignId,
 		})
 
 		if err != nil {
@@ -752,7 +768,7 @@ func (h *IncomingHandler) EditPOAF(c *fiber.Ctx) error {
 
 		h.DS.EditPOAFIncSummaryCampaign(entity.IncSummaryCampaign{
 			SummaryDate:   o.SummaryDate,
-			POAF: 		   o.POAF,
+			POAF:          o.POAF,
 			URLServiceKey: o.URLServiceKey,
 		})
 
@@ -765,7 +781,6 @@ func (h *IncomingHandler) EditPOAF(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).Send([]byte("OK"))
 	}
 }
-
 
 func (h *IncomingHandler) EditCampaignManagementDetail(c *fiber.Ctx) error {
 
@@ -788,7 +803,7 @@ func (h *IncomingHandler) EditCampaignManagementDetail(c *fiber.Ctx) error {
 		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
 
 		h.DS.EditCampaignManagementDetail(entity.CampaignDetail{
-			APIURL: cfgCmp.APIURL,
+			APIURL:        cfgCmp.APIURL,
 			URLServiceKey: o.URLServiceKey,
 			CampaignId:    o.CampaignId,
 		})
@@ -1181,7 +1196,7 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 			technical_fee, _ := strconv.ParseFloat(strings.TrimSpace(gs.TechnicalFee), 64)
 
 			h.DS.NewCampaignDetail(entity.CampaignDetail{
-				ID:  					   campaign_detail_id,		
+				ID:                        campaign_detail_id,
 				URLServiceKey:             dc.URLServiceKey,
 				CampaignId:                obj.CampaignId,
 				Country:                   country,

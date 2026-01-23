@@ -121,10 +121,12 @@ type (
 )
 
 // HOOK or Trigger
-func (cd *CampaignDetail) AfterUpdate(db *gorm.DB) {
+func (cd *CampaignDetail) AfterUpdate(db *gorm.DB) (err error) {
 	if cd.CounterMOCapping >= cd.MOCapping {
 		db.Model(&CampaignDetail{}).Where("id = ?", cd.ID).Update("last_update_capping", cd.LastUpdate)
 	}
+
+	return nil
 }
 
 // Important Create Name Func per hook entity!, Name returns the name of the plugin

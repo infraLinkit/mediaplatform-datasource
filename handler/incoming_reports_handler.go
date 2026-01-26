@@ -963,7 +963,7 @@ func (h *IncomingHandler) ResendData(c *fiber.Ctx) error {
 
 	for _, sc := range reports {
 		q := url.Values{
-			"date":           {sc.SummaryDate.Format("2006-10-02")},
+			"date":           {sc.SummaryDate.Format("2006-01-02")},
 			"campaign_id":    {sc.URLServiceKey},
 			"publisher":      {sc.Adnet},
 			"adnet":          {sc.Adnet},

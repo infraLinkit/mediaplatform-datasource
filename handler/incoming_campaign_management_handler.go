@@ -484,9 +484,10 @@ func (h *IncomingHandler) EditCampaignPO(c *fiber.Ctx) error {
 		CampaignId:    o.CampaignId,
 	}) */
 
+	updatedPO := pos
+
 	if sum, isOK := h.DS.GetSummaryCampaign(entity.SummaryCampaign{
 		SummaryDate:   s.SummaryDate,
-		PO:            pos,
 		URLServiceKey: o.URLServiceKey,
 		Country:       cfgCmp.Country,
 		Operator:      cfgCmp.Operator,
@@ -496,8 +497,14 @@ func (h *IncomingHandler) EditCampaignPO(c *fiber.Ctx) error {
 		CampaignId:    o.CampaignId,
 	}); isOK {
 
+		sum.PO = updatedPO
+
+		calculated := h.DS.FormulaCPA(sum)
+
+		calculated.PO = updatedPO
+
 		// Re-calculate summary CPA
-		h.DS.ReCalculateSummaryCampaign(h.DS.FormulaCPA(sum))
+		h.DS.ReCalculateSummaryCampaign(calculated)
 	}
 
 	return c.SendStatus(fiber.StatusOK)

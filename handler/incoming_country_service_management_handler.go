@@ -773,14 +773,41 @@ func (h *IncomingHandler) UpdatePartner(c *fiber.Ctx) error {
 }
 
 func (h *IncomingHandler) DeletePartner(c *fiber.Ctx) error {
-	id, _ := strconv.Atoi(c.Params("id"))
+	id, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "Invalid partner id",
+		})
+	}
+
+	// partner, err := h.DS.GetPartnerByID(uint(id))
+	// if err != nil {
+	// 	return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+	// 		"message": "Partner not found",
+	// 	})
+	// }
+
 	if err := h.DS.DeletePartner(uint(id)); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to delete partner",
 		})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
+	// cmd := exec.Command(
+	// 	"/bin/bash",
+	// 	"/app/mediaplatform/resources/dockerver/yaml/staging/bin/delete_partner_ratio.sh",
+	// 	"staging",
+	// 	strings.ToUpper(partner.Name),
+	// )
+
+	// if err := cmd.Run(); err != nil {
+	// 	h.Logs.Error("delete partner infra failed:", err)
+	// }
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+		Code:    fiber.StatusOK,
+		Message: config.OK_DESC,
+	})
 }
 
 func (h *IncomingHandler) DisplayPartner(c *fiber.Ctx) error {

@@ -16,7 +16,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 	var TotalSummaryCampaign entity.TotalSummaryCampaign
 
 	t_query := r.DB.Model(&entity.SummaryCampaign{})
-
+	//fmt.Println("Company: ", o.Company)
 	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
 		summary_campaigns.*,
 		CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
@@ -53,7 +53,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		t_query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
 	}
 
-	fmt.Println("o.CampaignObjective: ", o.CampaignObjective)
+	//fmt.Println("o.CampaignObjective: ", o.CampaignObjective)
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
@@ -70,7 +70,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		}
 		if o.Company != "" {
 			query = query.Where("company = ?", o.Company)
-			t_query = t_query.Where("country = ?", o.Country)
+			t_query = t_query.Where("company = ?", o.Company)
 		}
 		if o.ClientType != "" {
 			query = query.Where("client_type = ?", o.ClientType)
@@ -485,7 +485,7 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 		total_rows int64
 	)
 
-	fmt.Println("o: ", o)
+	//fmt.Println("o: ", o)
 
 	query := r.DB.Model(&entity.SummaryCampaign{})
 	query = query.Where("mo_received > 0")

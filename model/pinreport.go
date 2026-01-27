@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-func (r *BaseModel) getLastPayout(country, operator, adnet, service, campaignID string, dateSend time.Time) (float64, float64) {
+func (r *BaseModel) getLastPayout(country, operator, adnet, service string, dateSend time.Time) (float64, float64) {
 
 	var prev entity.ApiPinReport
 
@@ -27,9 +27,8 @@ func (r *BaseModel) getLastPayout(country, operator, adnet, service, campaignID 
 			 AND operator = ?
 			 AND adnet = ?
 			 AND service = ?
-			 AND campaign_id = ?
 			 AND date_send < ?`,
-			country, operator, adnet, service, campaignID, dateSend,
+			country, operator, adnet, service, dateSend,
 		).
 		Order("date_send DESC").
 		Limit(1).
@@ -42,19 +41,60 @@ func (r *BaseModel) getLastPayout(country, operator, adnet, service, campaignID 
 	return prev.PayoutAdn, prev.PayoutAF
 }
 
+func (r *BaseModel) getTodayPayout(country, operator, adnet, service string, dateSend time.Time) (float64, float64) {
+
+	var res struct {
+		PayoutAdn float64
+		PayoutAF  float64
+	}
+
+	r.DB.Model(&entity.ApiPinReport{}).
+		Select("payout_adn, payout_af").
+		Where(`
+			date_send = ? AND
+			country = ? AND
+			operator = ? AND
+			adnet = ? AND
+			service = ? 
+		`,
+			dateSend,
+			country,
+			operator,
+			adnet,
+			service,
+		).
+		Take(&res)
+
+	return res.PayoutAdn, res.PayoutAF
+}
+
 func (r *BaseModel) PinReport(o entity.ApiPinReport) int {
 
 	if o.PayoutAdn == 0 && o.PayoutAF == 0 {
-		prevAdn, prevAF := r.getLastPayout(
+
+		todayAdn, todayAF := r.getTodayPayout(
 			o.Country,
 			o.Operator,
 			o.Adnet,
 			o.Service,
-			o.CampaignId,
 			o.DateSend,
 		)
-		o.PayoutAdn = prevAdn
-		o.PayoutAF = prevAF
+
+		if todayAdn == 0 && todayAF == 0 {
+			prevAdn, prevAF := r.getLastPayout(
+				o.Country,
+				o.Operator,
+				o.Adnet,
+				o.Service,
+				o.DateSend,
+			)
+
+			o.PayoutAdn = prevAdn
+			o.PayoutAF = prevAF
+		} else {
+			o.PayoutAdn = todayAdn
+			o.PayoutAF = todayAF
+		}
 	}
 
 	entity.BuildPinReportCalculation(&o)
@@ -389,6 +429,18 @@ func (r *BaseModel) UpsertApiPerformanceReport(o *entity.ApiPinPerformance) erro
 		Scan(&estimatedARPU)
 	o.EstimatedARPU = estimatedARPU
 
+	// Ambil CPA & CPAWaki hari ini (kalau sudah ada)
+	var today struct {
+		CPA     float64
+		CPAWaki float64
+	}
+
+	r.DB.Model(&entity.ApiPinPerformance{}).
+		Select("cpa, cpa_waki").
+		Where("country=? AND operator=? AND adnet=? AND service=? AND date_send=?",
+			o.Country, o.Operator, o.Adnet, o.Service, o.DateSend).
+		Take(&today)
+
 	// Ambil prev CPA & CPA after waki
 	var prev struct {
 		CPA     float64
@@ -397,11 +449,16 @@ func (r *BaseModel) UpsertApiPerformanceReport(o *entity.ApiPinPerformance) erro
 	r.DB.Raw(`SELECT cpa, cpa_waki 
 		FROM api_pin_performances
 		WHERE country=? AND operator=? AND service=? AND adnet=? LIMIT 1`,
-		o.Country, o.Operator, o.Service, o.Adnet).Scan(&prev)
+		o.Country, o.Operator, o.Service, o.Adnet).Order("date_send DESC").Scan(&prev)
 
 	if o.CPA == 0 && o.CPAWaki == 0 {
-		o.CPA = prev.CPA
-		o.CPAWaki = prev.CPAWaki
+		if today.CPA == 0 && today.CPAWaki == 0 {
+			o.CPA = prev.CPA
+			o.CPAWaki = prev.CPAWaki
+		} else {
+			o.CPA = today.CPA
+			o.CPAWaki = today.CPAWaki
+		}
 	}
 
 	// Hitung semua field

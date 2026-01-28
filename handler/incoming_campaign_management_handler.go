@@ -540,7 +540,7 @@ func (h *IncomingHandler) EditCampaignSettingRatio(c *fiber.Ctx) error {
 
 	if err := h.DS.UpdateCampaignRatio(entity.CampaignDetail{
 		RatioSend:     req.RatioSend,
-		RatioReceive: req.RatioReceive,
+		RatioReceive:  req.RatioReceive,
 		URLServiceKey: req.URLServiceKey,
 		Country:       cfgCmp.Country,
 		Operator:      cfgCmp.Operator,
@@ -586,12 +586,6 @@ func (h *IncomingHandler) EditCampaignSettingPO(c *fiber.Ctx) error {
 	if err := h.DS.UpdateCampaignPO(entity.CampaignDetail{
 		PO:            req.PO,
 		URLServiceKey: req.URLServiceKey,
-		Country:       cfgCmp.Country,
-		Operator:      cfgCmp.Operator,
-		Partner:       cfgCmp.Partner,
-		Adnet:         cfgCmp.Adnet,
-		Service:       cfgCmp.Service,
-		CampaignId:    req.CampaignId,
 	}); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

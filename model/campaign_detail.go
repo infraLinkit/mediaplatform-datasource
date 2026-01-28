@@ -161,10 +161,21 @@ func (r *BaseModel) EditSettingCampaignDetail(o entity.CampaignDetail) error {
 }
 
 func (r *BaseModel) UpdateCampaignPO(o entity.CampaignDetail) error {
-	return r.DB.Model(&entity.CampaignDetail{}).
-		Where("url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
-			o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
-		Update("po", o.PO).Error
+	/* return r.DB.Model(&entity.CampaignDetail{}).
+	Where("url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
+		o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
+	Update("po", o.PO).Error */
+
+	/* SQL := fmt.Sprintf(`UPDATE campaign_details SET po = '%s' WHERE url_service_key = '%s'`, o.PO, o.URLServiceKey)
+	result := r.DB.Exec(SQL)
+
+	r.Logs.Info(fmt.Sprintf("SQL : %s, affected: %d, is error : %#v", SQL, result.RowsAffected, result.Error)) */
+
+	result := r.DB.Exec(`UPDATE campaign_details SET po = ? WHERE url_service_key = ?`, o.PO, o.URLServiceKey)
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+
+	return result.Error
 }
 
 func (r *BaseModel) UpdateCampaignRatio(o entity.CampaignDetail) error {

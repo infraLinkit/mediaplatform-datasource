@@ -143,6 +143,7 @@ type (
 		CampaignDetailName        string  `json:"campaign_detail_name"`
 		Prefix                    string  `json:"prefix"`
 		CountryDialingCode        string  `json:"country_dialing_code"`
+		UnusedTrafficRedirectType string  `json:"unused_traffic_redirect_type"`
 	}
 
 	//'{"id":1,"urlservicekey":"idtelgempastelmbv","campaign_id":"ID01","country":"ID","partner":"pass","operator":"telkomsel","aggregator":"telesat","service":"gazy","short_code":"1234","adnet":"mbv","keyword":"gazy","subkeyword":"","is_billable":false,"plan":"","traffic":0,"landing":0,"click":0,"redirect":0,"traffic_data":[],"landing_data":[],"click_data":[],"redirect_data":[]}'

@@ -107,6 +107,7 @@ type (
 		CampaignDetailName        string    `gorm:"type:varchar(80)" json:"campaign_detail_name"`
 		Prefix                    string    `gorm:"type:varchar(80)" json:"prefix"`
 		CountryDialingCode        string    `gorm:"type:varchar(80)" json:"country_dialing_code"`
+		UnusedTrafficRedirectType string    `gorm:"type:varchar(80);default:NA" json:"unused_traffic_redirect_type"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}

@@ -158,6 +158,11 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	campaign.Post("/editcampaignmanagementdetail", h.EditCampaignManagementDetail).Name("Edit campaign on campaign_details")
 	campaign.Post("/updatecampaignmanagement", h.UpdateCampaign).Name("Edit campaign on form")
 
+	// Campaign Setting
+	campaignSetting := management.Group("/campaign-setting") // Campaign Setting
+	campaignSetting.Post("/editratio", h.EditCampaignSettingRatio).Name("Edit ratio campaign on campaign_setting")
+	campaignSetting.Post("/editpo", h.EditCampaignSettingPO).Name("Edit po campaign on campaign_setting")
+
 	// Menu
 	menu := management.Group("/menu") // Menu
 	menu.Post("/", h.CreateMenu).Name("Menu Management Create FE")

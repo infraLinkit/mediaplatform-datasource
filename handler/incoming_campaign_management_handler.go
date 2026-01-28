@@ -334,12 +334,6 @@ func (h *IncomingHandler) EditCampaignMOCapping(c *fiber.Ctx) error {
 			StatusCapping: false,
 			LastUpdate:    helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
 			URLServiceKey: o.URLServiceKey,
-			Country:       cfgCmp.Country,
-			Operator:      cfgCmp.Operator,
-			Partner:       cfgCmp.Partner,
-			Adnet:         cfgCmp.Adnet,
-			Service:       cfgCmp.Service,
-			CampaignId:    o.CampaignId,
 		})
 	}
 
@@ -347,12 +341,6 @@ func (h *IncomingHandler) EditCampaignMOCapping(c *fiber.Ctx) error {
 		SummaryDate:   s.SummaryDate,
 		MOLimit:       o.MOCapping,
 		URLServiceKey: o.URLServiceKey,
-		Country:       cfgCmp.Country,
-		Operator:      cfgCmp.Operator,
-		Partner:       cfgCmp.Partner,
-		Adnet:         cfgCmp.Adnet,
-		Service:       cfgCmp.Service,
-		CampaignId:    o.CampaignId,
 	})
 
 	return c.SendStatus(fiber.StatusOK)
@@ -398,12 +386,6 @@ func (h *IncomingHandler) EditCampaignRatio(c *fiber.Ctx) error {
 			RatioSend:     o.RatioSend,
 			RatioReceive:  o.RatioReceive,
 			URLServiceKey: o.URLServiceKey,
-			Country:       cfgCmp.Country,
-			Operator:      cfgCmp.Operator,
-			Partner:       cfgCmp.Partner,
-			Adnet:         cfgCmp.Adnet,
-			Service:       cfgCmp.Service,
-			CampaignId:    o.CampaignId,
 		})
 	}
 
@@ -412,12 +394,6 @@ func (h *IncomingHandler) EditCampaignRatio(c *fiber.Ctx) error {
 		RatioSend:     o.RatioSend,
 		RatioReceive:  o.RatioReceive,
 		URLServiceKey: o.URLServiceKey,
-		Country:       cfgCmp.Country,
-		Operator:      cfgCmp.Operator,
-		Partner:       cfgCmp.Partner,
-		Adnet:         cfgCmp.Adnet,
-		Service:       cfgCmp.Service,
-		CampaignId:    o.CampaignId,
 	})
 
 	return c.SendStatus(fiber.StatusOK)
@@ -461,12 +437,6 @@ func (h *IncomingHandler) EditCampaignPO(c *fiber.Ctx) error {
 		h.DS.UpdateCampaignPO(entity.CampaignDetail{
 			PO:            o.PO,
 			URLServiceKey: o.URLServiceKey,
-			Country:       cfgCmp.Country,
-			Operator:      cfgCmp.Operator,
-			Partner:       cfgCmp.Partner,
-			Adnet:         cfgCmp.Adnet,
-			Service:       cfgCmp.Service,
-			CampaignId:    o.CampaignId,
 		})
 	}
 
@@ -510,6 +480,47 @@ func (h *IncomingHandler) EditCampaignPO(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
+func (h *IncomingHandler) EditCampaignSettingMOCapping(c *fiber.Ctx) error {
+	req := new(entity.CampaignDetail)
+	if err := c.BodyParser(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	cfgRedisKey := helper.Concat("-", req.URLServiceKey, "configIdx")
+	cfgCmp, err := h.DS.GetDataConfig(cfgRedisKey, "$")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if req.MOCapping == cfgCmp.MOCapping {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	cfgCmp.MOCapping = req.MOCapping
+	cfgCmp.StatusCapping = false
+	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+
+	cfgData, _ := json.Marshal(cfgCmp)
+	h.DS.SetData(cfgRedisKey, "$", string(cfgData))
+
+	if err := h.DS.UpdateCampaignMOCapping(entity.CampaignDetail{
+		MOCapping:      req.MOCapping,
+		StatusCapping:  false,
+		LastUpdate:     helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+		URLServiceKey:  req.URLServiceKey,
+	}); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 func (h *IncomingHandler) EditCampaignSettingRatio(c *fiber.Ctx) error {
 	req := new(entity.CampaignDetail)
 	if err := c.BodyParser(req); err != nil {
@@ -542,12 +553,6 @@ func (h *IncomingHandler) EditCampaignSettingRatio(c *fiber.Ctx) error {
 		RatioSend:     req.RatioSend,
 		RatioReceive:  req.RatioReceive,
 		URLServiceKey: req.URLServiceKey,
-		Country:       cfgCmp.Country,
-		Operator:      cfgCmp.Operator,
-		Partner:       cfgCmp.Partner,
-		Adnet:         cfgCmp.Adnet,
-		Service:       cfgCmp.Service,
-		CampaignId:    req.CampaignId,
 	}); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -854,24 +859,30 @@ func (h *IncomingHandler) EditPOAF(c *fiber.Ctx) error {
 
 	if err := c.BodyParser(&o); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
-	} else {
-
-		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
-
-		h.DS.EditPOAFIncSummaryCampaign(entity.IncSummaryCampaign{
-			SummaryDate:   o.SummaryDate,
-			POAF:          o.POAF,
-			URLServiceKey: o.URLServiceKey,
-		})
-
-		h.DS.EditPOAFSummaryCampaign(entity.SummaryCampaign{
-			SummaryDate:   o.SummaryDate,
-			POAF:          o.POAF,
-			URLServiceKey: o.URLServiceKey,
-		})
-
-		return c.Status(fiber.StatusOK).Send([]byte("OK"))
 	}
+
+	h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
+
+	h.DS.EditPOAFIncSummaryCampaign(entity.IncSummaryCampaign{
+		SummaryDate:   o.SummaryDate,
+		POAF:          o.POAF,
+		URLServiceKey: o.URLServiceKey,
+	})
+
+	if sum, isOK := h.DS.GetSummaryCampaign(entity.SummaryCampaign{
+		SummaryDate:   o.SummaryDate,
+		URLServiceKey: o.URLServiceKey,
+	}); isOK {
+
+		sum.POAF = o.POAF
+
+		calculated := h.DS.FormulaCPA(sum)
+
+		calculated.POAF = o.POAF
+		h.DS.ReCalculateSummaryCampaign(calculated)
+	}
+
+	return c.Status(fiber.StatusOK).Send([]byte("OK"))
 }
 
 func (h *IncomingHandler) EditCampaignManagementDetail(c *fiber.Ctx) error {

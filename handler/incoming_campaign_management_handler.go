@@ -510,6 +510,97 @@ func (h *IncomingHandler) EditCampaignPO(c *fiber.Ctx) error {
 	return c.SendStatus(fiber.StatusOK)
 }
 
+func (h *IncomingHandler) EditCampaignSettingRatio(c *fiber.Ctx) error {
+	req := new(entity.CampaignDetail)
+	if err := c.BodyParser(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	cfgRedisKey := helper.Concat("-", req.URLServiceKey, "configIdx")
+	cfgCmp, err := h.DS.GetDataConfig(cfgRedisKey, "$")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if req.RatioSend == cfgCmp.RatioSend &&
+		req.RatioReceive == cfgCmp.RatioReceive {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	cfgCmp.RatioSend = req.RatioSend
+	cfgCmp.RatioReceive = req.RatioReceive
+	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+
+	cfgData, _ := json.Marshal(cfgCmp)
+	h.DS.SetData(cfgRedisKey, "$", string(cfgData))
+
+	if err := h.DS.UpdateCampaignRatio(entity.CampaignDetail{
+		RatioSend:     req.RatioSend,
+		RatioReceive: req.RatioReceive,
+		URLServiceKey: req.URLServiceKey,
+		Country:       cfgCmp.Country,
+		Operator:      cfgCmp.Operator,
+		Partner:       cfgCmp.Partner,
+		Adnet:         cfgCmp.Adnet,
+		Service:       cfgCmp.Service,
+		CampaignId:    req.CampaignId,
+	}); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
+func (h *IncomingHandler) EditCampaignSettingPO(c *fiber.Ctx) error {
+	req := new(entity.CampaignDetail)
+	if err := c.BodyParser(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	cfgRedisKey := helper.Concat("-", req.URLServiceKey, "configIdx")
+	cfgCmp, err := h.DS.GetDataConfig(cfgRedisKey, "$")
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	if req.PO == cfgCmp.PO {
+		return c.SendStatus(fiber.StatusOK)
+	}
+
+	cfgCmp.PO = req.PO
+	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+
+	cfgData, _ := json.Marshal(cfgCmp)
+	h.DS.SetData(cfgRedisKey, "$", string(cfgData))
+
+	if err := h.DS.UpdateCampaignPO(entity.CampaignDetail{
+		PO:            req.PO,
+		URLServiceKey: req.URLServiceKey,
+		Country:       cfgCmp.Country,
+		Operator:      cfgCmp.Operator,
+		Partner:       cfgCmp.Partner,
+		Adnet:         cfgCmp.Adnet,
+		Service:       cfgCmp.Service,
+		CampaignId:    req.CampaignId,
+	}); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.SendStatus(fiber.StatusOK)
+}
+
 func (h *IncomingHandler) DelCampaign(c *fiber.Ctx) error {
 
 	o := new(entity.CampaignDetail)

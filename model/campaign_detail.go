@@ -179,24 +179,34 @@ func (r *BaseModel) UpdateCampaignPO(o entity.CampaignDetail) error {
 }
 
 func (r *BaseModel) UpdateCampaignRatio(o entity.CampaignDetail) error {
-	return r.DB.Model(&entity.CampaignDetail{}).
-		Where("url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
-			o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
-		Updates(map[string]interface{}{
-			"ratio_send":    o.RatioSend,
-			"ratio_receive": o.RatioReceive,
-		}).Error
+	result := r.DB.Exec(`
+		UPDATE campaign_details 
+		SET ratio_send = ?, ratio_receive = ?
+		WHERE url_service_key = ?
+	`,
+		o.RatioSend,
+		o.RatioReceive,
+		o.URLServiceKey,
+	)
+
+	r.Logs.Debug(fmt.Sprintf("UpdateCampaignRatio affected: %d, error: %#v", result.RowsAffected, result.Error))
+	return result.Error
 }
 
 func (r *BaseModel) UpdateCampaignMOCapping(o entity.CampaignDetail) error {
-	return r.DB.Model(&entity.CampaignDetail{}).
-		Where("url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
-			o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
-		Updates(map[string]interface{}{
-			"mo_capping":     o.MOCapping,
-			"status_capping": false,
-			"last_update":    o.LastUpdate,
-		}).Error
+	result := r.DB.Exec(`
+		UPDATE campaign_details 
+		SET mo_capping = ?, status_capping = ?, last_update = ?
+		WHERE url_service_key = ?
+	`,
+		o.MOCapping,
+		false,
+		o.LastUpdate,
+		o.URLServiceKey,
+	)
+
+	r.Logs.Debug(fmt.Sprintf("UpdateCampaignMOCapping affected: %d, error: %#v", result.RowsAffected, result.Error))
+	return result.Error
 }
 
 func (r *BaseModel) UpdateStatusCampaignDetail(o entity.CampaignDetail) error {

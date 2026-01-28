@@ -64,66 +64,101 @@ func (r *BaseModel) EditSettingSummaryCampaign(o entity.SummaryCampaign) error {
 }
 
 func (r *BaseModel) UpdateSummaryPO(o entity.SummaryCampaign) error {
-
 	summaryDate := o.SummaryDate
 	if summaryDate.IsZero() {
-		summaryDate = time.Now()
+		var err error
+		summaryDate, err = time.Parse(
+			"2006-01-02",
+			time.Now().Format("2006-01-02"),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
-	result := r.DB.Model(&entity.SummaryCampaign{}).
-		Where("summary_date=? AND url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
-			o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
-		Update("po", o.PO)
+	result := r.DB.Exec(`
+		UPDATE summary_campaigns
+		SET po = ?
+		WHERE summary_date = ?
+		  AND url_service_key = ?
+	`,
+		o.PO,
+		summaryDate,
+		o.URLServiceKey,
+	)
 
-	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
-
+	r.Logs.Debug(fmt.Sprintf("UpdateSummaryPO affected: %d, error: %#v", result.RowsAffected, result.Error))
 	return result.Error
 }
 
 func (r *BaseModel) UpdateSummaryRatio(o entity.SummaryCampaign) error {
-
 	summaryDate := o.SummaryDate
 	if summaryDate.IsZero() {
-		summaryDate = time.Now()
+		var err error
+		summaryDate, err = time.Parse(
+			"2006-01-02",
+			time.Now().Format("2006-01-02"),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
-	result := r.DB.Model(&entity.SummaryCampaign{}).
-		Where("summary_date=? AND url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
-			o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
-		Updates(map[string]interface{}{
-			"ratio_send":    o.RatioSend,
-			"ratio_receive": o.RatioReceive,
-		})
+	result := r.DB.Exec(`
+		UPDATE summary_campaigns
+		SET ratio_send = ?, ratio_receive = ?
+		WHERE summary_date = ?
+		  AND url_service_key = ?
+	`,
+		o.RatioSend,
+		o.RatioReceive,
+		summaryDate,
+		o.URLServiceKey,
+	)
 
-	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
-
+	r.Logs.Debug(fmt.Sprintf("UpdateSummaryRatio affected: %d, error: %#v", result.RowsAffected, result.Error))
 	return result.Error
 }
 
 func (r *BaseModel) UpdateSummaryMOCapping(o entity.SummaryCampaign) error {
-
 	summaryDate := o.SummaryDate
 	if summaryDate.IsZero() {
-		summaryDate = time.Now()
+		var err error
+		summaryDate, err = time.Parse(
+			"2006-01-02",
+			time.Now().Format("2006-01-02"),
+		)
+		if err != nil {
+			return err
+		}
 	}
 
-	result := r.DB.Model(&entity.SummaryCampaign{}).
-		Where("summary_date=? AND url_service_key=? AND country=? AND operator=? AND partner=? AND service=? AND adnet=? AND campaign_id=?",
-			o.SummaryDate, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId).
-		Update("mo_limit", o.MOLimit)
+	result := r.DB.Exec(`
+		UPDATE summary_campaigns
+		SET mo_limit = ?
+		WHERE summary_date = ?
+		  AND url_service_key = ?
+	`,
+		o.MOLimit,
+		summaryDate,
+		o.URLServiceKey,
+	)
 
-	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
-
+	r.Logs.Debug(fmt.Sprintf("UpdateSummaryMOCapping affected: %d, error: %#v", result.RowsAffected, result.Error))
 	return result.Error
 }
 
 func (r *BaseModel) EditPOAFIncSummaryCampaign(o entity.IncSummaryCampaign) error {
+	query := `
+		UPDATE inc_summary_campaigns
+		SET poaf = ?
+		WHERE summary_date = ?
+		  AND url_service_key = ?
+	`
 
-	result := r.DB.Model(&o).
-		Where("summary_date = ? AND url_service_key = ?", o.SummaryDate, o.URLServiceKey).
-		Updates(entity.SummaryCampaign{POAF: o.POAF})
+	result := r.DB.Exec(query, o.POAF, o.SummaryDate, o.URLServiceKey)
 
-	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+	r.Logs.Debug(fmt.Sprintf("affected: %d, is error: %#v", result.RowsAffected, result.Error))
 
 	return result.Error
 }
@@ -811,7 +846,7 @@ func (r *BaseModel) FormulaCPA(sum entity.SummaryCampaign) entity.SummaryCampaig
 
 func (r *BaseModel) ReCalculateSummaryCampaign(o entity.SummaryCampaign) error {
 
-	result := r.DB.Exec("UPDATE summary_campaigns SET traffic = ?, landing = ?, mo_received = ?, cr_mo = ?, cr_postback = ?, postback = ?, total_fp = ?, success_fp = ?, billrate = ?, po = ?, sbaf = ?, saaf = ?, cpa = ?, revenue = ?, url_after = ?, url_before = ?, mo_limit = ?, ratio_send = ?, ratio_receive = ?, client_type = ?, cost_per_conversion = ?, agency_fee = ?, total_waki_agency_fee = ?, campaign_name = ?, technical_fee = ?, company = ? WHERE summary_date = '"+o.SummaryDate.Format("2006-01-02")+"' AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ? AND campaign_objective = ?", o.Traffic, o.Landing, o.MoReceived, o.CrMO, o.CrPostback, o.Postback, o.TotalFP, o.SuccessFP, o.Billrate, o.PO, o.SBAF, o.SAAF, o.CPA, o.Revenue, o.URLAfter, o.URLBefore, o.MOLimit, o.RatioSend, o.RatioReceive, o.ClientType, o.CostPerConversion, o.AgencyFee, o.TotalWakiAgencyFee, o.CampaignName, o.TechnicalFee, o.Company, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId, o.CampaignObjective)
+	result := r.DB.Exec("UPDATE summary_campaigns SET traffic = ?, landing = ?, mo_received = ?, cr_mo = ?, cr_postback = ?, postback = ?, total_fp = ?, success_fp = ?, billrate = ?, po = ?, poaf = ?, sbaf = ?, saaf = ?, cpa = ?, revenue = ?, url_after = ?, url_before = ?, mo_limit = ?, ratio_send = ?, ratio_receive = ?, client_type = ?, cost_per_conversion = ?, agency_fee = ?, total_waki_agency_fee = ?, campaign_name = ?, technical_fee = ?, company = ? WHERE summary_date = '"+o.SummaryDate.Format("2006-01-02")+"' AND url_service_key = ? AND country = ? AND operator = ? AND partner = ? AND service = ? AND adnet = ? AND campaign_id = ? AND campaign_objective = ?", o.Traffic, o.Landing, o.MoReceived, o.CrMO, o.CrPostback, o.Postback, o.TotalFP, o.SuccessFP, o.Billrate, o.PO, o.POAF, o.SBAF, o.SAAF, o.CPA, o.Revenue, o.URLAfter, o.URLBefore, o.MOLimit, o.RatioSend, o.RatioReceive, o.ClientType, o.CostPerConversion, o.AgencyFee, o.TotalWakiAgencyFee, o.CampaignName, o.TechnicalFee, o.Company, o.URLServiceKey, o.Country, o.Operator, o.Partner, o.Service, o.Adnet, o.CampaignId, o.CampaignObjective)
 
 	r.Logs.Debug(fmt.Sprintf("ReCalculateSummaryCampaign : %s-%s, affected: %d, is error : %#v", o.URLServiceKey, o.SummaryDate, result.RowsAffected, result.Error))
 

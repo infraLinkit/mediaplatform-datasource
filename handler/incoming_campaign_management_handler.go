@@ -305,9 +305,6 @@ func (h *IncomingHandler) EditCampaignMOCapping(c *fiber.Ctx) error {
 	cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
 	cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
 
-	if o.MOCapping == cfgCmp.MOCapping {
-		return c.SendStatus(fiber.StatusOK)
-	}
 
 	cfgCmp.MOCapping = o.MOCapping
 	cfgCmp.StatusCapping = false
@@ -358,9 +355,6 @@ func (h *IncomingHandler) EditCampaignRatio(c *fiber.Ctx) error {
 	cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
 	cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
 
-	if o.RatioSend == cfgCmp.RatioSend && o.RatioReceive == cfgCmp.RatioReceive {
-		return c.SendStatus(fiber.StatusOK)
-	}
 
 	cfgCmp.RatioSend = o.RatioSend
 	cfgCmp.RatioReceive = o.RatioReceive
@@ -411,9 +405,6 @@ func (h *IncomingHandler) EditCampaignPO(c *fiber.Ctx) error {
 	cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
 	cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
 
-	if o.PO == cfgCmp.PO {
-		return c.SendStatus(fiber.StatusOK)
-	}
 
 	cfgCmp.PO = o.PO
 	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
@@ -496,10 +487,6 @@ func (h *IncomingHandler) EditCampaignSettingMOCapping(c *fiber.Ctx) error {
 		})
 	}
 
-	if req.MOCapping == cfgCmp.MOCapping {
-		return c.SendStatus(fiber.StatusOK)
-	}
-
 	cfgCmp.MOCapping = req.MOCapping
 	cfgCmp.StatusCapping = false
 	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
@@ -537,11 +524,6 @@ func (h *IncomingHandler) EditCampaignSettingRatio(c *fiber.Ctx) error {
 		})
 	}
 
-	if req.RatioSend == cfgCmp.RatioSend &&
-		req.RatioReceive == cfgCmp.RatioReceive {
-		return c.SendStatus(fiber.StatusOK)
-	}
-
 	cfgCmp.RatioSend = req.RatioSend
 	cfgCmp.RatioReceive = req.RatioReceive
 	cfgCmp.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
@@ -576,10 +558,6 @@ func (h *IncomingHandler) EditCampaignSettingPO(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
-	}
-
-	if req.PO == cfgCmp.PO {
-		return c.SendStatus(fiber.StatusOK)
 	}
 
 	cfgCmp.PO = req.PO

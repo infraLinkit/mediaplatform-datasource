@@ -468,7 +468,7 @@ func (h *IncomingHandler) UploadExcel(c *fiber.Ctx) error {
 
 	if errCreate := h.DS.CreateCpaReport(campaign); errCreate != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"message": "Failed to create SMS",
+			"message": "[1] Failed to create SMS",
 			"errors":  errCreate.Error(),
 		})
 	}
@@ -530,7 +530,10 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 		campaign.Service,
 		campaign.Adnet,
 		campaign.URLServiceKey,
+		"UPLOAD SMS",
 	)
+
+	fmt.Println("existing: ", existing)
 	if err == nil && existing.ID > 0 {
 
 		// Update jika ada
@@ -575,7 +578,7 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 
 			if err := h.DS.CreateCpaReport(newCampaign); err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"message": "Failed to create SMS",
+					"message": "[2] Failed to create SMS",
 					"errors":  err.Error(),
 				})
 			}
@@ -587,7 +590,7 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 			// Tidak ada referensi, create langsung dari FE
 			if err := h.DS.CreateCpaReport(campaign); err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"message": "Failed to create SMS",
+					"message": "[3] Failed to create SMS",
 					"errors":  err.Error(),
 				})
 			}

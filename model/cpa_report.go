@@ -279,7 +279,7 @@ func (r *BaseModel) UpdateCpaReport(s entity.SummaryCampaign) error {
 
 func (r *BaseModel) FindSummaryCampaignByUniqueKey(
 	summaryDate *time.Time,
-	campaignId, country, operator, partner, service, adnet, urlServiceKey string,
+	campaignId, country, operator, partner, service, adnet, urlServiceKey, campaignObjective string,
 ) (entity.SummaryCampaign, error) {
 	db := r.DB.Model(&entity.SummaryCampaign{})
 	if summaryDate != nil {
@@ -305,6 +305,9 @@ func (r *BaseModel) FindSummaryCampaignByUniqueKey(
 	}
 	if urlServiceKey != "" {
 		db = db.Where("LOWER(url_service_key) = LOWER(?)", urlServiceKey)
+	}
+	if campaignObjective != "" {
+		db = db.Where("LOWER(campaign_objective) = LOWER(?)", campaignObjective)
 	}
 
 	var s entity.SummaryCampaign

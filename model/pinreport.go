@@ -977,3 +977,21 @@ func (r *BaseModel) GetARPUReport(s *entity.PerformanceReport, dateStart time.Ti
 		}
 	}
 }
+
+func (r *BaseModel) GetAPIReportById(id []string) ([]entity.ApiPinReport, error) {
+	query := r.DB.Model(&entity.ApiPinReport{}).Where("id IN ?", id)
+	rows, err := query.Rows()
+
+	if err != nil {
+		return []entity.ApiPinReport{}, err
+	}
+
+	var results []entity.ApiPinReport
+	for rows.Next() {
+		var s entity.ApiPinReport
+		r.DB.ScanRows(rows, &s)
+		results = append(results, s)
+	}
+
+	return results, nil
+}

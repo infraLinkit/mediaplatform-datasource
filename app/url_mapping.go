@@ -110,6 +110,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/defaultinput/", h.DisplayDefaultInput).Name("Default Input for cpa n mainstream")
 	rpt.Get("/redirectiontime", h.DisplayRedirectionTime).Name("Redirection Time")
 	rpt.Post("/resend-data", h.ResendData).Name("Resend Data")
+	rpt.Post("/resend-data-apireport", h.ResendDataAPIReport).Name("Resend Data API Report")
 	rpt.Get("/ioreport", h.DisplaySummaryBudgetIO).Name("IO Report")
 
 	// API Internal

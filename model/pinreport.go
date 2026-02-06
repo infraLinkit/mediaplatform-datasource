@@ -995,3 +995,12 @@ func (r *BaseModel) GetAPIReportById(id []string) ([]entity.ApiPinReport, error)
 
 	return results, nil
 }
+
+func (r *BaseModel) GetOperatorAliases() ([]entity.OperatorAlias, error) {
+	var res []entity.OperatorAlias
+	err := r.DB.
+		Table("operator_aliases").
+		Where("type = ?", "API").
+		Find(&res).Error
+	return res, err
+}

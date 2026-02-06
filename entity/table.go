@@ -977,6 +977,15 @@ type (
 		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Name string `gorm:"type:varchar(80)" json:"name"`
 	}
+
+	OperatorAlias struct {
+		ID         uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Country  string `gorm:"type:varchar(10)" json:"country"`
+		Operator string `gorm:"type:varchar(100)" json:"operator"`
+		Service  string `gorm:"type:varchar(100)" json:"service"`
+		Alias    string `gorm:"type:varchar(100)" json:"alias"`
+		Type     string `gorm:"type:varchar(50)" json:"type"`
+	}
 )
 
 // Hook table campaign_details

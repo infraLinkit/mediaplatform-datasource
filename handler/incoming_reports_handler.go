@@ -952,9 +952,13 @@ func (h *IncomingHandler) ResendData(c *fiber.Ctx) error {
 	total, _ := strconv.Atoi(c.FormValue("total"))
 
 	for i := 0; i < total; i++ {
-		ids = append(ids, c.FormValue("id["+strconv.Itoa(i)+"]"))
-		//fmt.Printf("Current iteration: %d\n", i)
+		id := strings.TrimSpace(c.FormValue("id[" + strconv.Itoa(i) + "]"))
+		if id == "" {
+			continue 
+		}
+		ids = append(ids, id)
 	}
+
 
 	baseURL := h.Config.APILINKITDashboard
 
@@ -1019,64 +1023,139 @@ func (h *IncomingHandler) ResendData(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).SendString(`{"status":"OK","error":""}`)
 }
 
+func ResolveOperatorAlias(
+	operator string,
+	service string,
+	country string,
+	aliases []entity.OperatorAlias,
+) string {
+
+	operator = strings.ToLower(strings.TrimSpace(operator))
+	service  = strings.ToLower(strings.TrimSpace(service))
+	country  = strings.ToLower(strings.TrimSpace(country))
+
+	countries := helper.NormalizeCountry(country)
+	for i := range countries {
+		countries[i] = strings.ToLower(strings.TrimSpace(countries[i]))
+	}
+
+	for _, a := range aliases {
+		if strings.ToUpper(a.Type) != "API" {
+			continue
+		}
+
+		aliasOperator := strings.ToLower(strings.TrimSpace(a.Operator))
+		aliasService  := strings.ToLower(strings.TrimSpace(a.Service))
+		aliasCountry  := strings.ToLower(strings.TrimSpace(a.Country))
+
+		if aliasOperator == operator &&
+			aliasService != "" &&
+			strings.Contains(service, aliasService) &&
+			contains(countries, aliasCountry) {
+			return strings.ToLower(strings.TrimSpace(a.Alias))
+		}
+	}
+
+	for _, a := range aliases {
+		if strings.ToUpper(a.Type) != "API" {
+			continue
+		}
+
+		aliasOperator := strings.ToLower(strings.TrimSpace(a.Operator))
+		aliasCountry  := strings.ToLower(strings.TrimSpace(a.Country))
+
+		if aliasOperator == operator &&
+			a.Service == "" &&
+			contains(countries, aliasCountry) {
+			return strings.ToLower(strings.TrimSpace(a.Alias))
+		}
+	}
+
+	return operator
+}
+
 func (h *IncomingHandler) ResendDataAPIReport(c *fiber.Ctx) error {
 
 	var ids []string
 	total, _ := strconv.Atoi(c.FormValue("total"))
 
 	for i := 0; i < total; i++ {
-		ids = append(ids, c.FormValue("id["+strconv.Itoa(i)+"]"))
-		//fmt.Printf("Current iteration: %d\n", i)
+		id := strings.TrimSpace(c.FormValue("id[" + strconv.Itoa(i) + "]"))
+		if id == "" {
+			continue
+		}
+		ids = append(ids, id)
 	}
 
 	baseURL := h.Config.APILINKITDashboard
 
-	reports, _ := h.DS.GetAPIReportById(ids)
+	reports, err := h.DS.GetAPIReportById(ids)
+	if err != nil {
+		return c.Status(500).SendString(`{"status":"NOK","error":"failed load report"}`)
+	}
+
+	aliases, err := h.DS.GetOperatorAliases()
+	if err != nil {
+		return c.Status(500).SendString(`{"status":"NOK","error":"failed load operator alias"}`)
+	}
+
 	errorCounter := 0
 
 	for _, sc := range reports {
+
+		operatorAlias := ResolveOperatorAlias(
+			sc.Operator,
+			sc.Service,
+			sc.Country,
+			aliases,
+		)
+
 		q := url.Values{
 			"date":           {sc.DateSend.Format("2006-01-02")},
-			"publisher":      {sc.Adnet},
-			"adnet":          {sc.Adnet},
-			"operator":       {sc.Operator},
-			"client":         {sc.Company},
-			"country":        {sc.Country},
-			"service":        {sc.Service},
+			"publisher":      {strings.ToLower(sc.Adnet)},
+			"adnet":          {strings.ToLower(sc.Adnet)},
+			"operator":       {operatorAlias},
+			"client":         {strings.ToLower(sc.Company)},
+			"aggregator":     {""},
+			"country":        {strings.ToLower(sc.Country)},
+			"service":        {strings.ToLower(sc.Service)},
 			"total_mo":       {strconv.Itoa(sc.TotalMO)},
 			"total_postback": {strconv.Itoa(sc.TotalPostback)},
-			"sbaf":           {strconv.FormatFloat(sc.SBAF, 'f', 2, 64)},
-			"saaf":           {strconv.FormatFloat(sc.SAAF, 'f', 2, 64)},
+			"landing":        {""},
+			"cr_mo_received": {""},
+			"cr_mo_postback": {""},
+			"url_campaign":   {""},
+			"url_service":    {""},
+			"sbaf":           {""},
 			"spending":       {strconv.FormatFloat(sc.SAAF, 'f', 2, 64)},
 			"payout":         {strconv.FormatFloat(sc.PayoutAdn, 'f', 2, 64)},
 			"price_per_mo":   {strconv.FormatFloat(sc.PricePerMO, 'f', 2, 64)},
 		}
 
 		fullURL := fmt.Sprintf("%s?%s", baseURL, q.Encode())
-		message := `{"url":"` + fullURL + `"}`
+		message := fmt.Sprintf(`{"url":"%s"}`, fullURL)
+
 		published := h.Rmqp.PublishMsg(rmqp.PublishItems{
 			ExchangeName: "E_RESENDCAMPAIGNDATA",
 			QueueName:    "Q_RESENDCAMPAIGNDATA",
 			ContentType:  "application/json",
-			Payload:      message, // Send the properly formatted JSON
+			Payload:      message,
 			Priority:     0,
 		})
 
 		if !published {
 			errorCounter++
-			h.Logs.Debug(fmt.Sprintf("[x] Failed published: Data: %s ...", message))
-			//fmt.Println(fmt.Sprintf("[x] Failed published: Data: %s ...", message))
+			h.Logs.Debug(fmt.Sprintf("[x] Failed published: %s", message))
 		} else {
-			h.Logs.Debug(fmt.Sprintf("[v] Published: Data: %s ...", message))
-			//fmt.Println(fmt.Sprintf("[v] Published: Data: %s ...", message))
+			h.Logs.Debug(fmt.Sprintf("[v] Published: %s", message))
 		}
-		//fmt.Println(message)
-
 	}
 
 	if errorCounter > 0 {
-		return c.Status(fiber.StatusOK).SendString(`{"status":"NOK","error":"Some data not published"}`)
+		return c.Status(fiber.StatusOK).
+			SendString(`{"status":"NOK","error":"Some data not published"}`)
 	}
 
-	return c.Status(fiber.StatusOK).SendString(`{"status":"OK","error":""}`)
+	return c.Status(fiber.StatusOK).
+		SendString(`{"status":"OK","error":""}`)
 }

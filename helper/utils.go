@@ -323,3 +323,26 @@ func AppendPartnerToTxt(filePath, content string) error {
 
 	return f.Sync()
 }
+
+func NormalizeCountry(country string) []string {
+	switch country {
+	case "SA", "KSA":
+		return []string{"SA", "KSA"}
+	case "LA", "LS":
+		return []string{"LA", "LS"}
+	case "LK", "LKA":
+		return []string{"LK", "LKA"}
+	case "PS", "PSE":
+		return []string{"PS", "PSE"}
+	case "SE", "SLE":
+		return []string{"SE", "SLE"}
+	case "NG", "NGA":
+		return []string{"NG", "NGA"}
+	case "CZ", "CZE":
+		return []string{"CZ", "CZE"}
+	case "OM", "OMN":
+		return []string{"OM", "OMN"}
+	default:
+		return []string{country}
+	}
+}

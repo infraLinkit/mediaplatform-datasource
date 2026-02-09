@@ -828,3 +828,48 @@ func (r *BaseModel) GetSummaryReportById(id []string) ([]entity.SummaryCampaign,
 
 	return results, nil
 }
+
+func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
+	SQL := `
+	INSERT INTO summary_campaigns 
+	(id, created_at, updated_at, status, summary_date, url_service_key, campaign_id, campaign_name, country, operator,
+	partner, aggregator, adnet, service, short_code, traffic, landing, mo_received, cr, postback,
+	total_fp, success_fp, billrate, roi, po, first_push, cost, sbaf, saaf, cpa, revenue,
+	url_after, url_before, mo_limit, ratio_send, ratio_receive, company, client_type,
+	cost_per_conversion, agency_fee, target_daily_budget, cr_mo, cr_postback, total_waki_agency_fee,
+	budget_usage, target_daily_budget_changes, technical_fee, campaign_objective, 
+	channel, price_per_mo, target_monthly_budget, poaf)
+	SELECT 0, NOW(), NOW(), true, ?,
+	cd.url_service_key, cd.campaign_id, cp.name, cd.country, 
+	?, ?, cd.aggregator, ?, ?, ?, 0, 0, ?, -- mo_received
+	0, ?, -- postback
+	0, 0, 0, 0, ?, -- po
+	0, -- first_push
+	0, -- cost
+	?, -- sbaf
+	?, -- saaf
+	0, 0, cd.url_landing, cd.url_landing, ?, ?,
+	?, -- ratio_receive 
+	pt.company, pt.client_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'UPLOAD SMS',
+	'NA', 0, 0, 0
+	from campaign_details cd 
+	left join partners as pt on pt.name=cd.partner 
+	left join campaigns as cp on cp.id = cd.campaign_id::INTEGER where 
+	cd.url_service_key = ?
+	ON CONFLICT (summary_date,url_service_key,campaign_id,country,operator,partner,adnet,service,campaign_objective) 
+	DO UPDATE SET 
+		updated_at=NOW(),
+		po = EXCLUDED.po,
+		sbaf = EXCLUDED.sbaf,
+		saaf = EXCLUDED.saaf,
+		ratio_send = EXCLUDED.ratio_send,
+		ratio_receive = EXCLUDED.ratio_receive,
+		mo_received = EXCLUDED.mo_received,
+		postback = EXCLUDED.postback `
+
+	q := r.DB.Exec(SQL, s.SummaryDate, s.Operator, s.Partner, s.Adnet,
+		s.Service, s.ShortCode, s.MoReceived, s.Postback,
+		s.PO, s.SBAF, s.SAAF, 500, s.RatioSend, s.RatioReceive,
+		s.URLServiceKey)
+	return q.Error
+}

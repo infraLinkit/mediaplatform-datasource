@@ -520,6 +520,40 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 	}
 	//fmt.Println("BODY CAMPAIGN URL SERVICE : ", campaign.URLServiceKey)
 
+	if campaign.CampaignObjective == "UPLOAD SMS" {
+
+		// UPSERT QUERY
+		campaign.SuccessFP = 0
+		campaign.PO = 0
+		campaign.AgencyFee = 0
+		campaign.TotalWakiAgencyFee = 0
+		campaign.TechnicalFee = 0
+		campaign.CPA = 0
+		campaign.Traffic = 0
+		campaign.CrPostback = 0
+		campaign.CrMO = 0
+
+		err := h.DS.AddSMSReport(campaign)
+
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "[0] Failed to update SMS Campaign",
+				"error":   err.Error(),
+			})
+		}
+
+		err = h.DS.CreateSummaryDashboard(campaign)
+
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"message": "[1] Failed to update SMS Campaign",
+				"error":   err.Error(),
+			})
+		}
+
+		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "Updated"})
+	}
+
 	campaign.SuccessFP = 0
 	campaign.PO = 0
 	campaign.AgencyFee = 0
@@ -540,17 +574,17 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 		campaign.Service,
 		campaign.Adnet,
 		campaign.URLServiceKey,
-		"UPLOAD SMS",
+		campaign.CampaignObjective,
 	)
 
-	fmt.Println("existing: ", existing)
+	//fmt.Println("existing: ", existing)
 	if err == nil && existing.ID > 0 {
 
 		// Update jika ada
 		campaign.ID = existing.ID
 		if err := h.DS.UpdateCpaReport(campaign); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to update SMS Campaign",
+				"message": "[2] Failed to update SMS Campaign",
 				"error":   err.Error(),
 			})
 		}
@@ -588,7 +622,7 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 
 			if err := h.DS.CreateCpaReport(newCampaign); err != nil {
 				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"message": "[2] Failed to create SMS",
+					"message": "[3] Failed to create SMS",
 					"errors":  err.Error(),
 				})
 			}

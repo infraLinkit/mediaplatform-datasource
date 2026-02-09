@@ -1115,7 +1115,7 @@ func (h *IncomingHandler) ResendDataAPIReport(c *fiber.Ctx) error {
 			"publisher":      {strings.ToLower(sc.Adnet)},
 			"adnet":          {strings.ToLower(sc.Adnet)},
 			"operator":       {operatorAlias},
-			"client":         {strings.ToLower(sc.Company)},
+			"client":         {operatorAlias},
 			"aggregator":     {""},
 			"country":        {strings.ToLower(sc.Country)},
 			"service":        {strings.ToLower(sc.Service)},

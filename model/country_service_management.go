@@ -467,6 +467,55 @@ func (r *BaseModel) GetAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.
 	return ss, total_rows, rows.Err()
 }
 
+func (r *BaseModel) GetAPIAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.ApiPinReport, int64, error) {
+
+	var (
+		rows       *sql.Rows
+		totalRows  int64
+	)
+
+	// base query
+	query := r.DB.Model(&entity.ApiPinReport{}).
+		Select("adnet").
+		Distinct("adnet")
+
+	if o.Search != "" {
+		searchValue := strings.TrimSpace(o.Search)
+		query = query.Where(
+			"adnet ILIKE ?",
+			"%"+searchValue+"%",
+		)
+	}
+
+	// count distinct adnet
+	query.Count(&totalRows)
+
+	// pagination
+	if o.PageSize > 0 {
+		query = query.Limit(o.PageSize)
+		if o.Page > 0 {
+			query = query.Offset((o.Page - 1) * o.PageSize)
+		}
+	}
+
+	rows, err := query.
+		Order("adnet").
+		Rows()
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var result []entity.ApiPinReport
+	for rows.Next() {
+		var s entity.ApiPinReport
+		r.DB.ScanRows(rows, &s)
+		result = append(result, s)
+	}
+
+	return result, totalRows, rows.Err()
+}
+
 func (r *BaseModel) GetAgency(o entity.GlobalRequestFromDataTable) ([]entity.Agency, int64, error) {
 
 	var (

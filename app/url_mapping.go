@@ -237,6 +237,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	countryService.Put("/service/:id", h.UpdateService).Name("Update Service")
 	countryService.Delete("/service/:id", h.DeleteService).Name("Delete Service")
 	countryService.Get("/adnet-list", h.DisplayAdnetList).Name("Create AdnetList")
+	countryService.Get("/api-adnet-list", h.DisplayAPIAdnetList).Name("Show API AdnetList")
 	countryService.Post("/adnet-list", h.CreateAdnetList).Name("Create AdnetList")
 	countryService.Put("/adnet-list/:id", h.UpdateAdnetList).Name("Update AdnetList")
 	countryService.Delete("/adnet-list/:id", h.DeleteAdnetList).Name("Delete AdnetList")

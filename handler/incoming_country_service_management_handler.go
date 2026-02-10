@@ -1119,6 +1119,66 @@ func (h *IncomingHandler) DisplayAdnetList(c *fiber.Ctx) error {
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
+func (h *IncomingHandler) DisplayAPIAdnetList(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	m := c.Queries()
+
+	page, _ := strconv.Atoi(m["page"])
+	pageSize, errRequest := strconv.Atoi(m["page_size"])
+	if errRequest != nil {
+		pageSize = 10
+	}
+	draw, _ := strconv.Atoi(m["draw"])
+	fe := entity.GlobalRequestFromDataTable{
+		Page:     page,
+		Action:   m["action"],
+		Draw:     draw,
+		PageSize: pageSize,
+		Search:   m["search[value]"],
+	}
+
+	var (
+		errResponse     error
+		total_data      int64
+		api_adnet_list []entity.ApiPinReport
+	)
+
+	// key := "temp_key_api_adnet_list_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	// need to add redis mechanism here
+	api_adnet_list, total_data, errResponse = h.DS.GetAPIAdnetList(fe)
+
+	r := entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
+	}
+
+	if errResponse == nil {
+
+		r = entity.ReturnResponse{
+			HttpStatus: fiber.StatusOK,
+			Rsp: entity.GlobalResponseWithDataTable{
+				Code:            fiber.StatusOK,
+				Message:         config.OK_DESC,
+				Data:            api_adnet_list,
+				Draw:            fe.Draw,
+				RecordsTotal:    int(total_data),
+				RecordsFiltered: int(total_data),
+			},
+		}
+
+	}
+
+	return c.Status(r.HttpStatus).JSON(r.Rsp)
+}
+
 func (h *IncomingHandler) CreateAgency(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")

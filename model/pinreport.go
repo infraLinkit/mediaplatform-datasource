@@ -536,6 +536,9 @@ func (r *BaseModel) GetApiPinPerformanceReport(o entity.DisplayPinPerformanceRep
 		if o.Service != "" {
 			query = query.Where("service = ?", o.Service)
 		}
+		if len(o.Adnets) > 0 {
+			query = query.Where("adnet IN ?", o.Adnets)
+		}
 		if o.DateRange != "" {
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":

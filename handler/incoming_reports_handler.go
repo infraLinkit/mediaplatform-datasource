@@ -146,11 +146,18 @@ func (h *IncomingHandler) DisplayPinPerformanceReport(c *fiber.Ctx) error {
 	}
 
 	draw, _ := strconv.Atoi(m["draw"])
+	var adnets []string
+	for k, v := range m {
+		if strings.HasPrefix(k, "adnet[") {
+			adnets = append(adnets, v)
+		}
+	}
 	fe := entity.DisplayPinPerformanceReport{
 		Adnet:      m["adnet"],
 		Country:    m["country"],
 		Service:    m["service"],
 		Operator:   m["operator"],
+		Adnets:     adnets,
 		DateRange:  m["date_range"],
 		DateBefore: m["date_before"],
 		DateAfter:  m["date_after"],

@@ -795,6 +795,7 @@ type (
 		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Code string `gorm:"type:varchar(20)" json:"code"`
 		Name string `gorm:"type:varchar(80)" json:"name"`
+		APIURL string    `gorm:"size:255;default:NA" json:"api_url"`
 	}
 
 	Channel struct {
@@ -810,6 +811,7 @@ type (
 		Service       string `gorm:"type:varchar(80)" json:"service" `
 		UniqueDomain  string `gorm:"type:varchar(80)" json:"unique_domain"`
 		DomainService string `gorm:"type:varchar(80)" json:"domain_service"`
+		APIURL        string `gorm:"type:varchar(255)" json:"api_url"`
 	}
 
 	SummaryLanding struct {

@@ -556,7 +556,23 @@ func (m *BaseModel) CreateAgency(agency *entity.Agency) error {
 }
 
 func (m *BaseModel) UpdateAgency(agency *entity.Agency) error {
-	return m.DB.Updates(agency).Error
+	tx := m.DB.Begin()
+
+	if err := tx.Model(&entity.Agency{}).
+		Where("id = ?", agency.ID).
+		Updates(agency).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if err := tx.Table("mainstream_groups").
+		Where("agency = ?", agency.Name).
+		Update("api_url", agency.APIURL).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 func (m *BaseModel) DeleteAgency(id uint) error {

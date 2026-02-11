@@ -422,12 +422,17 @@ func NewInstanceTrxPinPerfonrmanceReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinP
 	pinOkRatio, _ := strconv.Atoi(m["pin_ok_ratio"])
 	chargedMO, _ := strconv.Atoi(m["charged_mo"])
 
+	country := strings.ToUpper(m["country"])
+	if country == "UAE" {
+		country = "AE"
+	}
+
 	pin := ApiPinPerformance{
-		Adnet:               m["adnet"],
-		Country:             m["country"],
-		Company:             m["company"],
-		Service:             m["service"],
-		Operator:            m["operator"],
+		Adnet:               strings.ToUpper(m["adnet"]),
+		Country:             country,
+		Company:             strings.ToUpper(m["company"]),
+		Service:             strings.ToUpper(m["service"]),
+		Operator:            strings.ToUpper(m["operator"]),
 		DateSend:            dateSend,
 		PinRequest:          pinRequest,
 		UniquePinRequest:    uniquePinRequest,

@@ -1471,6 +1471,17 @@ func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 	newItem := entity.DomainServices{
 		Domain: domainKey,
 		Render: renderName,
+		Country: mainstreamGroup.Country,
+		Operator: mainstreamGroup.Operator,
+		Service: mainstreamGroup.Service,
+		Company: mainstreamGroup.Company,
+		CompanyLegalName: mainstreamGroup.CompanyLegalName,
+		CompanyAddress: mainstreamGroup.CompanyAddress,
+		CompanyEmail: mainstreamGroup.CompanyEmail,
+		CompanyPhone: mainstreamGroup.CompanyPhone,
+		ServiceCurrency: mainstreamGroup.ServiceCurrency,
+		ServicePrice: mainstreamGroup.ServicePrice,
+		PortalURL: mainstreamGroup.PortalURL,
 	}
 
 	cfgDomain = append(cfgDomain, newItem)
@@ -1512,9 +1523,24 @@ func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
 	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
 
 	updated := false
+
 	for i, v := range cfgDomain {
 		if v.Domain == domainKey {
-			cfgDomain[i].Render = renderName
+			cfgDomain[i] = entity.DomainServices{
+				Domain:           domainKey,
+				Render:           renderName,
+				Country:          mainstreamGroup.Country,
+				Operator:         mainstreamGroup.Operator,
+				Service:          mainstreamGroup.Service,
+				Company:          mainstreamGroup.Company,
+				CompanyLegalName: mainstreamGroup.CompanyLegalName,
+				CompanyAddress:   mainstreamGroup.CompanyAddress,
+				CompanyEmail:     mainstreamGroup.CompanyEmail,
+				CompanyPhone:     mainstreamGroup.CompanyPhone,
+				ServiceCurrency:  mainstreamGroup.ServiceCurrency,
+				ServicePrice:     mainstreamGroup.ServicePrice,
+				PortalURL: mainstreamGroup.PortalURL,
+			}
 			updated = true
 			break
 		}
@@ -1524,6 +1550,17 @@ func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
 		cfgDomain = append(cfgDomain, entity.DomainServices{
 			Domain: domainKey,
 			Render: renderName,
+			Country: mainstreamGroup.Country,
+			Operator: mainstreamGroup.Operator,
+			Service: mainstreamGroup.Service,
+			Company: mainstreamGroup.Company,
+			CompanyLegalName: mainstreamGroup.CompanyLegalName,
+			CompanyAddress: mainstreamGroup.CompanyAddress,
+			CompanyEmail: mainstreamGroup.CompanyEmail,
+			CompanyPhone: mainstreamGroup.CompanyPhone,
+			ServiceCurrency: mainstreamGroup.ServiceCurrency,
+			ServicePrice: mainstreamGroup.ServicePrice,
+			PortalURL: mainstreamGroup.PortalURL,
 		})
 	}
 

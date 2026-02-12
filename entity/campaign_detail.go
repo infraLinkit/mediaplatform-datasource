@@ -108,6 +108,12 @@ type (
 		Prefix                    string    `gorm:"type:varchar(80)" json:"prefix"`
 		CountryDialingCode        string    `gorm:"type:varchar(80)" json:"country_dialing_code"`
 		UnusedTrafficRedirectType string    `gorm:"type:varchar(80);default:NA" json:"unused_traffic_redirect_type"`
+		CompanyLegalName          string    `gorm:"type:varchar(100);default:NA" json:"company_legal_name"`
+		CompanyAddress         	  string    `gorm:"type:text;default:NA" json:"company_address"`
+		CompanyEmail			  string    `gorm:"type:varchar(100);default:NA" json:"company_email"`
+		CompanyPhone			  string    `gorm:"type:varchar(20);default:NA" json:"company_phone"`
+		ServicePrice              float64   `gorm:"type:double precision;default:0" json:"service_price"`
+		PortalURL				  string    `gorm:"type:text;default:NA" json:"portal_url"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}

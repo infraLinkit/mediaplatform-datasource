@@ -1187,6 +1187,12 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 			Prefix:                    dc.Prefix,
 			CountryDialingCode:        dc.CountryDialingCode,
 			UnusedTrafficRedirectType: dc.UnusedTrafficRedirectType,
+			CompanyLegalName: dc.CompanyLegalName,
+			CompanyAddress: dc.CompanyAddress,
+			CompanyEmail: dc.CompanyEmail,
+			CompanyPhone: dc.CompanyPhone,
+			ServicePrice: dc.ServicePrice,
+			PortalURL: dc.PortalURL,
 		}
 
 		if cd, _ := h.DS.GetCampaignByCampaignDetailId(entity.CampaignDetail{
@@ -1265,6 +1271,12 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 			cd.Prefix = dc.Prefix
 			cd.CountryDialingCode = dc.CountryDialingCode
 			cd.UnusedTrafficRedirectType = dc.UnusedTrafficRedirectType
+			cd.CompanyLegalName = dc.CompanyLegalName
+			cd.CompanyAddress = dc.CompanyAddress
+			cd.CompanyEmail = dc.CompanyEmail
+			cd.CompanyPhone = dc.CompanyPhone
+			cd.ServicePrice = dc.ServicePrice
+			cd.PortalURL = dc.PortalURL
 
 			h.DS.SaveCampaignDetail(cd)
 			h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
@@ -1378,6 +1390,12 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 				Prefix:                    dc.Prefix,
 				CountryDialingCode:        dc.CountryDialingCode,
 				UnusedTrafficRedirectType: dc.UnusedTrafficRedirectType,
+				CompanyLegalName: dc.CompanyLegalName,
+				CompanyAddress: dc.CompanyAddress,
+				CompanyEmail: dc.CompanyEmail,
+				CompanyPhone: dc.CompanyPhone,
+				ServicePrice: dc.ServicePrice,
+				PortalURL: dc.PortalURL,
 			})
 
 			dataConfig.Id = campaign_detail_id

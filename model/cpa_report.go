@@ -832,14 +832,14 @@ func (r *BaseModel) GetSummaryReportById(id []string) ([]entity.SummaryCampaign,
 func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
 	SQL := `
 	INSERT INTO summary_campaigns 
-	(id, created_at, updated_at, status, summary_date, url_service_key, campaign_id, campaign_name, country, operator,
+	(created_at, updated_at, status, summary_date, url_service_key, campaign_id, campaign_name, country, operator,
 	partner, aggregator, adnet, service, short_code, traffic, landing, mo_received, cr, postback,
 	total_fp, success_fp, billrate, roi, po, first_push, cost, sbaf, saaf, cpa, revenue,
 	url_after, url_before, mo_limit, ratio_send, ratio_receive, company, client_type,
 	cost_per_conversion, agency_fee, target_daily_budget, cr_mo, cr_postback, total_waki_agency_fee,
 	budget_usage, target_daily_budget_changes, technical_fee, campaign_objective, 
 	channel, price_per_mo, target_monthly_budget, poaf)
-	SELECT 0, NOW(), NOW(), true, ?,
+	SELECT NOW(), NOW(), true, ?,
 	cd.url_service_key, cd.campaign_id, cp.name, cd.country, 
 	?, ?, cd.aggregator, ?, ?, ?, 0, 0, ?, -- mo_received
 	0, ?, -- postback

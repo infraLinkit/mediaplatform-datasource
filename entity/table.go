@@ -156,7 +156,7 @@ type (
 		RatioSend         int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
-		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
+		APIURL            string    `gorm:"type:text" json:"api_url"`
 		CampaignObjective string    `gorm:"size:50;default:NA" json:"campaign_objective"`
 		Channel           string    `gorm:"size:50;default:NA" json:"channel"`
 		CreatedAt         time.Time
@@ -224,7 +224,7 @@ type (
 		RatioSend         int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
-		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
+		APIURL            string    `gorm:"type:text" json:"api_url"`
 		CampaignObjective string    `gorm:"size:50;default:NA" json:"campaign_objective"`
 		Channel           string    `gorm:"size:50;default:NA" json:"channel"`
 		GoogleSheet       string    `gorm:"type:text;default:NA" json:"google_sheet"`
@@ -298,7 +298,7 @@ type (
 		RatioSend         int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
-		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
+		APIURL            string    `gorm:"type:text" json:"api_url"`
 		CampaignObjective string    `gorm:"not null;size:50" json:"campaign_objective"`
 		Channel           string    `gorm:"not null;size:50" json:"channel"`
 		CreatedAt         time.Time
@@ -802,7 +802,7 @@ type (
 		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Code string `gorm:"type:varchar(20)" json:"code"`
 		Name string `gorm:"type:varchar(80)" json:"name"`
-		APIURL string    `gorm:"size:255;default:NA" json:"api_url"`
+		APIURL string    `gorm:"type:text" json:"api_url"`
 	}
 
 	Channel struct {
@@ -828,7 +828,7 @@ type (
 		UniqueDomain  string `gorm:"type:varchar(80)" json:"unique_domain"`
 		DomainService string `gorm:"type:varchar(80)" json:"domain_service"`
 		PortalURL     string `gorm:"type:text" json:"portal_url"`
-		APIURL        string `gorm:"type:varchar(255)" json:"api_url"`
+		APIURL        string `gorm:"type:text" json:"api_url"`
 	}
 
 	SummaryLanding struct {

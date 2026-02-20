@@ -499,7 +499,8 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 	query := r.DB.Table(`
 	   (select date_send as summary_date,adnet,
 		SUM(total_mo) as mo_received,
-		sum(total_postback) as conversion,sum(payout_af*total_postback) as "cost",
+		sum(total_postback) as conversion,
+		sum(sbaf) as "cost",
 		sum(saaf) as saaf,'api' as type
 		from api_pin_reports WHERE total_mo > 0 group by adnet,date_send
 		UNION

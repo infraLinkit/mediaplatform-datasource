@@ -705,6 +705,26 @@ func (h *IncomingHandler) GetURLServiceInSummaryLanding(c *fiber.Ctx) error {
 	//}
 }
 
+func ParseFlexibleTime(t string) (time.Time, error) {
+
+	layouts := []string{
+		"2006-01-02 15:04:05",
+		time.RFC3339,
+	}
+
+	var err error
+	var parsed time.Time
+
+	for _, layout := range layouts {
+		parsed, err = time.Parse(layout, t)
+		if err == nil {
+			return parsed, nil
+		}
+	}
+
+	return time.Time{}, err
+}
+
 func (h *IncomingHandler) UpdateResponseURLServiceInSummaryLanding(c *fiber.Ctx) error {
 
 	var request []map[string]interface{}
@@ -716,14 +736,13 @@ func (h *IncomingHandler) UpdateResponseURLServiceInSummaryLanding(c *fiber.Ctx)
 		})
 	}
 
-	layout := "2006-01-02 15:04:05"
 
 	for _, v := range request {
 
-		// Parse time dari request
-		var summaryTime time.Time
+		summaryTime := time.Time{}
+
 		if t, ok := v["summary_date_hour"].(string); ok {
-			parsedTime, err := time.Parse(layout, t)
+			parsedTime, err := ParseFlexibleTime(t)
 			if err != nil {
 				return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
 					Code:    fiber.StatusBadRequest,

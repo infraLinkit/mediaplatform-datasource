@@ -48,22 +48,26 @@ func (r *BaseModel) GetURLServiceFromSummaryLanding(event_date string, with_limi
 
 }
 
-func (r *BaseModel) UpdateResponseTimeURLService(event_date string, o entity.SummaryLanding) error {
+func (r *BaseModel) UpdateResponseTimeURLService(o entity.SummaryLanding) error {
 
-	var query string
+	sql := `
+		UPDATE summary_landings
+		SET response_url_service_time = ?
+		WHERE url_service_key = ?
+		AND summary_date_hour = ?
+	`
 
-	switch event_date {
-	case "1HOURAGO":
-		query = "DATE(summary_date_hour) = CURRENT_DATE and date_part('hour', summary_date_hour) = date_part('hour', NOW() - INTERVAL '1 hour')"
-	case "1DAYAGO":
-		query = "DATE(summary_date_hour) = CURRENT_DATE - INTERVAL '2 day'"
-	default:
-		query = "DATE(summary_date_hour) = '" + event_date + "'"
-	}
+	result := r.DB.Exec(sql,
+		o.ResponseUrlServiceTime,
+		o.URLServiceKey,
+		o.SummaryDateHour.Format("2006-01-02 15:00:00"),
+	)
 
-	result := r.DB.Exec(fmt.Sprintf("UPDATE summary_landings SET response_url_service_time = '%.2f' WHERE url_service_key = '%s' AND "+query, o.ResponseUrlServiceTime, o.URLServiceKey))
-
-	r.Logs.Debug(fmt.Sprintf("affected: %d, is error : %#v", result.RowsAffected, result.Error))
+	r.Logs.Debug(fmt.Sprintf(
+		"affected: %d, error: %#v",
+		result.RowsAffected,
+		result.Error,
+	))
 
 	return result.Error
 }

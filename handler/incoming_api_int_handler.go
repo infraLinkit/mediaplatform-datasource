@@ -707,51 +707,55 @@ func (h *IncomingHandler) GetURLServiceInSummaryLanding(c *fiber.Ctx) error {
 
 func (h *IncomingHandler) UpdateResponseURLServiceInSummaryLanding(c *fiber.Ctx) error {
 
-	c.Accepts("application/json")
-	c.Accepts("application/x-www-form-urlencoded")
-	c.AcceptsCharsets("utf-8", "iso-8859-1")
+	var request []map[string]interface{}
 
-	var (
-		request []entity.SummaryLanding
-		err     error
-	)
-
-	if err = json.Unmarshal(c.Body(), &request); err != nil {
-		c.Set("Content-Type", "application/json")
-
+	if err := json.Unmarshal(c.Body(), &request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
 			Code:    fiber.StatusBadRequest,
 			Message: "parameters not complete or different setup",
 		})
-	} else {
+	}
 
-		q := c.Queries()
-		event_date := q["event_date"]
+	layout := "2006-01-02 15:04:05"
 
-		if event_date == "" {
+	for _, v := range request {
 
-			c.Set("Content-Type", "application/json")
-
-			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
-				Code:    fiber.StatusBadRequest,
-				Message: "Failed update, event_date is null",
-			})
-
-		} else {
-
-			for _, v := range request {
-				h.DS.UpdateResponseTimeURLService(event_date, entity.SummaryLanding{
-					URLServiceKey:          v.URLServiceKey,
-					ResponseUrlServiceTime: v.ResponseUrlServiceTime,
+		// Parse time dari request
+		var summaryTime time.Time
+		if t, ok := v["summary_date_hour"].(string); ok {
+			parsedTime, err := time.Parse(layout, t)
+			if err != nil {
+				return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+					Code:    fiber.StatusBadRequest,
+					Message: "invalid time format",
 				})
 			}
+			summaryTime = parsedTime
+		}
 
-			c.Set("Content-Type", "application/json")
+		err := h.DS.UpdateResponseTimeURLService(
+			entity.SummaryLanding{
+				URLServiceKey: v["urlservicekey"].(string),
+				ResponseUrlServiceTime: func() float64 {
+					if val, ok := v["response_url_service_time"].(float64); ok {
+						return val
+					}
+					return 0
+				}(),
+				SummaryDateHour: summaryTime,
+			},
+		)
 
-			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
-				Code:    fiber.StatusOK,
-				Message: "OK",
+		if err != nil {
+			return c.Status(500).JSON(entity.GlobalResponse{
+				Code:    500,
+				Message: "Update failed",
 			})
 		}
 	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+		Code:    fiber.StatusOK,
+		Message: "OK",
+	})
 }

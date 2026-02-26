@@ -705,70 +705,38 @@ func (h *IncomingHandler) GetURLServiceInSummaryLanding(c *fiber.Ctx) error {
 	//}
 }
 
-func ParseFlexibleTime(t string) (time.Time, error) {
-
-	layouts := []string{
-		"2006-01-02 15:04:05",
-		time.RFC3339,
-	}
-
-	var err error
-	var parsed time.Time
-
-	for _, layout := range layouts {
-		parsed, err = time.Parse(layout, t)
-		if err == nil {
-			return parsed, nil
-		}
-	}
-
-	return time.Time{}, err
-}
-
 func (h *IncomingHandler) UpdateResponseURLServiceInSummaryLanding(c *fiber.Ctx) error {
 
-	var request []map[string]interface{}
+	var request []entity.SummaryLanding
 
-	if err := json.Unmarshal(c.Body(), &request); err != nil {
+	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
 			Code:    fiber.StatusBadRequest,
-			Message: "parameters not complete or different setup",
+			Message: "invalid request body",
 		})
 	}
 
-
 	for _, v := range request {
 
-		summaryTime := time.Time{}
-
-		if t, ok := v["summary_date_hour"].(string); ok {
-			parsedTime, err := ParseFlexibleTime(t)
-			if err != nil {
-				return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
-					Code:    fiber.StatusBadRequest,
-					Message: "invalid time format",
-				})
-			}
-			summaryTime = parsedTime
+		if v.URLServiceKey == "" || v.SummaryDateHour.IsZero() {
+			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusBadRequest,
+				Message: "missing required field",
+			})
 		}
 
 		err := h.DS.UpdateResponseTimeURLService(
 			entity.SummaryLanding{
-				URLServiceKey: v["urlservicekey"].(string),
-				ResponseUrlServiceTime: func() float64 {
-					if val, ok := v["response_url_service_time"].(float64); ok {
-						return val
-					}
-					return 0
-				}(),
-				SummaryDateHour: summaryTime,
+				URLServiceKey:          v.URLServiceKey,
+				ResponseUrlServiceTime: v.ResponseUrlServiceTime,
+				SummaryDateHour:        v.SummaryDateHour,
 			},
 		)
 
 		if err != nil {
-			return c.Status(500).JSON(entity.GlobalResponse{
-				Code:    500,
-				Message: "Update failed",
+			return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusInternalServerError,
+				Message: "update failed",
 			})
 		}
 	}

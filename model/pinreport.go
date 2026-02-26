@@ -609,7 +609,7 @@ func (r *BaseModel) GetConversionLogReport(o entity.DisplayConversionLogReport) 
 	if o.CampaignType == "mainstream" {
 		query = query.Where("campaign_objective LIKE ?", "%MAINSTREAM%")
 	} else {
-		query = query.Where("campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
+		query = query.Where("campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM", "SINGLE URL S2S"})
 	}
 
 	if o.Action == "Search" {

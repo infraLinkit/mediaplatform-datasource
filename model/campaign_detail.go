@@ -410,7 +410,7 @@ func (r *BaseModel) UpdateMOCappingS2S(o entity.CampaignDetail) error {
 			AND cd.operator = ? 
 			AND cd.partner = ? 
 			AND cd.service = ? 
-			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC')
+			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC', 'SINGLE URL S2S')
 	`, o.MOCappingService, o.Country, o.Operator, o.Partner, o.Service)
 
 	r.Logs.Debug(fmt.Sprintf("UpdateMOCounterService - affected: %d, error: %v", result.RowsAffected, result.Error))
@@ -427,7 +427,7 @@ func (r *BaseModel) UpdateMOCounterServiceS2S(o entity.CampaignDetail) error {
 			FROM campaigns c
 			WHERE c.campaign_id = cd.campaign_id
 			AND cd.country = ? AND cd.operator = ? AND cd.partner = ? AND cd.service = ?
-			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC')
+			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC', 'SINGLE URL S2S')
 		`, o.CounterMOCappingService, o.Country, o.Operator, o.Partner, o.Service)
 	} else {
 		result = r.DB.Exec(`
@@ -436,7 +436,7 @@ func (r *BaseModel) UpdateMOCounterServiceS2S(o entity.CampaignDetail) error {
 			FROM campaigns c
 			WHERE c.campaign_id = cd.campaign_id
 			AND cd.country = ? AND cd.operator = ? AND cd.partner = ? AND cd.service = ?
-			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC')
+			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC', 'SINGLE URL S2S')
 		`, o.CounterMOCappingService, o.Country, o.Operator, o.Partner, o.Service)
 	}
 

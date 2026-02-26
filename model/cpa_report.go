@@ -49,8 +49,8 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 		query.Where("campaign_objective = ? ", o.CampaignObjective)
 		t_query.Where("campaign_objective = ? ", o.CampaignObjective)
 	} else {
-		query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
-		t_query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
+		query.Where("campaign_objective IN ?", []string{"CPA", "UPLOAD SMS", "SINGLE URL S2S"})
+		t_query.Where("campaign_objective IN ?", []string{"CPA", "UPLOAD SMS", "SINGLE URL S2S"})
 	}
 
 	//fmt.Println("o.CampaignObjective: ", o.CampaignObjective)
@@ -668,7 +668,7 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport, allow
 		if o.CampaignType != "" {
 			switch strings.ToUpper(o.CampaignType) {
 			case "S2S":
-				query = query.Where("campaign_objective IN ('CPA', 'UPLOAD SMS')")
+				query = query.Where("campaign_objective IN ('CPA', 'UPLOAD SMS', 'SINGLE URL S2S)")
 			case "MAINSTREAM":
 				query = query.Where("campaign_objective ? ", "MAINSTREAM")
 			case "API":

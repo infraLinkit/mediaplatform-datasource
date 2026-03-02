@@ -191,14 +191,18 @@ func (h *IncomingHandler) UpdateStatusCampaign(c *fiber.Ctx) error {
 		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
 		cfgCmp.IsActive = o.IsActive
 
+		if o.IsActive {
+			cfgCmp.StatusCapping = false
+		}
+
 		cfgDataConfig, _ := json.Marshal(cfgCmp)
 
 		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
 
 		// Update to database
-		h.DS.UpdateCampaignDetail(entity.CampaignDetail{
-			ID:       o.ID,
-			IsActive: o.IsActive,
+		h.DS.UpdateStatusCounterMOCampaignDetail(entity.CampaignDetail{
+			URLServiceKey: o.URLServiceKey,
+			IsActive:      o.IsActive,
 		})
 
 		h.DS.UpdateSummaryCampaign(entity.SummaryCampaign{

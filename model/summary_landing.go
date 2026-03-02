@@ -52,12 +52,15 @@ func (r *BaseModel) UpdateResponseTimeURLService(o entity.SummaryLanding) error 
 
 	sql := `
 		UPDATE summary_landings
-		SET response_url_service_time = ?
+		SET 
+			response_url_service_time = ?,
+			total_load_time = response_time + ?
 		WHERE url_service_key = ?
 		AND summary_date_hour = ?
 	`
 
 	result := r.DB.Exec(sql,
+		o.ResponseUrlServiceTime,
 		o.ResponseUrlServiceTime,
 		o.URLServiceKey,
 		o.SummaryDateHour.Format("2006-01-02 15:00:00"),

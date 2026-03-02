@@ -27,11 +27,11 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 	}
 	draw, _ := strconv.Atoi(m["draw"])
 	var adnets []string
-    for k, v := range m {
-        if strings.HasPrefix(k, "adnet[") {
-            adnets = append(adnets, v)
-        }
-    }
+	for k, v := range m {
+		if strings.HasPrefix(k, "adnet[") {
+			adnets = append(adnets, v)
+		}
+	}
 	fe := entity.DisplayCPAReport{
 		SummaryDate:   time.Time{},
 		CampaignId:    m["campaign_id"],
@@ -56,8 +56,8 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 		DateBefore:    m["date_before"],
 		DateAfter:     m["date_after"],
 		Reload:        m["reload"],
-		OrderColumn:    m["order_column"],
-		OrderDir:       m["order_dir"],
+		OrderColumn:   m["order_column"],
+		OrderDir:      m["order_dir"],
 	}
 
 	allowedCompanies, _ := c.Locals("companies").([]string)
@@ -69,16 +69,17 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport, allowedCompanies []string) entity.ReturnResponse {
 
 	var (
-		err        error
-		total_data int64
+		err              error
+		total_data       int64
 		mainstreamreport []entity.SummaryCampaign
+		TotalSummary     interface{}
 	)
 
 	if fe.Action != "" || fe.Reload == "true" {
 		fmt.Println("-----", fe.Reload, "-----")
-		mainstreamreport, total_data, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies)
+		mainstreamreport, total_data, TotalSummary, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies)
 	} else {
-		mainstreamreport, total_data, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies)
+		mainstreamreport, total_data, TotalSummary, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies)
 	}
 
 	if err == nil {
@@ -86,6 +87,8 @@ func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.D
 		if mainstreamreport == nil {
 			mainstreamreport = []entity.SummaryCampaign{}
 		}
+
+		//TotalSummary := interface{}
 
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
@@ -96,6 +99,7 @@ func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.D
 				Data:            mainstreamreport,
 				RecordsTotal:    int(total_data),
 				RecordsFiltered: int(total_data),
+				TotalSummary:    TotalSummary,
 			},
 		}
 

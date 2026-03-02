@@ -506,6 +506,7 @@ func (r *BaseModel) UpdateStatusCounterMOCampaignDetail(o entity.CampaignDetail)
 		result = r.DB.Exec(`
 			UPDATE campaign_details 
 			SET is_active = ?, 
+				status_capping = false,
 			    counter_mo_capping = ?, 
 			    counter_mo_capping_service = 0
 			WHERE url_service_key = ?`,

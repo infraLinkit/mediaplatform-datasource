@@ -18,7 +18,7 @@ import (
 func (h *IncomingHandler) DisplayRedirectionTime(c *fiber.Ctx) error {
 	dataIndicators := extractQueryArrayRedirection(c, "data-indicators[]")
 	if len(dataIndicators) == 0 {
-		dataIndicators = append(dataIndicators, "total_load_time", "response_time", "landing", "success_rate", "click_ios", "click_android", "click_operator", "click_non_operator")
+		dataIndicators = append(dataIndicators, "total_load_time", "response_time", "response_url_service_time", "landing", "success_rate", "click_ios", "click_android", "click_operator", "click_non_operator")
 	}
 
 	params := entity.RedirectionTimeParams{
@@ -216,7 +216,7 @@ func generateSummaryRedirection(data []entity.SummaryLanding, params entity.Redi
 
 			var newValue float64
 			// Khusus indikator yang harus avg
-			if indicator == "success_rate" || indicator == "response_time" || indicator == "total_load_time" {
+			if indicator == "success_rate" || indicator == "response_time" || indicator == "response_url_service_time" || indicator == "total_load_time" {
 				cnt := countsPerDay[date][indicator]
 				if cnt > 0 {
 					newValue = totalsPerDay[date][indicator] / float64(cnt)
@@ -628,7 +628,7 @@ func generateHourlyChartRedirection(data []entity.SummaryLanding, params entity.
 			val := getIndicatorValueRedirection(item, indicator)
 
 			// Jika All = true & indikator tertentu → hitung rata-rata per jam
-			if params.All == "true" && (indicator == "success_rate" || indicator == "response_time" || indicator == "total_load_time") {
+			if params.All == "true" && (indicator == "success_rate" || indicator == "response_time" || indicator == "response_url_service_time" || indicator == "total_load_time") {
 				current := hourlyMap[hour][indicator]
 				hourlyMap[hour][indicator] = current + val // total sementara
 			} else {
@@ -653,7 +653,7 @@ func generateHourlyChartRedirection(data []entity.SummaryLanding, params entity.
 				countsPerHour[hour] = make(map[string]int)
 			}
 			for _, indicator := range params.DataIndicators {
-				if indicator == "success_rate" || indicator == "response_time" || indicator == "total_load_time" {
+				if indicator == "success_rate" || indicator == "response_time" || indicator == "response_url_service_time" || indicator == "total_load_time" {
 					countsPerHour[hour][indicator]++
 				}
 			}

@@ -896,7 +896,8 @@ func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
 	0, -- cost
 	?, -- sbaf
 	?, -- saaf
-	0, 0, cd.url_landing, cd.url_landing, ?, ?,
+	?, -- cpa
+	0, cd.url_landing, cd.url_landing, ?, ?,
 	?, -- ratio_receive 
 	pt.company, pt.client_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'UPLOAD SMS',
 	'NA', 0, 0, 0
@@ -908,6 +909,7 @@ func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
 	DO UPDATE SET 
 		updated_at=NOW(),
 		po = EXCLUDED.po,
+		cpa = EXCLUDED.cpa,
 		sbaf = EXCLUDED.sbaf,
 		saaf = EXCLUDED.saaf,
 		ratio_send = EXCLUDED.ratio_send,
@@ -917,7 +919,7 @@ func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
 
 	q := r.DB.Exec(SQL, s.SummaryDate, s.Operator, s.Partner, s.Adnet,
 		s.Service, s.ShortCode, s.MoReceived, s.Postback,
-		s.PO, s.SBAF, s.SAAF, 500, s.RatioSend, s.RatioReceive,
+		s.PO, s.SBAF, s.SAAF, s.CPA, 500, s.RatioSend, s.RatioReceive,
 		s.URLServiceKey)
 	return q.Error
 }

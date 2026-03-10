@@ -60,7 +60,6 @@ func (h *IncomingHandler) DisplayPinReport(c *fiber.Ctx) error {
 		OrderDir:    m["order_dir"],
 	}
 
-
 	r := h.DisplayPinReportExtra(c, fe)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
@@ -695,12 +694,20 @@ func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.Display
 		costreport []entity.CostReport
 		// displaycostreport []entity.CostReport
 	)
+
+	filter_by := c.Query("filter_by")
+	fe.Country = c.Query("country")
+	fe.Operator = c.Query("operator")
+
+	fmt.Println("COUNTRY: ", fe.Country)
+
 	if v == "list" {
+
 		if fe.Action != "" {
-			costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
+			costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets, filter_by)
 		} else {
 			if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
-				costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
+				costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets, filter_by)
 				s, _ := json.Marshal(costreport)
 				h.DS.SetData(key, "$", string(s))
 				h.DS.SetExpireData(key, 60)
@@ -800,12 +807,12 @@ func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.D
 		total_data int64
 		// displaycpareport []entity.SummaryCampaign
 	)
-
+	filter_by := ""
 	if fe.Action != "" {
-		costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
+		costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets, filter_by)
 	} else {
 		if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
-			costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
+			costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets, filter_by)
 			s, _ := json.Marshal(costreport)
 			h.DS.SetData(key, "$", string(s))
 			h.DS.SetExpireData(key, 60)
@@ -961,11 +968,10 @@ func (h *IncomingHandler) ResendData(c *fiber.Ctx) error {
 	for i := 0; i < total; i++ {
 		id := strings.TrimSpace(c.FormValue("id[" + strconv.Itoa(i) + "]"))
 		if id == "" {
-			continue 
+			continue
 		}
 		ids = append(ids, id)
 	}
-
 
 	baseURL := h.Config.APILINKITDashboard
 
@@ -1038,8 +1044,8 @@ func ResolveOperatorAlias(
 ) string {
 
 	operator = strings.ToLower(strings.TrimSpace(operator))
-	service  = strings.ToLower(strings.TrimSpace(service))
-	country  = strings.ToLower(strings.TrimSpace(country))
+	service = strings.ToLower(strings.TrimSpace(service))
+	country = strings.ToLower(strings.TrimSpace(country))
 
 	countries := helper.NormalizeCountry(country)
 	for i := range countries {
@@ -1052,8 +1058,8 @@ func ResolveOperatorAlias(
 		}
 
 		aliasOperator := strings.ToLower(strings.TrimSpace(a.Operator))
-		aliasService  := strings.ToLower(strings.TrimSpace(a.Service))
-		aliasCountry  := strings.ToLower(strings.TrimSpace(a.Country))
+		aliasService := strings.ToLower(strings.TrimSpace(a.Service))
+		aliasCountry := strings.ToLower(strings.TrimSpace(a.Country))
 
 		if aliasOperator == operator &&
 			aliasService != "" &&
@@ -1069,7 +1075,7 @@ func ResolveOperatorAlias(
 		}
 
 		aliasOperator := strings.ToLower(strings.TrimSpace(a.Operator))
-		aliasCountry  := strings.ToLower(strings.TrimSpace(a.Country))
+		aliasCountry := strings.ToLower(strings.TrimSpace(a.Country))
 
 		if aliasOperator == operator &&
 			a.Service == "" &&

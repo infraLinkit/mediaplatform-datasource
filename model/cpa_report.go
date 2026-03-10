@@ -530,7 +530,7 @@ func (r *BaseModel) UpdateAgencyCostModel(o entity.SummaryCampaign) error {
 
 }
 
-func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdnets []string) ([]entity.CostReport, int64, error) {
+func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdnets []string, filter_by string) ([]entity.CostReport, int64, error) {
 	var (
 		rows       *sql.Rows
 		err        error
@@ -539,19 +539,33 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 
 	var apiAdnets []string
 
+	//fmt.Println("filter_by: ", filter_by)
+
 	_ = r.DB.Model(&entity.ApiPinReport{}).
 		Distinct("adnet").Pluck("adnet", &apiAdnets)
 
 	allowedAdnets = append(allowedAdnets, apiAdnets...)
 
 	//query := r.DB.Model(&entity.SummaryCampaign{})
+	where := ""
+	switch strings.ToUpper(filter_by) {
+	case "COUNTRY":
+		if o.Country != "" {
+			where = "UPPER(country) = UPPER('" + o.Country + "') AND "
+		}
+	case "OPERATOR":
+		if o.Operator != "" {
+			where = "UPPER(operator) = UPPER('" + o.Operator + "') AND "
+		}
+	}
+
 	query := r.DB.Table(`
 	   (select date_send as summary_date,adnet,
 		SUM(total_mo) as mo_received,
 		sum(total_postback) as conversion,
 		sum(sbaf) as "cost",
 		sum(saaf) as saaf,'api' as type
-		from api_pin_reports WHERE total_mo > 0 group by adnet,date_send
+		from api_pin_reports WHERE ` + where + ` total_mo > 0 group by adnet,date_send
 		UNION
 		select summary_date as summary_date,
 		adnet,
@@ -565,7 +579,7 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 				(total_waki_agency_fee + (po * postback) + technical_fee)
 		    END
 		END) as saaf,'s2s' as "type"
-		FROM "summary_campaigns" WHERE mo_received > 0
+		FROM "summary_campaigns" WHERE ` + where + ` mo_received > 0
 		AND "summary_campaigns"."deleted_at" IS NULL GROUP BY summary_date,"adnet")
 		as t`)
 
@@ -704,7 +718,7 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport, allow
 
 	query = query.Where("mo_received > 0")
 	query = query.Where("adnet IN ?", allowedAdnets)
-
+	fmt.Println("COUNTRY: ", o.Country)
 	if o.Action == "Search" {
 
 		if o.Adnet != "" {

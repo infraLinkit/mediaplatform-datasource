@@ -548,15 +548,12 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 
 	//query := r.DB.Model(&entity.SummaryCampaign{})
 	where := ""
-	switch strings.ToUpper(filter_by) {
-	case "COUNTRY":
-		if o.Country != "" {
-			where = "UPPER(country) = UPPER('" + o.Country + "') AND "
-		}
-	case "OPERATOR":
-		if o.Operator != "" {
-			where = "UPPER(operator) = UPPER('" + o.Operator + "') AND "
-		}
+	if o.Country != "" {
+		where += "UPPER(country) = UPPER('" + o.Country + "') AND "
+	}
+
+	if o.Operator != "" {
+		where += "UPPER(operator) = UPPER('" + o.Operator + "') AND "
 	}
 
 	query := r.DB.Table(`

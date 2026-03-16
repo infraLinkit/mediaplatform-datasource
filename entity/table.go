@@ -709,8 +709,8 @@ type (
 		Name      string `gorm:"type:text" json:"name"`
 		LegalName string `gorm:"type:text" json:"legal_name"`
 		Address   string `gorm:"type:text" json:"address"`
-		Email	  string `gorm:"type:varchar(255);default:NA" json:"email"`
-		Phone	  string `gorm:"type:varchar(20);default:NA" json:"phone"`
+		Email     string `gorm:"type:varchar(255);default:NA" json:"email"`
+		Phone     string `gorm:"type:varchar(20);default:NA" json:"phone"`
 	}
 
 	CompanyGroup struct {
@@ -754,15 +754,15 @@ type (
 	}
 
 	Service struct {
-		ID       uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-		Service  string `gorm:"type:varchar(55)" json:"service"`
-		Adn      string `gorm:"type:varchar(20)" json:"adn"`
-		Partner  string `gorm:"type:varchar(50)" json:"partner"`
-		Country  string `gorm:"type:varchar(50)" json:"country"`
-		Operator string `gorm:"type:varchar(50)" json:"operator"`
-		Currency string `gorm:"type:varchar(10)" json:"currency"`
-		Price   float64 `gorm:"type:double precision;default:0" json:"price"`
-		PortalURL string `gorm:"type:text" json:"portal_url"`
+		ID        uint    `gorm:"primaryKey;autoIncrement" json:"id"`
+		Service   string  `gorm:"type:varchar(55)" json:"service"`
+		Adn       string  `gorm:"type:varchar(20)" json:"adn"`
+		Partner   string  `gorm:"type:varchar(50)" json:"partner"`
+		Country   string  `gorm:"type:varchar(50)" json:"country"`
+		Operator  string  `gorm:"type:varchar(50)" json:"operator"`
+		Currency  string  `gorm:"type:varchar(10)" json:"currency"`
+		Price     float64 `gorm:"type:double precision;default:0" json:"price"`
+		PortalURL string  `gorm:"type:text" json:"portal_url"`
 	}
 
 	AdnetList struct {
@@ -799,36 +799,37 @@ type (
 	}
 
 	Agency struct {
-		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-		Code string `gorm:"type:varchar(20)" json:"code"`
-		Name string `gorm:"type:varchar(80)" json:"name"`
-		APIURL string    `gorm:"size:255;default:NA" json:"api_url"`
+		ID     uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Code   string `gorm:"type:varchar(20)" json:"code"`
+		Name   string `gorm:"type:varchar(80)" json:"name"`
+		APIURL string `gorm:"size:255;default:NA" json:"api_url"`
 	}
 
 	Channel struct {
-		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-		Name string `gorm:"type:varchar(80)" json:"name" `
+		ID     uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name   string `gorm:"type:varchar(80)" json:"name" `
+		ApiKey string `gorm:"type:text" json:"api_key"`
 	}
 
 	MainstreamGroup struct {
-		ID            uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-		Name          string `gorm:"type:varchar(254)" json:"name" `
-		Channel       string `gorm:"type:varchar(80)" json:"channel"  `
-		Agency        string `gorm:"type:varchar(80)" json:"agency" `
-		Country	   	  string `gorm:"type:varchar(10)" json:"country" `
-		Operator	  string `gorm:"type:varchar(50)" json:"operator" `
-		Service       string `gorm:"type:varchar(80)" json:"service" `
-		Company	   	  string `gorm:"type:varchar(80)" json:"company" `
-		CompanyLegalName string `gorm:"type:varchar(80)" json:"company_legal_name" `
-		CompanyAddress	   string `gorm:"type:varchar(255)" json:"company_address" `
-		CompanyEmail    string `gorm:"type:varchar(255)" json:"company_email"`
-		CompanyPhone    string `gorm:"type:varchar(20)" json:"company_phone"`
-		ServiceCurrency string `gorm:"type:varchar(10)" json:"service_currency"`
-		ServicePrice    float64 `gorm:"type:double precision;default:0" json:"service_price"`
-		UniqueDomain  string `gorm:"type:varchar(80)" json:"unique_domain"`
-		DomainService string `gorm:"type:varchar(80)" json:"domain_service"`
-		PortalURL     string `gorm:"type:text" json:"portal_url"`
-		APIURL        string `gorm:"type:varchar(255)" json:"api_url"`
+		ID               uint    `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name             string  `gorm:"type:varchar(254)" json:"name" `
+		Channel          string  `gorm:"type:varchar(80)" json:"channel"  `
+		Agency           string  `gorm:"type:varchar(80)" json:"agency" `
+		Country          string  `gorm:"type:varchar(10)" json:"country" `
+		Operator         string  `gorm:"type:varchar(50)" json:"operator" `
+		Service          string  `gorm:"type:varchar(80)" json:"service" `
+		Company          string  `gorm:"type:varchar(80)" json:"company" `
+		CompanyLegalName string  `gorm:"type:varchar(80)" json:"company_legal_name" `
+		CompanyAddress   string  `gorm:"type:varchar(255)" json:"company_address" `
+		CompanyEmail     string  `gorm:"type:varchar(255)" json:"company_email"`
+		CompanyPhone     string  `gorm:"type:varchar(20)" json:"company_phone"`
+		ServiceCurrency  string  `gorm:"type:varchar(10)" json:"service_currency"`
+		ServicePrice     float64 `gorm:"type:double precision;default:0" json:"service_price"`
+		UniqueDomain     string  `gorm:"type:varchar(80)" json:"unique_domain"`
+		DomainService    string  `gorm:"type:varchar(80)" json:"domain_service"`
+		PortalURL        string  `gorm:"type:text" json:"portal_url"`
+		APIURL           string  `gorm:"type:varchar(255)" json:"api_url"`
 	}
 
 	SummaryLanding struct {
@@ -998,7 +999,7 @@ type (
 	}
 
 	OperatorAlias struct {
-		ID         uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		ID       uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Country  string `gorm:"type:varchar(10)" json:"country"`
 		Operator string `gorm:"type:varchar(100)" json:"operator"`
 		Service  string `gorm:"type:varchar(100)" json:"service"`

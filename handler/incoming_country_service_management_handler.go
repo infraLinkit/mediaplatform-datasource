@@ -270,6 +270,19 @@ func (h *IncomingHandler) DisplayCountry(c *fiber.Ctx) error {
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
+func (h *IncomingHandler) DisplayCountryInfo(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	country, _ := h.DS.GetCountryByCode(c.Params("code"))
+
+	fmt.Println(country)
+	return c.Status(200).JSON(country)
+
+}
+
 func (h *IncomingHandler) CreateCompany(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")
@@ -356,8 +369,8 @@ func (h *IncomingHandler) DisplayContinent(c *fiber.Ctx) error {
 	}
 
 	var (
-		errResponse  error
-		total_data   int64
+		errResponse    error
+		total_data     int64
 		continent_list []entity.Continent
 	)
 
@@ -1142,8 +1155,8 @@ func (h *IncomingHandler) DisplayAPIAdnetList(c *fiber.Ctx) error {
 	}
 
 	var (
-		errResponse     error
-		total_data      int64
+		errResponse    error
+		total_data     int64
 		api_adnet_list []entity.ApiPinReport
 	)
 
@@ -1344,7 +1357,7 @@ func (h *IncomingHandler) UpdateChannel(c *fiber.Ctx) error {
 	}
 
 	channel.ID = uint(id)
-
+	fmt.Println("CHANNEL APIKEY: ", channel.ApiKey)
 	if err := h.DS.UpdateChannel(&channel); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"message": "Failed to update channel",
@@ -1434,7 +1447,6 @@ func formatDomainKey(domain string) string {
 	return strings.ReplaceAll(domain, ".", "_")
 }
 
-
 func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 	c.Set("Content-Type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")
@@ -1469,19 +1481,19 @@ func (h *IncomingHandler) CreateMainstreamGroup(c *fiber.Ctx) error {
 	cfgDomain, _ := h.DS.GetDomainServices(redisKey, path)
 
 	newItem := entity.DomainServices{
-		Domain: domainKey,
-		Render: renderName,
-		Country: mainstreamGroup.Country,
-		Operator: mainstreamGroup.Operator,
-		Service: mainstreamGroup.Service,
-		Company: mainstreamGroup.Company,
+		Domain:           domainKey,
+		Render:           renderName,
+		Country:          mainstreamGroup.Country,
+		Operator:         mainstreamGroup.Operator,
+		Service:          mainstreamGroup.Service,
+		Company:          mainstreamGroup.Company,
 		CompanyLegalName: mainstreamGroup.CompanyLegalName,
-		CompanyAddress: mainstreamGroup.CompanyAddress,
-		CompanyEmail: mainstreamGroup.CompanyEmail,
-		CompanyPhone: mainstreamGroup.CompanyPhone,
-		ServiceCurrency: mainstreamGroup.ServiceCurrency,
-		ServicePrice: mainstreamGroup.ServicePrice,
-		PortalURL: mainstreamGroup.PortalURL,
+		CompanyAddress:   mainstreamGroup.CompanyAddress,
+		CompanyEmail:     mainstreamGroup.CompanyEmail,
+		CompanyPhone:     mainstreamGroup.CompanyPhone,
+		ServiceCurrency:  mainstreamGroup.ServiceCurrency,
+		ServicePrice:     mainstreamGroup.ServicePrice,
+		PortalURL:        mainstreamGroup.PortalURL,
 	}
 
 	cfgDomain = append(cfgDomain, newItem)
@@ -1539,7 +1551,7 @@ func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
 				CompanyPhone:     mainstreamGroup.CompanyPhone,
 				ServiceCurrency:  mainstreamGroup.ServiceCurrency,
 				ServicePrice:     mainstreamGroup.ServicePrice,
-				PortalURL: mainstreamGroup.PortalURL,
+				PortalURL:        mainstreamGroup.PortalURL,
 			}
 			updated = true
 			break
@@ -1548,19 +1560,19 @@ func (h *IncomingHandler) UpdateMainstreamGroup(c *fiber.Ctx) error {
 
 	if !updated {
 		cfgDomain = append(cfgDomain, entity.DomainServices{
-			Domain: domainKey,
-			Render: renderName,
-			Country: mainstreamGroup.Country,
-			Operator: mainstreamGroup.Operator,
-			Service: mainstreamGroup.Service,
-			Company: mainstreamGroup.Company,
+			Domain:           domainKey,
+			Render:           renderName,
+			Country:          mainstreamGroup.Country,
+			Operator:         mainstreamGroup.Operator,
+			Service:          mainstreamGroup.Service,
+			Company:          mainstreamGroup.Company,
 			CompanyLegalName: mainstreamGroup.CompanyLegalName,
-			CompanyAddress: mainstreamGroup.CompanyAddress,
-			CompanyEmail: mainstreamGroup.CompanyEmail,
-			CompanyPhone: mainstreamGroup.CompanyPhone,
-			ServiceCurrency: mainstreamGroup.ServiceCurrency,
-			ServicePrice: mainstreamGroup.ServicePrice,
-			PortalURL: mainstreamGroup.PortalURL,
+			CompanyAddress:   mainstreamGroup.CompanyAddress,
+			CompanyEmail:     mainstreamGroup.CompanyEmail,
+			CompanyPhone:     mainstreamGroup.CompanyPhone,
+			ServiceCurrency:  mainstreamGroup.ServiceCurrency,
+			ServicePrice:     mainstreamGroup.ServicePrice,
+			PortalURL:        mainstreamGroup.PortalURL,
 		})
 	}
 
@@ -1860,8 +1872,8 @@ func (h *IncomingHandler) DisplayCompanyGroup(c *fiber.Ctx) error {
 	}
 
 	var (
-		errResponse  error
-		total_data   int64
+		errResponse        error
+		total_data         int64
 		company_group_list []entity.CompanyGroup
 	)
 

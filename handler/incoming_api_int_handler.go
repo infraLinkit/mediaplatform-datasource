@@ -707,51 +707,42 @@ func (h *IncomingHandler) GetURLServiceInSummaryLanding(c *fiber.Ctx) error {
 
 func (h *IncomingHandler) UpdateResponseURLServiceInSummaryLanding(c *fiber.Ctx) error {
 
-	c.Accepts("application/json")
-	c.Accepts("application/x-www-form-urlencoded")
-	c.AcceptsCharsets("utf-8", "iso-8859-1")
+	var request []entity.SummaryLanding
 
-	var (
-		request []entity.SummaryLanding
-		err     error
-	)
-
-	if err = json.Unmarshal(c.Body(), &request); err != nil {
-		c.Set("Content-Type", "application/json")
-
+	if err := c.BodyParser(&request); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
 			Code:    fiber.StatusBadRequest,
-			Message: "parameters not complete or different setup",
+			Message: "invalid request body",
 		})
-	} else {
+	}
 
-		q := c.Queries()
-		event_date := q["event_date"]
+	for _, v := range request {
 
-		if event_date == "" {
-
-			c.Set("Content-Type", "application/json")
-
+		if v.URLServiceKey == "" || v.SummaryDateHour.IsZero() {
 			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{
 				Code:    fiber.StatusBadRequest,
-				Message: "Failed update, event_date is null",
+				Message: "missing required field",
 			})
+		}
 
-		} else {
+		err := h.DS.UpdateResponseTimeURLService(
+			entity.SummaryLanding{
+				URLServiceKey:          v.URLServiceKey,
+				ResponseUrlServiceTime: v.ResponseUrlServiceTime,
+				SummaryDateHour:        v.SummaryDateHour,
+			},
+		)
 
-			for _, v := range request {
-				h.DS.UpdateResponseTimeURLService(event_date, entity.SummaryLanding{
-					URLServiceKey:          v.URLServiceKey,
-					ResponseUrlServiceTime: v.ResponseUrlServiceTime,
-				})
-			}
-
-			c.Set("Content-Type", "application/json")
-
-			return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
-				Code:    fiber.StatusOK,
-				Message: "OK",
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{
+				Code:    fiber.StatusInternalServerError,
+				Message: "update failed",
 			})
 		}
 	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+		Code:    fiber.StatusOK,
+		Message: "OK",
+	})
 }

@@ -479,12 +479,13 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 	}
 
 	allowedCompanies, _ := c.Locals("companies").([]string)
+	allowedAdnets, _ := c.Locals("adnets").([]string)
 
-	r := h.DisplayCPAReportExtra(c, fe, allowedCompanies)
+	r := h.DisplayCPAReportExtra(c, fe, allowedCompanies, allowedAdnets)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport, allowedCompanies []string) entity.ReturnResponse {
+func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport, allowedCompanies []string, allowedAdnets []string) entity.ReturnResponse {
 	// key := "temp_key_api_cpa_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 
 	var (
@@ -497,9 +498,9 @@ func (h *IncomingHandler) DisplayCPAReportExtra(c *fiber.Ctx, fe entity.DisplayC
 	)
 
 	if fe.Action != "" || fe.Reload == "true" {
-		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies, allowedAdnets)
 	} else {
-		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+		cpareport, total_data, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies, allowedAdnets)
 	}
 
 	if err == nil {
@@ -593,14 +594,15 @@ func (h *IncomingHandler) ExportCpaReportExtraNoLimit(c *fiber.Ctx, fe entity.Di
 	)
 
 	allowedCompanies, _ := c.Locals("companies").([]string)
+	allowedAdnets, _ := c.Locals("adnets").([]string)
 
 	if fe.Action != "" {
-		cpareport, _, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+		cpareport, _, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies, allowedAdnets)
 	} else {
 
 		if cpareport, isempty = h.DS.RGetDisplayCPAReport(key, "$"); isempty {
 
-			cpareport, _, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies)
+			cpareport, _, TotalSummaryCampaign, err = h.DS.GetDisplayCPAReport(fe, allowedCompanies, allowedAdnets)
 
 			s, _ := json.Marshal(cpareport)
 

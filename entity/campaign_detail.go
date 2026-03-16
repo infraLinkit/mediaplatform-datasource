@@ -58,7 +58,7 @@ type (
 		KPIUpperLimitRatioSend    int       `gorm:"not null;length:10;default:1" json:"kpi_upper_limit_ratio_send"`
 		KPIUpperLimitRatioReceive int       `gorm:"not null;length:10;default:4" json:"kpi_upper_limit_ratio_receive"`
 		IsMachineLearningRatio    bool      `gorm:"not null;default:false" json:"is_machine_learning_ratio"`
-		APIURL                    string    `gorm:"size:255;default:NA" json:"api_url"`
+		APIURL                    string    `gorm:"type:text" json:"api_url"`
 		LastUpdate                time.Time `json:"last_update"`
 		LastUpdateCapping         time.Time `json:"last_update_capping"`
 		CostPerConversion         float64   `gorm:"type:double precision" json:"cost_per_conversion"`
@@ -128,13 +128,13 @@ type (
 )
 
 // HOOK or Trigger
-func (cd *CampaignDetail) AfterUpdate(db *gorm.DB) (err error) {
-	if cd.CounterMOCapping >= cd.MOCapping {
-		db.Model(&CampaignDetail{}).Where("id = ?", cd.ID).Update("last_update_capping", cd.LastUpdate)
-	}
+// func (cd *CampaignDetail) AfterUpdate(db *gorm.DB) (err error) {
+// 	if cd.CounterMOCapping >= cd.MOCapping {
+// 		db.Model(&CampaignDetail{}).Where("id = ?", cd.ID).Update("last_update_capping", cd.LastUpdate)
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // Important Create Name Func per hook entity!, Name returns the name of the plugin
 /* func (cd *CampaignDetail) Name() string {

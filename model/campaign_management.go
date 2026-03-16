@@ -71,7 +71,7 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
             if o.CampaignType == "mainstream" {
                 query = query.Where("campaigns.campaign_objective LIKE ?", "%MAINSTREAM%")
             } else {
-                query = query.Where("campaigns.campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM"})
+                query = query.Where("campaigns.campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM", "SINGLE URL S2S"})
             }
         }
         if o.URLServiceKey != "" {

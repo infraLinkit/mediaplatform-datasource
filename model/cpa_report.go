@@ -9,7 +9,7 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
-func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, int64, entity.TotalSummaryCampaign, error) {
+func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompanies []string, allowedAdnets []string) ([]entity.SummaryCampaign, int64, entity.TotalSummaryCampaign, error) {
 	var rows *sql.Rows
 	var err error
 	var total_rows int64
@@ -42,15 +42,15 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 				END - (po * postback)
 			 )
 		END AS revenue
-	`).Where("mo_received > 0").Where("company IN ?", allowedCompanies)
-	t_query.Where("mo_received > 0").Where("company IN ?", allowedCompanies)
+	`).Where("mo_received > 0").Where("company IN ?", allowedCompanies).Where("adnet IN ?", allowedAdnets)
+	t_query.Where("mo_received > 0").Where("company IN ?", allowedCompanies).Where("adnet IN ?", allowedAdnets)
 
 	if o.CampaignObjective != "" {
 		query.Where("campaign_objective = ? ", o.CampaignObjective)
 		t_query.Where("campaign_objective = ? ", o.CampaignObjective)
 	} else {
-		query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
-		t_query.Where("campaign_objective = ? OR campaign_objective = ?", "CPA", "UPLOAD SMS")
+		query.Where("campaign_objective IN ?", []string{"CPA", "UPLOAD SMS", "SINGLE URL S2S"})
+		t_query.Where("campaign_objective IN ?", []string{"CPA", "UPLOAD SMS", "SINGLE URL S2S"})
 	}
 
 	//fmt.Println("o.CampaignObjective: ", o.CampaignObjective)
@@ -729,7 +729,7 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport, allow
 		if o.CampaignType != "" {
 			switch strings.ToUpper(o.CampaignType) {
 			case "S2S":
-				query = query.Where("campaign_objective IN ('CPA', 'UPLOAD SMS')")
+				query = query.Where("campaign_objective IN ('CPA', 'UPLOAD SMS', 'SINGLE URL S2S)")
 			case "MAINSTREAM":
 				query = query.Where("campaign_objective ? ", "MAINSTREAM")
 			case "API":

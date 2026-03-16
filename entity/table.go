@@ -156,7 +156,7 @@ type (
 		RatioSend         int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
-		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
+		APIURL            string    `gorm:"type:text" json:"api_url"`
 		CampaignObjective string    `gorm:"size:50;default:NA" json:"campaign_objective"`
 		Channel           string    `gorm:"size:50;default:NA" json:"channel"`
 		CreatedAt         time.Time
@@ -224,7 +224,7 @@ type (
 		RatioSend         int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
-		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
+		APIURL            string    `gorm:"type:text" json:"api_url"`
 		CampaignObjective string    `gorm:"size:50;default:NA" json:"campaign_objective"`
 		Channel           string    `gorm:"size:50;default:NA" json:"channel"`
 		GoogleSheet       string    `gorm:"type:text;default:NA" json:"google_sheet"`
@@ -298,7 +298,7 @@ type (
 		RatioSend         int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
 		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
 		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
-		APIURL            string    `gorm:"size:255;default:NA" json:"api_url"`
+		APIURL            string    `gorm:"type:text" json:"api_url"`
 		CampaignObjective string    `gorm:"not null;size:50" json:"campaign_objective"`
 		Channel           string    `gorm:"not null;size:50" json:"channel"`
 		CreatedAt         time.Time
@@ -809,27 +809,28 @@ type (
 		ID     uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Name   string `gorm:"type:varchar(80)" json:"name" `
 		ApiKey string `gorm:"type:text" json:"api_key"`
+    Type string `gorm:"type:varchar(80)" json:"type" `
 	}
 
 	MainstreamGroup struct {
-		ID               uint    `gorm:"primaryKey;autoIncrement" json:"id"`
-		Name             string  `gorm:"type:varchar(254)" json:"name" `
-		Channel          string  `gorm:"type:varchar(80)" json:"channel"  `
-		Agency           string  `gorm:"type:varchar(80)" json:"agency" `
-		Country          string  `gorm:"type:varchar(10)" json:"country" `
-		Operator         string  `gorm:"type:varchar(50)" json:"operator" `
-		Service          string  `gorm:"type:varchar(80)" json:"service" `
-		Company          string  `gorm:"type:varchar(80)" json:"company" `
-		CompanyLegalName string  `gorm:"type:varchar(80)" json:"company_legal_name" `
-		CompanyAddress   string  `gorm:"type:varchar(255)" json:"company_address" `
-		CompanyEmail     string  `gorm:"type:varchar(255)" json:"company_email"`
-		CompanyPhone     string  `gorm:"type:varchar(20)" json:"company_phone"`
-		ServiceCurrency  string  `gorm:"type:varchar(10)" json:"service_currency"`
-		ServicePrice     float64 `gorm:"type:double precision;default:0" json:"service_price"`
-		UniqueDomain     string  `gorm:"type:varchar(80)" json:"unique_domain"`
-		DomainService    string  `gorm:"type:varchar(80)" json:"domain_service"`
-		PortalURL        string  `gorm:"type:text" json:"portal_url"`
-		APIURL           string  `gorm:"type:varchar(255)" json:"api_url"`
+		ID            uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+		Name          string `gorm:"type:varchar(254)" json:"name" `
+		Channel       string `gorm:"type:varchar(80)" json:"channel"  `
+		Agency        string `gorm:"type:varchar(80)" json:"agency" `
+		Country	   	  string `gorm:"type:varchar(10)" json:"country" `
+		Operator	  string `gorm:"type:varchar(50)" json:"operator" `
+		Service       string `gorm:"type:varchar(80)" json:"service" `
+		Company	   	  string `gorm:"type:varchar(80)" json:"company" `
+		CompanyLegalName string `gorm:"type:varchar(80)" json:"company_legal_name" `
+		CompanyAddress	   string `gorm:"type:varchar(255)" json:"company_address" `
+		CompanyEmail    string `gorm:"type:varchar(255)" json:"company_email"`
+		CompanyPhone    string `gorm:"type:varchar(20)" json:"company_phone"`
+		ServiceCurrency string `gorm:"type:varchar(10)" json:"service_currency"`
+		ServicePrice    float64 `gorm:"type:double precision;default:0" json:"service_price"`
+		UniqueDomain  string `gorm:"type:varchar(80)" json:"unique_domain"`
+		DomainService string `gorm:"type:varchar(80)" json:"domain_service"`
+		PortalURL     string `gorm:"type:text" json:"portal_url"`
+		APIURL        string `gorm:"type:text" json:"api_url"`
 	}
 
 	SummaryLanding struct {

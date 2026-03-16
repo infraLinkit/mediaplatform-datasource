@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"gorm.io/gorm"
@@ -410,7 +411,7 @@ func (r *BaseModel) UpdateMOCappingS2S(o entity.CampaignDetail) error {
 			AND cd.operator = ? 
 			AND cd.partner = ? 
 			AND cd.service = ? 
-			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC')
+			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC', 'SINGLE URL S2S')
 	`, o.MOCappingService, o.Country, o.Operator, o.Partner, o.Service)
 
 	r.Logs.Debug(fmt.Sprintf("UpdateMOCounterService - affected: %d, error: %v", result.RowsAffected, result.Error))
@@ -427,7 +428,7 @@ func (r *BaseModel) UpdateMOCounterServiceS2S(o entity.CampaignDetail) error {
 			FROM campaigns c
 			WHERE c.campaign_id = cd.campaign_id
 			AND cd.country = ? AND cd.operator = ? AND cd.partner = ? AND cd.service = ?
-			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC')
+			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC', 'SINGLE URL S2S')
 		`, o.CounterMOCappingService, o.Country, o.Operator, o.Partner, o.Service)
 	} else {
 		result = r.DB.Exec(`
@@ -436,7 +437,7 @@ func (r *BaseModel) UpdateMOCounterServiceS2S(o entity.CampaignDetail) error {
 			FROM campaigns c
 			WHERE c.campaign_id = cd.campaign_id
 			AND cd.country = ? AND cd.operator = ? AND cd.partner = ? AND cd.service = ?
-			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC')
+			AND c.campaign_objective IN ('CPA', 'CPI', 'CPM', 'CPC', 'SINGLE URL S2S')
 		`, o.CounterMOCappingService, o.Country, o.Operator, o.Partner, o.Service)
 	}
 
@@ -479,4 +480,51 @@ func (r *BaseModel) GetCampaignDetailsWithObjectiveByCampaignId(campaignId strin
 		Where("campaign_details.campaign_id = ?", campaignId).
 		Scan(&results).Error
 	return results, err
+}
+
+func (r *BaseModel) UpdateStatusCounterMOCampaignDetail(o entity.CampaignDetail) error {
+
+	var result *gorm.DB
+
+	if o.IsActive {
+
+		var moReceived int64
+
+		today := time.Now().Format("2006-01-02")
+
+		err := r.DB.
+			Table("inc_summary_campaigns").
+			Select("COALESCE(mo_received, 0)").
+			Where("url_service_key = ? AND summary_date = ?",
+				o.URLServiceKey, today).
+			Scan(&moReceived).Error
+
+		if err != nil {
+			return err
+		}
+
+		result = r.DB.Exec(`
+			UPDATE campaign_details 
+			SET is_active = ?, 
+				status_capping = false,
+			    counter_mo_capping = ?, 
+			    counter_mo_capping_service = 0
+			WHERE url_service_key = ?`,
+			o.IsActive, moReceived, o.URLServiceKey,
+		)
+
+	} else {
+
+		result = r.DB.Exec(`
+			UPDATE campaign_details 
+			SET is_active = ?
+			WHERE url_service_key = ?`,
+			o.IsActive, o.URLServiceKey,
+		)
+	}
+
+	r.Logs.Debug(fmt.Sprintf("affected: %d, error: %#v",
+		result.RowsAffected, result.Error))
+
+	return result.Error
 }

@@ -880,12 +880,6 @@ func formatDate(date time.Time, dataType string) string {
 	return date.Format("2006-01-02")
 }
 
-func incrementDate(date time.Time, dataType string) time.Time {
-	if dataType == "monthly_report" {
-		return date.AddDate(0, 1, 0)
-	}
-	return date.AddDate(0, 0, 1)
-}
 
 func formatPreviousDate(date time.Time, dataType string) string {
 	if dataType == "monthly_report" {

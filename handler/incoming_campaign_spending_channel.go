@@ -35,8 +35,8 @@ var channelGroupMap = map[string]string{
 	"fb":                  "Mainstream Meta Ads",
 	"fbmeta":              "Mainstream Meta Ads",
 	// Snack Video
-	"snack video":         "Mainstream Snack Video Ads",
-	"snack_video":         "Mainstream Snack Video Ads",
+	"snack video":          "Mainstream Snack Video Ads",
+	"snack_video":          "Mainstream Snack Video Ads",
 	// Others
 	"cpa":           "CPA",
 	"dsp":           "DSP",
@@ -49,13 +49,14 @@ var channelGroupMap = map[string]string{
 
 func resolveChannelGroup(raw string) string {
 	key := strings.ToLower(strings.TrimSpace(raw))
-	if group, ok := channelGroupMap[key]; ok {
-		return group
-	}
 	if key == "" || key == "na" {
 		return "Other"
 	}
-	return strings.Title(strings.ReplaceAll(key, "_", " "))
+	if group, ok := channelGroupMap[key]; ok {
+		return group
+	}
+	// Unrecognised channel value → "Other" instead of title-casing the raw string
+	return "Other"
 }
 
 // ─── HTTP Handlers ────────────────────────────────────────────────────────────
@@ -151,9 +152,6 @@ func formatSpendingByChannel(
 	grouped := make(map[string][]entity.CampaignSpendingChannelMonitoring)
 	for _, c := range data {
 		grp := resolveChannelGroup(c.Channel)
-		if grp == "" || grp == "Other" {
-			grp = resolveChannelGroup(c.Adnet)
-		}
 		grouped[grp] = append(grouped[grp], c)
 	}
 
@@ -246,9 +244,6 @@ func groupChannelChildrenCSC(
 	grouped := make(map[string][]entity.CampaignSpendingChannelMonitoring)
 	for _, c := range campaigns {
 		grp := resolveChannelGroup(c.Channel)
-		if grp == "" || grp == "Other" {
-			grp = resolveChannelGroup(c.Adnet)
-		}
 		grouped[grp] = append(grouped[grp], c)
 	}
 
@@ -337,7 +332,6 @@ func normalisePeriodStart(d time.Time, dataType string) time.Time {
 }
 
 // ─── Stats Helpers ────────────────────────────────────────────────────────────
-
 
 func countPeriods(startDate, endDate time.Time, dataType string) int {
 	n := 0

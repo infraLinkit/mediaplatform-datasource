@@ -29,8 +29,8 @@ var channelGroupMapModel = map[string]string{
 	"fb":                  "Mainstream Meta Ads",
 	"fbmeta":              "Mainstream Meta Ads",
 	// Snack Video
-	"snack video":         "Mainstream Snack Video Ads",
-	"snack_video":         "Mainstream Snack Video Ads",
+	"snack video":          "Mainstream Snack Video Ads",
+	"snack_video":          "Mainstream Snack Video Ads",
 	// Others
 	"cpa":           "CPA",
 	"dsp":           "DSP",
@@ -174,18 +174,17 @@ func (r *BaseModel) GetSpendingChannelMonitoring(
 	}
 
 	if params.ChannelCampaign != "" && !strings.EqualFold(params.ChannelCampaign, "api") {
-		adnetKeys := reverseChannelLookupSQL(params.ChannelCampaign)
-		if len(adnetKeys) > 0 {
-			quoted := make([]string, len(adnetKeys))
-			for i, k := range adnetKeys {
+		channelKeys := reverseChannelLookupSQL(params.ChannelCampaign)
+		if len(channelKeys) > 0 {
+			quoted := make([]string, len(channelKeys))
+			for i, k := range channelKeys {
 				quoted[i] = fmt.Sprintf("'%s'", esc(k))
 			}
 			inList := strings.Join(quoted, ", ")
 			finalSQL = fmt.Sprintf(
 				`SELECT * FROM (%s) _ch
-				 WHERE LOWER(COALESCE(channel,'')) IN (%s)
-				    OR LOWER(COALESCE(adnet,'')) IN (%s)`,
-				finalSQL, inList, inList,
+				 WHERE LOWER(COALESCE(channel,'')) IN (%s)`,
+				finalSQL, inList,
 			)
 		}
 	}

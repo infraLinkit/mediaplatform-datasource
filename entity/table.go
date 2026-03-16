@@ -808,6 +808,7 @@ type (
 	Channel struct {
 		ID   uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 		Name string `gorm:"type:varchar(80)" json:"name" `
+		Type string `gorm:"type:varchar(80)" json:"type" `
 	}
 
 	MainstreamGroup struct {

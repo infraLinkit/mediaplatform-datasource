@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"gorm.io/gorm"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
@@ -481,43 +482,340 @@ func (r *BaseModel) UpdateAgencyCostModel(o entity.SummaryCampaign) error {
 
 }
 
+func buildChannelCaseSQL(column string) string {
+
+	var caseSQL strings.Builder
+	caseSQL.WriteString("CASE ")
+
+	for k, v := range channelGroupMapModel {
+		caseSQL.WriteString(fmt.Sprintf(
+			"WHEN LOWER(%s) = '%s' THEN '%s' ",
+			column,
+			strings.ToLower(k),
+			v,
+		))
+	}
+
+	caseSQL.WriteString(fmt.Sprintf("ELSE %s END", column))
+
+	return caseSQL.String()
+}
+
+
+func applyDateFilter(query *gorm.DB, dateRange, dateBefore, dateAfter string) *gorm.DB {
+	switch strings.ToUpper(dateRange) {
+	case "TODAY":
+		return query.Where("summary_date = CURRENT_DATE")
+	case "YESTERDAY":
+		return query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
+	case "LAST7DAY":
+		return query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+	case "LAST30DAY":
+		return query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+	case "THISMONTH":
+		return query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+	case "LASTMONTH":
+		return query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+	case "CUSTOMRANGE":
+		return query.Where("summary_date BETWEEN ? AND ?", dateBefore, dateAfter)
+	case "ALLDATERANGE":
+		return query
+	default:
+		if dateRange != "" {
+			return query.Where("summary_date = ?", dateRange)
+		}
+		return query
+	}
+}
+
+func applyDataBasedOnOrder(query *gorm.DB, dataBasedOn string) *gorm.DB {
+	switch strings.ToUpper(dataBasedOn) {
+	case "HIGHEST CONVERSION S2S":
+		return query.Order("SUM(CASE WHEN type = 's2s' THEN conversion ELSE 0 END) DESC")
+	case "LOWEST CONVERSION S2S":
+		return query.Order("SUM(CASE WHEN type = 's2s' THEN conversion ELSE 0 END) ASC")
+	case "HIGHEST COST S2S":
+		return query.Order("SUM(CASE WHEN type = 's2s' THEN cost ELSE 0 END) DESC")
+	case "LOWEST COST S2S":
+		return query.Order("SUM(CASE WHEN type = 's2s' THEN cost ELSE 0 END) ASC")
+	case "HIGHEST CONVERSION API":
+		return query.Order("SUM(CASE WHEN type = 'api' THEN conversion ELSE 0 END) DESC")
+	case "LOWEST CONVERSION API":
+		return query.Order("SUM(CASE WHEN type = 'api' THEN conversion ELSE 0 END) ASC")
+	case "HIGHEST COST API":
+		return query.Order("SUM(CASE WHEN type = 'api' THEN cost ELSE 0 END) DESC")
+	case "LOWEST COST API":
+		return query.Order("SUM(CASE WHEN type = 'api' THEN cost ELSE 0 END) ASC")
+	default:
+		return query.Order("SUM(CASE WHEN type = 's2s' THEN conversion ELSE 0 END) DESC")
+	}
+}
+
+func applyDataBasedOnOrderByCountry(query *gorm.DB, dataBasedOn string) *gorm.DB {
+	switch strings.ToUpper(dataBasedOn) {
+
+	case "HIGHEST CONVERSION S2S":
+		return query.Order("parent_conversion1 DESC, country, operator, channel_type, group_rank")
+
+	case "LOWEST CONVERSION S2S":
+		return query.Order("parent_conversion1 ASC, country, operator, channel_type, group_rank")
+
+	case "HIGHEST COST S2S":
+		return query.Order("parent_cost1 DESC, country, operator, channel_type, group_rank")
+
+	case "LOWEST COST S2S":
+		return query.Order("parent_cost1 ASC, country, operator, channel_type, group_rank")
+
+	case "HIGHEST CONVERSION API":
+		return query.Order("parent_conversion2 DESC, country, operator, channel_type, group_rank")
+
+	case "LOWEST CONVERSION API":
+		return query.Order("parent_conversion2 ASC, country, operator, channel_type, group_rank")
+
+	case "HIGHEST COST API":
+		return query.Order("parent_cost2 DESC, country, operator, channel_type, group_rank")
+
+	case "LOWEST COST API":
+		return query.Order("parent_cost2 ASC, country, operator, channel_type, group_rank")
+
+	default:
+		return query.Order("parent_conversion1 DESC, country, operator, channel_type, group_rank")
+	}
+}
+
+// applyDataBasedOnOrderDetail adds ORDER BY for the detail query.
+func applyDataBasedOnOrderDetail(query *gorm.DB, dataBasedOn string) *gorm.DB {
+	switch strings.ToUpper(dataBasedOn) {
+	case "HIGHEST CONVERSION S2S":
+		return query.Order("SUM(postback) DESC")
+	case "LOWEST CONVERSION S2S":
+		return query.Order("SUM(postback) ASC")
+	case "HIGHEST COST S2S":
+		return query.Order("SUM(sbaf) DESC")
+	case "LOWEST COST S2S":
+		return query.Order("SUM(sbaf) ASC")
+	default:
+		return query.Order("SUM(postback) DESC")
+	}
+}
+
+func applyPagination(query *gorm.DB, page, pageSize int) *gorm.DB {
+	if pageSize <= 0 {
+		return query // show all
+	}
+	if page > 1 {
+		query = query.Offset((page - 1) * pageSize)
+	}
+	return query.Limit(pageSize)
+}
+
+// scanCostRows iterates *sql.Rows into []entity.CostReport.
+func (r *BaseModel) scanCostRows(rows *sql.Rows) ([]entity.CostReport, error) {
+	defer rows.Close()
+	var results []entity.CostReport
+	for rows.Next() {
+		var item entity.CostReport
+		if err := r.DB.ScanRows(rows, &item); err != nil {
+			r.Logs.Error(fmt.Sprintf("Error scanning row: %v", err))
+			continue
+		}
+		results = append(results, item)
+	}
+	return results, rows.Err()
+}
+
 func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdnets []string) ([]entity.CostReport, int64, error) {
-	var (
-		rows       *sql.Rows
-		err        error
-		total_rows int64
-	)
+	var total_rows int64
 
 	var apiAdnets []string
+	_ = r.DB.Model(&entity.ApiPinReport{}).Distinct("adnet").Pluck("adnet", &apiAdnets)
+	
+	var agencies []string
+	_ = r.DB.Model(&entity.Agency{}).
+		Distinct("name").
+		Pluck("name", &agencies)
 
-	_ = r.DB.Model(&entity.ApiPinReport{}).
-		Distinct("adnet").Pluck("adnet", &apiAdnets)
+	for i, a := range agencies {
+		agencies[i] = strings.ToUpper(a)
+	}
 
 	allowedAdnets = append(allowedAdnets, apiAdnets...)
+	allowedAdnets = append(allowedAdnets, agencies...)
 
-	//query := r.DB.Model(&entity.SummaryCampaign{})
-	query := r.DB.Table(`
-	   (select date_send as summary_date,adnet,
-		SUM(total_mo) as mo_received,
-		sum(total_postback) as conversion,sum(payout_af*total_postback) as "cost",
-		sum(saaf) as saaf,'api' as type
-		from api_pin_reports WHERE total_mo > 0 group by adnet,date_send
-		UNION
-		select summary_date as summary_date,
+	baseSQL := `
+			SELECT
+				date_send                           AS summary_date,
+				adnet,
+				SUM(total_mo)                       AS mo_received,
+				SUM(total_postback)                 AS conversion,
+				SUM(sbaf)     AS cost,
+				SUM(saaf)                           AS saaf,
+				'api'                               AS type,
+				''                                  AS country,
+				''                                  AS operator,
+				'API'                               AS channel_type
+			FROM api_pin_reports
+			WHERE total_mo > 0
+			GROUP BY adnet, date_send
+
+			UNION ALL
+
+			SELECT
+				summary_date,
+				adnet,
+				SUM(mo_received)                    AS mo_received,
+				SUM(postback)                       AS conversion,
+				SUM(CASE WHEN campaign_objective = 'UPLOAD SMS' THEN sbaf
+				         ELSE po * postback END)    AS cost,
+				SUM(CASE WHEN campaign_objective = 'UPLOAD SMS' THEN saaf
+				         WHEN LOWER(client_type) = 'external'   THEN (mo_received * poaf)
+				         ELSE (total_waki_agency_fee + (po * postback) + technical_fee)
+				    END)                            AS saaf,
+				's2s'                               AS type,
+				country,
+				operator,
+				channel                             AS channel_type
+			FROM summary_campaigns
+			WHERE mo_received > 0
+			  AND deleted_at IS NULL
+			GROUP BY summary_date, adnet, country, operator, channel
+		`
+
+	query := r.DB.Table("(" + baseSQL + ") as t")
+
+	// Adnet allow-list
+	if len(o.Adnets) > 0 {
+		query = query.Where("adnet IN ?", o.Adnets)
+	} else {
+		query = query.Where("adnet IN ?", allowedAdnets)
+	}
+
+	// Filters
+	if o.Adnet != "" {
+		query = query.Where("adnet = ?", o.Adnet)
+	}
+	if o.Country != "" {
+		query = query.Where("country = ?", o.Country)
+	}
+	if o.Operator != "" {
+		query = query.Where("operator = ?", o.Operator)
+	}
+	if o.ChannelType != "" {
+		query = query.Where("channel_type = ?", o.ChannelType)
+	}
+	if o.DateRange != "" {
+		query = applyDateFilter(query, o.DateRange, o.DateBefore, o.DateAfter)
+	}
+
+	selectClause := `
 		adnet,
-		SUM(mo_received) as mo_received,
-		SUM(postback) as conversion,
-		SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf
-			ELSE po * postback END) as cost,
-		SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
-			ELSE CASE WHEN LOWER(client_type) = 'external' THEN (mo_received * poaf)
-			ELSE
-				(total_waki_agency_fee + (po * postback) + technical_fee)
-		    END
-		END) as saaf,'s2s' as "type"
-		FROM "summary_campaigns" WHERE mo_received > 0
-		AND "summary_campaigns"."deleted_at" IS NULL GROUP BY summary_date,"adnet")
-		as t`)
+		SUM(CASE WHEN type = 's2s' THEN conversion ELSE 0 END) AS conversion1,
+		SUM(CASE WHEN type = 's2s' THEN cost       ELSE 0 END) AS cost1,
+		SUM(CASE WHEN type = 'api' THEN conversion ELSE 0 END) AS conversion2,
+		SUM(CASE WHEN type = 'api' THEN cost       ELSE 0 END) AS cost2,
+		SUM(CASE WHEN type = 's2s' THEN saaf       ELSE 0 END) AS saaf1,
+		SUM(CASE WHEN type = 'api' THEN saaf       ELSE 0 END) AS saaf2`
+
+	// Count distinct adnets matching filters
+	countQuery := query.
+	Select("adnet").
+	Group("adnet")
+
+	r.DB.Table("(?) AS counted", countQuery).
+		Count(&total_rows)
+
+	// Order + paginate + fetch
+	finalQuery := applyPagination(
+		applyDataBasedOnOrder(query, o.DataBasedOn),
+		o.Page, o.PageSize,
+	)
+
+	rows, err := finalQuery.Select(selectClause).Group("adnet").Rows()
+	if err != nil {
+		return nil, 0, err
+	}
+	if rows == nil {
+		return []entity.CostReport{}, 0, nil
+	}
+
+	results, err := r.scanCostRows(rows)
+	r.Logs.Debug(fmt.Sprintf("GetDisplayCostReport total: %d\n", len(results)))
+	return results, total_rows, err
+}
+
+func (r *BaseModel) GetDisplayCostReportByCountry(o entity.DisplayCostReport, allowedAdnets []string,) ([]entity.CostReport, int64, error) {
+
+	var total_rows int64
+
+	channelCase := buildChannelCaseSQL("channel")
+
+	var apiAdnets []string
+	_ = r.DB.Model(&entity.ApiPinReport{}).
+		Distinct("adnet").
+		Pluck("adnet", &apiAdnets)
+
+	var agencies []string
+	_ = r.DB.Model(&entity.Agency{}).
+		Distinct("name").
+		Pluck("name", &agencies)
+
+	for i, a := range agencies {
+		agencies[i] = strings.ToUpper(a)
+	}
+
+	allowedAdnets = append(allowedAdnets, apiAdnets...)
+	allowedAdnets = append(allowedAdnets, agencies...)
+
+	baseSQL := fmt.Sprintf(`
+	SELECT
+		date_send AS summary_date,
+		adnet,
+		SUM(total_mo) AS mo_received,
+		SUM(total_postback) AS conversion,
+		SUM(sbaf) AS cost,
+		SUM(saaf) AS saaf,
+		'api' AS type,
+		country,
+		operator,
+		'API' AS channel_type
+	FROM api_pin_reports
+	WHERE total_mo > 0
+	GROUP BY adnet, date_send, country, operator
+
+	UNION ALL
+
+	SELECT
+		summary_date,
+		adnet,
+		SUM(mo_received) AS mo_received,
+		SUM(postback) AS conversion,
+		SUM(
+			CASE
+				WHEN campaign_objective = 'UPLOAD SMS'
+					THEN sbaf
+				ELSE po * postback
+			END
+		) AS cost,
+		SUM(
+			CASE
+				WHEN campaign_objective = 'UPLOAD SMS'
+					THEN saaf
+				WHEN LOWER(client_type) = 'external'
+					THEN mo_received * poaf
+				ELSE total_waki_agency_fee + (po * postback) + technical_fee
+			END
+		) AS saaf,
+		's2s' AS type,
+		country,
+		operator,
+		%s AS channel_type
+	FROM summary_campaigns
+	WHERE mo_received > 0
+	AND deleted_at IS NULL
+	GROUP BY summary_date, adnet, country, operator, channel
+	`, channelCase)
+
+	query := r.DB.Table("(" + baseSQL + ") as t")
 
 	if len(o.Adnets) > 0 {
 		query = query.Where("adnet IN ?", o.Adnets)
@@ -525,288 +823,277 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 		query = query.Where("adnet IN ?", allowedAdnets)
 	}
 
-	if o.Action == "Search" {
-
-		if o.Adnet != "" {
-			query = query.Where("adnet = ?", o.Adnet)
-		}
-
-		if o.DateRange != "" {
-			switch strings.ToUpper(o.DateRange) {
-			case "TODAY":
-				query = query.Where("summary_date = CURRENT_DATE")
-			case "YESTERDAY":
-				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
-			case "LAST7DAY":
-				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
-			case "LAST30DAY":
-				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
-			case "THISMONTH":
-				query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
-			case "LASTMONTH":
-				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
-			case "CUSTOMRANGE":
-				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
-			case "ALLDATERANGE":
-			default:
-				query = query.Where("summary_date = ?", o.DateRange)
-			}
-		} else {
-			// query = query.Where("summary_date = CURRENT_DATE")
-		}
-
-		rows, err = query.Select(`
-			adnet,
-            SUM(CASE WHEN type = 's2s' THEN conversion ELSE 0 END) AS conversion1,
-			SUM(CASE WHEN type = 's2s' THEN cost ELSE 0 END) AS cost1,
-            SUM(CASE WHEN type = 'api' THEN conversion ELSE 0 END) AS conversion2,
-            SUM(CASE WHEN type = 'api' THEN cost ELSE 0 END) AS cost2,
-			SUM(CASE WHEN type = 's2s' THEN saaf ELSE 0 END) AS saaf1,
-            SUM(CASE WHEN type = 'api' THEN saaf ELSE 0 END) AS saaf2
-		`).Group("adnet").
-			Rows()
-
-		if o.DataBasedOn != "" {
-			switch strings.ToUpper(o.DataBasedOn) {
-			case "HIGHEST CONVERSION S2S":
-				query = query.Order("SUM(CASE WHEN type = 's2s' THEN conversion ELSE 0 END) DESC")
-			case "LOWEST CONVERSION S2S":
-				query = query.Order("SUM(CASE WHEN type = 's2s' THEN conversion ELSE 0 END) ASC")
-			case "HIGHEST COST S2S":
-				query = query.Order("SUM(CASE WHEN type = 's2s' THEN cost ELSE 0 END) DESC")
-			case "LOWEST COST S2S":
-				query = query.Order("SUM(CASE WHEN type = 's2s' THEN cost ELSE 0 END) ASC")
-
-			case "HIGHEST CONVERSION API":
-				query = query.Order("SUM(CASE WHEN type = 'api' THEN conversion ELSE 0 END) DESC")
-			case "LOWEST CONVERSION API":
-				query = query.Order("SUM(CASE WHEN type = 'api' THEN conversion ELSE 0 END) ASC")
-			case "HIGHEST COST API":
-				query = query.Order("SUM(CASE WHEN type = 'api' THEN cost ELSE 0 END) DESC")
-			case "LOWEST COST API":
-				query = query.Order("SUM(CASE WHEN type = 'api' THEN cost ELSE 0 END) ASC")
-			default:
-				query = query.Order("SUM(CASE WHEN type = 's2s' THEN conversion ELSE 0 END) DESC")
-			}
-		}
-
-		if err != nil {
-			return nil, 0, err
-		}
-		if rows == nil {
-			return []entity.CostReport{}, 0, nil
-		}
-
-	} else {
-		rows, err = query.Select(`
-			adnet,
-            SUM(CASE WHEN type = 's2s' THEN conversion ELSE 0 END) AS conversion1,
-			SUM(CASE WHEN type = 's2s' THEN cost ELSE 0 END) AS cost1,
-            SUM(CASE WHEN type = 'api' THEN conversion ELSE 0 END) AS conversion2,
-            SUM(CASE WHEN type = 'api' THEN cost ELSE 0 END) AS cost2,
-			SUM(CASE WHEN type = 's2s' THEN saaf ELSE 0 END) AS saaf1,
-            SUM(CASE WHEN type = 'api' THEN saaf ELSE 0 END) AS saaf2
-		`).Group("adnet").
-			Rows()
-
-		if err != nil {
-			return nil, 0, err
-		}
-		if rows == nil {
-			return []entity.CostReport{}, 0, nil
-		}
-
+	// filters
+	if o.Adnet != "" {
+		query = query.Where("adnet = ?", o.Adnet)
 	}
 
-	query.Unscoped().Count(&total_rows)
-
-	query_limit := query.Limit(o.PageSize)
-	if o.Page > 0 {
-		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
+	if o.Country != "" {
+		query = query.Where("country = ?", o.Country)
 	}
 
-	rows, _ = query_limit.Rows()
-
-	defer rows.Close()
-	var results []entity.CostReport
-
-	for rows.Next() {
-		var item entity.CostReport
-		if err := r.DB.ScanRows(rows, &item); err != nil {
-			r.Logs.Error(fmt.Sprintf("Error scanning row: %v", err))
-			continue
-		}
-		results = append(results, item)
+	if o.Operator != "" {
+		query = query.Where("operator = ?", o.Operator)
 	}
 
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(results)))
+	if o.ChannelType != "" {
+		query = query.Where("channel_type = ?", o.ChannelType)
+	}
 
-	return results, total_rows, rows.Err()
-}
-func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport, allowedAdnets []string) ([]entity.CostReport, int64, error) {
-	var (
-		rows       *sql.Rows
-		err        error
-		total_rows int64
+	if o.DataIndicator != "" {
+		query = query.Where("type = ?", strings.ToLower(o.DataIndicator))
+	}
+
+	if o.DateRange != "" {
+		query = applyDateFilter(query, o.DateRange, o.DateBefore, o.DateAfter)
+	}
+
+	selectClause := `
+	country,
+	operator,
+	channel_type,
+	adnet,
+
+	SUM(CASE WHEN type='s2s' THEN conversion ELSE 0 END) AS conversion1,
+	SUM(CASE WHEN type='s2s' THEN cost ELSE 0 END) AS cost1,
+
+	SUM(CASE WHEN type='api' THEN conversion ELSE 0 END) AS conversion2,
+	SUM(CASE WHEN type='api' THEN cost ELSE 0 END) AS cost2,
+
+	SUM(CASE WHEN type='s2s' THEN saaf ELSE 0 END) AS saaf1,
+	SUM(CASE WHEN type='api' THEN saaf ELSE 0 END) AS saaf2,
+
+	SUM(SUM(CASE WHEN type='s2s' THEN conversion ELSE 0 END))
+	OVER (PARTITION BY country, operator, channel_type) AS parent_conversion1,
+
+	SUM(SUM(CASE WHEN type='s2s' THEN cost ELSE 0 END))
+	OVER (PARTITION BY country, operator, channel_type) AS parent_cost1,
+
+	ROW_NUMBER() OVER (
+		PARTITION BY country, operator, channel_type
+		ORDER BY SUM(CASE WHEN type='s2s' THEN conversion ELSE 0 END) DESC
+	) AS group_rank
+	`
+
+	groupClause := "country, operator, channel_type, adnet"
+
+	r.DB.Table("(?) AS counted",
+		query.Session(&gorm.Session{}).
+			Select(groupClause).
+			Group(groupClause),
+	).Count(&total_rows)
+
+	finalQuery := applyPagination(
+		applyDataBasedOnOrderByCountry(query, o.DataBasedOn),
+		o.Page,
+		o.PageSize,
 	)
 
-	query := r.DB.Model(&entity.SummaryCampaign{})
+	rows, err := finalQuery.
+		Session(&gorm.Session{}).
+		Select(selectClause).
+		Group(groupClause).
+		Rows()
 
-	query = query.Where("mo_received > 0")
-	query = query.Where("adnet IN ?", allowedAdnets)
+	if err != nil {
+		return nil, 0, err
+	}
 
-	if o.Action == "Search" {
+	results, err := r.scanCostRows(rows)
 
-		if o.Adnet != "" {
-			query = query.Where("adnet = ?", o.Adnet)
-		}
+	return results, total_rows, err
+}
 
-		if o.Country != "" {
-			query = query.Where("country = ?", o.Country)
-		}
+func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport, allowedAdnets []string) ([]entity.CostReport, int64, error) {
 
-		if o.CampaignType != "" {
-			switch strings.ToUpper(o.CampaignType) {
-			case "S2S":
-				query = query.Where("campaign_objective IN ('CPA', 'UPLOAD SMS', 'SINGLE URL S2S)")
-			case "MAINSTREAM":
-				query = query.Where("campaign_objective ? ", "MAINSTREAM")
-			case "API":
-				query = query.Where("campaign_objective ?", "API")
-			default:
-				query = query.Where("campaign_objective = ?", o.CampaignType)
-			}
-		}
+	var total_rows int64
 
-		if o.DateRange != "" {
-			//today := time.Now()
-			switch o.DateRange {
-			case "TODAY":
-				query = query.Where("summary_date = CURRENT_DATE")
-			case "YESTERDAY":
-				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '1 DAY' AND CURRENT_DATE")
-			case "LAST7DAY":
-				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
-			case "LAST30DAY":
-				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
-			case "THISMONTH":
-				query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
-			case "LASTMONTH":
-				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
-			case "CUSTOMRANGE":
-				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
-			case "ALLDATERANGE":
-			default:
-				query = query.Where("summary_date = ?", o.DateRange)
-			}
-		}
+	channelCase := buildChannelCaseSQL("channel")
 
-		rows, err = query.Select(`
-			adnet,
-			summary_date,
-			country,
-			operator,
-			SUM(traffic) as landing,
-			CASE WHEN SUM(traffic)=0 THEN 0 ELSE SUM(postback)/SUM(traffic) END as cr_postback,
-			CASE WHEN SUM(traffic)=0 THEN 0 ELSE SUM(mo_received)/SUM(traffic) END as cr_mo,
-			short_code,
-			url_after,
-			SUM(postback) as conversion1,
-			SUM(mo_received) as mo_conversion1,
-			SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf
-				ELSE po * postback END) as cost1,
-			NULL as conversion2,
-			NULL as cost2,
-			SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
-				ELSE CASE WHEN LOWER(client_type) = 'external' THEN (mo_received * poaf)
-					 ELSE
-					 	(total_waki_agency_fee + (po * postback) + technical_fee)
-					 END 
-				END) as saaf1,
-			NULL as saaf2
-		`).Group("summary_date, adnet, country, operator, short_code, url_after").Order("summary_date ASC").
-			Rows()
+	var apiAdnets []string
+	_ = r.DB.Model(&entity.ApiPinReport{}).
+		Distinct("adnet").
+		Pluck("adnet", &apiAdnets)
 
-		if o.DataBasedOn != "" {
-			switch strings.ToUpper(o.DataBasedOn) {
-			case "HIGHEST CONVERSION S2S":
-				query = query.Order("SUM(postback) DESC")
-			case "LOWEST CONVERSION S2S":
-				query = query.Order("SUM(postback) ASC")
-			case "HIGHEST COST S2S":
-				query = query.Order("SUM(sbaf) DESC")
-			case "LOWEST COST S2S":
-				query = query.Order("SUM(sbaf) ASC")
-			default:
-				query = query.Order("SUM(postback) DESC")
-			}
-		}
-		if err != nil {
-			return nil, 0, err
-		}
-		if rows == nil {
-			return []entity.CostReport{}, 0, nil
-		}
+	var agencies []string
+	_ = r.DB.Model(&entity.Agency{}).
+		Distinct("name").
+		Pluck("name", &agencies)
 
+	for i, a := range agencies {
+		agencies[i] = strings.ToUpper(a)
+	}
+
+	allowedAdnets = append(allowedAdnets, apiAdnets...)
+	allowedAdnets = append(allowedAdnets, agencies...)
+
+	baseSQL := fmt.Sprintf(`
+
+	SELECT
+		adnet,
+		date_send AS summary_date,
+		country,
+		operator,
+		'API' AS channel_type,
+		'' AS short_code,
+		'' AS url_after,
+
+		SUM(total_postback) AS landing,
+		SUM(total_postback) AS conversion,
+		SUM(total_mo) AS mo_received,
+		SUM(sbaf) AS cost,
+		SUM(saaf) AS saaf,
+
+		'api' AS type
+
+	FROM api_pin_reports
+	WHERE total_mo > 0
+	GROUP BY adnet, date_send, country, operator
+
+	UNION ALL
+
+	SELECT
+		adnet,
+		summary_date,
+		country,
+		operator,
+		%s AS channel_type,
+		short_code,
+		url_after,
+
+		SUM(landing) AS landing,
+		SUM(postback) AS conversion,
+		SUM(mo_received) AS mo_received,
+
+		SUM(
+			CASE
+				WHEN campaign_objective = 'UPLOAD SMS'
+				THEN sbaf
+				ELSE po * postback
+			END
+		) AS cost,
+
+		SUM(
+			CASE
+				WHEN campaign_objective = 'UPLOAD SMS'
+				THEN saaf
+				WHEN LOWER(client_type) = 'external'
+				THEN mo_received * poaf
+				ELSE total_waki_agency_fee + (po * postback) + technical_fee
+			END
+		) AS saaf,
+
+		's2s' AS type
+
+	FROM summary_campaigns
+	WHERE mo_received > 0
+	AND deleted_at IS NULL
+	GROUP BY summary_date, adnet, country, operator, channel, short_code, url_after
+
+	`, channelCase)
+
+	query := r.DB.Table("(" + baseSQL + ") as t")
+
+	// adnet filter
+	if len(o.Adnets) > 0 {
+		query = query.Where("adnet IN ?", o.Adnets)
+	} else if len(allowedAdnets) > 0 {
+		query = query.Where("adnet IN ?", allowedAdnets)
+	}
+
+	if o.Adnet != "" {
+		query = query.Where("adnet = ?", o.Adnet)
+	}
+
+	if o.Country != "" {
+		query = query.Where("country = ?", o.Country)
+	}
+
+	if o.Operator != "" {
+		query = query.Where("operator = ?", o.Operator)
+	}
+
+	if o.ChannelType != "" {
+		query = query.Where("channel_type = ?", o.ChannelType)
+	}
+
+	if o.DataIndicator != "" {
+		query = query.Where("type = ?", strings.ToLower(o.DataIndicator))
+	}
+
+	if o.DateRange != "" {
+		query = applyDateFilter(query, o.DateRange, o.DateBefore, o.DateAfter)
+	}
+
+	selectClause := `
+	adnet,
+	summary_date,
+	country,
+	operator,
+	channel_type,
+	short_code,
+	url_after,
+
+	SUM(landing) AS landing,
+
+	CASE WHEN SUM(landing) = 0 THEN 0
+		ELSE ROUND((SUM(conversion)::numeric / SUM(landing)::numeric) * 100, 2)
+	END AS cr_postback,
+
+
+	SUM(CASE WHEN type='s2s' THEN conversion ELSE 0 END) AS conversion1,
+	SUM(CASE WHEN type='s2s' THEN cost ELSE 0 END) AS cost1,
+
+	SUM(CASE WHEN type='api' THEN conversion ELSE 0 END) AS conversion2,
+	SUM(CASE WHEN type='api' THEN cost ELSE 0 END) AS cost2,
+
+	SUM(CASE WHEN type='s2s' THEN saaf ELSE 0 END) AS saaf1,
+	SUM(CASE WHEN type='api' THEN saaf ELSE 0 END) AS saaf2
+	`
+
+	groupClause := `
+	summary_date,
+	adnet,
+	country,
+	operator,
+	channel_type,
+	short_code,
+	url_after
+	`
+
+	r.DB.Table("(?) AS counted",
+		query.Session(&gorm.Session{}).
+			Select(groupClause).
+			Group(groupClause),
+	).Count(&total_rows)
+
+	if o.DataBasedOn != "" {
+		query = applyDataBasedOnOrderDetail(query, o.DataBasedOn)
 	} else {
-
-		if o.Adnet != "" {
-			query = query.Where("adnet = ?", o.Adnet)
-		}
-
-		rows, err = query.Select(`
-			adnet,
-			summary_date,
-			country,
-			operator,
-			SUM(traffic) as landing,
-			CASE WHEN SUM(traffic)=0 THEN 0 ELSE SUM(postback)/SUM(traffic) END as cr_postback,
-			CASE WHEN SUM(traffic)=0 THEN 0 ELSE SUM(mo_received)/SUM(traffic) END as cr_mo,
-			short_code,
-			url_after,
-			SUM(postback) as conversion1,
-			SUM(mo_received) as mo_conversion1,
-			SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf
-				ELSE po * postback END) as cost1,
-			NULL as conversion2,
-			NULL as cost2,
-			SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
-				ELSE CASE WHEN LOWER(client_type) = 'external' THEN (mo_received * poaf)
-					 ELSE
-					 	(total_waki_agency_fee + (po * postback) + technical_fee)
-					 END 
-				END) as saaf1,
-			NULL as saaf2
-		`).Group("summary_date, adnet, country, operator, adn, url_after").
-			Rows()
-
-		if err != nil {
-			return nil, 0, err
-		}
+		query = query.Order("summary_date ASC")
 	}
 
-	query.Unscoped().Count(&total_rows)
+	finalQuery := applyPagination(query, o.Page, o.PageSize)
 
-	query_limit := query.Limit(o.PageSize)
-	if o.Page > 0 {
-		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
-	}
-	rows, _ = query_limit.Rows()
+	rows, err := finalQuery.
+		Session(&gorm.Session{}).
+		Select(selectClause).
+		Group(groupClause).
+		Rows()
 
-	var results []entity.CostReport
-
-	for rows.Next() {
-		var item entity.CostReport
-		if err := r.DB.ScanRows(rows, &item); err != nil {
-			r.Logs.Error(fmt.Sprintf("Error scanning row: %v", err))
-			continue
-		}
-		results = append(results, item)
+	if err != nil {
+		return nil, 0, err
 	}
 
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ...\n", len(results)))
+	if rows == nil {
+		return []entity.CostReport{}, 0, nil
+	}
 
-	return results, total_rows, rows.Err()
+	results, err := r.scanCostRows(rows)
+
+	r.Logs.Debug(fmt.Sprintf("GetDisplayCostReportDetail total: %d\n", len(results)))
+
+	return results, total_rows, err
 }
 
 func (r *BaseModel) GetSummaryReportById(id []string) ([]entity.SummaryCampaign, error) {

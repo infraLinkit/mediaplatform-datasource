@@ -19,6 +19,7 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 	if err != nil {
 		r.Logs.Info(fmt.Sprintf("Google sheet link not valid for campaign ID:  %#v\n", ps.CampaignId))
 		r.Logs.Info(fmt.Sprintf("Google sheet link :  %#v ", ps.GoogleSheet))
+		return
 	}
 
 	/* prop, err := GS.Spreadsheets.Get(sheetId).Fields("properties.title").Context(context.Background()).Do()
@@ -29,6 +30,12 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 	resp, err := GS.Spreadsheets.Values.Get(sheetId, "Sheet1!A1:D1").Do()
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("Failed to read sheet: %#v\n", err))
+		return
+	}
+
+	if resp == nil {
+		r.Logs.Error("Google sheet response nil")
+		return
 	}
 
 	var header *sheets.ValueRange
@@ -50,6 +57,7 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:D7", header).ValueInputOption("RAW").Do()
 		if err != nil {
 			r.Logs.Error(fmt.Sprintf("Failed to insert header: %#v\n", err))
+			return
 		}
 
 	} else {
@@ -64,6 +72,7 @@ func (r *BaseModel) UpdateGoogleSheetPixel(GS *sheets.Service, ps entity.PixelSt
 		_, err := GS.Spreadsheets.Values.Update(sheetId, "Sheet1!A1:D1", header).ValueInputOption("RAW").Do()
 		if err != nil {
 			r.Logs.Error(fmt.Sprintf("Failed to insert header: %#v\n", err))
+			return
 		}
 	}
 

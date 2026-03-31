@@ -639,10 +639,9 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 	c.Set("Content-type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")
 	c.AcceptsCharsets("utf-8", "iso-8859-1")
-
-	//fmt.Println("GO FUCK !")
+ 
 	m := c.Queries()
-
+ 
 	page, errPage := strconv.Atoi(m["page"])
 	pageSize, err := strconv.Atoi(m["page_size"])
 	if err != nil {
@@ -651,61 +650,95 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 	if errPage != nil {
 		page = 10
 	}
-
+ 
 	draw, _ := strconv.Atoi(m["draw"])
 	v := c.Params("v")
-
+ 
 	var adnets []string
-	for k, v := range m {
-		if strings.HasPrefix(k, "adnet[") {
-			adnets = append(adnets, v)
+	for k, val := range m {
+		if strings.HasPrefix(k, "adnets[") {
+			adnets = append(adnets, val)
 		}
 	}
-
-	//fmt.Println("V: ", adnets)
-
-	fe := entity.DisplayCostReport{
-		Adnet:        m["adnet"],
-		Adnets:       adnets,
-		Country:      m["country"],
-		Operator:     m["operator"],
-		CampaignType: m["campaign_type"],
-		Page:         page,
-		Action:       m["action"],
-		DateRange:    m["date_range"],
-		DateBefore:   m["date_before"],
-		DateAfter:    m["date_after"],
-		DataBasedOn:  m["data_based_on"],
-		PageSize:     pageSize,
-		Draw:         draw,
+ 
+	var adnetFilter []string
+	for k, val := range m {
+		if strings.HasPrefix(k, "adnet[") {
+			adnetFilter = append(adnetFilter, val)
+		}
 	}
-
+	if len(adnets) == 0 && len(adnetFilter) > 0 {
+		adnets = adnetFilter
+	}
+ 
+	fromChannel := m["from_channel"] == "1"
+ 
+	fe := entity.DisplayCostReport{
+		Adnet:       m["adnet"],
+		Adnets:      adnets,
+		Country:     m["country"],
+		Operator:    m["operator"],
+		ChannelType: m["channel_type"],
+		GroupBy:     m["group_by"],
+		DataIndicator: m["data_indicator"],
+		Page:        page,
+		Action:      m["action"],
+		DateRange:   m["date_range"],
+		DateBefore:  m["date_before"],
+		DateAfter:   m["date_after"],
+		DataBasedOn: m["data_based_on"],
+		PageSize:    pageSize,
+		Draw:        draw,
+		FromChannel: fromChannel,
+	}
+ 
 	allowedAdnets, _ := c.Locals("adnets").([]string)
-
+ 
 	r := h.DisplayCostReportExtra(c, fe, v, allowedAdnets)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.DisplayCostReport, v string, allowedAdnets []string) entity.ReturnResponse {
-	key := "temp_key_api_cost_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+ 
+func (h *IncomingHandler) DisplayCostReportExtra(
+	c *fiber.Ctx,
+	fe entity.DisplayCostReport,
+	v string,
+	allowedAdnets []string,
+) entity.ReturnResponse {
+ 
+	key       := "temp_key_api_cost_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 	keydetail := "temp_key_api_cost_report_detail_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
-
+ 
 	var (
 		err        error
 		isempty    bool
 		total_data int64
 		costreport []entity.CostReport
-		// displaycostreport []entity.CostReport
 	)
+ 
 	if v == "list" {
-		if fe.Action != "" {
-			costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
+		if fe.GroupBy == "country" {
+			if fe.Action != "" {
+				costreport, total_data, err = h.DS.GetDisplayCostReportByCountry(fe, allowedAdnets)
+			} else {
+				keyCountry := key + "_country"
+				if costreport, isempty = h.DS.RGetDisplayCostReport(keyCountry, "$"); isempty {
+					costreport, total_data, err = h.DS.GetDisplayCostReportByCountry(fe, allowedAdnets)
+					s, _ := json.Marshal(costreport)
+					h.DS.SetData(keyCountry, "$", string(s))
+					h.DS.SetExpireData(keyCountry, 60)
+				}
+			}
 		} else {
-			if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
+			if fe.Action != "" {
 				costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
-				s, _ := json.Marshal(costreport)
-				h.DS.SetData(key, "$", string(s))
-				h.DS.SetExpireData(key, 60)
+			} else {
+				if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
+					costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
+					s, _ := json.Marshal(costreport)
+					h.DS.SetData(key, "$", string(s))
+					h.DS.SetExpireData(key, 60)
+				}
 			}
 		}
 	} else if v == "detail" {
@@ -715,24 +748,13 @@ func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.Display
 			if costreport, isempty = h.DS.RGetDisplayCostReportDetail(keydetail, "$"); isempty {
 				costreport, total_data, err = h.DS.GetDisplayCostReportDetail(fe, allowedAdnets)
 				s, _ := json.Marshal(costreport)
-				h.DS.SetData(key, "$", string(s))
-				h.DS.SetExpireData(key, 60)
+				h.DS.SetData(keydetail, "$", string(s))
+				h.DS.SetExpireData(keydetail, 60)
 			}
 		}
 	}
-
+ 
 	if err == nil {
-		// pagesize := PAGESIZE
-		// if fe.Page >= 2 {
-		// 	x = pagesize * (fe.Page - 1)
-		// } else {
-		// 	x = 0
-		// }
-
-		// for i := x; i < len(costreport) && i < x+pagesize; i++ {
-		// 	displaycostreport = append(displaycostreport, costreport[i])
-		// }
-
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithDataTable{
@@ -744,15 +766,14 @@ func (h *IncomingHandler) DisplayCostReportExtra(c *fiber.Ctx, fe entity.Display
 				RecordsFiltered: int(total_data),
 			},
 		}
-
-	} else {
-		return entity.ReturnResponse{
-			HttpStatus: fiber.StatusNotFound,
-			Rsp: entity.GlobalResponse{
-				Code:    fiber.StatusNotFound,
-				Message: "empty",
-			},
-		}
+	}
+ 
+	return entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
 	}
 }
 
@@ -769,6 +790,8 @@ func (h *IncomingHandler) ExportCostButton(c *fiber.Ctx) error {
 		Adnet:       m["adnet"],
 		Country:     m["country"],
 		Operator:    m["operator"],
+		ChannelType: m["channel_type"],
+		GroupBy:     m["group_by"],
 		Page:        page,
 		Action:      m["action"],
 		DateRange:   m["date_range"],
@@ -779,9 +802,7 @@ func (h *IncomingHandler) ExportCostButton(c *fiber.Ctx) error {
 	}
 	export_cost := m["export_cost"]
 	if export_cost == "true" {
-
 		allowedAdnets, _ := c.Locals("adnets").([]string)
-
 		r := h.ExportCostReportExtraNoLimit(c, fe, allowedAdnets)
 		return c.Status(r.HttpStatus).JSON(r.Rsp)
 	}
@@ -800,17 +821,30 @@ func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.D
 		costreport []entity.CostReport
 		isempty    bool
 		total_data int64
-		// displaycpareport []entity.SummaryCampaign
 	)
 
-	if fe.Action != "" {
-		costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
+	if fe.GroupBy == "country" {
+		if fe.Action != "" {
+			costreport, total_data, err = h.DS.GetDisplayCostReportByCountry(fe, allowedAdnets)
+		} else {
+			keyCountry := key + "_country"
+			if costreport, isempty = h.DS.RGetDisplayCostReport(keyCountry, "$"); isempty {
+				costreport, total_data, err = h.DS.GetDisplayCostReportByCountry(fe, allowedAdnets)
+				s, _ := json.Marshal(costreport)
+				h.DS.SetData(keyCountry, "$", string(s))
+				h.DS.SetExpireData(keyCountry, 60)
+			}
+		}
 	} else {
-		if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
+		if fe.Action != "" {
 			costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
-			s, _ := json.Marshal(costreport)
-			h.DS.SetData(key, "$", string(s))
-			h.DS.SetExpireData(key, 60)
+		} else {
+			if costreport, isempty = h.DS.RGetDisplayCostReport(key, "$"); isempty {
+				costreport, total_data, err = h.DS.GetDisplayCostReport(fe, allowedAdnets)
+				s, _ := json.Marshal(costreport)
+				h.DS.SetData(key, "$", string(s))
+				h.DS.SetExpireData(key, 60)
+			}
 		}
 	}
 
@@ -826,16 +860,17 @@ func (h *IncomingHandler) ExportCostReportExtraNoLimit(c *fiber.Ctx, fe entity.D
 				RecordsFiltered: int(total_data),
 			},
 		}
-	} else {
-		return entity.ReturnResponse{
-			HttpStatus: fiber.StatusNotFound,
-			Rsp: entity.GlobalResponse{
-				Code:    fiber.StatusNotFound,
-				Message: "empty",
-			},
-		}
+	}
+
+	return entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
 	}
 }
+
 func (h *IncomingHandler) ExportCostDetailButton(c *fiber.Ctx) error {
 	c.Set("Content-type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")
@@ -849,6 +884,7 @@ func (h *IncomingHandler) ExportCostDetailButton(c *fiber.Ctx) error {
 		Adnet:       m["adnet"],
 		Country:     m["country"],
 		Operator:    m["operator"],
+		ChannelType: m["channel_type"],
 		Page:        page,
 		Action:      m["action"],
 		DateRange:   m["date_range"],
@@ -859,7 +895,6 @@ func (h *IncomingHandler) ExportCostDetailButton(c *fiber.Ctx) error {
 	}
 	export_cost := m["export_cost"]
 	if export_cost == "true" {
-
 		r := h.ExportCostReportDetailExtraNoLimit(c, fe)
 		return c.Status(r.HttpStatus).JSON(r.Rsp)
 	}
@@ -879,7 +914,6 @@ func (h *IncomingHandler) ExportCostReportDetailExtraNoLimit(c *fiber.Ctx, fe en
 		costreport []entity.CostReport
 		isempty    bool
 		total_data int64
-		// displaycpareport []entity.SummaryCampaign
 	)
 
 	if fe.Action != "" {
@@ -905,14 +939,14 @@ func (h *IncomingHandler) ExportCostReportDetailExtraNoLimit(c *fiber.Ctx, fe en
 				RecordsFiltered: int(total_data),
 			},
 		}
-	} else {
-		return entity.ReturnResponse{
-			HttpStatus: fiber.StatusNotFound,
-			Rsp: entity.GlobalResponse{
-				Code:    fiber.StatusNotFound,
-				Message: "empty",
-			},
-		}
+	}
+
+	return entity.ReturnResponse{
+		HttpStatus: fiber.StatusNotFound,
+		Rsp: entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "empty",
+		},
 	}
 }
 

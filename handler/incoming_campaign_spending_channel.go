@@ -40,6 +40,7 @@ var channelGroupMap = map[string]string{
 	// Others
 	"cpa":           "CPA",
 	"dsp":           "DSP",
+	"sms":           "SMS",
 	"telco":         "Telco Channel",
 	"telco_channel": "Telco Channel",
 	"telco channel": "Telco Channel",

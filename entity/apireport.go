@@ -321,9 +321,11 @@ func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
 	payoutAdn, _ := strconv.ParseFloat(m["payout_adn"], 64)
 	payoutAF, _ := strconv.ParseFloat(m["payout_af"], 64)
 
-	country := strings.ToUpper(m["country"])
-	if country == "UAE" {
-		country = "AE"
+	country := helper.NormalizeCountries(m["country"])
+
+	operator := strings.ToUpper(m["operator"])
+	if operator == "" && m["telco"] != "" {
+		operator = strings.ToUpper(m["telco"])
 	}
 
 	var dateSend time.Time
@@ -339,7 +341,7 @@ func NewInstanceTrxPinReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinReport {
 		Company:       strings.ToUpper(m["company"]),
 		Adnet:         strings.ToUpper(m["adnet"]),
 		Service:       strings.ToUpper(m["service"]),
-		Operator:      strings.ToUpper(m["operator"]),
+		Operator:      operator,
 		DateSend:      dateSend,
 		PayoutAdn:     payoutAdn,
 		PayoutAF:      payoutAF,
@@ -422,9 +424,11 @@ func NewInstanceTrxPinPerfonrmanceReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinP
 	pinOkRatio, _ := strconv.Atoi(m["pin_ok_ratio"])
 	chargedMO, _ := strconv.Atoi(m["charged_mo"])
 
-	country := strings.ToUpper(m["country"])
-	if country == "UAE" {
-		country = "AE"
+	country := helper.NormalizeCountries(m["country"])
+
+	operator := strings.ToUpper(m["operator"])
+	if operator == "" && m["telco"] != "" {
+		operator = strings.ToUpper(m["telco"])
 	}
 
 	pin := ApiPinPerformance{
@@ -432,7 +436,7 @@ func NewInstanceTrxPinPerfonrmanceReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinP
 		Country:             country,
 		Company:             strings.ToUpper(m["company"]),
 		Service:             strings.ToUpper(m["service"]),
-		Operator:            strings.ToUpper(m["operator"]),
+		Operator:            operator,
 		DateSend:            dateSend,
 		PinRequest:          pinRequest,
 		UniquePinRequest:    uniquePinRequest,

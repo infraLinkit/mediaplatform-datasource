@@ -323,10 +323,18 @@ func (r *BaseModel) FindLatestSummaryCampaignByUniqueKey(service, adnet, operato
 	return s, result.Error
 }
 
-func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, int64, error) {
+func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, int64, interface{}, error) {
 	var rows *sql.Rows
 	var err error
 	var total_rows int64
+	var total_summary entity.TotalSummaryCampaign
+
+	/*
+
+	 */
+	t_query := r.DB.Model(&entity.SummaryCampaign{}).Where("campaign_objective LIKE ?", "%MAINSTREAM%").
+		Where("mo_received > 0").
+		Where("company IN ?", allowedCompanies)
 
 	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
 		summary_campaigns.*,
@@ -341,39 +349,51 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
 			query = query.Where("LOWER(campaign_id) = LOWER(?)", o.CampaignId)
+			t_query = t_query.Where("LOWER(campaign_id) = LOWER(?)", o.CampaignId)
 		}
 		if o.Agency != "" {
 			query = query.Where("LOWER(adnet) = LOWER(?)", o.Agency)
+			t_query = t_query.Where("LOWER(adnet) = LOWER(?)", o.Agency)
 		}
 		if o.UrlServiceKey != "" {
 			query = query.Where("LOWER(url_service_key) = LOWER(?)", o.UrlServiceKey)
+			t_query = t_query.Where("LOWER(url_service_key) = LOWER(?)", o.UrlServiceKey)
 		}
 		if o.Country != "" {
 			query = query.Where("LOWER(country) = LOWER(?)", o.Country)
+			t_query = t_query.Where("LOWER(country) = LOWER(?)", o.Country)
 		}
 		if o.Company != "" {
 			query = query.Where("LOWER(company) = LOWER(?)", o.Company)
+			t_query = t_query.Where("LOWER(company) = LOWER(?)", o.Company)
 		}
 		if o.ClientType != "" {
 			query = query.Where("LOWER(client_type) = LOWER(?)", o.ClientType)
+			t_query = t_query.Where("LOWER(client_type) = LOWER(?)", o.ClientType)
 		}
 		if o.Operator != "" {
 			query = query.Where("LOWER(operator) = LOWER(?)", o.Operator)
+			t_query = t_query.Where("LOWER(operator) = LOWER(?)", o.Operator)
 		}
 		if o.CampaignName != "" {
 			query = query.Where("LOWER(campaign_name) = LOWER(?)", o.CampaignName)
+			t_query = t_query.Where("LOWER(campaign_name) = LOWER(?)", o.CampaignName)
 		}
 		if o.Channel != "" {
 			query = query.Where("LOWER(channel) = LOWER(?)", o.Channel)
+			t_query = t_query.Where("LOWER(channel) = LOWER(?)", o.Channel)
 		}
 		if o.Partner != "" {
 			query = query.Where("LOWER(partner) = LOWER(?)", o.Partner)
+			t_query = t_query.Where("LOWER(partner) = LOWER(?)", o.Partner)
 		}
 		if len(o.Adnets) > 0 {
 			query = query.Where("adnet IN ?", o.Adnets)
+			t_query = t_query.Where("adnet IN ?", o.Adnets)
 		}
 		if o.Service != "" {
 			query = query.Where("LOWER(service) = LOWER(?)", o.Service)
+			t_query = t_query.Where("LOWER(service) = LOWER(?)", o.Service)
 		}
 
 		// Date range filter
@@ -381,25 +401,34 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 			switch strings.ToUpper(o.DateRange) {
 			case "TODAY":
 				query = query.Where("summary_date = CURRENT_DATE")
+				t_query = t_query.Where("summary_date = CURRENT_DATE")
 			case "YESTERDAY":
 				query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
+				t_query = t_query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
 			case "LAST7DAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+				t_query = t_query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 			case "LAST30DAY":
 				query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+				t_query = t_query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
 			case "THISMONTH":
 				query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+				t_query = t_query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
 			case "LASTMONTH":
 				query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+				t_query = t_query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
 			case "CUSTOMRANGE":
 				query = query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
+				t_query = t_query.Where("summary_date BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
 			case "ALLDATERANGE":
 				// no filter
 			default:
 				query = query.Where("summary_date = ?", o.DateRange)
+				t_query = t_query.Where("summary_date = ?", o.DateRange)
 			}
 		} else {
 			query = query.Where("summary_date = CURRENT_DATE")
+			t_query = t_query.Where("summary_date = CURRENT_DATE")
 		}
 	}
 
@@ -434,7 +463,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 
 	rows, err = query_limit.Rows()
 	if err != nil {
-		return []entity.SummaryCampaign{}, 0, err
+		return []entity.SummaryCampaign{}, 0, total_summary, err
 	}
 	defer rows.Close()
 
@@ -445,8 +474,28 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		ss = append(ss, s)
 	}
 
+	if total_rows > 0 {
+		// COUNT THE SUMMARIZE
+		_ = t_query.Select(
+			`SUM(mo_received) as mo_received,
+			 SUM(postback) as postback,
+			 SUM(poaf * postback) as saaf,
+			 SUM(po * postback) as sbaf,
+			 SUM((CASE WHEN mo_received > 0 THEN (poaf * postback) / mo_received ELSE 0 END)) AS price_per_mo,
+		     SUM(((poaf * postback) - (po * postback))) AS revenue,
+			 SUM(po) as po`).Row().Scan(
+			&total_summary.MoReceived,
+			&total_summary.Postback,
+			&total_summary.SAAF,
+			&total_summary.SBAF,
+			&total_summary.PricePerMO,
+			&total_summary.WakiRevenue,
+			&total_summary.PO,
+		)
+	}
+
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-	return ss, total_rows, rows.Err()
+	return ss, total_rows, total_summary, rows.Err()
 }
 
 func (r *BaseModel) FindSummaryCampaign(id int) (entity.SummaryCampaign, error) {
@@ -481,7 +530,7 @@ func (r *BaseModel) UpdateAgencyCostModel(o entity.SummaryCampaign) error {
 
 }
 
-func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdnets []string) ([]entity.CostReport, int64, error) {
+func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdnets []string, filter_by string) ([]entity.CostReport, int64, error) {
 	var (
 		rows       *sql.Rows
 		err        error
@@ -490,18 +539,30 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 
 	var apiAdnets []string
 
+	//fmt.Println("filter_by: ", filter_by)
+
 	_ = r.DB.Model(&entity.ApiPinReport{}).
 		Distinct("adnet").Pluck("adnet", &apiAdnets)
 
 	allowedAdnets = append(allowedAdnets, apiAdnets...)
 
 	//query := r.DB.Model(&entity.SummaryCampaign{})
+	where := ""
+	if o.Country != "" {
+		where += "UPPER(country) = UPPER('" + o.Country + "') AND "
+	}
+
+	if o.Operator != "" {
+		where += "UPPER(operator) = UPPER('" + o.Operator + "') AND "
+	}
+
 	query := r.DB.Table(`
 	   (select date_send as summary_date,adnet,
 		SUM(total_mo) as mo_received,
-		sum(total_postback) as conversion,sum(payout_af*total_postback) as "cost",
+		sum(total_postback) as conversion,
+		sum(sbaf) as "cost",
 		sum(saaf) as saaf,'api' as type
-		from api_pin_reports WHERE total_mo > 0 group by adnet,date_send
+		from api_pin_reports WHERE ` + where + ` total_mo > 0 group by adnet,date_send
 		UNION
 		select summary_date as summary_date,
 		adnet,
@@ -515,7 +576,7 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 				(total_waki_agency_fee + (po * postback) + technical_fee)
 		    END
 		END) as saaf,'s2s' as "type"
-		FROM "summary_campaigns" WHERE mo_received > 0
+		FROM "summary_campaigns" WHERE ` + where + ` mo_received > 0
 		AND "summary_campaigns"."deleted_at" IS NULL GROUP BY summary_date,"adnet")
 		as t`)
 
@@ -654,7 +715,7 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport, allow
 
 	query = query.Where("mo_received > 0")
 	query = query.Where("adnet IN ?", allowedAdnets)
-
+	fmt.Println("COUNTRY: ", o.Country)
 	if o.Action == "Search" {
 
 		if o.Adnet != "" {
@@ -846,7 +907,8 @@ func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
 	0, -- cost
 	?, -- sbaf
 	?, -- saaf
-	0, 0, cd.url_landing, cd.url_landing, ?, ?,
+	?, -- cpa
+	0, cd.url_landing, cd.url_landing, ?, ?,
 	?, -- ratio_receive 
 	pt.company, pt.client_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'UPLOAD SMS',
 	'NA', 0, 0, 0
@@ -858,6 +920,7 @@ func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
 	DO UPDATE SET 
 		updated_at=NOW(),
 		po = EXCLUDED.po,
+		cpa = EXCLUDED.cpa,
 		sbaf = EXCLUDED.sbaf,
 		saaf = EXCLUDED.saaf,
 		ratio_send = EXCLUDED.ratio_send,
@@ -867,7 +930,7 @@ func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
 
 	q := r.DB.Exec(SQL, s.SummaryDate, s.Operator, s.Partner, s.Adnet,
 		s.Service, s.ShortCode, s.MoReceived, s.Postback,
-		s.PO, s.SBAF, s.SAAF, 500, s.RatioSend, s.RatioReceive,
+		s.PO, s.SBAF, s.SAAF, s.CPA, 500, s.RatioSend, s.RatioReceive,
 		s.URLServiceKey)
 	return q.Error
 }

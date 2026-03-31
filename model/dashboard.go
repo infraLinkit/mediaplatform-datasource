@@ -336,7 +336,7 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 			date_list = append(date_list, newDate.Format("2006-01-02"))
 		}
 	case "THISMONTH":
-		current_day := currentTime.Day()
+		current_day := 1 //currentTime.Day()
 		last_day := GetDaysInMonth(currentTime.Year(), currentTime.Month())
 		for i := current_day; i <= last_day; i++ {
 			newDate := time.Date(currentTime.Year(), currentTime.Month(), i, 0, 0, 0, 0, time.Local)

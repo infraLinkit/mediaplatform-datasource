@@ -110,6 +110,19 @@ func (r *BaseModel) GetCountry(o entity.GlobalRequestFromDataTable) ([]entity.Co
 	return ss, total_rows, rows.Err()
 }
 
+func (r *BaseModel) GetCountryByCode(code string) (entity.Country, error) {
+
+	var country entity.Country
+
+	// Apply filters, minus the pagination constraints
+	query := r.DB.Model(&entity.Country{})
+	query = query.Where("code = ?", code).Take(&country)
+
+	// Get the total count after applying filters
+
+	return country, query.Error
+}
+
 func (r *BaseModel) GetContinent(o entity.GlobalRequestFromDataTable) ([]entity.Continent, int64, error) {
 
 	var (
@@ -470,8 +483,8 @@ func (r *BaseModel) GetAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.
 func (r *BaseModel) GetAPIAdnetList(o entity.GlobalRequestFromDataTable) ([]entity.ApiPinReport, int64, error) {
 
 	var (
-		rows       *sql.Rows
-		totalRows  int64
+		rows      *sql.Rows
+		totalRows int64
 	)
 
 	// base query
@@ -680,7 +693,6 @@ func (m *BaseModel) FindMainstreamGroupByID(id uint) (*entity.MainstreamGroup, e
 	}
 	return &mainstreamGroup, nil
 }
-
 
 func (r *BaseModel) GetDomainService(o entity.GlobalRequestFromDataTable) ([]entity.DomainService, int64, error) {
 

@@ -528,7 +528,7 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 		campaign.AgencyFee = 0
 		campaign.TotalWakiAgencyFee = 0
 		campaign.TechnicalFee = 0
-		campaign.CPA = 0
+		//campaign.CPA = 0
 		campaign.Traffic = 0
 		campaign.CrPostback = 0
 		campaign.CrMO = 0

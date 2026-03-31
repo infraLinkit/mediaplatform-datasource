@@ -38,18 +38,18 @@ type (
 	}
 
 	DisplayPinPerformanceReport struct {
-		Country    string `form:"country" json:"country"`
-		Adnet      string `form:"adnet" json:"adnet"`
-		Operator   string `form:"operator" json:"operator"`
-		Service    string `form:"service" json:"service"`
-		Adnets     []string  `form:"adnet" json:"adnet"`
-		Page       int    `form:"page" json:"page"`
-		DateRange  string `form:"date_range" json:"date_range"`
-		DateBefore string `form:"date_before" json:"date_before"`
-		DateAfter  string `form:"date_after" json:"date_after"`
-		Action     string `form:"action" json:"action"`
-		Draw       int    `form:"draw" json:"draw"`
-		PageSize   int    `form:"page_size" json:"page_size"`
+		Country    string   `form:"country" json:"country"`
+		Adnet      string   `form:"adnet" json:"adnet"`
+		Operator   string   `form:"operator" json:"operator"`
+		Service    string   `form:"service" json:"service"`
+		Adnets     []string `form:"adnet" json:"adnet"`
+		Page       int      `form:"page" json:"page"`
+		DateRange  string   `form:"date_range" json:"date_range"`
+		DateBefore string   `form:"date_before" json:"date_before"`
+		DateAfter  string   `form:"date_after" json:"date_after"`
+		Action     string   `form:"action" json:"action"`
+		Draw       int      `form:"draw" json:"draw"`
+		PageSize   int      `form:"page_size" json:"page_size"`
 	}
 
 	DisplayConversionLogReport struct {
@@ -123,6 +123,7 @@ type (
 		CrPostback         float64 `json:"cr_postback"`
 		WakiRevenue        float64 `json:"waki_revenue"`
 		ECPA               float64 `json:"e_cpa"`
+		PricePerMO         float64 `json:"price_per_mo"`
 	}
 
 	CostReport struct {
@@ -444,15 +445,14 @@ func NewInstanceTrxPinPerfonrmanceReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinP
 		PinFailed:           pinFailed,
 		PinVerifyRequest:       verifyRequest,
 		PinVerifyRequestUnique: verifyRequestUnique,
-		PinOK:               pinOK,
-		PinNotOK:            pinNotOK,
-		PinOkRatio:          pinOkRatio,
-		ChargedMO:           float64(chargedMO),
+		PinOK:                  pinOK,
+		PinNotOK:               pinNotOK,
+		PinOkRatio:             pinOkRatio,
+		ChargedMO:              float64(chargedMO),
 	}
 
 	return &pin
 }
-
 
 func (t *ApiPinPerformance) ValidateParams(Logs *logrus.Logger) ReturnResponse {
 
@@ -493,33 +493,33 @@ func NewInstancePinPerformance(c *fiber.Ctx, cfg *config.Cfg) *ApiPinPerformance
 	}
 
 	pin := ApiPinPerformance{
-		DateSend:            helper.GetCurrentTime(cfg.TZ, time.RFC3339),
-		Country:             m["country"],
-		Company:             m["company"],
-		Adnet:               m["adnet"],
-		Operator:            m["operator"],
-		Service:             m["service"],
-		PinRequest:          toInt("pin_request"),
-		UniquePinRequest:    toInt("unique_pin_request"),
-		PinSuccess:          toInt("pin_success"),
-		PinFailed:           toInt("pin_failed"),
+		DateSend:               helper.GetCurrentTime(cfg.TZ, time.RFC3339),
+		Country:                m["country"],
+		Company:                m["company"],
+		Adnet:                  m["adnet"],
+		Operator:               m["operator"],
+		Service:                m["service"],
+		PinRequest:             toInt("pin_request"),
+		UniquePinRequest:       toInt("unique_pin_request"),
+		PinSuccess:             toInt("pin_success"),
+		PinFailed:              toInt("pin_failed"),
 		PinVerifyRequest:       toInt("pin_verify_request"),
 		PinVerifyRequestUnique: toInt("pin_verify_request_unique"),
-		PinOK:               toInt("pin_ok"),
-		PinNotOK:            toInt("pin_not_ok"),
-		PinOkRatio:          toInt("pin_ok_ratio"),
-		CPA:                 toFloat("cpa"),
-		CPAWaki:             toFloat("cpa_waki"),
-		EstimatedARPU:       toFloat("estimated_arpu"),
-		SBAF:                toFloat("sbaf"),
-		SAAF:                toFloat("saaf"),
-		ChargedMO:           toFloat("charged_mo"),
-		SubsCR:              toFloat("subs_cr"),
-		AdnetCR:             toFloat("adnet_cr"),
-		CAC:                 toFloat("cac"),
-		PaidCAC:             toFloat("paid_cac"),
-		TotalWakiAgencyFee:  toFloat("total_waki_agency_fee"),
-		TotalSpending:       toFloat("total_spending"),
+		PinOK:                  toInt("pin_ok"),
+		PinNotOK:               toInt("pin_not_ok"),
+		PinOkRatio:             toInt("pin_ok_ratio"),
+		CPA:                    toFloat("cpa"),
+		CPAWaki:                toFloat("cpa_waki"),
+		EstimatedARPU:          toFloat("estimated_arpu"),
+		SBAF:                   toFloat("sbaf"),
+		SAAF:                   toFloat("saaf"),
+		ChargedMO:              toFloat("charged_mo"),
+		SubsCR:                 toFloat("subs_cr"),
+		AdnetCR:                toFloat("adnet_cr"),
+		CAC:                    toFloat("cac"),
+		PaidCAC:                toFloat("paid_cac"),
+		TotalWakiAgencyFee:     toFloat("total_waki_agency_fee"),
+		TotalSpending:          toFloat("total_spending"),
 		// ClientType:          m["client_type"],
 		// CampaignName: m["campaign_name"],
 	}

@@ -126,11 +126,13 @@ type (
 		PricePerMO         float64 `json:"price_per_mo"`
 	}
 
+	// CostReport is the data row returned by all cost report queries.
 	CostReport struct {
 		SummaryDate time.Time `json:"summary_date"`
 		Adnet       string    `json:"adnet"`
 		Country     string    `json:"country"`
 		Operator    string    `json:"operator"`
+		ChannelType string    `json:"channel_type"` // NEW: mapped from campaign_objective
 		Landing     float64   `json:"landing"`
 		CrPostback  float64   `json:"cr_postback"`
 		ShortCode   string    `json:"short_code"`
@@ -139,34 +141,38 @@ type (
 		Cost1       float64   `json:"cost1"`
 		Conversion2 float64   `json:"conversion2"`
 		Cost2       float64   `json:"cost2"`
-
-		Saaf1 float64 `json:"saaf1"`
-		Saaf2 float64 `json:"saaf2"`
+		Saaf1       float64   `json:"saaf1"`
+		Saaf2       float64   `json:"saaf2"`
 	}
 
+	// DisplayCostReport holds all filter parameters from the frontend.
 	DisplayCostReport struct {
-		SummaryDate  time.Time `json:"summary_date"`
-		Adnet        string    `json:"adnet"`
-		Adnets       []string  `json:"adnets"`
-		Country      string    `json:"country"`
-		Operator     string    `json:"operator"`
-		Landing      float64   `json:"landing"`
-		CrPostback   float64   `json:"cr_postback"`
-		ShortCode    string    `json:"short_code"`
-		UrlAfter     string    `json:"url_after"`
-		Conversion1  float64   `json:"conversion1"`
-		Cost1        float64   `json:"cost1"`
-		Conversion2  float64   `json:"conversion2"`
-		Cost2        float64   `json:"cost2"`
-		Action       string    `json:"action"`
-		CampaignType string    `json:"campaign_type"`
-		DateRange    string    `json:"date_range"`
-		DateBefore   string    `json:"date_before"`
-		DateAfter    string    `json:"date_after"`
-		PageSize     int       `json:"page_size"`
-		Page         int       `json:"page"`
-		Draw         int       `json:"draw"`
-		DataBasedOn  string    `json:"data_based_on"`
+		SummaryDate   time.Time `json:"summary_date"`
+		Adnet         string    `json:"adnet"`
+		Adnets        []string  `json:"adnets"`
+		Country       string    `json:"country"`
+		Operator      string    `json:"operator"`
+		ChannelType   string    `json:"channel_type"`   // NEW: filter by channel type
+		GroupBy       string    `json:"group_by"`        // NEW: "adnet" | "country"
+		DataIndicator string    `json:"data_indicator"`  // NEW: "s2s" | "api" | ""
+		Landing       float64   `json:"landing"`
+		CrPostback    float64   `json:"cr_postback"`
+		ShortCode     string    `json:"short_code"`
+		UrlAfter      string    `json:"url_after"`
+		Conversion1   float64   `json:"conversion1"`
+		Cost1         float64   `json:"cost1"`
+		Conversion2   float64   `json:"conversion2"`
+		Cost2         float64   `json:"cost2"`
+		Action        string    `json:"action"`
+		CampaignType  string    `json:"campaign_type"`
+		DateRange     string    `json:"date_range"`
+		DateBefore    string    `json:"date_before"`
+		DateAfter     string    `json:"date_after"`
+		PageSize      int       `json:"page_size"`
+		Page          int       `json:"page"`
+		Draw          int       `json:"draw"`
+		DataBasedOn   string    `json:"data_based_on"`
+		FromChannel   bool 
 	}
 
 	DisplayAlertReport struct {

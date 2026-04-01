@@ -5,62 +5,14 @@ import (
 	"log"
 	"math"
 	"sort"
-	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"github.com/infraLinkit/mediaplatform-datasource/helper"
 )
 
-// ─── Channel Grouping ─────────────────────────────────────────────────────────
-
-var channelGroupMap = map[string]string{
-	// TikTok
-	"tiktok":                "Mainstream TikTok Ads",
-	"mainstream_tiktok":     "Mainstream TikTok Ads",
-	"mainstream_tiktok_ads": "Mainstream TikTok Ads",
-	"tiktok ads":            "Mainstream TikTok Ads",
-	// Google
-	"google":                "Mainstream Google Ads",
-	"mainstream_google":     "Mainstream Google Ads",
-	"mainstream_google_ads": "Mainstream Google Ads",
-	"google ads":            "Mainstream Google Ads",
-	"google traffic":        "Mainstream Google Ads",
-	// Meta
-	"meta":                "Mainstream Meta Ads",
-	"mainstream_meta":     "Mainstream Meta Ads",
-	"mainstream_meta_ads": "Mainstream Meta Ads",
-	"facebook":            "Mainstream Meta Ads",
-	"fb":                  "Mainstream Meta Ads",
-	"fbmeta":              "Mainstream Meta Ads",
-	// Snack Video
-	"snack video":          "Mainstream Snack Video Ads",
-	"snack_video":          "Mainstream Snack Video Ads",
-	// Others
-	"cpa":           "CPA",
-	"dsp":           "DSP",
-	"sms":           "SMS",
-	"telco":         "Telco Channel",
-	"telco_channel": "Telco Channel",
-	"telco channel": "Telco Channel",
-	"s2s":           "S2S",
-	"api":           "API",
-}
-
-func resolveChannelGroup(raw string) string {
-	key := strings.ToLower(strings.TrimSpace(raw))
-	if key == "" || key == "na" {
-		return "Other"
-	}
-	if group, ok := channelGroupMap[key]; ok {
-		return group
-	}
-	// Unrecognised channel value → "Other" instead of title-casing the raw string
-	return "Other"
-}
-
-// ─── HTTP Handlers ────────────────────────────────────────────────────────────
 
 func (h *IncomingHandler) DisplayCampaignSpendingChannel(c *fiber.Ctx) error {
 	params := buildCampaignSpendingChannelParams(c)
@@ -152,7 +104,7 @@ func formatSpendingByChannel(
 
 	grouped := make(map[string][]entity.CampaignSpendingChannelMonitoring)
 	for _, c := range data {
-		grp := resolveChannelGroup(c.Channel)
+		grp := helper.ResolveChannelGroup(c.Channel)
 		grouped[grp] = append(grouped[grp], c)
 	}
 
@@ -244,7 +196,7 @@ func groupChannelChildrenCSC(
 
 	grouped := make(map[string][]entity.CampaignSpendingChannelMonitoring)
 	for _, c := range campaigns {
-		grp := resolveChannelGroup(c.Channel)
+		grp := helper.ResolveChannelGroup(c.Channel)
 		grouped[grp] = append(grouped[grp], c)
 	}
 

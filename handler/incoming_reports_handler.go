@@ -1007,6 +1007,7 @@ func (h *IncomingHandler) ResendData(c *fiber.Ctx) error {
 	errorCounter := 0
 
 	for _, sc := range reports {
+		channelGroup := helper.ResolveChannelGroup(sc.Channel)
 		q := url.Values{
 			"date":           {sc.SummaryDate.Format("2006-01-02")},
 			"campaign_id":    {sc.URLServiceKey},
@@ -1018,6 +1019,7 @@ func (h *IncomingHandler) ResendData(c *fiber.Ctx) error {
 			"aggregator":     {sc.Aggregator},
 			"country":        {sc.Country},
 			"service":        {sc.Service},
+			"channel":        {channelGroup},
 			"mo_received":    {strconv.Itoa(sc.MoReceived)},
 			"mo_postback":    {strconv.Itoa(sc.Postback)},
 			"total_mo":       {strconv.Itoa(sc.MoReceived)},
@@ -1160,6 +1162,7 @@ func (h *IncomingHandler) ResendDataAPIReport(c *fiber.Ctx) error {
 			"aggregator":     {""},
 			"country":        {strings.ToLower(sc.Country)},
 			"service":        {strings.ToLower(sc.Service)},
+			"channel": 		  {"API"},
 			"total_mo":       {strconv.Itoa(sc.TotalMO)},
 			"total_postback": {strconv.Itoa(sc.TotalPostback)},
 			"landing":        {""},

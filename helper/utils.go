@@ -422,3 +422,49 @@ func NormalizeCountries(country string) string {
 
 	return country
 }
+
+var channelGroupMap = map[string]string{
+	// TikTok
+	"tiktok":                "Mainstream TikTok Ads",
+	"mainstream_tiktok":     "Mainstream TikTok Ads",
+	"mainstream_tiktok_ads": "Mainstream TikTok Ads",
+	"tiktok ads":            "Mainstream TikTok Ads",
+	// Google
+	"google":                "Mainstream Google Ads",
+	"mainstream_google":     "Mainstream Google Ads",
+	"mainstream_google_ads": "Mainstream Google Ads",
+	"google ads":            "Mainstream Google Ads",
+	"google traffic":        "Mainstream Google Ads",
+	// Meta
+	"meta":                "Mainstream Meta Ads",
+	"mainstream_meta":     "Mainstream Meta Ads",
+	"mainstream_meta_ads": "Mainstream Meta Ads",
+	"facebook":            "Mainstream Meta Ads",
+	"fb":                  "Mainstream Meta Ads",
+	"fbmeta":              "Mainstream Meta Ads",
+	// Snack Video
+	"snack video":          "Mainstream Snack Video Ads",
+	"snack_video":          "Mainstream Snack Video Ads",
+	"snackvideo":           "Mainstream Snack Video Ads",
+	// Others
+	"cpa":           "CPA",
+	"dsp":           "DSP",
+	"sms":           "SMS",
+	"telco":         "Telco Channel",
+	"telco_channel": "Telco Channel",
+	"telco channel": "Telco Channel",
+	"s2s":           "S2S",
+	"api":           "API",
+}
+
+func ResolveChannelGroup(raw string) string {
+	key := strings.ToLower(strings.TrimSpace(raw))
+	if key == "" || key == "na" {
+		return "Other"
+	}
+	if group, ok := channelGroupMap[key]; ok {
+		return group
+	}
+	// Unrecognised channel value → "Other" instead of title-casing the raw string
+	return "Other"
+}

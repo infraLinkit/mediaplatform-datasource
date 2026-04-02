@@ -339,10 +339,10 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 
 	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
 		summary_campaigns.*,
-		(poaf * postback) AS saaf,
-		(po * postback) AS sbaf,
-		(CASE WHEN mo_received > 0 THEN (poaf * postback) / mo_received ELSE 0 END) AS price_per_mo,
-		((poaf * postback) - (po * postback)) AS revenue
+		saaf,
+		sbaf,
+		price_per_mo,
+		revenue
 	`).Where("campaign_objective LIKE ?", "%MAINSTREAM%").
 		Where("mo_received > 0").
 		Where("company IN ?", allowedCompanies)
@@ -441,13 +441,13 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 
 		switch o.OrderColumn {
 		case "saaf":
-			query = query.Order(fmt.Sprintf("(poaf * postback) %s", dir))
+			query = query.Order(fmt.Sprintf("saaf %s", dir))
 		case "sbaf":
-			query = query.Order(fmt.Sprintf("(po * postback) %s", dir))
+			query = query.Order(fmt.Sprintf("sbaf %s", dir))
 		case "price_per_mo":
-			query = query.Order(fmt.Sprintf("(CASE WHEN mo_received > 0 THEN (poaf * postback) / mo_received ELSE 0 END) %s", dir))
+			query = query.Order(fmt.Sprintf("price_per_mo %s", dir))
 		case "revenue":
-			query = query.Order(fmt.Sprintf("((poaf * postback) - (po * postback)) %s", dir))
+			query = query.Order(fmt.Sprintf("revenue %s", dir))
 		default:
 			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
 		}
@@ -480,10 +480,10 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		_ = t_query.Select(
 			`SUM(mo_received) as mo_received,
 			 SUM(postback) as postback,
-			 SUM(poaf * postback) as saaf,
-			 SUM(po * postback) as sbaf,
-			 SUM((CASE WHEN mo_received > 0 THEN (poaf * postback) / mo_received ELSE 0 END)) AS price_per_mo,
-		     SUM(((poaf * postback) - (po * postback))) AS revenue,
+			 SUM(saaf) as saaf,
+			 SUM(sbaf) as sbaf,
+			 SUM(price_per_mo) as price_per_mo,
+		     SUM(revenue) as revenue,
 			 SUM(po) as po`).Row().Scan(
 			&total_summary.MoReceived,
 			&total_summary.Postback,

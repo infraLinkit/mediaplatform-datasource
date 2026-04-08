@@ -480,6 +480,8 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		_ = t_query.Select(
 			`SUM(mo_received) as mo_received,
 			 SUM(postback) as postback,
+			 SUM(landing) as landing,
+			 SUM(clicked) as clicked,
 			 SUM(saaf) as saaf,
 			 SUM(sbaf) as sbaf,
 			 SUM(price_per_mo) as price_per_mo,
@@ -487,6 +489,8 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 			 SUM(po) as po`).Row().Scan(
 			&total_summary.MoReceived,
 			&total_summary.Postback,
+			&total_summary.Landing,
+			&total_summary.Clicked,
 			&total_summary.SAAF,
 			&total_summary.SBAF,
 			&total_summary.PricePerMO,

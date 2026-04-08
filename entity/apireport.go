@@ -119,6 +119,7 @@ type (
 		SAAF               float64 `json:"saaf"`
 		TechnicalFee       float64 `json:"technical_fee"`
 		Landing            int     `json:"landing"`
+		Clicked            int     `json:"clicked"`
 		CrMO               float64 `json:"cr_mo"`
 		CrPostback         float64 `json:"cr_postback"`
 		WakiRevenue        float64 `json:"waki_revenue"`

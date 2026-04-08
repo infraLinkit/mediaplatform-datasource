@@ -64,6 +64,8 @@ type (
 		RabbitMQDataType                       string
 		RabbitMQPixelStorageExchangeName       string
 		RabbitMQPixelStorageQueueName          string
+		RabbitMQClickStorageExchangeName       string
+		RabbitMQClickStorageQueueName          string
 		RabbitMQRedisCounterExchangeName       string
 		RabbitMQRedisCounterQueueName          string
 		RabbitMQRatioExchangeName              string
@@ -164,6 +166,8 @@ func InitCfg() *Cfg {
 		RabbitMQDataType:                       "application/json",
 		RabbitMQPixelStorageExchangeName:       os.Getenv("RABBITMQPIXELSTORAGEEXCHANGENAME"),
 		RabbitMQPixelStorageQueueName:          os.Getenv("RABBITMQPIXELSTORAGEQUEUENAME"),
+		RabbitMQClickStorageExchangeName:       os.Getenv("RABBITMQCLICKSTORAGEEXCHANGENAME"),
+		RabbitMQClickStorageQueueName:          os.Getenv("RABBITMQCLICKSTORAGEQUEUENAME"),
 		RabbitMQRedisCounterExchangeName:       os.Getenv("RABBITMQREDISCOUNTEREXCHANGENAME"),
 		RabbitMQRedisCounterQueueName:          os.Getenv("RABBITMQREDISCOUNTERQUEUENAME"),
 		RabbitMQRatioExchangeName:              os.Getenv("RABBITMQRATIOEXCHANGENAME"),

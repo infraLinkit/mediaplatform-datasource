@@ -130,12 +130,12 @@ func (h *IncomingHandler) AuthMiddleware(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database error"})
 	}
 
-	var agencyCodes []string
+	var agencyNames []string
 	for _, agency := range agencies {
-		agencyCodes = append(agencyCodes, agency.Code)
+		agencyNames = append(agencyNames, agency.Name)
 	}
 
-	c.Locals("agencies", agencyCodes)
+	c.Locals("agencies", agencyNames)
 
 	return c.Next()
 }

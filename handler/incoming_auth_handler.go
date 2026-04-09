@@ -118,5 +118,24 @@ func (h *IncomingHandler) AuthMiddleware(c *fiber.Ctx) error {
 	c.Locals("adnets", adnetCodes)
 	c.Locals("user_id", userID)
 
+	var agencies []entity.Agency
+	err = h.DB.Raw(`
+		SELECT a.id, upper(a.name) as name
+		FROM user_agencies ua
+		JOIN agencies a ON ua.agency_id = a.id
+		WHERE ua.user_id = ? AND ua.status = true
+	`, userID).Scan(&agencies).Error
+	if err != nil {
+		h.Logs.WithError(err).Errorf("AuthMiddleware: Database error fetching agencies for user %d", userID)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Database error"})
+	}
+
+	var agencyCodes []string
+	for _, agency := range agencies {
+		agencyCodes = append(agencyCodes, agency.Code)
+	}
+
+	c.Locals("agencies", agencyCodes)
+
 	return c.Next()
 }

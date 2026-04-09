@@ -324,7 +324,7 @@ func (r *BaseModel) FindLatestSummaryCampaignByUniqueKey(service, adnet, operato
 	return s, result.Error
 }
 
-func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowedCompanies []string) ([]entity.SummaryCampaign, int64, interface{}, error) {
+func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowedCompanies []string, allowedAgencies []string) ([]entity.SummaryCampaign, int64, interface{}, error) {
 	var rows *sql.Rows
 	var err error
 	var total_rows int64
@@ -335,7 +335,8 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 	 */
 	t_query := r.DB.Model(&entity.SummaryCampaign{}).Where("campaign_objective LIKE ?", "%MAINSTREAM%").
 		Where("mo_received > 0").
-		Where("company IN ?", allowedCompanies)
+		Where("company IN ?", allowedCompanies).
+		Where("adnet IN ?", allowedAgencies)
 
 	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
 		summary_campaigns.*,
@@ -345,7 +346,8 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 		revenue
 	`).Where("campaign_objective LIKE ?", "%MAINSTREAM%").
 		Where("mo_received > 0").
-		Where("company IN ?", allowedCompanies)
+		Where("company IN ?", allowedCompanies).
+		Where("adnet IN ?", allowedAgencies)
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {

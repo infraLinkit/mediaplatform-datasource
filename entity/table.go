@@ -190,6 +190,7 @@ type (
 		Pixel             string    `gorm:"index:idx_pixel,size:255;default:NA" json:"pixel"`
 		Token             string    `gorm:"index:idx_token,size:255;default:NA" json:"token"`
 		TrxId             string    `gorm:"size:255;default:NA" json:"trx_id"`
+		TrxDate           time.Time `gorm:"not null" json:"trx_date"`
 		Msisdn            string    `gorm:"index:idx_msisdn,size:255;default:NA" json:"msisdn"`
 		IsUsed            bool      `gorm:"not null;default:false" json:"is_used"`
 		Browser           string    `gorm:"size:150;default:NA" json:"browser"`
@@ -234,6 +235,14 @@ type (
 		LandedTime        float64   `gorm:"type:double precision;default:0" json:"landed_time"`
 		HttpStatus        int       `gorm:"not null;length:10;default:0" json:"http_status"`
 		IsOperator        bool      `gorm:"not null;default:false" json:"is_operator"`
+		MCampaignId       string    `gorm:"size:255;default:NA" json:"m_campaign_id"`
+		MAdgroupId        string    `gorm:"size:255;default:NA" json:"m_ad_group_id"`
+		MPlacement        string    `gorm:"size:255;default:NA" json:"m_placement"`
+		MCreative         string    `gorm:"size:255;default:NA" json:"m_creative"`
+		MGadCampaignId    string    `gorm:"size:255;default:NA" json:"m_gad_campaign_id"`
+		MStatusCharge     bool      `gorm:"not null;default:false" json:"m_status_charge"`
+		MStatusTimeCharge time.Time `gorm:"not null" json:"m_status_time_charge"`
+		MSnackCampaignId  string    `gorm:"size:255;default:NA" json:"m_snack_campaign_id"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}
@@ -265,6 +274,7 @@ type (
 		Pixel             string    `gorm:"index:idx_pixel,size:255;default:NA" json:"pixel"`
 		Token             string    `gorm:"index:idx_token,size:255;default:NA" json:"token"`
 		TrxId             string    `gorm:"size:255;default:NA" json:"trx_id"`
+		TrxDate			  time.Time `gorm:"not null" json:"trx_date"`
 		Msisdn            string    `gorm:"index:idx_msisdn,size:255;default:NA" json:"msisdn"`
 		IsUsed            bool      `gorm:"not null;default:false" json:"is_used"`
 		Browser           string    `gorm:"size:150;default:NA" json:"browser"`
@@ -309,6 +319,14 @@ type (
 		LandedTime        float64   `gorm:"type:double precision;default:0" json:"landed_time"`
 		HttpStatus        int       `gorm:"not null;length:10;default:0" json:"http_status"`
 		IsOperator        bool      `gorm:"not null;default:false" json:"is_operator"`
+		MCampaignId       string    `gorm:"size:255;default:NA" json:"m_campaign_id"`
+		MAdgroupId        string    `gorm:"size:255;default:NA" json:"m_ad_group_id"`
+		MPlacement        string    `gorm:"size:255;default:NA" json:"m_placement"`
+		MCreative         string    `gorm:"size:255;default:NA" json:"m_creative"`
+		MGadCampaignId    string    `gorm:"size:255;default:NA" json:"m_gad_campaign_id"`
+		MStatusCharge     bool      `gorm:"not null;default:false" json:"m_status_charge"`
+		MStatusTimeCharge time.Time `gorm:"not null" json:"m_status_time_charge"`
+		MSnackCampaignId  string    `gorm:"size:255;default:NA" json:"m_snack_campaign_id"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}

@@ -646,61 +646,81 @@ func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
 
 	// Parse Postback Data
 	p := entity.NewDataPostbackV2(c)
-	//p.URLServiceKey = c.Params("urlservicekey")
 
 	// Validate Parameters
 	if v := p.ValidateParamsV2(h.Logs); v.Code == fiber.StatusBadRequest {
-
-		return c.Status(v.Code).JSON(entity.GlobalResponse{Code: v.Code, Message: v.Message})
-
-	} else {
-
-		if c.Cookies(p.CookieKey) != "" {
-
-			return c.Status(fiber.StatusForbidden).JSON(entity.GlobalResponse{Code: fiber.StatusForbidden, Message: "forbidden access"})
-
-		} else {
-			// Setup cookie if double requested within n-hour
-			c.Cookie(&fiber.Cookie{
-				Name:     p.CookieKey,
-				Value:    "1",
-				Expires:  time.Now().Add(3 * time.Second),
-				HTTPOnly: true,
-				SameSite: "lax",
-			})
-
-			if !strings.Contains(p.AffSub, "-") {
-
-				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Invalid pixel format, pixel : " + p.AffSub})
-
-			} else {
-
-				dataraw := strings.Split(p.AffSub, "-")
-				p.URLServiceKey = helper.Concat("-", dataraw[0], dataraw[1])
-
-				if dc, err := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$"); err == nil {
-
-					apiurl := strings.NewReplacer(p.URLServiceKey+"-", "")
-					pixel := apiurl.Replace(p.AffSub)
-
-					h.DS.UpdateGoogleSheetPixel(h.GS, entity.PixelStorage{
-						CampaignId:    dc.CampaignId,
-						GoogleSheet:   dc.GoogleSheetBillable,
-						Pixel:         pixel,
-						PixelUsedDate: helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-						Msisdn:        p.Msisdn,
-					}, "Billed", p.Desc)
-
-					return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "OK"})
-
-				} else {
-
-					return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Campaign ID not found"})
-
-				}
-			}
-		}
+		return c.Status(v.Code).JSON(entity.GlobalResponse{
+			Code:    v.Code,
+			Message: v.Message,
+		})
 	}
+
+	if c.Cookies(p.CookieKey) != "" {
+		return c.Status(fiber.StatusForbidden).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusForbidden,
+			Message: "forbidden access",
+		})
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     p.CookieKey,
+		Value:    "1",
+		Expires:  time.Now().Add(3 * time.Second),
+		HTTPOnly: true,
+		SameSite: "lax",
+	})
+
+	if !strings.Contains(p.AffSub, "-") {
+		return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "Invalid pixel format, pixel : " + p.AffSub,
+		})
+	}
+
+	dataraw := strings.Split(p.AffSub, "-")
+	p.URLServiceKey = helper.Concat("-", dataraw[0], dataraw[1])
+
+	dc, err := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$")
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "Campaign ID not found",
+		})
+	}
+
+	apiurl := strings.NewReplacer(p.URLServiceKey+"-", "")
+	pixel := apiurl.Replace(p.AffSub)
+
+	now := helper.GetCurrentTime(h.Config.TZ, time.RFC3339)
+
+	isSuccess := strings.ToLower(p.Status) == "success"
+
+	pixelStorage := entity.PixelStorage{
+		CampaignId:    dc.CampaignId,
+		GoogleSheet:   dc.GoogleSheetBillable,
+		Pixel:         pixel,
+		PixelUsedDate: now,
+		Msisdn:        p.Msisdn,
+
+		URLServiceKey: p.URLServiceKey,
+		MStatusCharge: isSuccess,
+	}
+
+	h.DS.UpdateGoogleSheetPixel(
+		h.GS,
+		pixelStorage,
+		"Billed",
+		p.Desc,
+	)
+
+	if err := h.DS.UpdatePixelBilled(pixelStorage); err != nil {
+		h.Logs.Error(fmt.Sprintf("failed update pixel billed: %#v", err))
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+		Code:    fiber.StatusOK,
+		Message: "OK",
+	})
 }
 
 func (h *IncomingHandler) InquiryCampID(c *fiber.Ctx) error {

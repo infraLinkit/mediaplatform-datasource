@@ -688,34 +688,41 @@ func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
 		})
 	}
 
+	// full untuk DB
+	pixelDB := p.AffSub
+
+	// clean untuk Google Sheet
 	apiurl := strings.NewReplacer(p.URLServiceKey+"-", "")
-	pixel := apiurl.Replace(p.AffSub)
+	pixelGS := apiurl.Replace(p.AffSub)
 
 	now := helper.GetCurrentTime(h.Config.TZ, time.RFC3339)
-
-	isSuccess := strings.ToLower(p.Status) == "success"
 
 	pixelStorage := entity.PixelStorage{
 		CampaignId:    dc.CampaignId,
 		GoogleSheet:   dc.GoogleSheetBillable,
-		Pixel:         pixel,
+		Pixel:         pixelDB,
 		PixelUsedDate: now,
 		Msisdn:        p.Msisdn,
-
 		URLServiceKey: p.URLServiceKey,
-		MStatusCharge: isSuccess,
+		MStatusCharge: strings.TrimSpace(strings.ToLower(p.Status)) == "success",
 	}
-
-	h.DS.UpdateGoogleSheetPixel(
-		h.GS,
-		pixelStorage,
-		"Billed",
-		p.Desc,
-	)
 
 	if err := h.DS.UpdatePixelBilled(pixelStorage); err != nil {
 		h.Logs.Error(fmt.Sprintf("failed update pixel billed: %#v", err))
 	}
+
+	h.DS.UpdateGoogleSheetPixel(
+		h.GS,
+		entity.PixelStorage{
+			CampaignId:    dc.CampaignId,
+			GoogleSheet:   dc.GoogleSheetBillable,
+			Pixel:         pixelGS,
+			PixelUsedDate: now,
+			Msisdn:        p.Msisdn,
+		},
+		"Billed",
+		p.Desc,
+	)
 
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
 		Code:    fiber.StatusOK,

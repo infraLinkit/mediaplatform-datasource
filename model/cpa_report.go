@@ -359,8 +359,13 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 			t_query = t_query.Where("LOWER(adnet) = LOWER(?)", o.Agency)
 		}
 		if o.UrlServiceKey != "" {
-			query = query.Where("LOWER(url_service_key) = LOWER(?)", o.UrlServiceKey)
-			t_query = t_query.Where("LOWER(url_service_key) = LOWER(?)", o.UrlServiceKey)
+			keys := strings.Split(o.UrlServiceKey, ",")
+			lowerKeys := make([]string, len(keys))
+			for i, k := range keys {
+				lowerKeys[i] = strings.ToLower(strings.TrimSpace(k))
+			}
+			query = query.Where("LOWER(url_service_key) IN ?", lowerKeys)
+			t_query = t_query.Where("LOWER(url_service_key) IN ?", lowerKeys)
 		}
 		if o.Country != "" {
 			query = query.Where("LOWER(country) = LOWER(?)", o.Country)

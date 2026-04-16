@@ -490,6 +490,22 @@ type (
 		UpdatedAt                time.Time
 	}
 
+	SummaryCampaignBilling struct {
+		gorm.Model
+		ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		SummaryDate   time.Time `gorm:"type:date;uniqueIndex:idx_sumunique" json:"summary_date"`
+		URLServiceKey string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"urlservicekey"`
+		CampaignId    string    `gorm:"not null;size:50" json:"campaign_id"`
+		AdGroupID     string    `gorm:"not null;size:50" json:"adgroup_id"`
+		Placement     string    `gorm:"type:text" json:"placement"`
+		StatusSuccess int       `gorm:"length:20;default:0" json:"status_success"`
+		StatusFailed  int       `gorm:"length:20;default:0" json:"status_failed"`
+		TotalBill     int       `gorm:"length:20;default:0" json:"total_bill"`
+		BillRate      int       `gorm:"length:20;default:0" json:"bill_rate"`
+		CreatedAt     time.Time
+		UpdatedAt     time.Time
+	}
+
 	IncSummaryCampaignHour struct {
 		gorm.Model
 		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`

@@ -501,7 +501,7 @@ type (
 		StatusSuccess int       `gorm:"length:20;default:0" json:"status_success"`
 		StatusFailed  int       `gorm:"length:20;default:0" json:"status_failed"`
 		TotalBill     int       `gorm:"length:20;default:0" json:"total_bill"`
-		BillRate      int       `gorm:"length:20;default:0" json:"bill_rate"`
+		BillRate      float64    `gorm:"length:20;default:0" json:"bill_rate"`
 		CreatedAt     time.Time
 		UpdatedAt     time.Time
 	}

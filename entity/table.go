@@ -236,7 +236,7 @@ type (
 		HttpStatus        int       `gorm:"not null;length:10;default:0" json:"http_status"`
 		IsOperator        bool      `gorm:"not null;default:false" json:"is_operator"`
 		MCampaignId       string    `gorm:"size:255;default:NA" json:"m_campaign_id"`
-		MAdgroupId        string    `gorm:"size:255;default:NA" json:"m_ad_group_id"`
+		MAdgroupId        string    `gorm:"size:255;default:NA" json:"m_adgroup_id"`
 		MPlacement        string    `gorm:"size:255;default:NA" json:"m_placement"`
 		MCreative         string    `gorm:"size:255;default:NA" json:"m_creative"`
 		MGadCampaignId    string    `gorm:"size:255;default:NA" json:"m_gad_campaign_id"`
@@ -320,7 +320,7 @@ type (
 		HttpStatus        int       `gorm:"not null;length:10;default:0" json:"http_status"`
 		IsOperator        bool      `gorm:"not null;default:false" json:"is_operator"`
 		MCampaignId       string    `gorm:"size:255;default:NA" json:"m_campaign_id"`
-		MAdgroupId        string    `gorm:"size:255;default:NA" json:"m_ad_group_id"`
+		MAdgroupId        string    `gorm:"size:255;default:NA" json:"m_adgroup_id"`
 		MPlacement        string    `gorm:"size:255;default:NA" json:"m_placement"`
 		MCreative         string    `gorm:"size:255;default:NA" json:"m_creative"`
 		MGadCampaignId    string    `gorm:"size:255;default:NA" json:"m_gad_campaign_id"`
@@ -496,7 +496,7 @@ type (
 		SummaryDate   time.Time `gorm:"type:date;uniqueIndex:idx_sumunique" json:"summary_date"`
 		URLServiceKey string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"urlservicekey"`
 		CampaignId    string    `gorm:"not null;size:50" json:"campaign_id"`
-		AdGroupID     string    `gorm:"not null;size:50" json:"adgroup_id"`
+		AdgroupID     string    `gorm:"not null;size:50" json:"adgroup_id"`
 		Placement     string    `gorm:"type:text" json:"placement"`
 		StatusSuccess int       `gorm:"length:20;default:0" json:"status_success"`
 		StatusFailed  int       `gorm:"length:20;default:0" json:"status_failed"`

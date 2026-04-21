@@ -4,7 +4,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
@@ -472,6 +471,8 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 		}
 
 		// GET 1 MONTH PRIOR DATA
+		priorData := make(map[string]map[string]float64)
+		
 		rows, _ = query_last_month.Select(
 			`summary_date as date,
 		 SUM(total_mo) as total_mo,
@@ -491,6 +492,10 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 			r.DB.ScanRows(rows, &s)
 			s.Date = strings.TrimSuffix(s.Date, "T00:00:00Z")
 			sl = append(sl, s)
+			
+			priorData[s.Date] = make(map[string]float64)
+			priorData[s.Date]["total_spending"] = s.TotalSpending
+			priorData[s.Date]["total_mo"] = float64(s.TotalMO)
 		}
 
 		SummaryDashboard.DateList = date_list
@@ -518,6 +523,25 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 			DetailChart.LastMonthTotalMO = 0
 			DetailChart.LastMonthTotalSpending = 0
 
+			if innerMap, ok := priorData[last_date]; ok {
+				if val, exists := innerMap["total_mo"]; exists {
+					DetailChart.LastMonthTotalMO = int(val)
+				}
+			}
+			
+			if innerMap, ok := priorData[last_date]; ok {
+				if val, exists := innerMap["total_spending"]; exists {
+					DetailChart.LastMonthTotalSpending = val
+				}
+			}
+			
+			for _, detail := range ss {
+				if date == detail.Date {
+					DetailChart.TotalMO = detail.TotalMO
+					DetailChart.TotalSpending = detail.TotalSpending
+				}
+			}
+			
 			// ADD WITH API
 			total_spending_api := 0.0
 			total_mo := 0
@@ -546,13 +570,15 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 				}
 			}
 
+			/*
 			for _, detail := range ss {
 				if date == detail.Date {
 					DetailChart.TotalMO = detail.TotalMO
 					DetailChart.TotalSpending = detail.TotalSpending
 				}
 			}
-
+			*/
+			
 			DetailChartData = append(DetailChartData, DetailChart)
 		}
 

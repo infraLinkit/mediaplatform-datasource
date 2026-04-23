@@ -150,6 +150,7 @@ type (
 		CompanyPhone              string  `json:"company_phone"`
 		ServicePrice              float64 `json:"service_price"`
 		PortalURL                 string  `json:"portal_url"`
+		IsEvina 				  bool    `json:"is_evina"`
 	}
 
 	//'{"id":1,"urlservicekey":"idtelgempastelmbv","campaign_id":"ID01","country":"ID","partner":"pass","operator":"telkomsel","aggregator":"telesat","service":"gazy","short_code":"1234","adnet":"mbv","keyword":"gazy","subkeyword":"","is_billable":false,"plan":"","traffic":0,"landing":0,"click":0,"redirect":0,"traffic_data":[],"landing_data":[],"click_data":[],"redirect_data":[]}'

@@ -114,6 +114,7 @@ type (
 		CompanyPhone			  string    `gorm:"type:varchar(20);default:NA" json:"company_phone"`
 		ServicePrice              float64   `gorm:"type:double precision;default:0" json:"service_price"`
 		PortalURL				  string    `gorm:"type:text;default:NA" json:"portal_url"`
+		IsEvina 				  bool      `gorm:"not null;default:false" json:"is_evina"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}

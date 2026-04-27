@@ -115,6 +115,7 @@ type (
 		ServicePrice              float64   `gorm:"type:double precision;default:0" json:"service_price"`
 		PortalURL				  string    `gorm:"type:text;default:NA" json:"portal_url"`
 		IsEvina 				  bool      `gorm:"not null;default:false" json:"is_evina"`
+		EvinaRedirectFraudURL     string    `gorm:"type:text;default:NA" json:"evina_redirect_fraud_url"`
 		CreatedAt                 time.Time
 		UpdatedAt                 time.Time
 	}

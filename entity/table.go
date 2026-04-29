@@ -493,10 +493,17 @@ type (
 	SummaryCampaignBilling struct {
 		gorm.Model
 		ID            int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		SummaryDate   time.Time `gorm:"type:date;uniqueIndex:idx_sumunique" json:"summary_date"`
-		URLServiceKey string    `gorm:"uniqueIndex:idx_sumunique;not null;size:50" json:"urlservicekey"`
-		CampaignId    string    `gorm:"not null;size:50" json:"campaign_id"`
-		AdgroupID     string    `gorm:"not null;size:50" json:"adgroup_id"`
+		SummaryDate   time.Time `gorm:"type:date;uniqueIndex:idx_sumbilunique" json:"summary_date"`
+		URLServiceKey string    `gorm:"uniqueIndex:idx_sumbilunique;not null;size:50" json:"urlservicekey"`
+		CampaignName  string    `gorm:"not null;size:100" json:"campaign_name"`
+		Country       string    `gorm:"uniqueIndex:idx_sumbilunique;not null;size:50" json:"country"`
+		Operator      string    `gorm:"uniqueIndex:idx_sumbilunique;not null;size:50" json:"operator"`
+		Partner       string    `gorm:"uniqueIndex:idx_sumbilunique;not null;size:50" json:"partner"`
+		Adnet         string    `gorm:"uniqueIndex:idx_sumbilunique;not null;size:50" json:"adnet"`
+		Service       string    `gorm:"uniqueIndex:idx_sumbilunique;not null;size:50" json:"service"`
+		Company       string    `gorm:"size:255;default:NA" json:"company"`
+		CampaignId    string    `gorm:"uniqueIndex:idx_sumbilunique;not null;size:50" json:"campaign_id"`
+		AdgroupID     string    `gorm:"uniqueIndex:idx_sumbilunique;not null;size:50" json:"adgroup_id"`
 		Placement     string    `gorm:"type:text" json:"placement"`
 		StatusSuccess int       `gorm:"length:20;default:0" json:"status_success"`
 		StatusFailed  int       `gorm:"length:20;default:0" json:"status_failed"`

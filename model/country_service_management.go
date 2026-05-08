@@ -529,6 +529,104 @@ func (r *BaseModel) GetAPIAdnetList(o entity.GlobalRequestFromDataTable) ([]enti
 	return result, totalRows, rows.Err()
 }
 
+func (r *BaseModel) GetAPIOperatorList(o entity.GlobalRequestFromDataTable) ([]entity.ApiPinReport, int64, error) {
+
+	var (
+		rows       *sql.Rows
+		totalRows  int64
+	)
+
+	// base query
+	query := r.DB.Model(&entity.ApiPinReport{}).
+		Select("operator").
+		Distinct("operator")
+
+	if o.Search != "" {
+		searchValue := strings.TrimSpace(o.Search)
+		query = query.Where(
+			"operator ILIKE ?",
+			"%"+searchValue+"%",
+		)
+	}
+
+	// count distinct operator
+	query.Count(&totalRows)
+
+	// pagination
+	if o.PageSize > 0 {
+		query = query.Limit(o.PageSize)
+		if o.Page > 0 {
+			query = query.Offset((o.Page - 1) * o.PageSize)
+		}
+	}
+
+	rows, err := query.
+		Order("operator").
+		Rows()
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var result []entity.ApiPinReport
+	for rows.Next() {
+		var s entity.ApiPinReport
+		r.DB.ScanRows(rows, &s)
+		result = append(result, s)
+	}
+
+	return result, totalRows, rows.Err()
+}
+
+func (r *BaseModel) GetAPIServiceList(o entity.GlobalRequestFromDataTable) ([]entity.ApiPinReport, int64, error) {
+
+	var (
+		rows       *sql.Rows
+		totalRows  int64
+	)
+
+	// base query
+	query := r.DB.Model(&entity.ApiPinReport{}).
+		Select("service").
+		Distinct("service")
+
+	if o.Search != "" {
+		searchValue := strings.TrimSpace(o.Search)
+		query = query.Where(
+			"service ILIKE ?",
+			"%"+searchValue+"%",
+		)
+	}
+
+	// count distinct service
+	query.Count(&totalRows)
+
+	// pagination
+	if o.PageSize > 0 {
+		query = query.Limit(o.PageSize)
+		if o.Page > 0 {
+			query = query.Offset((o.Page - 1) * o.PageSize)
+		}
+	}
+
+	rows, err := query.
+		Order("service").
+		Rows()
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var result []entity.ApiPinReport
+	for rows.Next() {
+		var s entity.ApiPinReport
+		r.DB.ScanRows(rows, &s)
+		result = append(result, s)
+	}
+
+	return result, totalRows, rows.Err()
+}
+
 func (r *BaseModel) GetAgency(o entity.GlobalRequestFromDataTable) ([]entity.Agency, int64, error) {
 
 	var (

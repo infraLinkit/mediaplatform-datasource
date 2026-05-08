@@ -74,6 +74,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 					if px.IsUsed {
 
 						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
+							URLServiceKey: dc.URLServiceKey,
 							Adnet:         dc.Adnet,
 							IsBillable:    dc.IsBillable,
 							Pixel:         px.Pixel,
@@ -111,6 +112,7 @@ func (h *IncomingHandler) Postback(c *fiber.Ctx) error {
 						}
 
 						return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
+							URLServiceKey: dc.URLServiceKey,
 							Adnet:         dc.Adnet,
 							IsBillable:    dc.IsBillable,
 							Pixel:         px.Pixel,
@@ -279,6 +281,7 @@ func (h *IncomingHandler) Postback2(c *fiber.Ctx) error {
 							if px.IsUsed {
 
 								return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusNotFound, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
+									URLServiceKey: dc.URLServiceKey,
 									Adnet:         dc.Adnet,
 									IsBillable:    dc.IsBillable,
 									Pixel:         px.Pixel,
@@ -316,6 +319,7 @@ func (h *IncomingHandler) Postback2(c *fiber.Ctx) error {
 								}
 
 								return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
+									URLServiceKey: dc.URLServiceKey,
 									Adnet:         dc.Adnet,
 									IsBillable:    dc.IsBillable,
 									Pixel:         px.Pixel,
@@ -576,6 +580,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							if px.IsUsed {
 
 								return c.Status(fiber.StatusConflict).JSON(entity.GlobalResponseWithData{Code: fiber.StatusConflict, Message: "NOK - Pixel already used", Data: entity.PixelStorageRsp{
+									URLServiceKey: dc.URLServiceKey,
 									Adnet:         dc.Adnet,
 									IsBillable:    dc.IsBillable,
 									Pixel:         px.Pixel,
@@ -613,6 +618,7 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 								}
 
 								return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: entity.PixelStorageRsp{
+									URLServiceKey: dc.URLServiceKey,
 									Adnet:         dc.Adnet,
 									IsBillable:    dc.IsBillable,
 									Pixel:         px.Pixel,
@@ -646,61 +652,88 @@ func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
 
 	// Parse Postback Data
 	p := entity.NewDataPostbackV2(c)
-	//p.URLServiceKey = c.Params("urlservicekey")
 
 	// Validate Parameters
 	if v := p.ValidateParamsV2(h.Logs); v.Code == fiber.StatusBadRequest {
-
-		return c.Status(v.Code).JSON(entity.GlobalResponse{Code: v.Code, Message: v.Message})
-
-	} else {
-
-		if c.Cookies(p.CookieKey) != "" {
-
-			return c.Status(fiber.StatusForbidden).JSON(entity.GlobalResponse{Code: fiber.StatusForbidden, Message: "forbidden access"})
-
-		} else {
-			// Setup cookie if double requested within n-hour
-			c.Cookie(&fiber.Cookie{
-				Name:     p.CookieKey,
-				Value:    "1",
-				Expires:  time.Now().Add(3 * time.Second),
-				HTTPOnly: true,
-				SameSite: "lax",
-			})
-
-			if !strings.Contains(p.AffSub, "-") {
-
-				return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Invalid pixel format, pixel : " + p.AffSub})
-
-			} else {
-
-				dataraw := strings.Split(p.AffSub, "-")
-				p.URLServiceKey = helper.Concat("-", dataraw[0], dataraw[1])
-
-				if dc, err := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$"); err == nil {
-
-					apiurl := strings.NewReplacer(p.URLServiceKey+"-", "")
-					pixel := apiurl.Replace(p.AffSub)
-
-					h.DS.UpdateGoogleSheetPixel(h.GS, entity.PixelStorage{
-						CampaignId:    dc.CampaignId,
-						GoogleSheet:   dc.GoogleSheetBillable,
-						Pixel:         pixel,
-						PixelUsedDate: helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-						Msisdn:        p.Msisdn,
-					}, "Billed", p.Desc)
-
-					return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: "OK"})
-
-				} else {
-
-					return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "Campaign ID not found"})
-
-				}
-			}
-		}
+		return c.Status(v.Code).JSON(entity.GlobalResponse{
+			Code:    v.Code,
+			Message: v.Message,
+		})
 	}
+
+	if c.Cookies(p.CookieKey) != "" {
+		return c.Status(fiber.StatusForbidden).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusForbidden,
+			Message: "forbidden access",
+		})
+	}
+
+	c.Cookie(&fiber.Cookie{
+		Name:     p.CookieKey,
+		Value:    "1",
+		Expires:  time.Now().Add(3 * time.Second),
+		HTTPOnly: true,
+		SameSite: "lax",
+	})
+
+	if !strings.Contains(p.AffSub, "-") {
+		return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "Invalid pixel format, pixel : " + p.AffSub,
+		})
+	}
+
+	dataraw := strings.Split(p.AffSub, "-")
+	p.URLServiceKey = helper.Concat("-", dataraw[0], dataraw[1])
+
+	dc, err := h.DS.GetDataConfig(helper.Concat("-", p.URLServiceKey, "configIdx"), "$")
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{
+			Code:    fiber.StatusNotFound,
+			Message: "Campaign ID not found",
+		})
+	}
+
+	// full untuk DB
+	pixelDB := p.AffSub
+
+	// clean untuk Google Sheet
+	apiurl := strings.NewReplacer(p.URLServiceKey+"-", "")
+	pixelGS := apiurl.Replace(p.AffSub)
+
+	now := helper.GetCurrentTime(h.Config.TZ, time.RFC3339)
+
+	pixelStorage := entity.PixelStorage{
+		CampaignId:    dc.CampaignId,
+		GoogleSheet:   dc.GoogleSheetBillable,
+		Pixel:         pixelDB,
+		PixelUsedDate: now,
+		Msisdn:        p.Msisdn,
+		URLServiceKey: p.URLServiceKey,
+		MStatusCharge: strings.TrimSpace(strings.ToLower(p.Status)) == "success",
+	}
+
+	if err := h.DS.UpdatePixelBilled(pixelStorage); err != nil {
+		h.Logs.Error(fmt.Sprintf("failed update pixel billed: %#v", err))
+	}
+
+	h.DS.UpdateGoogleSheetPixel(
+		h.GS,
+		entity.PixelStorage{
+			CampaignId:    dc.CampaignId,
+			GoogleSheet:   dc.GoogleSheetBillable,
+			Pixel:         pixelGS,
+			PixelUsedDate: now,
+			Msisdn:        p.Msisdn,
+		},
+		"Billed",
+		p.Desc,
+	)
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
+		Code:    fiber.StatusOK,
+		Message: "OK",
+	})
 }
 
 func (h *IncomingHandler) InquiryCampID(c *fiber.Ctx) error {

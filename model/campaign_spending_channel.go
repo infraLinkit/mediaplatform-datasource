@@ -31,9 +31,11 @@ var channelGroupMapModel = map[string]string{
 	// Snack Video
 	"snack video":          "Mainstream Snack Video Ads",
 	"snack_video":          "Mainstream Snack Video Ads",
+	"snackvideo":           "Mainstream Snack Video Ads",
 	// Others
 	"cpa":           "CPA",
 	"dsp":           "DSP",
+	"sms":           "SMS",
 	"telco":         "Telco Channel",
 	"telco_channel": "Telco Channel",
 	"telco channel": "Telco Channel",

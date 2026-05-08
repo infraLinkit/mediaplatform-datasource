@@ -26,6 +26,7 @@ type (
 	}
 
 	PixelStorageRsp struct {
+		URLServiceKey string `json:"url_service_key"`
 		Adnet         string `json:"adnet"`
 		IsBillable    bool   `json:"is_billable"`
 		Pixel         string `json:"pixel"`

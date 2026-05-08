@@ -61,12 +61,13 @@ func (h *IncomingHandler) DisplayMainstreamReport(c *fiber.Ctx) error {
 	}
 
 	allowedCompanies, _ := c.Locals("companies").([]string)
+	allowedAgencies, _ := c.Locals("agencies").([]string)
 
-	r := h.DisplayMainstreamReportExtra(c, fe, allowedCompanies)
+	r := h.DisplayMainstreamReportExtra(c, fe, allowedCompanies, allowedAgencies)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport, allowedCompanies []string) entity.ReturnResponse {
+func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.DisplayCPAReport, allowedCompanies []string, allowedAgencies []string) entity.ReturnResponse {
 
 	var (
 		err              error
@@ -77,9 +78,9 @@ func (h *IncomingHandler) DisplayMainstreamReportExtra(c *fiber.Ctx, fe entity.D
 
 	if fe.Action != "" || fe.Reload == "true" {
 		fmt.Println("-----", fe.Reload, "-----")
-		mainstreamreport, total_data, TotalSummary, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies)
+		mainstreamreport, total_data, TotalSummary, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies, allowedAgencies)
 	} else {
-		mainstreamreport, total_data, TotalSummary, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies)
+		mainstreamreport, total_data, TotalSummary, err = h.DS.GetDisplayMainstreamReport(fe, allowedCompanies, allowedAgencies)
 	}
 
 	if err == nil {

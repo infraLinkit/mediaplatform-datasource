@@ -22,6 +22,7 @@ type (
 		Service           string    `gorm:"uniqueIndex:idx_incsumunique;not null;size:50" json:"service"`
 		ShortCode         string    `gorm:"not null;size:50" json:"short_code"`
 		Landing           int       `gorm:"length:20;default:0" json:"landing"`
+		Clicked 		  int       `gorm:"length:20;default:0" json:"clicked"`
 		MoReceived        int       `gorm:"length:20;default:0" json:"mo_received"`
 		Postback          int       `gorm:"length:20;default:0" json:"postback"`
 		POAF              float64   `gorm:"type:double precision;default:0" json:"po_af"`

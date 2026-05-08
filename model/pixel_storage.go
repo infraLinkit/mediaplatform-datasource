@@ -138,3 +138,29 @@ func (r *BaseModel) SpecialGetPx(o entity.PixelStorage, si int, ei int) (entity.
 		return o, true
 	}
 }
+
+func (r *BaseModel) UpdatePixelBilled(o entity.PixelStorage) error {
+
+	result := r.DB.Exec(
+		`UPDATE pixel_storages 
+		 SET updated_at = NOW(), 
+		     m_status_time_charge = NOW(), 
+		     m_status_charge = ?
+		 WHERE DATE(pxdate) = CURRENT_DATE 
+		   AND url_service_key = ? 
+		   AND pixel = ? 
+		   AND is_unique = false `,
+		o.MStatusCharge,
+		o.URLServiceKey,
+		o.Pixel,
+	)
+
+	if result.Error != nil {
+		r.Logs.Error(fmt.Sprintf("DB error update pixel billed: %#v", result.Error))
+		return result.Error
+	}
+
+	r.Logs.Debug(fmt.Sprintf("update pixel billed affected rows: %d", result.RowsAffected))
+
+	return nil
+}

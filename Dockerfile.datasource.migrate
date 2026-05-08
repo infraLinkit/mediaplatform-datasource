@@ -1,6 +1,6 @@
 # Build stage
 # main.go di root, source code di /src/{app,cmd,config,handler,helper,domain/...}.
-# Go resolve import via go.mod, jadi `go build .` cukup.
+# `cmd/migrate.go` register sub-command `migrate` ke cobra root → binary same, CMD beda.
 FROM golang:1.24.1-alpine AS build
 
 RUN apk --no-cache add tzdata
@@ -18,11 +18,11 @@ RUN go mod download
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /datasource .
 
-# Optional test stage (dipanggil eksplisit via --target=test).
+# Optional test stage
 FROM build AS test
 RUN go test -v ./...
 
-# Runtime
+# Runtime — run-once container (migrate sub-cmd exit setelah selesai)
 FROM scratch
 
 COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
@@ -33,6 +33,6 @@ COPY --from=build /bin/sh /bin/sh
 
 COPY --from=build /datasource .
 
-VOLUME ["/app_data/data/mediaplatform/new_partner", "/app/logs"]
+VOLUME ["/app/logs"]
 
-CMD ["/datasource", "server"]
+CMD ["/datasource", "migrate"]

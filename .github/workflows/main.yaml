@@ -13,10 +13,13 @@ jobs:
             fail-fast: false
             matrix:
                 include:
-                  - 
+                  -
                     dockerfile: ./Dockerfile.datasource.server
                     image: infralinkit/mediaplatform-datasource-server
-                        
+                  -
+                    dockerfile: ./Dockerfile.datasource.migrate
+                    image: infralinkit/mediaplatform-datasource-migrate
+
         permissions:
             contents: read
             packages: write
@@ -43,7 +46,7 @@ jobs:
         -
             name: Set up QEMU
             uses: docker/setup-qemu-action@v3
-            
+
         -
             name: Set up Docker Buildx
             uses: docker/setup-buildx-action@v3

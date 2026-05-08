@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDD — mediaplatform-datasource</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --surface-2: #334155;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #38bdf8;
+    --accent-2: #818cf8;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --code-bg: #0b1220;
+    --border: #334155;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: 100vh;
+  }
+
+  aside {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+  }
+
+  aside h2 {
+    font-size: 14px;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0 0 16px;
+  }
+
+  aside ol { padding-left: 20px; margin: 0; }
+  aside li { margin: 6px 0; }
+  aside a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 14px;
+  }
+  aside a:hover { color: var(--accent); }
+
+  main {
+    padding: 40px 60px;
+    max-width: 1200px;
+    overflow-x: auto;
+  }
+
+  .header-card {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px 32px;
+    margin-bottom: 32px;
+  }
+
+  .header-card h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+    color: var(--text);
+  }
+
+  .header-card .subtitle {
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .meta-grid .meta-item {
+    background: rgba(15, 23, 42, 0.4);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+  }
+
+  .meta-grid .meta-item strong {
+    color: var(--accent);
+    margin-right: 8px;
+  }
+
+  section {
+    margin-bottom: 48px;
+    scroll-margin-top: 20px;
+  }
+
+  h2 {
+    font-size: 22px;
+    color: var(--accent);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 8px;
+    margin-top: 40px;
+  }
+
+  h3 {
+    font-size: 17px;
+    color: var(--accent-2);
+    margin-top: 24px;
+  }
+
+  h4 {
+    font-size: 15px;
+    color: var(--text);
+    margin-top: 20px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 14px;
+    background: var(--surface);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  thead th {
+    background: var(--surface-2);
+    text-align: left;
+    padding: 10px 14px;
+    color: var(--accent);
+    font-weight: 600;
+    border-bottom: 2px solid var(--border);
+  }
+
+  tbody td {
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tbody tr:hover { background: rgba(56, 189, 248, 0.05); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  code, kbd {
+    font-family: 'SF Mono', Monaco, Consolas, 'Courier New', monospace;
+    font-size: 13px;
+    background: var(--code-bg);
+    color: #fbbf24;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  pre code {
+    background: transparent;
+    padding: 0;
+    color: var(--text);
+  }
+
+  .ascii-diagram {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--text);
+    white-space: pre;
+  }
+
+  ul { padding-left: 24px; }
+  li { margin: 4px 0; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-public { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+  .badge-auth   { background: rgba(56, 189, 248, 0.15); color: var(--accent); }
+  .badge-warn   { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+  .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+
+  .callout {
+    border-left: 4px solid var(--accent);
+    background: rgba(56, 189, 248, 0.08);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+  }
+  .callout.warn   { border-color: var(--warning); background: rgba(245, 158, 11, 0.08); }
+  .callout.danger { border-color: var(--danger);  background: rgba(239, 68, 68, 0.08); }
+
+  .uc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin: 16px 0;
+  }
+
+  .uc-card h4 { margin-top: 0; color: var(--accent); }
+  .uc-card .uc-meta {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+  }
+
+  details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 12px 0;
+  }
+  details summary {
+    cursor: pointer;
+    color: var(--accent-2);
+    font-weight: 600;
+    user-select: none;
+  }
+  details[open] summary { border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 8px; }
+
+  .footer {
+    margin-top: 60px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <aside>
+    <h2>Table of Contents</h2>
+    <ol>
+      <li><a href="#bc">Business Context</a></li>
+      <li><a href="#actors">Actors</a></li>
+      <li><a href="#usecases">Use Cases</a></li>
+      <li><a href="#api">API Contract</a></li>
+      <li><a href="#data">Data Model</a></li>
+      <li><a href="#constraints">Constraints</a></li>
+      <li><a href="#edge">Edge Cases</a></li>
+      <li><a href="#ac">Acceptance Criteria</a></li>
+      <li><a href="#workflow">Add Feature Workflow</a></li>
+    </ol>
+  </aside>
+
+  <main>
+
+    <div class="header-card">
+      <h1>Spec-Driven Development</h1>
+      <div class="subtitle">mediaplatform-datasource — central data API & ingestion layer</div>
+      <div class="meta-grid">
+        <div class="meta-item"><strong>Project</strong> infraLinkit/mediaplatform-datasource</div>
+        <div class="meta-item"><strong>Stack</strong> Go 1.24, Fiber v2, GORM, PostgreSQL, Redis, RabbitMQ</div>
+        <div class="meta-item"><strong>Architecture</strong> DDD layered (/src/{app,cmd,domain/...})</div>
+        <div class="meta-item"><strong>Last updated</strong> 2026-05-08</div>
+      </div>
+    </div>
+
+    <!-- 1. BUSINESS CONTEXT -->
+    <section id="bc">
+      <h2>1. Business Context</h2>
+
+      <h3>1.1 Problem Domain</h3>
+      <p>Sistem mengelola full lifecycle campaign DCB (direct carrier billing):</p>
+      <ul>
+        <li><strong>Campaign tracking</strong>: traffic → landing → click → MO → billed</li>
+        <li><strong>Postback handling</strong> dari adnet callback</li>
+        <li><strong>Performance reporting</strong>: CPA, ARPU, traffic, revenue, conversion, alert</li>
+        <li><strong>Budget management</strong>: target budget, IO approval, agency fee</li>
+        <li><strong>Master data</strong>: country, operator, partner, service, adnet, agency, channel</li>
+        <li><strong>User & access control</strong>: user, role, menu, permission, company hierarchy</li>
+      </ul>
+
+      <h3>1.2 Stakeholders & Value</h3>
+      <table>
+        <thead><tr><th>Stakeholder</th><th>Value</th></tr></thead>
+        <tbody>
+          <tr><td>Operations</td><td>Real-time monitoring, alert capping/ratio breach</td></tr>
+          <tr><td>Finance</td><td>Budget per IO, agency fee, revenue reconciliation</td></tr>
+          <tr><td>Adnet partners</td><td>Postback API untuk report konversi</td></tr>
+          <tr><td>Account managers</td><td>Dashboard summary, top-campaign per agency</td></tr>
+          <tr><td>Admins</td><td>Master data, user/role approval flow</td></tr>
+        </tbody>
+      </table>
+
+      <h3>1.3 System Boundaries</h3>
+      <div class="ascii-diagram">┌──────────────────────────────────────────────────────────────┐
+│                  mediaplatform-datasource                     │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐  │
+│  │ HTTP API │  │ Postback │  │  Cron /  │  │  Sub-cmd     │  │
+│  │ (Fiber)  │  │ (public) │  │  Workers │  │  migrate     │  │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └──────┬───────┘  │
+│       │             │             │              │            │
+│       └─────────┬───┴─────────────┴──────────────┘            │
+│                 │                                              │
+│  ┌──────────────┴────────────┐                                │
+│  │  domain (entity, repo)    │                                │
+│  └────┬────────────┬─────────┘                                │
+└───────┼────────────┼──────────────────────────────────────────┘
+        │            │
+   ┌────▼───┐   ┌────▼────┐  ┌──────────┐  ┌──────────────┐
+   │ PgSQL  │   │ Redis   │  │ RabbitMQ │  │ Google Sheets│
+   └────────┘   └─────────┘  └──────────┘  └──────────────┘</div>
+
+      <h3>1.4 Out of Scope</h3>
+      <ul>
+        <li>Authentication user issuance (token issued by separate auth service)</li>
+        <li>Frontend (separate repo <code>cms</code>)</li>
+        <li>Batch worker logic (separate <code>cores/worker</code>)</li>
+        <li>Landing page rendering (separate <code>cores/lp</code>)</li>
+      </ul>
+    </section>
+
+    <!-- 2. ACTORS -->
+    <section id="actors">
+      <h2>2. Actors</h2>
+
+      <h3>2.1 Human Actors</h3>
+      <table>
+        <thead><tr><th>Actor</th><th>Role</th><th>Akses</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Admin</strong></td><td>Super admin platform</td><td>Full CRUD master data, approve user, manage role/menu</td></tr>
+          <tr><td><strong>Account Manager</strong></td><td>Campaign per agency</td><td>Read campaign, edit budget/IO/postback, scoped reports</td></tr>
+          <tr><td><strong>Finance</strong></td><td>Budget & payout reconcile</td><td>Cost report, edit payout, approve IO, export Excel</td></tr>
+          <tr><td><strong>Operations</strong></td><td>Monitor traffic & alert</td><td>Dashboard, alert, traffic/redirection, resend data</td></tr>
+          <tr><td><strong>Read-only User</strong></td><td>View-only</td><td>Subset dashboard + report (scoped)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>2.2 System Actors</h3>
+      <table>
+        <thead><tr><th>Actor</th><th>Interaksi</th></tr></thead>
+        <tbody>
+          <tr><td>Adnet system</td><td>Hit <code>/v1/postback*</code> callback</td></tr>
+          <tr><td>CMS frontend</td><td>Konsumsi semua endpoint authenticated</td></tr>
+          <tr><td>Auth service</td><td>Issue JWT (HS256). Datasource validate</td></tr>
+          <tr><td>Worker processes</td><td>Konsume RabbitMQ queue (pixel, click, ratio, dll)</td></tr>
+          <tr><td>Cron scheduler</td><td>Trigger <code>CronResetCapping</code> daily</td></tr>
+          <tr><td>Google Sheets</td><td>Sink billable campaign export</td></tr>
+          <tr><td>ARPU API</td><td>Source eksternal data ARPU</td></tr>
+        </tbody>
+      </table>
+
+      <h3>2.3 Permission Scope</h3>
+      <table>
+        <thead><tr><th>Resource</th><th>Filter via</th></tr></thead>
+        <tbody>
+          <tr><td>Company</td><td><code>user_companies</code> table — multi-tenant</td></tr>
+          <tr><td>Adnet</td><td><code>user_adnets</code> table</td></tr>
+          <tr><td>Agency</td><td><code>user_agencies</code> table</td></tr>
+          <tr><td>Service</td><td>Assignment via user_management</td></tr>
+        </tbody>
+      </table>
+      <p>JWT claims dipakai: <code>sub</code>, <code>jti</code>, <code>exp</code>, <code>nbf</code>, <code>aud</code>, <code>iss</code>, <code>type</code> (= "access").</p>
+    </section>
+
+    <!-- 3. USE CASES -->
+    <section id="usecases">
+      <h2>3. Use Cases</h2>
+
+      <h3>3.1 Use Case Map</h3>
+      <table>
+        <thead><tr><th>ID</th><th>Use Case</th><th>Actor</th><th>Prereq</th></tr></thead>
+        <tbody>
+          <tr><td>UC-01</td><td>Receive postback dari adnet</td><td>Adnet</td><td>Public</td></tr>
+          <tr><td>UC-02</td><td>Display campaign monitoring summary</td><td>AM, Ops</td><td>Auth, scope</td></tr>
+          <tr><td>UC-03</td><td>Display traffic/redirection report</td><td>Operations</td><td>Auth</td></tr>
+          <tr><td>UC-04</td><td>Display CPA / cost report</td><td>Finance, AM</td><td>Auth, scope</td></tr>
+          <tr><td>UC-05</td><td>Edit campaign capping/ratio/postback</td><td>AM, Admin</td><td>Auth, edit perm</td></tr>
+          <tr><td>UC-06</td><td>Manage master data</td><td>Admin</td><td>Auth, admin role</td></tr>
+          <tr><td>UC-07</td><td>Approve user registration</td><td>Admin</td><td>Auth, admin</td></tr>
+          <tr><td>UC-08</td><td>Create budget IO</td><td>AM</td><td>Auth</td></tr>
+          <tr><td>UC-09</td><td>Approve budget IO</td><td>Finance</td><td>Auth, finance</td></tr>
+          <tr><td>UC-10</td><td>Export report Excel</td><td>Finance, AM</td><td>Auth</td></tr>
+          <tr><td>UC-11</td><td>Upload IP range CSV</td><td>Admin</td><td>Auth, admin</td></tr>
+          <tr><td>UC-12</td><td>Upload campaign Excel batch</td><td>AM</td><td>Auth</td></tr>
+          <tr><td>UC-13</td><td>Resend failed data RabbitMQ</td><td>Operations</td><td>Auth</td></tr>
+          <tr><td>UC-14</td><td>View dashboard summary</td><td>All</td><td>Auth</td></tr>
+          <tr><td>UC-15</td><td>Logout (revoke JWT)</td><td>All</td><td>Auth</td></tr>
+          <tr><td>UC-16</td><td>DB schema migration</td><td>DevOps</td><td>Out-of-band run</td></tr>
+        </tbody>
+      </table>
+
+      <h3>3.2 Use Case Detail (sample)</h3>
+
+      <div class="uc-card">
+        <h4>UC-01: Receive Postback from Adnet</h4>
+        <div class="uc-meta">Actor: Adnet · Trigger: HTTP GET <code>/v1/postback?...</code></div>
+        <p><strong>Goal</strong>: Adnet melaporkan event billed/unbilled untuk record campaign tracking + trigger downstream pixel storage.</p>
+        <strong>Main flow:</strong>
+        <ol>
+          <li>Adnet hit endpoint dgn URL params (campaign_id, partner, msisdn, status)</li>
+          <li>Sistem validasi params (no auth header — public)</li>
+          <li>Sistem cek IP allowlist (kalau aktif)</li>
+          <li>Insert ke <code>postbacks</code> table</li>
+          <li>Publish ke RabbitMQ <code>E_PIXELSTORAGE</code></li>
+          <li>Return HTTP 200 + tracking response</li>
+        </ol>
+        <strong>Postcondition</strong>: Record postback tersimpan, message di queue siap dikonsumsi worker.
+      </div>
+
+      <div class="uc-card">
+        <h4>UC-05: Edit Campaign Capping/Ratio/Postback</h4>
+        <div class="uc-meta">Actor: AM, Admin · Trigger: <code>POST /v1/management/campaign/editratio</code> (atau editmocapping, editpo, editcampaign)</div>
+        <p><strong>Goal</strong>: AM update parameter campaign berjalan tanpa restart.</p>
+        <strong>Main flow:</strong>
+        <ol>
+          <li>AM submit form dgn campaign_id + nilai baru</li>
+          <li>JWT divalidasi → user_id + scope</li>
+          <li>Cek user authorize untuk campaign (via company/agency scope)</li>
+          <li>Update <code>campaign_details</code> table</li>
+          <li>Publish ke <code>E_CAMPAIGNMANAGEMENT</code> (worker propagasi ke landing service)</li>
+          <li>Return updated record</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 4. API CONTRACT -->
+    <section id="api">
+      <h2>4. API Contract</h2>
+
+      <h3>4.1 Base & Versioning</h3>
+      <ul>
+        <li>Base path: <code>/v1</code></li>
+        <li>Versi mayor: path-based (<code>/v1</code>, <code>/v2</code> future)</li>
+        <li>Body limit: 100 MB (<code>BodyLimit: 100*1024*1024</code>)</li>
+        <li>Content-Type: <code>application/json</code> default</li>
+        <li>Upload: <code>multipart/form-data</code> (Excel/CSV)</li>
+      </ul>
+
+      <h3>4.2 Authentication</h3>
+      <p><span class="badge badge-public">PUBLIC</span> endpoints (no auth):</p>
+      <ul>
+        <li><code>GET /v1/postback/:urlservicekey/</code></li>
+        <li><code>GET /v1/postback</code></li>
+        <li><code>GET /v1/postback_billed</code></li>
+        <li><code>GET /v1/inquire/campid</code></li>
+        <li><code>/v1/ext/*</code> (placeholder)</li>
+      </ul>
+
+      <p><span class="badge badge-auth">AUTH</span> required: <code>Authorization: Bearer &lt;JWT&gt;</code> · Algorithm HS256</p>
+      <pre><code>{
+  "sub": 123,
+  "jti": "uuid-...",
+  "type": "access",
+  "exp": 1700000000,
+  "nbf": 1699999999,
+  "aud": "mediaplatform",
+  "iss": "auth.linkit"
+}</code></pre>
+
+      <h3>4.3 Endpoint Groups</h3>
+      <table>
+        <thead><tr><th>Group</th><th>Path</th><th>Auth</th><th>Owner</th></tr></thead>
+        <tbody>
+          <tr><td>Public postback</td><td><code>/v1/postback*</code>, <code>/v1/inquire/campid</code></td><td><span class="badge badge-public">PUBLIC</span></td><td>Adnet integration</td></tr>
+          <tr><td>Dashboard</td><td><code>/dashboard/*</code></td><td><span class="badge badge-auth">AUTH</span></td><td>All authenticated</td></tr>
+          <tr><td>Reports</td><td><code>/v1/report/*</code></td><td><span class="badge badge-auth">AUTH</span></td><td>AM, Ops, Finance</td></tr>
+          <tr><td>Internal API</td><td><code>/v1/int/*</code></td><td><span class="badge badge-auth">AUTH</span></td><td>Backend integration</td></tr>
+          <tr><td>Management</td><td><code>/v1/management/*</code></td><td><span class="badge badge-auth">AUTH</span></td><td>Admin, AM, Finance</td></tr>
+          <tr><td>External</td><td><code>/v1/ext/*</code></td><td>placeholder</td><td>TBD</td></tr>
+        </tbody>
+      </table>
+
+      <h3>4.4 Endpoint Reference</h3>
+
+      <details open>
+        <summary>Reports (<code>/v1/report</code>)</summary>
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Handler</th></tr></thead>
+          <tbody>
+            <tr><td>GET</td><td><code>/pinreport</code></td><td>DisplayPinReport</td></tr>
+            <tr><td>GET</td><td><code>/datasentapiperformance</code></td><td>DisplayPinPerformanceReport</td></tr>
+            <tr><td>GET</td><td><code>/cpareportlist</code></td><td>DisplayCPAReport</td></tr>
+            <tr><td>GET</td><td><code>/costreport/:v</code></td><td>DisplayCostReport</td></tr>
+            <tr><td>GET</td><td><code>/conversionlog</code></td><td>DisplayConversionLogReport</td></tr>
+            <tr><td>GET</td><td><code>/campaign-monitoring-summary</code></td><td>DisplayCampaignSummary</td></tr>
+            <tr><td>GET</td><td><code>/campaign-monitoring-summary/chart</code></td><td>DisplayCampaignSummaryChart</td></tr>
+            <tr><td>GET</td><td><code>/alertreport/:v</code></td><td>DisplayAlertReportAll</td></tr>
+            <tr><td>GET</td><td><code>/trafficreport</code></td><td>DisplayTrafficReport</td></tr>
+            <tr><td>GET</td><td><code>/trafficreport/chart</code></td><td>GetTrafficReportChart</td></tr>
+            <tr><td>GET</td><td><code>/mainstreamreport</code></td><td>DisplayMainstreamReport</td></tr>
+            <tr><td>GET</td><td><code>/google-traffic-report</code></td><td>DisplayGoogleTrafficReport</td></tr>
+            <tr><td>GET</td><td><code>/budgetmonitoring</code></td><td>DisplayBudgetMonitoring</td></tr>
+            <tr><td>GET</td><td><code>/performance-report</code></td><td>DisplayPerformanceReport</td></tr>
+            <tr><td>GET</td><td><code>/revenuemonitoring</code></td><td>DisplayRevenueMonitoring</td></tr>
+            <tr><td>GET</td><td><code>/revenuemonitoring/chart</code></td><td>DisplayRevenueMonitoringChart</td></tr>
+            <tr><td>GET</td><td><code>/redirectiontime</code></td><td>DisplayRedirectionTime</td></tr>
+            <tr><td>GET</td><td><code>/ioreport</code></td><td>DisplaySummaryBudgetIO</td></tr>
+            <tr><td>GET</td><td><code>/campaign-spending-channel</code></td><td>DisplayCampaignSpendingChannel</td></tr>
+            <tr><td>GET</td><td><code>/campaign-spending-channel/country-children</code></td><td>DisplayCampaignSpendingChannelCountryChildren</td></tr>
+            <tr><td>POST</td><td><code>/resend-data</code></td><td>ResendData</td></tr>
+            <tr><td>POST</td><td><code>/resend-data-apireport</code></td><td>ResendDataAPIReport</td></tr>
+            <tr><td>POST</td><td><code>/campaign-monitoring-summary/edit-target-budget</code></td><td>EditTargetBudget</td></tr>
+          </tbody>
+        </table>
+      </details>
+
+      <details>
+        <summary>Management (<code>/v1/management/*</code>) — sub-groups: campaign, campaign-setting, menu, role, user, userlog, budget-io, country-service, ipranges (~120 endpoints)</summary>
+        <p>Pattern CRUD standar:</p>
+        <ul>
+          <li><code>GET /resource</code> → list</li>
+          <li><code>GET /resource/:id</code> → detail</li>
+          <li><code>POST /resource</code> → create</li>
+          <li><code>PUT /resource/:id</code> → update</li>
+          <li><code>DELETE /resource/:id</code> → soft delete</li>
+        </ul>
+        <p>Lihat <code>src/app/routes/management.go</code> untuk lengkap.</p>
+      </details>
+
+      <h3>4.5 Standard Response Envelope</h3>
+      <pre><code>{
+  "code": 200,
+  "desc": "OK",
+  "data": { }
+}</code></pre>
+      <pre><code>{
+  "code": 400,
+  "desc": "Bad Request",
+  "error": "validation message"
+}</code></pre>
+    </section>
+
+    <!-- 5. DATA MODEL -->
+    <section id="data">
+      <h2>5. Data Model</h2>
+
+      <h3>5.1 Domain Aggregates</h3>
+      <table>
+        <thead><tr><th>Aggregate Root</th><th>Entities</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Campaign</strong></td><td>Campaign, CampaignDetail, IncSummaryCampaign(Hour), SummaryCampaign(Billing)</td></tr>
+          <tr><td><strong>Tracking</strong></td><td>DataTraffic, DataLanding, DataClicked, DataRedirect, MO, PixelStorage, ClickStorage, Postback</td></tr>
+          <tr><td><strong>Reporting</strong></td><td>ApiPinReport, ApiPinPerformance, SummaryMo, SummaryCr, SummaryCapping, SummaryRatio, SummaryLanding, SummaryTraffic, SummaryDashboard</td></tr>
+          <tr><td><strong>Budget</strong></td><td>TargetBudget, TargetBudgetDetail, BudgetIO, SummaryBudgetIO</td></tr>
+          <tr><td><strong>Master Data</strong></td><td>Country, Continent, Company, CompanyGroup, Domain, DomainService, Operator, Partner, Service, AdnetList, Agency, Channel, MainstreamGroup, OperatorAlias, IPRange, IPRangeCsvRow, LpDesignType</td></tr>
+          <tr><td><strong>User & Access</strong></td><td>User, DetailUser, UserCompany, UserAdnet, Role, Permission, Menu, CcEmail, Email, HistoryCappingKey</td></tr>
+        </tbody>
+      </table>
+
+      <h3>5.2 Sample Schema (TargetBudget)</h3>
+      <pre><code>type TargetBudget struct {
+    ID                uint           `gorm:"primaryKey"`
+    Date              time.Time
+    Service           string
+    Country           string
+    Operator          string
+    Adnet             string
+    DailyBudget       float64
+    SpendingToAdnets  float64
+    AgencyFee         float64
+    CostPerConversion float64
+    CreatedAt         time.Time
+    UpdatedAt         time.Time
+    DeletedAt         gorm.DeletedAt `gorm:"index"`
+}</code></pre>
+
+      <h3>5.3 Migration Strategy</h3>
+      <ul>
+        <li><strong>Authoritative</strong>: AutoMigrate via <code>./datasource migrate</code> (run-once)</li>
+        <li><strong>Entity registration</strong>: <code>src/cmd/migrate.go</code> — <code>migrateEntities</code> slice</li>
+        <li><strong>Add new entity</strong>:
+          <ol>
+            <li>Buat di <code>src/domain/entity/</code></li>
+            <li>Tambah ke <code>migrateEntities</code></li>
+            <li>Jalankan <code>./datasource migrate</code></li>
+          </ol>
+        </li>
+        <li><strong>Production</strong>: wajib via init-container atau CI step. Server cmd tidak menjalankan migrasi.</li>
+      </ul>
+
+      <h3>5.4 Cache Layer (Redis)</h3>
+      <table>
+        <thead><tr><th>Key Pattern</th><th>TTL</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>jwt:blacklist:&lt;jti&gt;</code></td><td>sisa exp</td><td>JWT revocation list</td></tr>
+          <tr><td>Pixel cache (DB <code>RedisCachePixel</code>)</td><td><code>RedisKeyExpiration</code> (default 600s)</td><td>Pixel postback dedup</td></tr>
+          <tr><td>RedisJSON (DB <code>RedisDBIndex</code>)</td><td>varies</td><td>IP range, capping counter</td></tr>
+          <tr><td>HistoryCappingKey related</td><td>reset oleh cron</td><td>Daily capping reset</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 6. CONSTRAINTS -->
+    <section id="constraints">
+      <h2>6. Constraints</h2>
+
+      <h3>6.1 Functional Constraints</h3>
+      <table>
+        <thead><tr><th>ID</th><th>Constraint</th><th>Rationale</th></tr></thead>
+        <tbody>
+          <tr><td>FC-01</td><td>JWT wajib HS256</td><td>Hindari algorithm confusion (CWE-327)</td></tr>
+          <tr><td>FC-02</td><td>JWT <code>type</code> wajib <code>"access"</code></td><td>Pisahkan access vs refresh token</td></tr>
+          <tr><td>FC-03</td><td><code>aud</code> &amp; <code>iss</code> validation kalau env diset</td><td>Multi-tenant token isolation</td></tr>
+          <tr><td>FC-04</td><td>TLS verify default; opt-in disable hanya non-prod</td><td>CWE-295 fix</td></tr>
+          <tr><td>FC-05</td><td>AES key min 16/24/32 byte</td><td>AES-128/192/256 correctness</td></tr>
+          <tr><td>FC-06</td><td>Postback endpoint public — auth via signed params/IP allowlist</td><td>Adnet callback gak bisa kirim Bearer</td></tr>
+          <tr><td>FC-07</td><td>Body limit max 100 MB</td><td>Excel upload</td></tr>
+          <tr><td>FC-08</td><td>Group-level AuthMiddleware default</td><td>Default-secure, gated <code>AUTH_ENFORCE_DEFAULT</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>6.2 Non-Functional</h3>
+      <table>
+        <thead><tr><th>ID</th><th>Constraint</th><th>Target</th></tr></thead>
+        <tbody>
+          <tr><td>NFC-01</td><td>DB pool max open conn</td><td><code>DB_MAX_OPEN_CONNS × replicas ≤ PG max_connections</code></td></tr>
+          <tr><td>NFC-02</td><td>DB connection lifetime</td><td>30 min default</td></tr>
+          <tr><td>NFC-03</td><td>Redis fail-fast vs degraded</td><td><code>REDIS_REQUIRED=true</code> default</td></tr>
+          <tr><td>NFC-04</td><td>RabbitMQ reconnect</td><td>Goroutine watch <code>NotifyClose</code></td></tr>
+          <tr><td>NFC-05</td><td>HTTP outbound timeout</td><td>Per-call <code>helper.PHttp</code></td></tr>
+          <tr><td>NFC-06</td><td>Server tidak run schema migration</td><td>Pakai <code>migrate</code> sub-cmd</td></tr>
+          <tr><td>NFC-07</td><td>Logs redact secrets</td><td><code>Cfg.Redacted()</code></td></tr>
+          <tr><td>NFC-08</td><td>Build verifiable di Go 1.24.1</td><td>Dockerfile pin</td></tr>
+        </tbody>
+      </table>
+
+      <h3>6.3 Operational</h3>
+      <ul>
+        <li><strong>OC-01</strong>: Multi-replica deploy → migrate run-once → server start</li>
+        <li><strong>OC-02</strong>: Tag <code>v*.*.*</code> → CI auto-build 2 image (server + migrate)</li>
+        <li><strong>OC-03</strong>: <code>.env</code> tidak di-commit (di <code>.gitignore</code>)</li>
+        <li><strong>OC-04</strong>: <code>AES_SECRET_KEY</code> wajib via secret manager di prod</li>
+        <li><strong>OC-05</strong>: External tool (<code>golang-migrate</code>) recommended jangka panjang</li>
+      </ul>
+    </section>
+
+    <!-- 7. EDGE CASES -->
+    <section id="edge">
+      <h2>7. Edge Cases</h2>
+
+      <h3>7.1 Auth</h3>
+      <table>
+        <thead><tr><th>Case</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Missing <code>Authorization</code></td><td>401 <code>Missing or invalid token</code></td></tr>
+          <tr><td>Format selain <code>Bearer &lt;token&gt;</code></td><td>401</td></tr>
+          <tr><td><code>JWT_SECRET</code> not set</td><td>500 <code>JWT secret not configured</code></td></tr>
+          <tr><td>Token expired</td><td>401 <code>Token expired</code></td></tr>
+          <tr><td><code>nbf</code> di future</td><td>401 (30s leeway)</td></tr>
+          <tr><td><code>aud</code>/<code>iss</code> mismatch</td><td>401</td></tr>
+          <tr><td><code>type</code> ≠ "access"</td><td>401</td></tr>
+          <tr><td><code>jti</code> di blacklist</td><td>401 <code>Token revoked</code></td></tr>
+          <tr><td>Redis nil saat blacklist check</td><td>Skip (degraded)</td></tr>
+          <tr><td><code>sub</code> invalid format</td><td>401</td></tr>
+        </tbody>
+      </table>
+
+      <h3>7.2 Postback</h3>
+      <table>
+        <thead><tr><th>Case</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Duplicate postback dlm 600s</td><td>Idempotent: dedup via Redis cache</td></tr>
+          <tr><td>MSISDN format invalid</td><td>400 + log</td></tr>
+          <tr><td>Campaign ID tidak ditemukan</td><td>200 dgn flag — adnet jangan retry</td></tr>
+          <tr><td>Capping tercapai</td><td>Tetap record, mark capped</td></tr>
+        </tbody>
+      </table>
+
+      <h3>7.3 HTTP Helper (post-fix #2)</h3>
+      <table>
+        <thead><tr><th>Case</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td><code>httpClient.Do</code> error</td><td>Wrapped error, tidak akses <code>response.Status</code></td></tr>
+          <tr><td><code>response == nil</code></td><td>Explicit nil-check, return error</td></tr>
+          <tr><td>Non-OK status</td><td>Return real status + error wrapped</td></tr>
+        </tbody>
+      </table>
+
+      <h3>7.4 DB / Pool</h3>
+      <table>
+        <thead><tr><th>Case</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>PG <code>max_connections</code> saturated</td><td>Pool throttle (block sampai available)</td></tr>
+          <tr><td>Connection lifetime exceeded</td><td>GORM auto-recreate</td></tr>
+          <tr><td>AutoMigrate timeout</td><td><code>log.Fatalf</code> — operator investigate</td></tr>
+        </tbody>
+      </table>
+
+      <h3>7.5 Redis</h3>
+      <table>
+        <thead><tr><th>Case</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Down saat startup, <code>REDIS_REQUIRED=true</code></td><td>5x retry exp backoff → fail</td></tr>
+          <tr><td>Down, <code>REDIS_REQUIRED=false</code></td><td>Log warn, app continue dgn nil clients</td></tr>
+          <tr><td>Down saat runtime</td><td>Cache miss → fallback DB (jika handler pakai <code>helper.SafeRedisGet</code>)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>7.6 RabbitMQ</h3>
+      <table>
+        <thead><tr><th>Case</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Initial connection gagal</td><td>5x retry → return error → <code>log.Fatalf</code></td></tr>
+          <tr><td>Channel setup gagal</td><td><code>log.Fatalf</code></td></tr>
+          <tr><td>Connection drop runtime</td><td>Goroutine watcher reconnect + re-setup channel</td></tr>
+          <tr><td>Publisher error queue full</td><td><span class="badge badge-warn">TODO</span> ignored saat ini</td></tr>
+        </tbody>
+      </table>
+
+      <h3>7.7 Concurrency</h3>
+      <table>
+        <thead><tr><th>Case</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Concurrent edit campaign 2 AM</td><td>Last-write-wins <span class="badge badge-warn">TODO lock</span></td></tr>
+          <tr><td>Cron capping reset overlap</td><td>Single-fire (cron 1 instance)</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 8. ACCEPTANCE CRITERIA -->
+    <section id="ac">
+      <h2>8. Acceptance Criteria</h2>
+
+      <h3>8.1 Per Use Case</h3>
+
+      <div class="uc-card">
+        <h4>UC-01 (Postback)</h4>
+        <ul>
+          <li>Adnet GET <code>/v1/postback?campaign_id=X&amp;...</code> → response 200 dlm &lt; 500 ms</li>
+          <li>Record postback insert ke <code>postbacks</code> dgn semua param</li>
+          <li>Message ter-publish ke <code>E_PIXELSTORAGE</code></li>
+          <li>Duplicate postback dlm 600s tidak ter-record dua kali</li>
+          <li>Postback gagal validate → 400 + log warn dgn payload</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <h4>UC-05 (Edit campaign)</h4>
+        <ul>
+          <li>AM scope agency X bisa edit campaign agency X</li>
+          <li>AM scope agency X <strong>tidak bisa</strong> edit campaign agency Y → 403</li>
+          <li>Update tersimpan ke <code>campaign_details</code> + audit log (kalau ada)</li>
+          <li>Message ter-publish ke <code>E_CAMPAIGNMANAGEMENT</code></li>
+          <li>Concurrent edit oleh 2 AM → last-write-wins (sementara, TODO lock)</li>
+        </ul>
+      </div>
+
+      <div class="uc-card">
+        <h4>UC-15 (Logout)</h4>
+        <ul>
+          <li>Logout endpoint call <code>h.RevokeJWT(jti, ttl)</code> dgn ttl = exp - now</li>
+          <li>Token sama dipakai → 401 <code>Token revoked</code></li>
+          <li>Setelah ttl expire, key blacklist auto-cleanup oleh Redis</li>
+        </ul>
+      </div>
+
+      <h3>8.2 Cross-Cutting (Definition of Done)</h3>
+      <div class="callout">
+        Untuk setiap fitur baru, checklist berikut <strong>wajib</strong> sebelum merge:
+      </div>
+      <ul>
+        <li>Endpoint terdaftar di <code>src/app/routes/&lt;domain&gt;.go</code></li>
+        <li>Handler di <code>src/handler/incoming_&lt;domain&gt;_handler.go</code></li>
+        <li>Repository di <code>src/domain/repository/&lt;domain&gt;.go</code></li>
+        <li>Entity (kalau perlu) di <code>src/domain/entity/&lt;domain&gt;.go</code> + register di <code>migrateEntities</code></li>
+        <li>JWT auth applied (kalau bukan public)</li>
+        <li>Scope filter (company/agency/adnet) sesuai actor</li>
+        <li>Error response konsisten dgn envelope <code>{code, desc, error}</code></li>
+        <li>Response time &lt; 1s read, &lt; 3s export</li>
+        <li>Logs structured (logrus) — no <code>println</code></li>
+        <li>Secrets tidak di-log (<code>Cfg.Redacted()</code> pattern)</li>
+        <li><code>staticcheck ./...</code> zero new warning</li>
+        <li><code>go build ./...</code> exit 0</li>
+        <li>SPEC.md + SPEC.html updated (use case, API, entity, AC)</li>
+      </ul>
+
+      <h3>8.3 Non-Functional</h3>
+      <ul>
+        <li>DB query log enabled — no N+1 baru</li>
+        <li>Endpoint baru di-monitor di Grafana</li>
+        <li>Postback endpoint stress test ≥ 500 req/sec</li>
+        <li>Redis fail simulation: degraded mode tidak crash</li>
+        <li>DB pool sat test: tidak melebihi <code>DB_MAX_OPEN_CONNS</code></li>
+      </ul>
+    </section>
+
+    <!-- 9. WORKFLOW -->
+    <section id="workflow">
+      <h2>9. Add Feature — Quick Workflow</h2>
+      <pre><code>1. Identify domain (campaign/budget/master-data/...)
+
+2. Update SPEC (md + html):
+   - Section 3: Use case
+   - Section 4.4: Endpoint
+   - Section 5: Entity (kalau perlu)
+   - Section 7: Edge case
+   - Section 8.1: Acceptance criteria
+
+3. Implement:
+   - entity   → src/domain/entity/&lt;file&gt;.go (+ register migrateEntities)
+   - repo     → src/domain/repository/&lt;file&gt;.go
+   - handler  → src/handler/incoming_&lt;file&gt;_handler.go
+   - route    → src/app/routes/&lt;group&gt;.go
+   - DTO      → src/domain/entity/&lt;file&gt;.go (request/response struct)
+
+4. Test:
+   - go build ./...
+   - staticcheck ./...
+   - manual hit endpoint
+   - cek log untuk leak secret
+
+5. Run migration:
+   ./datasource migrate
+
+6. Deploy:
+   - tag git v1.x.y
+   - CI auto build
+   - update compose version
+   - run migrate compose first
+   - deploy server</code></pre>
+
+      <div class="callout warn">
+        <strong>Pre-prod reminder</strong>: <code>AES_SECRET_KEY</code> rotate &amp; pindah ke secret manager.
+        <code>AUTH_ENFORCE_DEFAULT=true</code> setelah FE migrate. Multi-replica deploy: pastikan
+        <code>DB_MAX_OPEN_CONNS × replicas ≤ PG max_connections</code>.
+      </div>
+    </section>
+
+    <div class="footer">
+      <p>SDD report — auto-generated dari source. Companion files:
+        <a href="./SPEC.md" style="color:var(--accent);">SPEC.md</a> ·
+        <a href="./AUDIT_FIX.md" style="color:var(--accent);">AUDIT_FIX.md</a> ·
+        <a href="./UNUSED_FUNCTIONS.md" style="color:var(--accent);">UNUSED_FUNCTIONS.md</a>
+      </p>
+      <p>Last updated: 2026-05-08</p>
+    </div>
+
+  </main>
+</div>
+</body>
+</html>

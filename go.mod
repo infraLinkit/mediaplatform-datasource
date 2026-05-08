@@ -11,9 +11,11 @@ require (
 	github.com/ledongthuc/goterators v1.0.2
 	github.com/lib/pq v1.10.9
 	github.com/mikhail-bigun/fiberlogrus v0.2.1
+	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/rueidis v1.0.51
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
+	github.com/stretchr/testify v1.11.1
 	github.com/wiliehidayat87/rmqp v1.1.2
 	golang.org/x/crypto v0.37.0
 	google.golang.org/api v0.229.0
@@ -26,6 +28,7 @@ require (
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
@@ -50,7 +53,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/onsi/ginkgo v1.16.5 // indirect
-	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -70,4 +73,5 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250414145226-207652e42e2e // indirect
 	google.golang.org/grpc v1.71.1 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

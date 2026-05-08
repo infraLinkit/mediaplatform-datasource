@@ -2,11 +2,9 @@ name: DATASOURCE
 
 on:
   push:
-    branches:
-      - "v*.*.*"
     tags:
       - "v*.*.*"
-  pull_request:
+  workflow_dispatch:
 
 jobs:
     build-and-push-image:

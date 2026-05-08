@@ -46,11 +46,11 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 	}
 
 	if params.DataBasedOn == "" {
-        params.DataBasedOn = "highest"
-    }
-    if params.DataBasedOnIndicator == "" {
-        params.DataBasedOnIndicator = "traffic"
-    }
+		params.DataBasedOn = "highest"
+	}
+	if params.DataBasedOnIndicator == "" {
+		params.DataBasedOnIndicator = "traffic"
+	}
 
 	r := h.GenerateCampaignSummary(c, params)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
@@ -120,13 +120,38 @@ func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.Pa
 	summary := formatSummaryDataValue(summaryCampaign, params, startDate, endDate)
 	sortedSummary := sortDataRevenue(summary, params.DataBasedOn, params.DataBasedOnIndicator)
 
+	//budgetDetailPerMonth, _ := h.DS.GetTargetBudgetList(params.Country, year, month)
+
 	if err == nil {
+
+		BudgetDetailPerMonth := []entity.TargetBudgetDetail{}
+		TargetBudget := []entity.TargetBudget{}
+
+		BudgetDetailPerMonth, _ = h.DS.GetTargetBudgetList(params.Country, startDate, endDate, params.Operator, params.PartnerName, params.Service, params.Adnet)
+		TargetBudget, _ = h.DS.GetTargetBudget(params.Country, startDate, endDate, params.Operator, params.PartnerName, params.Service, params.Adnet)
+
+		/*
+			if startDate.Year() == endDate.Year() && startDate.Month() == endDate.Month() {
+				year := fmt.Sprintf("%d", startDate.Year())
+				month := fmt.Sprintf("%d", startDate.Month())
+				BudgetDetailPerMonth, _ = h.DS.GetTargetBudgetList(params.Country, year, month, params.Operator, params.PartnerName, params.Service, params.Adnet)
+				TargetBudget, _ = h.DS.GetTargetBudget(params.Country, year, month, params.Operator, params.PartnerName, params.Service, params.Adnet)
+			}
+		*/
+
+		fmt.Println("budgetDetailPerMonth: ", BudgetDetailPerMonth)
+		fmt.Println("TargetBudget: ", TargetBudget)
+
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithData{
 				Code:    fiber.StatusOK,
 				Message: config.OK_DESC,
 				Data:    sortedSummary,
+				TotalSummary: map[string]interface{}{
+					"budget_detail": BudgetDetailPerMonth,
+					"budget":        TargetBudget,
+				},
 			},
 		}
 	} else {
@@ -803,7 +828,7 @@ func SnakeToCamelValue(snake string) string {
 	if snake == "cr_mo" {
 		return "CrMO"
 	}
-	
+
 	words := strings.Split(snake, "_")
 	for i, word := range words {
 		words[i] = strings.ToLower(word)
@@ -879,7 +904,6 @@ func formatDate(date time.Time, dataType string) string {
 	}
 	return date.Format("2006-01-02")
 }
-
 
 func formatPreviousDate(date time.Time, dataType string) string {
 	if dataType == "monthly_report" {

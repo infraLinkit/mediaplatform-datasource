@@ -113,6 +113,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Post("/resend-data", h.ResendData).Name("Resend Data")
 	rpt.Post("/resend-data-apireport", h.ResendDataAPIReport).Name("Resend Data API Report")
 	rpt.Get("/ioreport", h.DisplaySummaryBudgetIO).Name("IO Report")
+	rpt.Put("/ioreport/update", h.UpdateSummaryBudgetIO).Name("IO Report Update")
 
 	rpt.Post("/campaign-monitoring-summary/edit-target-budget", h.EditTargetBudget).Name("Edit Target Budget")
 
@@ -207,7 +208,6 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	userlog.Get("/:id", h.DisplayUserLogHistory).Name(" Display User Log History")
 
 	budgetio := management.Group("/budget-io")
-	budgetio.Post("/", h.CreateBudgetIO).Name("Create BudgetIO")
 	budgetio.Get("/budgetiolist", h.AuthMiddleware, h.DisplayBudgetIO).Name("Budget IO List")
 	budgetio.Get("/budgetiolistall", h.AuthMiddleware, h.DisplayBudgetIOAll).Name("Budget IO List All")
 	budgetio.Get("/budgetioapproved", h.AuthMiddleware, h.DisplayBudgetIOApproved).Name("Budget IO List All")

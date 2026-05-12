@@ -9,50 +9,6 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
 
-func (h *IncomingHandler) CreateBudgetIO(c *fiber.Ctx) error {
-	var req entity.BudgetIORequest
-
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Invalid request body",
-			"error":   err.Error(),
-		})
-	}
-
-	if len(req.Data) == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "Data rows cannot be empty",
-		})
-	}
-
-	for _, row := range req.Data {
-
-		budget := entity.BudgetIO{
-			CampaignType:       row.CampaignType,
-			Month:              row.Month,
-			Country:            row.Country,
-			CountryName:        row.CountryName,
-			Continent:          row.Continent,
-			CompanyGroupName:   row.CompanyGroupName,
-			Company:            row.Company,
-			Partner:            row.Partner,
-			Service:            row.Service,
-			TargetCAC:          row.TargetCAC,
-			TargetROI:          row.TargetROI,
-			MonthlyMOTarget:    row.MonthlyMOTarget,
-			MonthlySpendTarget: row.MonthlySpendTarget,
-		}
-
-		if err := h.DS.DB.Create(&budget).Error; err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "Failed to save data",
-				"error":   err.Error(),
-			})
-		}
-	}
-
-	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
-}
 
 func (h *IncomingHandler) DisplayBudgetIO(c *fiber.Ctx) error {
 
@@ -417,7 +373,9 @@ func (h *IncomingHandler) DisplaySummaryBudgetIO(c *fiber.Ctx) error {
 		Company:     m["company"],
 		Partner:     m["partner"],
 		Channel:     m["channel"],
+		CampaignType: m["campaign_type"],
 		Operator:    m["operator"],
+		Service:     m["service"],
 		Draw:        draw,
 		Page:        page,
 		PageSize:    pageSize,
@@ -436,11 +394,11 @@ func (h *IncomingHandler) DisplaySummaryBudgetIO(c *fiber.Ctx) error {
 
 func (h *IncomingHandler) DisplaySummaryBudgetIOExtra(c *fiber.Ctx, fe entity.DisplaySummaryBudgetIO) entity.ReturnResponse {
 	var (
-		err      error
-		budgetio []entity.SummaryBudgetIO
+		err    error
+		result []entity.SummaryBudgetIOAgg
 	)
 
-	budgetio, _, err = h.DS.GetDisplaySummaryBudgetIO(fe)
+	result, _, err = h.DS.GetDisplaySummaryBudgetIO(fe)
 
 	if err != nil {
 		return entity.ReturnResponse{
@@ -452,11 +410,11 @@ func (h *IncomingHandler) DisplaySummaryBudgetIOExtra(c *fiber.Ctx, fe entity.Di
 		}
 	}
 
-	if budgetio == nil {
-		budgetio = []entity.SummaryBudgetIO{}
+	if result == nil {
+		result = []entity.SummaryBudgetIOAgg{}
 	}
 
-	rows := MapSummaryBudgetIOToReportRows(budgetio)
+	rows := MapSummaryBudgetIOToReportRows(result)
 
 	return entity.ReturnResponse{
 		HttpStatus: fiber.StatusOK,
@@ -471,7 +429,7 @@ func (h *IncomingHandler) DisplaySummaryBudgetIOExtra(c *fiber.Ctx, fe entity.Di
 	}
 }
 
-func MapSummaryBudgetIOToReportRows(data []entity.SummaryBudgetIO) []entity.IOReportRow {
+func MapSummaryBudgetIOToReportRows(data []entity.SummaryBudgetIOAgg) []entity.IOReportRow {
 	rows := make([]entity.IOReportRow, 0, len(data))
 	for _, d := range data {
 		recordedDay := 0
@@ -481,13 +439,14 @@ func MapSummaryBudgetIOToReportRows(data []entity.SummaryBudgetIO) []entity.IORe
 		}
 
 		rows = append(rows, entity.IOReportRow{
-			ID:          d.ID,
+			BudgetIOID:  d.BudgetIOID,
 			Region:      d.Continent,
 			Country:     d.Country,
 			Company:     d.Company,
 			Partner:     d.Partner,
 			Operator:    d.Operator,
 			Channel:     d.Channel,
+			Service:     d.Service,
 			Month:       d.Month,
 			MOWeek1:     d.MOWeek1,
 			MOWeek2:     d.MOWeek2,
@@ -497,8 +456,8 @@ func MapSummaryBudgetIOToReportRows(data []entity.SummaryBudgetIO) []entity.IORe
 			CostWeek2:   d.ActualWeek2,
 			CostWeek3:   d.ActualWeek3,
 			CostWeek4:   d.ActualWeek4,
-			IOTarget:    d.TotalMonthlySpendTarget,
-			MOTarget:    d.TotalMonthlyMOTarget,
+			IOTarget:    d.IOTarget,
+			MOTarget:    d.MOTarget,
 			TargetCAC:   d.TargetCAC,
 			EstLTV:      d.LTV,
 			EstROAS:     d.ROAS,
@@ -517,10 +476,10 @@ func (h *IncomingHandler) UpdateSummaryBudgetIO(c *fiber.Ctx) error {
 			"message": "invalid request body",
 		})
 	}
-	if req.ID == 0 {
+	if req.ID == 0 && (req.Country == "" || req.Operator == "" || req.Month == "") {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"code":    fiber.StatusBadRequest,
-			"message": "id required",
+			"message": "id or full operator key (country, operator, month) required",
 		})
 	}
 	if err := h.DS.UpdateSummaryBudgetIO(req); err != nil {

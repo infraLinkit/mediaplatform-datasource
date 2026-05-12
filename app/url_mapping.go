@@ -206,7 +206,6 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	userlog.Get("/:id", h.DisplayUserLogHistory).Name(" Display User Log History")
 
 	budgetio := management.Group("/budget-io")
-	budgetio.Post("/", h.CreateBudgetIO).Name("Create BudgetIO")
 	budgetio.Get("/budgetiolist", h.AuthMiddleware, h.DisplayBudgetIO).Name("Budget IO List")
 	budgetio.Get("/budgetiolistall", h.AuthMiddleware, h.DisplayBudgetIOAll).Name("Budget IO List All")
 	budgetio.Get("/budgetioapproved", h.AuthMiddleware, h.DisplayBudgetIOApproved).Name("Budget IO List All")

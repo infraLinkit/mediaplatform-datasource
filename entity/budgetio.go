@@ -3,24 +3,36 @@ package entity
 import "time"
 
 type (
-	BudgetIORequest struct {
-		Data []BudgetIORowRequest `json:"data"`
-	}
+	// SummaryBudgetIOAgg is the aggregated query result (not a DB table).
+	// weekly actuals from summary_budget_ios + targets from budget_ios via LEFT JOIN.
+	SummaryBudgetIOAgg struct {
+		Country      string  `gorm:"column:country"`
+		Continent    string  `gorm:"column:continent"`
+		Company      string  `gorm:"column:company"`
+		Partner      string  `gorm:"column:partner"`
+		Operator     string  `gorm:"column:operator"`
+		Channel      string  `gorm:"column:channel"`
+		Service      string  `gorm:"column:service"`
+		CampaignType string  `gorm:"column:campaign_type"`
+		Month        string  `gorm:"column:month"`
+		LastDate     string  `gorm:"column:last_date"`
 
-	BudgetIORowRequest struct {
-		CampaignType       string  `json:"campaign_type"`
-		Month              string  `json:"month"`
-		Country            string  `json:"country"`
-		CountryName        string  `json:"country_name"`
-		Continent          string  `json:"continent"`
-		CompanyGroupName   string  `json:"company_group_name"`
-		Company            string  `json:"company"`
-		Partner            string  `json:"partner"`
-		Service            string  `json:"service"`
-		TargetCAC          float64 `json:"target_cac"`
-		TargetROI          int     `json:"target_roi"`
-		MonthlyMOTarget    float64 `json:"monthly_mo_target"`
-		MonthlySpendTarget float64 `json:"monthly_spend_target"`
+		ActualWeek1 float64 `gorm:"column:actual_week_1"`
+		ActualWeek2 float64 `gorm:"column:actual_week_2"`
+		ActualWeek3 float64 `gorm:"column:actual_week_3"`
+		ActualWeek4 float64 `gorm:"column:actual_week_4"`
+		MOWeek1     float64 `gorm:"column:mo_week1"`
+		MOWeek2     float64 `gorm:"column:mo_week2"`
+		MOWeek3     float64 `gorm:"column:mo_week3"`
+		MOWeek4     float64 `gorm:"column:mo_week4"`
+
+		BudgetIOID int     `gorm:"column:budget_io_id"`
+		IOTarget   float64 `gorm:"column:io_target"`
+		MOTarget   float64 `gorm:"column:mo_target"`
+		TargetCAC  float64 `gorm:"column:target_cac"`
+		LTV        float64 `gorm:"column:ltv"`
+		ROAS       float64 `gorm:"column:roas"`
+		ROI        float64 `gorm:"column:roi"`
 	}
 
 	DisplayBudgetIO struct {
@@ -114,12 +126,8 @@ type (
 		Partner   string `json:"partner"`
 		Operator  string `json:"operator"`
 		Channel   string `json:"channel"`
-
-		TotalMonthlySpendTarget float64 `json:"total_monthly_spend_target"`
-		ActualWeek1             float64 `json:"actual_week_1"`
-		ActualWeek2             float64 `json:"actual_week_2"`
-		ActualWeek3             float64 `json:"actual_week_3"`
-		ActualWeek4             float64 `json:"actual_week_4"`
+		CampaignType string `json:"campaign_type"`
+		Service   string `json:"service"`
 
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
@@ -138,14 +146,15 @@ type (
 	}
 
 	IOReportRow struct {
-		ID       int    `json:"id"`
-		Region   string `json:"region"`
-		Country  string `json:"country"`
-		Company  string `json:"company"`
-		Partner  string `json:"partner"`
-		Operator string `json:"operator"`
-		Channel  string `json:"channel"`
-		Month    string `json:"month"`
+		BudgetIOID int    `json:"budget_io_id"`
+		Region     string `json:"region"`
+		Country    string `json:"country"`
+		Company    string `json:"company"`
+		Partner    string `json:"partner"`
+		Operator   string `json:"operator"`
+		Channel    string `json:"channel"`
+		Service    string `json:"service"`
+		Month      string `json:"month"`
 
 		MOWeek1 float64 `json:"mo_week1"`
 		MOWeek2 float64 `json:"mo_week2"`
@@ -167,12 +176,18 @@ type (
 	}
 
 	UpdateSummaryBudgetIORequest struct {
-		ID        int      `json:"id"`
-		MOTarget  *float64 `json:"mo_target,omitempty"`
-		IOTarget  *float64 `json:"io_target,omitempty"`
-		TargetCAC *float64 `json:"target_cac,omitempty"`
-		LTV       *float64 `json:"ltv,omitempty"`
-		ROAS      *float64 `json:"roas,omitempty"`
-		ROI       *float64 `json:"roi,omitempty"`
+		ID           int      `json:"id"`
+		Country      string   `json:"country"`
+		Company      string   `json:"company"`
+		Partner      string   `json:"partner"`
+		Operator     string   `json:"operator"`
+		CampaignType string   `json:"campaign_type"`
+		Month        string   `json:"month"`
+		MOTarget     *float64 `json:"mo_target,omitempty"`
+		IOTarget     *float64 `json:"io_target,omitempty"`
+		TargetCAC    *float64 `json:"target_cac,omitempty"`
+		LTV          *float64 `json:"ltv,omitempty"`
+		ROAS         *float64 `json:"roas,omitempty"`
+		ROI          *float64 `json:"roi,omitempty"`
 	}
 )

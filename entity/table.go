@@ -245,10 +245,10 @@ type (
 		MSnackCampaignId  string    `gorm:"size:255;default:NA" json:"m_snack_campaign_id"`
 		IsEvina           bool      `gorm:"default:false" json:"is_evina"`
 		StatusEvinaFraud  bool      `gorm:"default:false" json:"status_evina_fraud"`
-		EvinaTI           string    `gorm:"size:255;default:NA" json:"evina_ti"`
-		EvinaTS           string    `gorm:"size:255;default:NA" json:"evina_ts"`
-		EvinaASCode       string    `gorm:"size:255;default:NA" json:"evina_as_code"`
-		EvinaFTCode       string    `gorm:"size:255;default:NA" json:"evina_ft_code"`
+		EvinaTI           string    `gorm:"type:text" json:"evina_ti"`
+		EvinaTS           int64     `gorm:"default:0" json:"evina_ts"`
+		EvinaASCode       int       `gorm:"default:0" json:"evina_as_code"`
+		EvinaFTCode       int       `gorm:"default:0" json:"evina_ft_code"`
 		CreatedAt         time.Time
 		UpdatedAt         time.Time
 	}

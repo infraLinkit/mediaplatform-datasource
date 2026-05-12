@@ -1039,55 +1039,47 @@ type (
 
 	BudgetIO struct {
 		gorm.Model
-		ID     int    `gorm:"primaryKey;autoIncrement" json:"id"`
-		Status string `gorm:"default:'submitted'" json:"status"`
-
-		VerifiedAt time.Time `gorm:"default:NULL" json:"verified_at"`
-
-		SubmittedBy string `gorm:"size:255;default:NA" json:"submitted_by"`
-		ApprovedBy  string `gorm:"size:255;default:NA" json:"approved_by"`
-
-		IOID             string `gorm:"size:255;default:NA" json:"io_id"`
-		CampaignType     string `gorm:"size:100;default:NA" json:"campaign_type"`
-		Month            string `gorm:"size:20;default:NA" json:"month"`
-		Country          string `gorm:"size:10;default:NA" json:"country"`
-		CountryName      string `gorm:"size:255;default:NA" json:"country_name"`
-		Continent        string `gorm:"size:50;default:NA" json:"continent"`
-		CompanyGroupName string `gorm:"size:255;default:NA" json:"company_group_name"`
-		Company          string `gorm:"size:255;default:NA" json:"company"`
-		Partner          string `gorm:"size:255;default:NA" json:"partner"`
-		Service          string `gorm:"size:255;default:NA" json:"service"`
-
-		TargetCAC          float64 `gorm:"type:double precision" json:"target_cac"`
-		TargetROI          int     `gorm:"type:int" json:"target_roi"`
-		MonthlyMOTarget    float64 `gorm:"type:double precision" json:"monthly_mo_target"`
+		ID               int     `gorm:"primaryKey;autoIncrement" json:"id"`
+		CampaignType     string  `gorm:"size:100;default:NA" json:"campaign_type"`
+		Month            string  `gorm:"size:20;default:NA" json:"month"`
+		Country          string  `gorm:"size:10;default:NA" json:"country"`
+		CountryName      string  `gorm:"size:255;default:NA" json:"country_name"`
+		Continent        string  `gorm:"size:50;default:NA" json:"continent"`
+		CompanyGroupName string  `gorm:"size:255;default:NA" json:"company_group_name"`
+		Company          string  `gorm:"size:255;default:NA" json:"company"`
+		Partner          string  `gorm:"size:255;default:NA" json:"partner"`
+		Service          string  `gorm:"size:255;default:NA" json:"service"`
+		TargetCAC        float64 `gorm:"type:double precision" json:"target_cac"`
+		TargetROI        int     `gorm:"type:int" json:"target_roi"`
+		MonthlyMOTarget  float64 `gorm:"type:double precision" json:"monthly_mo_target"`
 		MonthlySpendTarget float64 `gorm:"type:double precision" json:"monthly_spend_target"`
-
-		CPName            string `gorm:"size:255;default:NA" json:"cp_name"`
-		PICName           string `gorm:"size:255;default:NA" json:"pic_name"`
-		ContactEmail      string `gorm:"size:255;default:NA" json:"contact_email"`
-		CPBusinessPICName string `gorm:"size:255;default:NA" json:"business_pic_name"`
-		Signature         string `gorm:"type:text" json:"signature"`
-
-		CreatedAt time.Time
-		UpdatedAt time.Time
+		CreatedAt        time.Time
+		UpdatedAt        time.Time
 	}
 
 	SummaryBudgetIO struct {
 		gorm.Model
 		ID                      int     `gorm:"primaryKey;autoIncrement" json:"id"`
-		CampaignType            string  `gorm:"size:100;default:NA" json:"campaign_type"`
-		Month                   string  `gorm:"size:20;default:NA" json:"month"` // format YYYY-MM
-		Country                 string  `gorm:"size:50;default:NA" json:"country"`
+		CampaignType            string  `gorm:"size:100;default:NA;uniqueIndex:idx_sumbio_unique" json:"campaign_type"`
+		Month                   string  `gorm:"size:20;default:NA;uniqueIndex:idx_sumbio_unique" json:"month"` // format YYYY-MM
+		Country                 string  `gorm:"size:50;default:NA;uniqueIndex:idx_sumbio_unique" json:"country"`
 		Continent               string  `gorm:"size:50;default:NA" json:"continent"`
-		Company                 string  `gorm:"size:50;default:NA" json:"company"`
-		Partner                 string  `gorm:"size:50;default:NA" json:"partner"`
-		Service                 string  `gorm:"size:50;default:NA" json:"service"`
+		Company                 string  `gorm:"size:50;default:NA;uniqueIndex:idx_sumbio_unique" json:"company"`
+		Partner                 string  `gorm:"size:50;default:NA;uniqueIndex:idx_sumbio_unique" json:"partner"`
+		Operator                string  `gorm:"size:100;default:NA;uniqueIndex:idx_sumbio_unique" json:"operator"`
 		TotalMonthlySpendTarget float64 `gorm:"type:double precision;default:0" json:"total_monthly_spend_target"`
 		ActualWeek1             float64 `gorm:"type:double precision;default:0" json:"actual_week_1"`
 		ActualWeek2             float64 `gorm:"type:double precision;default:0" json:"actual_week_2"`
 		ActualWeek3             float64 `gorm:"type:double precision;default:0" json:"actual_week_3"`
 		ActualWeek4             float64 `gorm:"type:double precision;default:0" json:"actual_week_4"`
+
+		MOWeek1              float64 `gorm:"type:double precision;default:0" json:"mo_week1"`
+		MOWeek2              float64 `gorm:"type:double precision;default:0" json:"mo_week2"`
+		MOWeek3              float64 `gorm:"type:double precision;default:0" json:"mo_week3"`
+		MOWeek4              float64 `gorm:"type:double precision;default:0" json:"mo_week4"`
+		Channel              string  `gorm:"size:100;default:NA;uniqueIndex:idx_sumbio_unique" json:"channel"`
+		TotalMonthlyMOTarget float64 `gorm:"type:double precision;default:0" json:"total_monthly_mo_target"`
+		TargetCAC            float64 `gorm:"type:double precision;default:0" json:"target_cac"`
 
 		GMV  float64 `gorm:"type:double precision;default:0" json:"gmv"`
 		LTV  float64 `gorm:"type:double precision;default:0" json:"ltv"`

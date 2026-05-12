@@ -4,17 +4,10 @@ import "time"
 
 type (
 	BudgetIORequest struct {
-		CPName            string               `json:"cp_name"`
-		PICName           string               `json:"pic_name"`
-		ContactEmail      string               `json:"contact_email"`
-		CPBusinessPICName string               `json:"cp_business_pic_name"`
-		Signature         string               `json:"signature"`
-		SubmittedBy       string               `json:"submitted_by"`
-		Data              []BudgetIORowRequest `json:"data"`
+		Data []BudgetIORowRequest `json:"data"`
 	}
 
 	BudgetIORowRequest struct {
-		IOID               string  `json:"io_id"`
 		CampaignType       string  `json:"campaign_type"`
 		Month              string  `json:"month"`
 		Country            string  `json:"country"`
@@ -31,39 +24,23 @@ type (
 	}
 
 	DisplayBudgetIO struct {
-		ID         int       `json:"id"`
-		Status     string    `json:"status"`
-		VerifiedAt time.Time `json:"verified_at"`
-
-		SubmittedBy string `json:"submitted_by"`
-		VerifiedBy  string `json:"verified_by"`
-
-		IOID             string `json:"io_id"`
-		CampaignType     string `json:"campaign_type"`
-		Month            string `json:"month"`
-		Country          string `json:"country"`
-		CountryName      string `json:"country_name"`
-		Continent        string `json:"continent"`
-		CompanyGroupName string `json:"company_group_name"`
-		Company          string `json:"company"`
-		Partner          string `json:"partner"`
-		Service          string `json:"service"`
-
-		TargetCAC          float64 `json:"target_cac"`
-		TargetROI          int     `json:"target_roi"`
-		MonthlyMOTarget    float64 `json:"monthly_mo_target"`
+		ID               int       `json:"id"`
+		CampaignType     string    `json:"campaign_type"`
+		Month            string    `json:"month"`
+		Country          string    `json:"country"`
+		CountryName      string    `json:"country_name"`
+		Continent        string    `json:"continent"`
+		CompanyGroupName string    `json:"company_group_name"`
+		Company          string    `json:"company"`
+		Partner          string    `json:"partner"`
+		Service          string    `json:"service"`
+		TargetCAC        float64   `json:"target_cac"`
+		TargetROI        int       `json:"target_roi"`
+		MonthlyMOTarget  float64   `json:"monthly_mo_target"`
 		MonthlySpendTarget float64 `json:"monthly_spend_target"`
+		CreatedAt        time.Time `json:"created_at"`
+		UpdatedAt        time.Time `json:"updated_at"`
 
-		CPName            string `json:"cp_name"`
-		PICName           string `json:"pic_name"`
-		ContactEmail      string `json:"contact_email"`
-		CPBusinessPICName string `json:"business_pic_name"`
-		Signature         string `json:"signature"`
-
-		CreatedAt time.Time `json:"created_at"`
-		UpdatedAt time.Time `json:"updated_at"`
-
-		// ===== Extra fields for datatables / filtering =====
 		Keyword     string `json:"keyword"`
 		PageSize    int    `json:"page_size"`
 		Page        int    `json:"page"`
@@ -135,7 +112,8 @@ type (
 		Country   string `json:"country"`
 		Company   string `json:"company"`
 		Partner   string `json:"partner"`
-		Service   string `json:"service"`
+		Operator  string `json:"operator"`
+		Channel   string `json:"channel"`
 
 		TotalMonthlySpendTarget float64 `json:"total_monthly_spend_target"`
 		ActualWeek1             float64 `json:"actual_week_1"`
@@ -157,5 +135,44 @@ type (
 		Reload      string `json:"reload"`
 		OrderColumn string `json:"order_column"`
 		OrderDir    string `json:"order_dir"`
+	}
+
+	IOReportRow struct {
+		ID       int    `json:"id"`
+		Region   string `json:"region"`
+		Country  string `json:"country"`
+		Company  string `json:"company"`
+		Partner  string `json:"partner"`
+		Operator string `json:"operator"`
+		Channel  string `json:"channel"`
+		Month    string `json:"month"`
+
+		MOWeek1 float64 `json:"mo_week1"`
+		MOWeek2 float64 `json:"mo_week2"`
+		MOWeek3 float64 `json:"mo_week3"`
+		MOWeek4 float64 `json:"mo_week4"`
+
+		CostWeek1 float64 `json:"cost_week1"`
+		CostWeek2 float64 `json:"cost_week2"`
+		CostWeek3 float64 `json:"cost_week3"`
+		CostWeek4 float64 `json:"cost_week4"`
+
+		IOTarget    float64 `json:"io_target"`
+		MOTarget    float64 `json:"mo_target"`
+		TargetCAC   float64 `json:"target_cac"`
+		EstLTV      float64 `json:"est_ltv"`
+		EstROAS     float64 `json:"est_roas"`
+		ROI         float64 `json:"roi"`
+		RecordedDay int     `json:"recorded_day"`
+	}
+
+	UpdateSummaryBudgetIORequest struct {
+		ID        int      `json:"id"`
+		MOTarget  *float64 `json:"mo_target,omitempty"`
+		IOTarget  *float64 `json:"io_target,omitempty"`
+		TargetCAC *float64 `json:"target_cac,omitempty"`
+		LTV       *float64 `json:"ltv,omitempty"`
+		ROAS      *float64 `json:"roas,omitempty"`
+		ROI       *float64 `json:"roi,omitempty"`
 	}
 )

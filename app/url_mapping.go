@@ -113,6 +113,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Post("/resend-data", h.ResendData).Name("Resend Data")
 	rpt.Post("/resend-data-apireport", h.ResendDataAPIReport).Name("Resend Data API Report")
 	rpt.Get("/ioreport", h.DisplaySummaryBudgetIO).Name("IO Report")
+	rpt.Put("/ioreport/update", h.UpdateSummaryBudgetIO).Name("IO Report Update")
 
 	rpt.Get("/campaign-spending-channel",          h.DisplayCampaignSpendingChannel).
     Name("Campaign Spending Channel")

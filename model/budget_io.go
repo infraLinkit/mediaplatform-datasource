@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 )
@@ -342,50 +343,89 @@ func (r *BaseModel) GetDisplayBudgetIOApprovedAll(o entity.DisplayBudgetIO) ([]e
 
 func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) ([]entity.SummaryBudgetIO, int64, error) {
 
-    query := r.DB.Model(&entity.SummaryBudgetIO{})
+	query := r.DB.Model(&entity.SummaryBudgetIO{})
 
-    if o.Action == "Search" {
-        if o.Country != "" {
-            query = query.Where("country = ?", o.Country)
-        }
-        if o.Partner != "" {
-            query = query.Where("partner = ?", o.Partner)
-        }
-        if o.Continent != "" {
-            query = query.Where("continent = ?", o.Continent)
-        }
+	if o.Action == "Search" {
+		if o.Country != "" {
+			query = query.Where("country = ?", o.Country)
+		}
+		if o.Partner != "" {
+			query = query.Where("partner = ?", o.Partner)
+		}
+		if o.Continent != "" {
+			query = query.Where("continent = ?", o.Continent)
+		}
+		if o.Channel != "" {
+			query = query.Where("channel = ?", o.Channel)
+		}
+		if o.Company != "" {
+			query = query.Where("company = ?", o.Company)
+		}
+		if o.Operator != "" {
+			query = query.Where("operator = ?", o.Operator)
+		}
 
-        if o.DateRange != "" {
-            query = query.Where("month = ?", o.DateRange)
-        } else {
-            query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
-        }
-    }
+		if o.DateRange != "" {
+			query = query.Where("month = ?", o.DateRange)
+		} else if o.DateBefore != "" && o.DateAfter != "" {
+			query = query.Where("month BETWEEN TO_CHAR(?::date, 'YYYY-MM') AND TO_CHAR(?::date, 'YYYY-MM')", o.DateBefore, o.DateAfter)
+		} else {
+			query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
+		}
+	} else {
+		query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
+	}
 
-    if o.OrderColumn != "" {
-        dir := "ASC"
-        if strings.ToUpper(o.OrderDir) == "DESC" {
-            dir = "DESC"
-        }
-        query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
-    } else {
-        query = query.Order("month DESC, id DESC")
-    }
+	if o.OrderColumn != "" {
+		dir := "ASC"
+		if strings.ToUpper(o.OrderDir) == "DESC" {
+			dir = "DESC"
+		}
+		query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
+	} else {
+		query = query.Order("month DESC, continent ASC, country ASC, channel ASC")
+	}
 
-    rows, err := query.Rows()
-    if err != nil {
-        return []entity.SummaryBudgetIO{}, 0, err
-    }
-    defer rows.Close()
+	rows, err := query.Rows()
+	if err != nil {
+		return []entity.SummaryBudgetIO{}, 0, err
+	}
+	defer rows.Close()
 
-    var ss []entity.SummaryBudgetIO
-    for rows.Next() {
-        var s entity.SummaryBudgetIO
-        r.DB.ScanRows(rows, &s)
-        ss = append(ss, s)
-    }
+	var ss []entity.SummaryBudgetIO
+	for rows.Next() {
+		var s entity.SummaryBudgetIO
+		r.DB.ScanRows(rows, &s)
+		ss = append(ss, s)
+	}
 
-    r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
+	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
 
-    return ss, int64(len(ss)), rows.Err()
+	return ss, int64(len(ss)), rows.Err()
+}
+
+func (r *BaseModel) UpdateSummaryBudgetIO(req entity.UpdateSummaryBudgetIORequest) error {
+	if req.ID == 0 {
+		return fmt.Errorf("UpdateSummaryBudgetIO: id required")
+	}
+	updates := map[string]interface{}{"updated_at": time.Now()}
+	if req.MOTarget != nil {
+		updates["total_monthly_mo_target"] = *req.MOTarget
+	}
+	if req.IOTarget != nil {
+		updates["total_monthly_spend_target"] = *req.IOTarget
+	}
+	if req.TargetCAC != nil {
+		updates["target_cac"] = *req.TargetCAC
+	}
+	if req.LTV != nil {
+		updates["ltv"] = *req.LTV
+	}
+	if req.ROAS != nil {
+		updates["roas"] = *req.ROAS
+	}
+	if req.ROI != nil {
+		updates["roi"] = *req.ROI
+	}
+	return r.DB.Model(&entity.SummaryBudgetIO{}).Where("id = ?", req.ID).Updates(updates).Error
 }

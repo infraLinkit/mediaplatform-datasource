@@ -243,6 +243,7 @@ type (
 		MStatusCharge     bool      `gorm:"not null;default:false" json:"m_status_charge"`
 		MStatusTimeCharge time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"m_status_time_charge"`
 		MSnackCampaignId  string    `gorm:"size:255;default:NA" json:"m_snack_campaign_id"`
+		IsEvina           bool      `gorm:"default:false" json:"is_evina"`
 		StatusEvinaFraud  bool      `gorm:"default:false" json:"status_evina_fraud"`
 		EvinaTI           string    `gorm:"size:255;default:NA" json:"evina_ti"`
 		EvinaTS           string    `gorm:"size:255;default:NA" json:"evina_ts"`

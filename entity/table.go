@@ -246,6 +246,7 @@ type (
 		IsEvina           bool      `gorm:"default:false" json:"is_evina"`
 		StatusEvinaFraud  bool      `gorm:"default:false" json:"status_evina_fraud"`
 		EvinaTI           string    `gorm:"type:text" json:"evina_ti"`
+		EvinaTRX          string    `gorm:"type:text" json:"evina_trx"`
 		EvinaTS           int64     `gorm:"default:0" json:"evina_ts"`
 		EvinaASCode       int       `gorm:"default:0" json:"evina_as_code"`
 		EvinaFTCode       int       `gorm:"default:0" json:"evina_ft_code"`

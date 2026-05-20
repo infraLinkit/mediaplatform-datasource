@@ -145,7 +145,7 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.Api
 		(payout_adn * total_postback) AS sbaf,
 		(CASE WHEN total_mo > 0 THEN (payout_af * total_postback) / total_mo ELSE 0 END) AS price_per_mo,
 		((payout_af * total_postback) - (payout_adn * total_postback)) AS waki_revenue
-	`)
+	`).Where("total_mo > 0")
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {

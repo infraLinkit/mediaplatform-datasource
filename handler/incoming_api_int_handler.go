@@ -11,6 +11,7 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
+	"github.com/wiliehidayat87/rmqp"
 )
 
 func (h *IncomingHandler) SetData(c *fiber.Ctx) error {
@@ -151,7 +152,16 @@ func (h *IncomingHandler) TrxPinReport(c *fiber.Ctx) error {
 	r := pin.ValidateParams(h.Logs)
 
 	if r.HttpStatus == 200 {
-		h.DS.PinReport(*pin)
+		if body, err := json.Marshal(pin); err == nil {
+			h.Rmqp.PublishMsg(rmqp.PublishItems{
+				ExchangeName: "E_APIPINREPORT",
+				QueueName:    "Q_APIPINREPORT",
+				ContentType:  h.Config.RabbitMQDataType,
+				Payload:      string(body),
+			})
+		} else {
+			h.Logs.Errorf("TrxPinReport marshal error: %v", err)
+		}
 	}
 
 	return c.Status(r.HttpStatus).JSON(r.Rsp)

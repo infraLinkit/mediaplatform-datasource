@@ -10,50 +10,22 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+// GetDisplayBudgetIO — BudgetIO is now country+month only; allowedCompanies param kept for signature compat.
 func (r *BaseModel) GetDisplayBudgetIO(o entity.DisplayBudgetIO, allowedCompanies []string) ([]entity.BudgetIO, int64, error) {
 	var rows *sql.Rows
 	var err error
 	var total_rows int64
 
-
-	query := r.DB.Model(&entity.BudgetIO{}).Where("company IN ?", allowedCompanies)
-
-	if o.CampaignType != "" {
-		query.Where("campaign_type = ? ", o.CampaignType)
-	} 
+	query := r.DB.Model(&entity.BudgetIO{})
 
 	if o.Action == "Search" {
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
 		}
-		if o.Partner != "" {
-			query = query.Where("partner = ?", o.Partner)
-		}
-		if o.Continent != "" {
-			query = query.Where("continent = ?", o.Continent)
-		}
-
 		if o.DateRange != "" {
-			switch strings.ToUpper(o.DateRange) {
-			case "TODAY":
-				query = query.Where("DATE(created_at) = CURRENT_DATE")
-			case "YESTERDAY":
-				query = query.Where("DATE(created_at) = CURRENT_DATE - INTERVAL '1 DAY'")
-			case "LAST7DAY":
-				query = query.Where("DATE(created_at) BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
-			case "LAST30DAY":
-				query = query.Where("DATE(created_at) BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
-			case "THISMONTH":
-				query = query.Where("DATE(created_at) >= DATE_TRUNC('month', CURRENT_DATE)")
-			case "LASTMONTH":
-				query = query.Where("DATE(created_at) BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
-			case "CUSTOMRANGE":
-				query = query.Where("DATE(created_at) BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
-			default:
-				query = query.Where("DATE(created_at) = ?", o.DateRange)
-			}
+			query = query.Where("month = ?", o.DateRange)
 		} else {
-			query = query.Where("DATE(created_at) >= DATE_TRUNC('month', CURRENT_DATE)")
+			query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
 		}
 	}
 
@@ -62,22 +34,16 @@ func (r *BaseModel) GetDisplayBudgetIO(o entity.DisplayBudgetIO, allowedCompanie
 		if strings.ToUpper(o.OrderDir) == "DESC" {
 			dir = "DESC"
 		}
-
-		switch o.OrderColumn {
-		default:
-			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
-		}
+		query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
 	} else {
-		query = query.Order("DATE(created_at) DESC").Order("id DESC")
+		query = query.Order("month DESC").Order("id DESC")
 	}
 
 	query.Unscoped().Count(&total_rows)
-
 	query_limit := query.Limit(o.PageSize)
 	if o.Page > 0 {
 		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
 	}
-
 	rows, err = query_limit.Rows()
 	if err != nil {
 		return []entity.BudgetIO{}, 0, err
@@ -90,9 +56,7 @@ func (r *BaseModel) GetDisplayBudgetIO(o entity.DisplayBudgetIO, allowedCompanie
 		r.DB.ScanRows(rows, &s)
 		ss = append(ss, s)
 	}
-
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-
 	return ss, total_rows, rows.Err()
 }
 
@@ -101,45 +65,16 @@ func (r *BaseModel) GetDisplayBudgetIOAll(o entity.DisplayBudgetIO) ([]entity.Bu
 	var err error
 	var total_rows int64
 
-
 	query := r.DB.Model(&entity.BudgetIO{})
-
-	if o.CampaignType != "" {
-		query.Where("campaign_type = ? ", o.CampaignType)
-	} 
 
 	if o.Action == "Search" {
 		if o.Country != "" {
 			query = query.Where("country = ?", o.Country)
 		}
-		if o.Partner != "" {
-			query = query.Where("partner = ?", o.Partner)
-		}
-		if o.Continent != "" {
-			query = query.Where("continent = ?", o.Continent)
-		}
-
 		if o.DateRange != "" {
-			switch strings.ToUpper(o.DateRange) {
-			case "TODAY":
-				query = query.Where("DATE(created_at) = CURRENT_DATE")
-			case "YESTERDAY":
-				query = query.Where("DATE(created_at) = CURRENT_DATE - INTERVAL '1 DAY'")
-			case "LAST7DAY":
-				query = query.Where("DATE(created_at) BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
-			case "LAST30DAY":
-				query = query.Where("DATE(created_at) BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
-			case "THISMONTH":
-				query = query.Where("DATE(created_at) >= DATE_TRUNC('month', CURRENT_DATE)")
-			case "LASTMONTH":
-				query = query.Where("DATE(created_at) BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
-			case "CUSTOMRANGE":
-				query = query.Where("DATE(created_at) BETWEEN ? AND ?", o.DateBefore, o.DateAfter)
-			default:
-				query = query.Where("DATE(created_at) = ?", o.DateRange)
-			}
+			query = query.Where("month = ?", o.DateRange)
 		} else {
-			query = query.Where("DATE(created_at) >= DATE_TRUNC('month', CURRENT_DATE)")
+			query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
 		}
 	}
 
@@ -148,22 +83,16 @@ func (r *BaseModel) GetDisplayBudgetIOAll(o entity.DisplayBudgetIO) ([]entity.Bu
 		if strings.ToUpper(o.OrderDir) == "DESC" {
 			dir = "DESC"
 		}
-
-		switch o.OrderColumn {
-		default:
-			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
-		}
+		query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
 	} else {
-		query = query.Order("DATE(created_at) DESC").Order("id DESC")
+		query = query.Order("month DESC").Order("id DESC")
 	}
 
 	query.Unscoped().Count(&total_rows)
-
 	query_limit := query.Limit(o.PageSize)
 	if o.Page > 0 {
 		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
 	}
-
 	rows, err = query_limit.Rows()
 	if err != nil {
 		return []entity.BudgetIO{}, 0, err
@@ -176,148 +105,16 @@ func (r *BaseModel) GetDisplayBudgetIOAll(o entity.DisplayBudgetIO) ([]entity.Bu
 		r.DB.ScanRows(rows, &s)
 		ss = append(ss, s)
 	}
-
 	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-
 	return ss, total_rows, rows.Err()
 }
 
 func (r *BaseModel) GetDisplayBudgetIOApproved(o entity.DisplayBudgetIO, allowedCompanies []string) ([]entity.BudgetIO, int64, error) {
-	var rows *sql.Rows
-	var err error
-	var total_rows int64
-
-
-	query := r.DB.Model(&entity.BudgetIO{}).Where("company IN ?", allowedCompanies)
-
-	if o.CampaignType != "" {
-		query.Where("campaign_type = ? ", o.CampaignType)
-	} 
-
-	if o.Action == "Search" {
-		if o.Country != "" {
-			query = query.Where("country = ?", o.Country)
-		}
-		if o.Partner != "" {
-			query = query.Where("partner = ?", o.Partner)
-		}
-		if o.Continent != "" {
-			query = query.Where("continent = ?", o.Continent)
-		}
-
-		if o.DateRange != "" {
-			query = query.Where("month = ?", o.DateRange)
-		} else {
-			query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
-		}
-	}
-
-	if o.OrderColumn != "" {
-		dir := "ASC"
-		if strings.ToUpper(o.OrderDir) == "DESC" {
-			dir = "DESC"
-		}
-
-		switch o.OrderColumn {
-		default:
-			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
-		}
-	} else {
-		query = query.Order("DATE(created_at) DESC").Order("id DESC")
-	}
-
-	query.Unscoped().Count(&total_rows)
-
-	query_limit := query.Limit(o.PageSize)
-	if o.Page > 0 {
-		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
-	}
-
-	rows, err = query_limit.Rows()
-	if err != nil {
-		return []entity.BudgetIO{}, 0, err
-	}
-	defer rows.Close()
-
-	var ss []entity.BudgetIO
-	for rows.Next() {
-		var s entity.BudgetIO
-		r.DB.ScanRows(rows, &s)
-		ss = append(ss, s)
-	}
-
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-
-	return ss, total_rows, rows.Err()
+	return r.GetDisplayBudgetIO(o, allowedCompanies)
 }
 
 func (r *BaseModel) GetDisplayBudgetIOApprovedAll(o entity.DisplayBudgetIO) ([]entity.BudgetIO, int64, error) {
-	var rows *sql.Rows
-	var err error
-	var total_rows int64
-
-
-	query := r.DB.Model(&entity.BudgetIO{})
-
-	if o.CampaignType != "" {
-		query.Where("campaign_type = ? ", o.CampaignType)
-	}
-
-	if o.Action == "Search" {
-		if o.Country != "" {
-			query = query.Where("country = ?", o.Country)
-		}
-		if o.Partner != "" {
-			query = query.Where("partner = ?", o.Partner)
-		}
-		if o.Continent != "" {
-			query = query.Where("continent = ?", o.Continent)
-		}
-
-		if o.DateRange != "" {
-			query = query.Where("month = ?", o.DateRange)
-		} else {
-			query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
-		}
-	}
-
-	if o.OrderColumn != "" {
-		dir := "ASC"
-		if strings.ToUpper(o.OrderDir) == "DESC" {
-			dir = "DESC"
-		}
-
-		switch o.OrderColumn {
-		default:
-			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
-		}
-	} else {
-		query = query.Order("DATE(created_at) DESC").Order("id DESC")
-	}
-
-	query.Unscoped().Count(&total_rows)
-
-	query_limit := query.Limit(o.PageSize)
-	if o.Page > 0 {
-		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
-	}
-
-	rows, err = query_limit.Rows()
-	if err != nil {
-		return []entity.BudgetIO{}, 0, err
-	}
-	defer rows.Close()
-
-	var ss []entity.BudgetIO
-	for rows.Next() {
-		var s entity.BudgetIO
-		r.DB.ScanRows(rows, &s)
-		ss = append(ss, s)
-	}
-
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-
-	return ss, total_rows, rows.Err()
+	return r.GetDisplayBudgetIOAll(o)
 }
 
 func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) ([]entity.SummaryBudgetIOAgg, int64, error) {
@@ -357,6 +154,10 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 			whereClause = append(whereClause, "s.service = ?")
 			args = append(args, o.Service)
 		}
+		if o.ClientType != "" {
+			whereClause = append(whereClause, "s.client_type = ?")
+			args = append(args, o.ClientType)
+		}
 		if o.DateRange != "" {
 			whereClause = append(whereClause, "s.month = ?")
 			args = append(args, o.DateRange)
@@ -375,7 +176,7 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 		where = "WHERE " + strings.Join(whereClause, " AND ")
 	}
 
-	orderBy := "ORDER BY s.month DESC, s.continent ASC, s.country ASC, s.channel ASC"
+	orderBy := "ORDER BY s.month DESC, s.continent ASC, s.country ASC, s.operator ASC, s.channel ASC"
 	if o.OrderColumn != "" {
 		dir := "ASC"
 		if strings.ToUpper(o.OrderDir) == "DESC" {
@@ -406,8 +207,7 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 			COALESCE(b.roi, 0)        AS roi
 		FROM summary_budget_ios s
 		LEFT JOIN budget_ios b ON
-			b.country = s.country AND b.company = s.company AND b.partner = s.partner
-			AND b.operator = s.operator AND b.campaign_type = s.campaign_type AND b.month = s.month
+			b.country = s.country AND b.month = s.month
 			AND b.deleted_at IS NULL
 		%s
 		GROUP BY
@@ -455,39 +255,27 @@ func (r *BaseModel) UpdateSummaryBudgetIO(req entity.UpdateSummaryBudgetIOReques
 		}
 	}
 
-	if req.Country == "" || req.Operator == "" || req.Month == "" {
-		return fmt.Errorf("UpdateSummaryBudgetIO: id or full operator key required")
+	if req.Country == "" || req.Month == "" {
+		return fmt.Errorf("UpdateSummaryBudgetIO: id or (country, month) required")
 	}
 	return r.DB.Model(&entity.BudgetIO{}).
-		Where("country = ? AND company = ? AND partner = ? AND operator = ? AND campaign_type = ? AND month = ?",
-			req.Country, req.Company, req.Partner, req.Operator, req.CampaignType, req.Month).
+		Where("country = ? AND month = ?", req.Country, req.Month).
 		Updates(updates).Error
 }
 
 type BudgetIOKey struct {
-	Country      string
-	Company      string
-	Partner      string
-	Operator     string
-	CampaignType string
-	Month        string
+	Country string
+	Month   string
 }
 
 func (r *BaseModel) UpsertBudgetIOPlaceholders(keys []BudgetIOKey) error {
 	for _, k := range keys {
 		row := entity.BudgetIO{
-			Country:      k.Country,
-			Company:      k.Company,
-			Partner:      k.Partner,
-			Operator:     k.Operator,
-			CampaignType: k.CampaignType,
-			Month:        k.Month,
+			Country: k.Country,
+			Month:   k.Month,
 		}
 		err := r.DB.Clauses(clause.OnConflict{
-			Columns: []clause.Column{
-				{Name: "country"}, {Name: "company"}, {Name: "partner"},
-				{Name: "operator"}, {Name: "campaign_type"}, {Name: "month"},
-			},
+			Columns:   []clause.Column{{Name: "country"}, {Name: "month"}},
 			DoNothing: true,
 		}).Create(&row).Error
 		if err != nil {

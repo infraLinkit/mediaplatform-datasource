@@ -13,6 +13,7 @@ type (
 		Operator     string  `gorm:"column:operator"`
 		Channel      string  `gorm:"column:channel"`
 		Service      string  `gorm:"column:service"`
+		ClientType   string  `gorm:"column:client_type"`
 		CampaignType string  `gorm:"column:campaign_type"`
 		Month        string  `gorm:"column:month"`
 		LastDate     string  `gorm:"column:last_date"`
@@ -127,7 +128,8 @@ type (
 		Operator  string `json:"operator"`
 		Channel   string `json:"channel"`
 		CampaignType string `json:"campaign_type"`
-		Service   string `json:"service"`
+		Service      string `json:"service"`
+		ClientType   string `json:"client_type"`
 
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
@@ -154,6 +156,7 @@ type (
 		Operator   string `json:"operator"`
 		Channel    string `json:"channel"`
 		Service    string `json:"service"`
+		ClientType string `json:"client_type"`
 		Month      string `json:"month"`
 
 		MOWeek1 float64 `json:"mo_week1"`
@@ -176,18 +179,14 @@ type (
 	}
 
 	UpdateSummaryBudgetIORequest struct {
-		ID           int      `json:"id"`
-		Country      string   `json:"country"`
-		Company      string   `json:"company"`
-		Partner      string   `json:"partner"`
-		Operator     string   `json:"operator"`
-		CampaignType string   `json:"campaign_type"`
-		Month        string   `json:"month"`
-		MOTarget     *float64 `json:"mo_target,omitempty"`
-		IOTarget     *float64 `json:"io_target,omitempty"`
-		TargetCAC    *float64 `json:"target_cac,omitempty"`
-		LTV          *float64 `json:"ltv,omitempty"`
-		ROAS         *float64 `json:"roas,omitempty"`
+		ID        int      `json:"id"`
+		Country   string   `json:"country"`
+		Month     string   `json:"month"`
+		MOTarget  *float64 `json:"mo_target,omitempty"`
+		IOTarget  *float64 `json:"io_target,omitempty"`
+		TargetCAC *float64 `json:"target_cac,omitempty"`
+		LTV       *float64 `json:"ltv,omitempty"`
+		ROAS      *float64 `json:"roas,omitempty"`
 		ROI          *float64 `json:"roi,omitempty"`
 	}
 )

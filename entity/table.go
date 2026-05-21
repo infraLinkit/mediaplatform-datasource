@@ -1046,21 +1046,17 @@ type (
 
 	BudgetIO struct {
 		gorm.Model
-		ID           int     `gorm:"primaryKey;autoIncrement" json:"id"`
-		Country      string  `gorm:"size:10;default:NA;uniqueIndex:idx_budgetio_unique" json:"country"`
-		Company      string  `gorm:"size:255;default:NA;uniqueIndex:idx_budgetio_unique" json:"company"`
-		Partner      string  `gorm:"size:255;default:NA;uniqueIndex:idx_budgetio_unique" json:"partner"`
-		Operator     string  `gorm:"size:100;default:NA;uniqueIndex:idx_budgetio_unique" json:"operator"`
-		CampaignType string  `gorm:"size:100;default:NA;uniqueIndex:idx_budgetio_unique" json:"campaign_type"`
-		Month        string  `gorm:"size:20;default:NA;uniqueIndex:idx_budgetio_unique" json:"month"`
-		IOTarget     float64 `gorm:"type:double precision;default:0" json:"io_target"`
-		MOTarget     float64 `gorm:"type:double precision;default:0" json:"mo_target"`
-		TargetCAC    float64 `gorm:"type:double precision;default:0" json:"target_cac"`
-		LTV          float64 `gorm:"type:double precision;default:0" json:"ltv"`
-		ROAS         float64 `gorm:"type:double precision;default:0" json:"roas"`
-		ROI          float64 `gorm:"type:double precision;default:0" json:"roi"`
-		CreatedAt    time.Time
-		UpdatedAt    time.Time
+		ID        int     `gorm:"primaryKey;autoIncrement" json:"id"`
+		Country   string  `gorm:"size:10;default:NA;uniqueIndex:idx_budgetio_unique" json:"country"`
+		Month     string  `gorm:"size:20;default:NA;uniqueIndex:idx_budgetio_unique" json:"month"`
+		IOTarget  float64 `gorm:"type:double precision;default:0" json:"io_target"`
+		MOTarget  float64 `gorm:"type:double precision;default:0" json:"mo_target"`
+		TargetCAC float64 `gorm:"type:double precision;default:0" json:"target_cac"`
+		LTV       float64 `gorm:"type:double precision;default:0" json:"ltv"`
+		ROAS      float64 `gorm:"type:double precision;default:0" json:"roas"`
+		ROI       float64 `gorm:"type:double precision;default:0" json:"roi"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
 	}
 
 	SummaryBudgetIO struct {
@@ -1068,6 +1064,7 @@ type (
 		ID           int       `gorm:"primaryKey;autoIncrement" json:"id"`
 		SummaryDate  time.Time `gorm:"type:date;uniqueIndex:idx_sumbio_unique" json:"summary_date"`
 		CampaignType string    `gorm:"size:100;default:NA;uniqueIndex:idx_sumbio_unique" json:"campaign_type"`
+		ClientType   string    `gorm:"size:50;default:NA;uniqueIndex:idx_sumbio_unique" json:"client_type"`
 		Month        string    `gorm:"size:20;default:NA" json:"month"`
 		Country      string    `gorm:"size:50;default:NA;uniqueIndex:idx_sumbio_unique" json:"country"`
 		Continent    string    `gorm:"size:50;default:NA" json:"continent"`

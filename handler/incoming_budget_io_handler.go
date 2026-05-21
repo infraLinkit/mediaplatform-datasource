@@ -376,6 +376,7 @@ func (h *IncomingHandler) DisplaySummaryBudgetIO(c *fiber.Ctx) error {
 		CampaignType: m["campaign_type"],
 		Operator:    m["operator"],
 		Service:     m["service"],
+		ClientType:  m["client_type"],
 		Draw:        draw,
 		Page:        page,
 		PageSize:    pageSize,
@@ -446,6 +447,7 @@ func MapSummaryBudgetIOToReportRows(data []entity.SummaryBudgetIOAgg) []entity.I
 			Partner:     d.Partner,
 			Operator:    d.Operator,
 			Channel:     d.Channel,
+			ClientType:  d.ClientType,
 			Service:     d.Service,
 			Month:       d.Month,
 			MOWeek1:     d.MOWeek1,
@@ -476,10 +478,10 @@ func (h *IncomingHandler) UpdateSummaryBudgetIO(c *fiber.Ctx) error {
 			"message": "invalid request body",
 		})
 	}
-	if req.ID == 0 && (req.Country == "" || req.Operator == "" || req.Month == "") {
+	if req.ID == 0 && (req.Country == "" || req.Month == "") {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"code":    fiber.StatusBadRequest,
-			"message": "id or full operator key (country, operator, month) required",
+			"message": "id or (country, month) required",
 		})
 	}
 	if err := h.DS.UpdateSummaryBudgetIO(req); err != nil {

@@ -295,6 +295,92 @@ func (r *BaseModel) UpdateReportSummaryCampaignMonitoringBudget(o entity.Summary
 	return result.Error
 }
 
+func (r *BaseModel) GetCampaignBudgetSummary(params entity.ParamsCampaignSummary, dateStart, dateEnd time.Time) ([]entity.BudgetDetailItem, []entity.BudgetSummaryItem, error) {
+	base := r.DB.Table("summary_campaigns").
+		Where("deleted_at IS NULL").
+		Where("summary_date BETWEEN ? AND ?", dateStart, dateEnd)
+
+	if params.Country != "" {
+		base = base.Where("country = ?", params.Country)
+	}
+	if params.Operator != "" {
+		base = base.Where("operator = ?", params.Operator)
+	}
+	if params.PartnerName != "" {
+		base = base.Where("partner = ?", params.PartnerName)
+	}
+	if params.Service != "" {
+		base = base.Where("service = ?", params.Service)
+	}
+	if params.Adnet != "" {
+		base = base.Where("adnet = ?", params.Adnet)
+	}
+
+	var detail []entity.BudgetDetailItem
+	err := base.Session(&gorm.Session{}).
+		Select(`country, operator, partner, service, adnet,
+			EXTRACT(YEAR FROM summary_date)::int AS year,
+			EXTRACT(MONTH FROM summary_date)::int AS month,
+			MAX(target_daily_budget) AS budget,
+			SUM(saaf) AS spending,
+			CASE WHEN MAX(target_daily_budget) = 0 THEN 0
+			     ELSE SUM(saaf) / MAX(target_daily_budget) * 100
+			END AS budget_usage`).
+		Group("country, operator, partner, service, adnet, EXTRACT(YEAR FROM summary_date), EXTRACT(MONTH FROM summary_date)").
+		Unscoped().
+		Find(&detail).Error
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Derive country-level budget from detail aggregation
+	type key struct{ country string; year, month int }
+	agg := make(map[key]*entity.BudgetSummaryItem)
+	for _, d := range detail {
+		k := key{d.Country, d.Year, d.Month}
+		if agg[k] == nil {
+			agg[k] = &entity.BudgetSummaryItem{Country: d.Country, Year: d.Year, Month: d.Month}
+		}
+		agg[k].Budget += d.Budget
+		agg[k].Spending += d.Spending
+	}
+	var summaryList []entity.BudgetSummaryItem
+	for _, v := range agg {
+		summaryList = append(summaryList, *v)
+	}
+
+	return detail, summaryList, nil
+}
+
+func (r *BaseModel) UpdateTargetBudgetByLevel(req entity.EditTargetBudgetRequest) error {
+	query := r.DB.Table("summary_campaigns").
+		Where("EXTRACT(YEAR FROM summary_date) = ? AND EXTRACT(MONTH FROM summary_date) = ?", req.Year, req.Month).
+		Where("country = ?", req.Country)
+
+	switch req.Level {
+	case "adnet":
+		query = query.Where("operator = ? AND partner = ? AND service = ? AND adnet = ?", req.Operator, req.Partner, req.Service, req.Adnet)
+	case "service":
+		query = query.Where("operator = ? AND partner = ? AND service = ?", req.Operator, req.Partner, req.Service)
+	case "partner":
+		query = query.Where("operator = ? AND partner = ?", req.Operator, req.Partner)
+	case "operator":
+		query = query.Where("operator = ?", req.Operator)
+	}
+
+	result := query.Updates(map[string]interface{}{
+		"target_daily_budget":   req.Budget,
+		"target_monthly_budget": req.Budget * float64(daysInMonth(req.Year, req.Month)),
+	})
+
+	r.Logs.Debug(fmt.Sprintf("UpdateTargetBudgetByLevel affected: %d, error: %v", result.RowsAffected, result.Error))
+	return result.Error
+}
+
+func daysInMonth(year, month int) int {
+	return time.Date(year, time.Month(month+1), 0, 0, 0, 0, 0, time.UTC).Day()
+}
+
 func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSummary) ([]entity.CampaignSummaryMonitoring, time.Time, time.Time, error) {
 	var (
 		rows *sql.Rows

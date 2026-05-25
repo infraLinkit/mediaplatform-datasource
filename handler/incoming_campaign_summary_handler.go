@@ -120,7 +120,7 @@ func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.Pa
 	summary := formatSummaryDataValue(summaryCampaign, params, startDate, endDate)
 	sortedSummary := sortDataRevenue(summary, params.DataBasedOn, params.DataBasedOnIndicator)
 
-	//budgetDetailPerMonth, _ := h.DS.GetTargetBudgetList(params.Country, year, month)
+	budgetDetail, budgetSummary, _ := h.DS.GetCampaignBudgetSummary(params, startDate, endDate)
 
 	if err == nil {
 
@@ -149,8 +149,8 @@ func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.Pa
 				Message: config.OK_DESC,
 				Data:    sortedSummary,
 				TotalSummary: map[string]interface{}{
-					"budget_detail": BudgetDetailPerMonth,
-					"budget":        TargetBudget,
+					"budget":        budgetSummary,
+					"budget_detail": budgetDetail,
 				},
 			},
 		}
@@ -258,6 +258,7 @@ func groupOperatorValue(campaings []entity.CampaignSummaryMonitoring, params ent
 		placeHolder := map[string]any{
 			"level":     "operator",
 			"country":   campaignPerOperator[0].Operator,
+			"operator":  campaignPerOperator[0].Operator,
 			"_children": children,
 		}
 		completeSummary := mergeMapsRevenue(generatedSummary, placeHolder)
@@ -275,12 +276,14 @@ func groupPartnerValue(campaings []entity.CampaignSummaryMonitoring, params enti
 
 	for _, campaignPerPatner := range groupedPartner {
 		var children []any
-		generatedSummary := generateSummaryValue(campaignPerPatner, params, startDate, endDate, "parnter")
+		generatedSummary := generateSummaryValue(campaignPerPatner, params, startDate, endDate, "partner")
 		children = groupServiceValue(campaignPerPatner, params, startDate, endDate)
 
 		placeHolder := map[string]any{
 			"level":     "partner",
 			"country":   campaignPerPatner[0].Partner,
+			"operator":  campaignPerPatner[0].Operator,
+			"partner":   campaignPerPatner[0].Partner,
 			"_children": children,
 		}
 		completeSummary := mergeMapsRevenue(generatedSummary, placeHolder)
@@ -304,6 +307,9 @@ func groupServiceValue(campaings []entity.CampaignSummaryMonitoring, params enti
 		placeHolder := map[string]any{
 			"level":     "service",
 			"country":   campaignPerService[0].Service,
+			"operator":  campaignPerService[0].Operator,
+			"partner":   campaignPerService[0].Partner,
+			"service":   campaignPerService[0].Service,
 			"_children": children,
 		}
 		completeSummary := mergeMapsRevenue(generatedSummary, placeHolder)
@@ -321,8 +327,12 @@ func groupAdnetValue(campaings []entity.CampaignSummaryMonitoring, params entity
 	for _, campaignPerAdnet := range groupedAdnet {
 		generatedSummary := generateSummaryValue(campaignPerAdnet, params, startDate, endDate, "adnet")
 		placeHolder := map[string]any{
-			"level":   "adnet",
-			"country": campaignPerAdnet[0].Adnet,
+			"level":    "adnet",
+			"country":  campaignPerAdnet[0].Adnet,
+			"operator": campaignPerAdnet[0].Operator,
+			"partner":  campaignPerAdnet[0].Partner,
+			"service":  campaignPerAdnet[0].Service,
+			"adnet":    campaignPerAdnet[0].Adnet,
 		}
 		completeSummary := mergeMapsRevenue(generatedSummary, placeHolder)
 		formattedData = append(formattedData, completeSummary)
@@ -414,7 +424,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 			operatorData := map[string]interface{}{}
 
 			for _, indicator := range params.DataIndicators {
-				if indicator != "target_daily_budget" && indicator != "budget_usage" {
+				if indicator != "target_daily_budget" {
 					operatorData[indicator] = 0.0
 				}
 			}
@@ -430,7 +440,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				date := formatDate(campaign.SummaryDate, params.DataType)
 
 				for _, indicator := range params.DataIndicators {
-					if indicator == "target_daily_budget" {
+					if indicator == "target_daily_budget" || indicator == "budget_usage" {
 						continue
 					}
 
@@ -591,7 +601,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 			}
 
 			if containsString(params.DataIndicators, "budget_usage") {
-				spending := safeFloat(operatorData, "spending_to_adnets")
+				spending := safeFloat(operatorData, "total_spending")
 				budget := safeFloat(operatorData, "target_daily_budget")
 				usage := 0.0
 				if budget > 0 {
@@ -599,12 +609,10 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 				}
 				operatorData["budget_usage"] = usage
 
-				totals["budget_usage"] += usage
-
 				currentDate := startDate
 				for !currentDate.After(endDate) {
 					date := formatDate(currentDate, params.DataType)
-					dailySpending := safeFloat(days[date]["spending_to_adnets"], "value")
+					dailySpending := safeFloat(days[date]["total_spending"], "value")
 					dailyBudget := operatorDailyBudgets[operatorKey][date]
 					dailyUsage := 0.0
 					if dailyBudget > 0 {
@@ -667,7 +675,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 		}
 
 		if containsString(params.DataIndicators, "budget_usage") {
-			countrySpending := totals["spending_to_adnets"]
+			countrySpending := totals["total_spending"]
 			countryBudget := totals["target_daily_budget"]
 			countryUsage := 0.0
 			if countryBudget > 0 {
@@ -675,16 +683,18 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 			}
 			countryData["budget_usage"] = countryUsage
 
+			totals["budget_usage"] = 0.0
 			currentDate := startDate
 			for !currentDate.After(endDate) {
 				date := formatDate(currentDate, params.DataType)
-				dailySpending := safeFloat(days[date]["spending_to_adnets"], "value")
+				dailySpending := safeFloat(days[date]["total_spending"], "value")
 				dailyBudget := countryDailyBudgets[country][date]
 				dailyUsage := 0.0
 				if dailyBudget > 0 {
 					dailyUsage = safeDivision(dailySpending, dailyBudget) * 100
 				}
 				days[date]["budget_usage"]["value"] = dailyUsage
+				totals["budget_usage"] += dailyUsage
 				currentDate = incrementDate(currentDate, params.DataType)
 			}
 		}
@@ -937,4 +947,15 @@ func safeDivision(numerator, denominator float64) float64 {
 		return 0
 	}
 	return numerator / denominator
+}
+
+func (h *IncomingHandler) EditTargetBudget(c *fiber.Ctx) error {
+	var req entity.EditTargetBudgetRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "NOK", "error": "invalid request body"})
+	}
+	if err := h.DS.UpdateTargetBudgetByLevel(req); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "NOK", "error": err.Error()})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "OK", "error": ""})
 }

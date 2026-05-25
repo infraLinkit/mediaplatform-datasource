@@ -787,3 +787,37 @@ func (h *IncomingHandler) InquiryCampID(c *fiber.Ctx) error {
 		}
 	}
 }
+
+func (h *IncomingHandler) InquiryAPICampID(c *fiber.Ctx) error {
+
+	c.Set("Content-Type", "application/x-www-form-urlencoded")
+	c.Accepts("application/x-www-form-urlencoded")
+	c.AcceptsCharsets("utf-8", "iso-8859-1")
+
+	h.Logs.Debug(fmt.Sprintf("Inquiry API Camp ID By Params %#v ...\n", c.AllParams()))
+
+	request := new(entity.InquiryAPICampID)
+
+	if err := c.QueryParser(request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "check mandatory param : country, operator, adnet"})
+	}
+
+	request.Country = strings.ToUpper(request.Country)
+	request.Operator = strings.ToUpper(request.Operator)
+	request.Adnet = strings.ToUpper(request.Adnet)
+
+	if request.Country == "" || request.Operator == "" || request.Adnet == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "mandatory params missing: country, operator, adnet"})
+	}
+
+	results, err := h.DS.GetAPICampaignDetails(request.Country, request.Operator, request.Adnet)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{Code: fiber.StatusInternalServerError, Message: "failed to retrieve configs"})
+	}
+
+	if len(results) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "no campaign found for given params"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: results})
+}

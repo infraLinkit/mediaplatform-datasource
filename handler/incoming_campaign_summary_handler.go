@@ -959,3 +959,17 @@ func (h *IncomingHandler) EditTargetBudgetLevel(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "OK", "error": ""})
 }
+
+func (h *IncomingHandler) EditTargetBudgetBatch(c *fiber.Ctx) error {
+	var reqs []entity.EditTargetBudgetRequest
+	if err := c.BodyParser(&reqs); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "NOK", "error": "invalid request body"})
+	}
+	if len(reqs) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "NOK", "error": "empty batch"})
+	}
+	if err := h.DS.UpdateTargetBudgetBatch(reqs); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"status": "NOK", "error": err.Error()})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"status": "OK", "error": ""})
+}

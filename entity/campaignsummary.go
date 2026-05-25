@@ -221,15 +221,16 @@ type (
 	}
 
 	EditTargetBudgetRequest struct {
-		Level    string  `form:"level"    json:"level"`
-		Country  string  `form:"country"  json:"country"`
-		Operator string  `form:"operator" json:"operator"`
-		Partner  string  `form:"partner"  json:"partner"`
-		Service  string  `form:"service"  json:"service"`
-		Adnet    string  `form:"adnet"    json:"adnet"`
-		Year     int     `form:"year"     json:"year"`
-		Month    int     `form:"month"    json:"month"`
-		Budget   float64 `form:"budget"   json:"budget"`
+		Level    string  `form:"level"     json:"level"`
+		Country  string  `form:"country"   json:"country"`
+		Operator string  `form:"operator"  json:"operator"`
+		Partner  string  `form:"partner"   json:"partner"`
+		Service  string  `form:"service"   json:"service"`
+		Adnet    string  `form:"adnet"     json:"adnet"`
+		Year     int     `form:"year"      json:"year"`
+		Month    int     `form:"month"     json:"month"`
+		Budget   float64 `form:"budget"    json:"budget"`
+		DataType string  `form:"data_type" json:"data_type"`
 	}
 
 	BudgetDetailItem struct {

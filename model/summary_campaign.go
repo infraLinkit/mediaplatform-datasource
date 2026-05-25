@@ -295,7 +295,7 @@ func (r *BaseModel) UpdateReportSummaryCampaignMonitoringBudget(o entity.Summary
 	return result.Error
 }
 
-func (r *BaseModel) GetCampaignBudgetSummary(params entity.ParamsCampaignSummary, dateStart, dateEnd time.Time) ([]entity.BudgetDetailItem, []entity.BudgetSummaryItem, error) {
+func (r *BaseModel) GetCampaignBudgetSummary(params entity.ParamsCampaignSummary, dateStart, dateEnd time.Time) ([]entity.BudgetDetailItem, []entity.BudgetSummaryItem, []entity.BudgetDetailItem, error) {
 	base := r.DB.Table("summary_campaigns").
 		Where("deleted_at IS NULL").
 		Where("summary_date BETWEEN ? AND ?", dateStart, dateEnd)
@@ -321,35 +321,96 @@ func (r *BaseModel) GetCampaignBudgetSummary(params entity.ParamsCampaignSummary
 		Select(`country, operator, partner, service, adnet,
 			EXTRACT(YEAR FROM summary_date)::int AS year,
 			EXTRACT(MONTH FROM summary_date)::int AS month,
-			MAX(target_daily_budget) AS budget,
+			MAX(target_monthly_budget) AS budget,
 			SUM(saaf) AS spending,
-			CASE WHEN MAX(target_daily_budget) = 0 THEN 0
-			     ELSE SUM(saaf) / MAX(target_daily_budget) * 100
+			CASE WHEN MAX(target_monthly_budget) = 0 THEN 0
+			     ELSE SUM(saaf) / MAX(target_monthly_budget) * 100
 			END AS budget_usage`).
 		Group("country, operator, partner, service, adnet, EXTRACT(YEAR FROM summary_date), EXTRACT(MONTH FROM summary_date)").
 		Unscoped().
 		Find(&detail).Error
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	// Derive country-level budget from detail aggregation
-	type key struct{ country string; year, month int }
-	agg := make(map[key]*entity.BudgetSummaryItem)
+	// Sum spending per country from adnet-level actuals
+	type cKey struct {
+		country      string
+		year, month int
+	}
+	spendingMap := make(map[cKey]float64)
 	for _, d := range detail {
-		k := key{d.Country, d.Year, d.Month}
-		if agg[k] == nil {
-			agg[k] = &entity.BudgetSummaryItem{Country: d.Country, Year: d.Year, Month: d.Month}
-		}
-		agg[k].Budget += d.Budget
-		agg[k].Spending += d.Spending
-	}
-	var summaryList []entity.BudgetSummaryItem
-	for _, v := range agg {
-		summaryList = append(summaryList, *v)
+		k := cKey{d.Country, d.Year, d.Month}
+		spendingMap[k] += d.Spending
 	}
 
-	return detail, summaryList, nil
+	// Country budget: read from target_budgets (independently stored, not derived from adnet sum)
+	periodStart := time.Date(dateStart.Year(), dateStart.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+	periodEnd := time.Date(dateEnd.Year(), dateEnd.Month()+1, 1, 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1).Format("2006-01-02")
+
+	type rawBudgetRow struct {
+		Country string
+		Year    int
+		Month   int
+		Budget  float64
+	}
+	var rawBudgets []rawBudgetRow
+	tbQuery := r.DB.Table("target_budgets").
+		Select("country, year, month, budget").
+		Where("(year::text||'-'||lpad(month::text,2,'0')||'-02')::date BETWEEN ? AND ?", periodStart, periodEnd)
+	if params.Country != "" {
+		tbQuery = tbQuery.Where("country = ?", params.Country)
+	}
+	tbQuery.Scan(&rawBudgets)
+
+	var summaryList []entity.BudgetSummaryItem
+	for _, rb := range rawBudgets {
+		k := cKey{rb.Country, rb.Year, rb.Month}
+		summaryList = append(summaryList, entity.BudgetSummaryItem{
+			Country:  rb.Country,
+			Year:     rb.Year,
+			Month:    rb.Month,
+			Budget:   rb.Budget,
+			Spending: spendingMap[k],
+		})
+	}
+	if len(summaryList) == 0 {
+		// Fallback: derive from adnet sum if target_budgets has no entry yet
+		agg := make(map[cKey]*entity.BudgetSummaryItem)
+		for _, d := range detail {
+			k := cKey{d.Country, d.Year, d.Month}
+			if agg[k] == nil {
+				agg[k] = &entity.BudgetSummaryItem{Country: d.Country, Year: d.Year, Month: d.Month}
+			}
+			agg[k].Budget += d.Budget
+			agg[k].Spending += d.Spending
+		}
+		for _, v := range agg {
+			summaryList = append(summaryList, *v)
+		}
+	}
+
+	// Sub-level budgets: sentinel records from target_budget_details where adnet=''
+	var budgetSelf []entity.BudgetDetailItem
+	tbdQuery := r.DB.Table("target_budget_details").
+		Select("country, operator, partner, service, adnet, year, month, budget, 0 as spending, 0 as budget_usage").
+		Where("adnet = ''").
+		Where("(year::text||'-'||lpad(month::text,2,'0')||'-02')::date BETWEEN ? AND ?", periodStart, periodEnd)
+	if params.Country != "" {
+		tbdQuery = tbdQuery.Where("country = ?", params.Country)
+	}
+	if params.Operator != "" {
+		tbdQuery = tbdQuery.Where("operator = ?", params.Operator)
+	}
+	if params.PartnerName != "" {
+		tbdQuery = tbdQuery.Where("partner = ?", params.PartnerName)
+	}
+	if params.Service != "" {
+		tbdQuery = tbdQuery.Where("service = ?", params.Service)
+	}
+	tbdQuery.Find(&budgetSelf)
+
+	return detail, summaryList, budgetSelf, nil
 }
 
 func (r *BaseModel) UpdateTargetBudgetByLevel(req entity.EditTargetBudgetRequest) error {
@@ -368,9 +429,9 @@ func (r *BaseModel) UpdateTargetBudgetByLevel(req entity.EditTargetBudgetRequest
 		query = query.Where("operator = ?", req.Operator)
 	}
 
+	days := float64(daysInMonth(req.Year, req.Month))
 	result := query.Updates(map[string]interface{}{
-		"target_daily_budget":   req.Budget,
-		"target_monthly_budget": req.Budget * float64(daysInMonth(req.Year, req.Month)),
+		"target_daily_budget": req.Budget / days,
 	})
 
 	r.Logs.Debug(fmt.Sprintf("UpdateTargetBudgetByLevel affected: %d, error: %v", result.RowsAffected, result.Error))
@@ -380,6 +441,18 @@ func (r *BaseModel) UpdateTargetBudgetByLevel(req entity.EditTargetBudgetRequest
 func (r *BaseModel) UpdateTargetBudgetBatch(reqs []entity.EditTargetBudgetRequest) error {
 	return r.DB.Transaction(func(tx *gorm.DB) error {
 		for _, req := range reqs {
+			// Country level: store budget independently in target_budgets, skip summary_campaigns
+			if req.Level == "country" {
+				upsertSQL := `INSERT INTO target_budgets (country, year, month, budget, created_at, updated_at)
+					VALUES (?, ?, ?, ?, NOW(), NOW())
+					ON CONFLICT (country, year, month) DO UPDATE SET budget = ?, updated_at = NOW()`
+				if err := tx.Exec(upsertSQL, req.Country, req.Year, req.Month, req.Budget, req.Budget).Error; err != nil {
+					return err
+				}
+				continue
+			}
+
+			// Update summary_campaigns for operator/partner/service/adnet levels
 			query := tx.Table("summary_campaigns").
 				Where("EXTRACT(YEAR FROM summary_date) = ? AND EXTRACT(MONTH FROM summary_date) = ?", req.Year, req.Month).
 				Where("country = ?", req.Country)
@@ -393,10 +466,32 @@ func (r *BaseModel) UpdateTargetBudgetBatch(reqs []entity.EditTargetBudgetReques
 			case "operator":
 				query = query.Where("operator = ?", req.Operator)
 			}
+			days := float64(daysInMonth(req.Year, req.Month))
+			dailyBudget := req.Budget / days
+			monthlyBudget := req.Budget
 			if err := query.Updates(map[string]interface{}{
-				"target_daily_budget":   req.Budget,
-				"target_monthly_budget": req.Budget * float64(daysInMonth(req.Year, req.Month)),
+				"target_daily_budget":   dailyBudget,
+				"target_monthly_budget": monthlyBudget,
 			}).Error; err != nil {
+				return err
+			}
+
+			// Upsert level budget to target_budget_details using sentinel adnet='' for non-adnet levels
+			var operator, partner, service, adnet string
+			switch req.Level {
+			case "adnet":
+				operator, partner, service, adnet = req.Operator, req.Partner, req.Service, req.Adnet
+			case "service":
+				operator, partner, service, adnet = req.Operator, req.Partner, req.Service, ""
+			case "partner":
+				operator, partner, service, adnet = req.Operator, req.Partner, "", ""
+			case "operator":
+				operator, partner, service, adnet = req.Operator, "", "", ""
+			}
+			tbdSQL := `INSERT INTO target_budget_details (country, year, month, operator, partner, service, adnet, budget, budget_per_day, created_at, updated_at)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+				ON CONFLICT (country, year, month, operator, partner, service, adnet) DO UPDATE SET budget = ?, budget_per_day = ?, updated_at = NOW()`
+			if err := tx.Exec(tbdSQL, req.Country, req.Year, req.Month, operator, partner, service, adnet, monthlyBudget, dailyBudget, monthlyBudget, dailyBudget).Error; err != nil {
 				return err
 			}
 		}
@@ -644,9 +739,9 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 			case "waki_revenue":
 				formattedValue = "SUM(saaf - sbaf) AS waki_revenue"
 			case "target_budget":
-				formattedValue = "SUM(target_monthly_budget) AS target_budget"
+				formattedValue = "MAX(target_monthly_budget) AS target_budget"
 			case "budget_usage":
-				formattedValue = "SUM(CASE WHEN target_daily_budget = 0 THEN 0 ELSE (saaf / target_daily_budget * 100) END) AS budget_usage"
+				formattedValue = "CASE WHEN MAX(target_monthly_budget) = 0 THEN 0 ELSE SUM(saaf) / MAX(target_monthly_budget) * 100 END AS budget_usage"
 			case "spending_to_adnets":
 				formattedValue = "SUM(sbaf) AS spending_to_adnets"
 			case "total_spending":
@@ -660,7 +755,7 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 			case "traffic":
 				formattedValue = "SUM(landing) AS traffic"
 			case "budget":
-				formattedValue = "SUM(target_daily_budget) AS budget"
+				formattedValue = "MAX(target_monthly_budget) AS budget"
 			case "revenue":
 				formattedValue = "SUM(revenue) AS revenue"
 			default:
@@ -829,9 +924,9 @@ func formatQueryIndicatorsBudget(selects []string, dataType string) []string {
 		if dataType == "monthly_report" {
 			switch value {
 			case "budget":
-				formattedValue = "SUM(target_daily_budget) AS budget"
+				formattedValue = "MAX(target_monthly_budget) AS budget"
 			case "target_budget":
-				formattedValue = "SUM(target_daily_budget) AS target_budget"
+				formattedValue = "MAX(target_monthly_budget) AS target_budget"
 			case "spending":
 				formattedValue = "SUM(saaf) AS spending"
 			case "mo":
@@ -839,7 +934,7 @@ func formatQueryIndicatorsBudget(selects []string, dataType string) []string {
 			case "waki_revenue":
 				formattedValue = "SUM(saaf - sbaf) AS waki_revenue"
 			case "budget_usage":
-				formattedValue = "SUM(CASE WHEN target_daily_budget = 0 THEN 0 ELSE (saaf / target_daily_budget * 100) END) AS budget_usage"
+				formattedValue = "CASE WHEN MAX(target_monthly_budget) = 0 THEN 0 ELSE SUM(saaf) / MAX(target_monthly_budget) * 100 END AS budget_usage"
 			case "spending_to_adnets":
 				formattedValue = "SUM(sbaf) AS spending_to_adnets"
 			case "total_spending":

@@ -11,6 +11,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type ApiPinReportWithAlias struct {
+	ApiPinReport
+	OperatorAlias string `json:"operator_alias"`
+}
+
 type (
 	DisplayPinReport struct { // api report
 		ID          int       `form:"id" json:"id"`

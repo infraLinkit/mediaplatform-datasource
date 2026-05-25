@@ -117,17 +117,16 @@ func (h *IncomingHandler) DisplayCampaignSummaryChart(c *fiber.Ctx) error {
 func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.ParamsCampaignSummary) entity.ReturnResponse {
 
 	summaryCampaign, startDate, endDate, err := h.DS.GetSummaryCampaignMonitoring(params)
-	summary := formatSummaryDataValue(summaryCampaign, params, startDate, endDate)
+	BudgetDetailPerMonth, _ := h.DS.GetTargetBudgetList(params.Country, startDate, endDate, params.Operator, params.PartnerName, params.Service, params.Adnet)
+	summary := formatSummaryDataValue(summaryCampaign, params, startDate, endDate, BudgetDetailPerMonth)
 	sortedSummary := sortDataRevenue(summary, params.DataBasedOn, params.DataBasedOnIndicator)
 
-	budgetDetail, budgetSummary, _ := h.DS.GetCampaignBudgetSummary(params, startDate, endDate)
+	budgetDetail, budgetSummary, budgetSelf, _ := h.DS.GetCampaignBudgetSummary(params, startDate, endDate)
 
 	if err == nil {
 
-		BudgetDetailPerMonth := []entity.TargetBudgetDetail{}
 		TargetBudget := []entity.TargetBudget{}
 
-		BudgetDetailPerMonth, _ = h.DS.GetTargetBudgetList(params.Country, startDate, endDate, params.Operator, params.PartnerName, params.Service, params.Adnet)
 		TargetBudget, _ = h.DS.GetTargetBudget(params.Country, startDate, endDate, params.Operator, params.PartnerName, params.Service, params.Adnet)
 
 		/*
@@ -151,6 +150,7 @@ func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.Pa
 				TotalSummary: map[string]interface{}{
 					"budget":        budgetSummary,
 					"budget_detail": budgetDetail,
+					"budget_self":   budgetSelf,
 				},
 			},
 		}
@@ -165,12 +165,12 @@ func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.Pa
 	}
 }
 
-func formatSummaryDataValue(data []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time) []map[string]interface{} {
+func formatSummaryDataValue(data []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time, budgetDetails []entity.TargetBudgetDetail) []map[string]interface{} {
 	var formattedData []map[string]interface{}
 
 	if params.DataType == "cr" || params.DataType == "spending" {
 		if params.All == "true" {
-			generatedSummary := generateSummaryValue(data, params, startDate, endDate, "all")
+			generatedSummary := generateSummaryValue(data, params, startDate, endDate, "all", budgetDetails)
 			placeHolder := map[string]any{
 				"all": "All Campaign",
 			}
@@ -181,7 +181,7 @@ func formatSummaryDataValue(data []entity.CampaignSummaryMonitoring, params enti
 				return campaign.Country + "|" + campaign.Operator + "|" + campaign.Service + "|" + campaign.Adnet
 			})
 			for _, campaignPerAdnet := range groupedAdnet {
-				generatedSummary := generateSummaryValue(campaignPerAdnet, params, startDate, endDate, "adnet")
+				generatedSummary := generateSummaryValue(campaignPerAdnet, params, startDate, endDate, "adnet", budgetDetails)
 
 				placeHolder := map[string]interface{}{
 					"level":         "country",
@@ -199,7 +199,7 @@ func formatSummaryDataValue(data []entity.CampaignSummaryMonitoring, params enti
 		}
 	} else {
 		if params.All == "true" {
-			generatedSummary := generateSummaryValue(data, params, startDate, endDate, "all")
+			generatedSummary := generateSummaryValue(data, params, startDate, endDate, "all", budgetDetails)
 			placeHolder := map[string]interface{}{
 				"level":   "country",
 				"country": "All",
@@ -213,19 +213,19 @@ func formatSummaryDataValue(data []entity.CampaignSummaryMonitoring, params enti
 			})
 
 			for _, campaignPerCountry := range groupedCountry {
-				generatedCountrySummary := generateSummaryValue(campaignPerCountry, params, startDate, endDate, "country")
+				generatedCountrySummary := generateSummaryValue(campaignPerCountry, params, startDate, endDate, "country", budgetDetails)
 
 				var children []any
 
 				switch params.ReportType {
 				case "campaign_summary":
-					children = groupPartnerValue(campaignPerCountry, params, startDate, endDate)
+					children = groupPartnerValue(campaignPerCountry, params, startDate, endDate, budgetDetails)
 				case "url_service_summary":
-					children = groupServiceValue(campaignPerCountry, params, startDate, endDate)
+					children = groupServiceValue(campaignPerCountry, params, startDate, endDate, budgetDetails)
 				case "adnet_summary":
-					children = groupAdnetValue(campaignPerCountry, params, startDate, endDate)
+					children = groupAdnetValue(campaignPerCountry, params, startDate, endDate, budgetDetails)
 				default:
-					children = groupOperatorValue(campaignPerCountry, params, startDate, endDate)
+					children = groupOperatorValue(campaignPerCountry, params, startDate, endDate, budgetDetails)
 				}
 
 				placeHolder := map[string]interface{}{
@@ -242,7 +242,7 @@ func formatSummaryDataValue(data []entity.CampaignSummaryMonitoring, params enti
 	return formattedData
 }
 
-func groupOperatorValue(campaings []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time) []interface{} {
+func groupOperatorValue(campaings []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time, budgetDetails []entity.TargetBudgetDetail) []interface{} {
 	var formattedData []any
 	groupedOperator := goterators.Group(campaings, func(campaign entity.CampaignSummaryMonitoring) string {
 		return campaign.Operator
@@ -251,9 +251,9 @@ func groupOperatorValue(campaings []entity.CampaignSummaryMonitoring, params ent
 	for _, campaignPerOperator := range groupedOperator {
 		var children []any
 
-		generatedSummary := generateSummaryValue(campaignPerOperator, params, startDate, endDate, "operator")
+		generatedSummary := generateSummaryValue(campaignPerOperator, params, startDate, endDate, "operator", budgetDetails)
 
-		children = groupPartnerValue(campaignPerOperator, params, startDate, endDate)
+		children = groupPartnerValue(campaignPerOperator, params, startDate, endDate, budgetDetails)
 
 		placeHolder := map[string]any{
 			"level":     "operator",
@@ -267,7 +267,7 @@ func groupOperatorValue(campaings []entity.CampaignSummaryMonitoring, params ent
 	return formattedData
 }
 
-func groupPartnerValue(campaings []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time) []interface{} {
+func groupPartnerValue(campaings []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time, budgetDetails []entity.TargetBudgetDetail) []interface{} {
 	var formattedData []any
 
 	groupedPartner := goterators.Group(campaings, func(campaign entity.CampaignSummaryMonitoring) string {
@@ -276,8 +276,8 @@ func groupPartnerValue(campaings []entity.CampaignSummaryMonitoring, params enti
 
 	for _, campaignPerPatner := range groupedPartner {
 		var children []any
-		generatedSummary := generateSummaryValue(campaignPerPatner, params, startDate, endDate, "partner")
-		children = groupServiceValue(campaignPerPatner, params, startDate, endDate)
+		generatedSummary := generateSummaryValue(campaignPerPatner, params, startDate, endDate, "partner", budgetDetails)
+		children = groupServiceValue(campaignPerPatner, params, startDate, endDate, budgetDetails)
 
 		placeHolder := map[string]any{
 			"level":     "partner",
@@ -292,7 +292,7 @@ func groupPartnerValue(campaings []entity.CampaignSummaryMonitoring, params enti
 	return formattedData
 }
 
-func groupServiceValue(campaings []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time) []interface{} {
+func groupServiceValue(campaings []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time, budgetDetails []entity.TargetBudgetDetail) []interface{} {
 	var formattedData []any
 	groupedService := goterators.Group(campaings, func(campaign entity.CampaignSummaryMonitoring) string {
 		return campaign.Service
@@ -301,8 +301,8 @@ func groupServiceValue(campaings []entity.CampaignSummaryMonitoring, params enti
 	for _, campaignPerService := range groupedService {
 		var children []any
 
-		generatedSummary := generateSummaryValue(campaignPerService, params, startDate, endDate, "service")
-		children = groupAdnetValue(campaignPerService, params, startDate, endDate)
+		generatedSummary := generateSummaryValue(campaignPerService, params, startDate, endDate, "service", budgetDetails)
+		children = groupAdnetValue(campaignPerService, params, startDate, endDate, budgetDetails)
 
 		placeHolder := map[string]any{
 			"level":     "service",
@@ -318,14 +318,14 @@ func groupServiceValue(campaings []entity.CampaignSummaryMonitoring, params enti
 	return formattedData
 }
 
-func groupAdnetValue(campaings []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time) []interface{} {
+func groupAdnetValue(campaings []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time, budgetDetails []entity.TargetBudgetDetail) []interface{} {
 	var formattedData []any
 	groupedAdnet := goterators.Group(campaings, func(campaign entity.CampaignSummaryMonitoring) string {
 		return campaign.Adnet
 	})
 
 	for _, campaignPerAdnet := range groupedAdnet {
-		generatedSummary := generateSummaryValue(campaignPerAdnet, params, startDate, endDate, "adnet")
+		generatedSummary := generateSummaryValue(campaignPerAdnet, params, startDate, endDate, "adnet", budgetDetails)
 		placeHolder := map[string]any{
 			"level":    "adnet",
 			"country":  campaignPerAdnet[0].Adnet,
@@ -340,7 +340,7 @@ func groupAdnetValue(campaings []entity.CampaignSummaryMonitoring, params entity
 	return formattedData
 }
 
-func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time, groupType string) map[string]interface{} {
+func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity.ParamsCampaignSummary, startDate time.Time, endDate time.Time, groupType string, budgetDetails []entity.TargetBudgetDetail) map[string]interface{} {
 	days := map[string]map[string]map[string]interface{}{}
 	totals := make(map[string]float64)
 	monthlyBudgets := make(map[string]map[string]float64)
@@ -371,28 +371,44 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 		currentDate = incrementDate(currentDate, params.DataType)
 	}
 
-	// Collect monthly budgets
-	for _, campaign := range data {
-		if containsString(params.DataIndicators, "target_daily_budget") {
-			month := campaign.SummaryDate.Format("2006-01")
-			key := fmt.Sprintf("%s|%s|%s", campaign.Country, campaign.Operator, month)
-			budgetValue := getIndicatorValueRevenue(campaign, "target_daily_budget")
-			if budgetValue > 0 {
-				if monthlyBudgets[key] == nil {
-					monthlyBudgets[key] = make(map[string]float64)
-				}
-				monthlyBudgets[key][month] = budgetValue
+	// target_daily_budget: source from target_budget_details (budget / daysInMonth), deduplicate per unique row
+	if containsString(params.DataIndicators, "target_daily_budget") {
+		seen := make(map[string]bool)
+		for _, detail := range budgetDetails {
+			if detail.Budget <= 0 {
+				continue
 			}
+			month := fmt.Sprintf("%d-%02d", detail.Year, detail.Month)
+			seenKey := fmt.Sprintf("%s|%s|%s|%s|%s|%s", detail.Country, detail.Operator, detail.Partner, detail.Service, detail.Adnet, month)
+			if seen[seenKey] {
+				continue
+			}
+			seen[seenKey] = true
+			key := fmt.Sprintf("%s|%s|%s", detail.Country, detail.Operator, month)
+			nDays := float64(time.Date(detail.Year, time.Month(detail.Month)+1, 0, 0, 0, 0, 0, time.UTC).Day())
+			dailyBudget := detail.Budget / nDays
+			if monthlyBudgets[key] == nil {
+				monthlyBudgets[key] = make(map[string]float64)
+			}
+			monthlyBudgets[key][month] += dailyBudget
 		}
+	}
+	// target_budget: read from campaign rows
+	seenTargetBudget := make(map[string]bool)
+	for _, campaign := range data {
 		if containsString(params.DataIndicators, "target_budget") {
 			month := campaign.SummaryDate.Format("2006-01")
-			key := fmt.Sprintf("%s|%s|%s", campaign.Country, campaign.Operator, month)
-			budgetValue := getIndicatorValueRevenue(campaign, "target_budget")
-			if budgetValue > 0 {
-				if monthlyBudgets[key] == nil {
-					monthlyBudgets[key] = make(map[string]float64)
+			seenKey := fmt.Sprintf("%s|%s|%s|%s", campaign.Country, campaign.Operator, campaign.Adnet, month)
+			if !seenTargetBudget[seenKey] {
+				seenTargetBudget[seenKey] = true
+				key := fmt.Sprintf("%s|%s|%s", campaign.Country, campaign.Operator, month)
+				budgetValue := getIndicatorValueRevenue(campaign, "target_budget")
+				if budgetValue > 0 {
+					if monthlyBudgets[key] == nil {
+						monthlyBudgets[key] = make(map[string]float64)
+					}
+					monthlyBudgets[key][month] += budgetValue
 				}
-				monthlyBudgets[key][month] = budgetValue
 			}
 		}
 	}
@@ -718,8 +734,8 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 		currentDate = incrementDate(currentDate, params.DataType)
 	}
 
-	tmoEnd := countTmoEndRevenue(totals, startDate, endDate)
-	avg := countAverageRevenue(totals, startDate, endDate)
+	tmoEnd := countTmoEndRevenue(totals, startDate, endDate, params.DataType)
+	avg := countAverageRevenue(totals, startDate, endDate, params.DataType)
 
 	return mergeDaysRevenue(map[string]interface{}{
 		"data_indicators": params.DataIndicators,
@@ -777,36 +793,48 @@ func countPercentageRevenue(now, prev float64) float64 {
 	return percentage
 }
 
-func countTmoEndRevenue(totals map[string]float64, startDate time.Time, endDate time.Time) map[string]float64 {
+func countTmoEndRevenue(totals map[string]float64, startDate time.Time, endDate time.Time, dataType string) map[string]float64 {
 	tmoEnd := map[string]float64{}
-	totalDaysRunning := int(math.Ceil(endDate.Sub(startDate).Hours() / 24))
+
+	if dataType == "monthly_report" {
+		// For monthly report: t_mo_end = avg monthly budget (no day projection needed)
+		numMonths := (endDate.Year()-startDate.Year())*12 + int(endDate.Month()) - int(startDate.Month()) + 1
+		if numMonths < 1 {
+			numMonths = 1
+		}
+		for key, value := range totals {
+			tmoEnd[key] = value / float64(numMonths)
+		}
+		return tmoEnd
+	}
+
+	// Daily report: project daily rate to end of current month
+	totalDaysRunning := int(math.Round(endDate.Sub(startDate).Hours()/24)) + 1 // inclusive
 	if totalDaysRunning < 1 {
 		totalDaysRunning = 1
 	}
-
-	// Calculate total days in the last month
-	lastMonthEnd := endDate.AddDate(0, 0, -endDate.Day())
-	lastMonthStart := lastMonthEnd.AddDate(0, 0, -lastMonthEnd.Day())
-	totalDaysLastMonth := int(math.Ceil(lastMonthEnd.Sub(lastMonthStart).Hours()/24)) + 1
+	daysInEndMonth := time.Date(endDate.Year(), endDate.Month()+1, 0, 0, 0, 0, 0, time.UTC).Day()
 	for key, value := range totals {
-		result := (value / float64(totalDaysRunning)) * float64(totalDaysLastMonth)
-		tmoEnd[key] = result
+		tmoEnd[key] = (value / float64(totalDaysRunning)) * float64(daysInEndMonth)
 	}
-
 	return tmoEnd
 }
 
-func countAverageRevenue(totals map[string]float64, startDate, endDate time.Time) map[string]float64 {
+func countAverageRevenue(totals map[string]float64, startDate, endDate time.Time, dataType string) map[string]float64 {
 	averages := map[string]float64{}
-	totalDaysRunning := int(endDate.Sub(startDate).Hours() / 24)
-	if totalDaysRunning < 1 {
-		totalDaysRunning = 1
-	}
 
+	var divisor int
+	if dataType == "monthly_report" {
+		divisor = (endDate.Year()-startDate.Year())*12 + int(endDate.Month()) - int(startDate.Month()) + 1
+	} else {
+		divisor = int(math.Round(endDate.Sub(startDate).Hours()/24)) + 1 // inclusive
+	}
+	if divisor < 1 {
+		divisor = 1
+	}
 	for key, value := range totals {
-		averages[key] = value / float64(totalDaysRunning)
+		averages[key] = value / float64(divisor)
 	}
-
 	return averages
 }
 

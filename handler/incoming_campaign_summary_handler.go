@@ -949,7 +949,7 @@ func safeDivision(numerator, denominator float64) float64 {
 	return numerator / denominator
 }
 
-func (h *IncomingHandler) EditTargetBudget(c *fiber.Ctx) error {
+func (h *IncomingHandler) EditTargetBudgetLevel(c *fiber.Ctx) error {
 	var req entity.EditTargetBudgetRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"status": "NOK", "error": "invalid request body"})

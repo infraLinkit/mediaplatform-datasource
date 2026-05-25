@@ -377,6 +377,33 @@ func (r *BaseModel) UpdateTargetBudgetByLevel(req entity.EditTargetBudgetRequest
 	return result.Error
 }
 
+func (r *BaseModel) UpdateTargetBudgetBatch(reqs []entity.EditTargetBudgetRequest) error {
+	return r.DB.Transaction(func(tx *gorm.DB) error {
+		for _, req := range reqs {
+			query := tx.Table("summary_campaigns").
+				Where("EXTRACT(YEAR FROM summary_date) = ? AND EXTRACT(MONTH FROM summary_date) = ?", req.Year, req.Month).
+				Where("country = ?", req.Country)
+			switch req.Level {
+			case "adnet":
+				query = query.Where("operator = ? AND partner = ? AND service = ? AND adnet = ?", req.Operator, req.Partner, req.Service, req.Adnet)
+			case "service":
+				query = query.Where("operator = ? AND partner = ? AND service = ?", req.Operator, req.Partner, req.Service)
+			case "partner":
+				query = query.Where("operator = ? AND partner = ?", req.Operator, req.Partner)
+			case "operator":
+				query = query.Where("operator = ?", req.Operator)
+			}
+			if err := query.Updates(map[string]interface{}{
+				"target_daily_budget":   req.Budget,
+				"target_monthly_budget": req.Budget * float64(daysInMonth(req.Year, req.Month)),
+			}).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 func daysInMonth(year, month int) int {
 	return time.Date(year, time.Month(month+1), 0, 0, 0, 0, 0, time.UTC).Day()
 }

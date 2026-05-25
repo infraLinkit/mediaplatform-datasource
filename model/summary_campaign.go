@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"strconv"
 	"strings"
 	"time"
@@ -438,8 +439,21 @@ func (r *BaseModel) UpdateTargetBudgetByLevel(req entity.EditTargetBudgetRequest
 	return result.Error
 }
 
+func budgetLockKey(country string, year, month int) int64 {
+	h := fnv.New64a()
+	h.Write([]byte(fmt.Sprintf("%s_%d_%d", country, year, month)))
+	return int64(h.Sum64())
+}
+
 func (r *BaseModel) UpdateTargetBudgetBatch(reqs []entity.EditTargetBudgetRequest) error {
+	if len(reqs) == 0 {
+		return nil
+	}
+	lockKey := budgetLockKey(reqs[0].Country, reqs[0].Year, reqs[0].Month)
 	return r.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec("SELECT pg_advisory_xact_lock(?)", lockKey).Error; err != nil {
+			return err
+		}
 		for _, req := range reqs {
 			// Country level: store budget independently in target_budgets, skip summary_campaigns
 			if req.Level == "country" {

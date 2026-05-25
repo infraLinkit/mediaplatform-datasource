@@ -117,8 +117,10 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/ioreport", h.DisplaySummaryBudgetIO).Name("IO Report")
 	rpt.Put("/ioreport/update", h.UpdateSummaryBudgetIO).Name("IO Report Update")
 
-	rpt.Get("/campaign-spending-channel",          h.DisplayCampaignSpendingChannel).
-    Name("Campaign Spending Channel")
+	rpt.Post("/campaign-monitoring-summary/edit-target-budget", h.EditTargetBudget).Name("Edit Target Budget")
+
+	rpt.Get("/campaign-spending-channel", h.DisplayCampaignSpendingChannel).
+		Name("Campaign Spending Channel")
 
 	rpt.Get("/campaign-spending-channel/country-children", h.DisplayCampaignSpendingChannelCountryChildren).
 		Name("Campaign Spending Channel Country Children")

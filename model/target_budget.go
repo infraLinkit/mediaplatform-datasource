@@ -154,6 +154,71 @@ func (r *BaseModel) GetTargetBudgetList(country string, startDate time.Time, end
 
 }
 
+// GetBudgetAggByOperator returns effective monthly budget per (country, operator, year, month).
+// It picks the most-aggregate level stored in target_budget_details:
+//   priority 1 = operator sentinel  (partner='', service='', adnet='')
+//   priority 2 = partner sentinels  (service='', adnet='')
+//   priority 3 = service sentinels  (adnet='')
+//   priority 4 = adnet-level rows
+// Whichever priority level has data first wins; records at that level are summed.
+func (r *BaseModel) GetBudgetAggByOperator(country string, startDate, endDate time.Time, operator, partner, service, adnet string) ([]entity.BudgetAggEntry, error) {
+	periodStart := time.Date(startDate.Year(), startDate.Month(), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+	periodEnd := time.Date(endDate.Year(), endDate.Month()+1, 1, 0, 0, 0, 0, time.UTC).AddDate(0, 0, -1).Format("2006-01-02")
+
+	where := " AND TRUE"
+	args := []interface{}{periodStart, periodEnd}
+	if country != "" {
+		where += " AND country = ?"
+		args = append(args, country)
+	}
+	if operator != "" {
+		where += " AND operator = ?"
+		args = append(args, operator)
+	}
+	if partner != "" {
+		where += " AND partner = ?"
+		args = append(args, partner)
+	}
+	if service != "" {
+		where += " AND service = ?"
+		args = append(args, service)
+	}
+	if adnet != "" {
+		where += " AND adnet = ?"
+		args = append(args, adnet)
+	}
+
+	SQL := fmt.Sprintf(`
+		WITH ranked AS (
+			SELECT country, operator, year, month, budget,
+				CASE
+					WHEN partner = '' AND service = '' AND adnet = '' THEN 1
+					WHEN service = '' AND adnet = ''                  THEN 2
+					WHEN adnet = ''                                   THEN 3
+					ELSE 4
+				END AS priority
+			FROM target_budget_details
+			WHERE (year::text||'-'||lpad(month::text,2,'0')||'-02')::date BETWEEN ? AND ?
+			%s
+		),
+		min_prio AS (
+			SELECT country, operator, year, month, MIN(priority) AS mp
+			FROM ranked
+			GROUP BY country, operator, year, month
+		)
+		SELECT r.country, r.operator, r.year, r.month, SUM(r.budget) AS budget
+		FROM ranked r
+		JOIN min_prio m ON r.country=m.country AND r.operator=m.operator
+			AND r.year=m.year AND r.month=m.month AND r.priority=m.mp
+		GROUP BY r.country, r.operator, r.year, r.month`, where)
+
+	var out []entity.BudgetAggEntry
+	if err := r.DB.Raw(SQL, args...).Scan(&out).Error; err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (r *BaseModel) AddTargetBudget(s entity.TargetBudget, data []entity.TargetBudgetDetail) error {
 	SQL := `
 	INSERT INTO target_budgets (country,month,year,budget,updated_at) 

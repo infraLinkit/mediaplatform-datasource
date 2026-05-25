@@ -253,6 +253,16 @@ type (
 		Budget   float64 `json:"budget"   gorm:"column:budget"`
 		Spending float64 `json:"spending" gorm:"column:spending"`
 	}
+
+	// BudgetAggEntry holds the effective monthly budget for one (country, operator, year, month),
+	// resolved at the most-aggregate level stored in target_budget_details.
+	BudgetAggEntry struct {
+		Country  string  `gorm:"column:country"`
+		Operator string  `gorm:"column:operator"`
+		Year     int     `gorm:"column:year"`
+		Month    int     `gorm:"column:month"`
+		Budget   float64 `gorm:"column:budget"`
+	}
 )
 type Tabler interface {
 	TableName() string

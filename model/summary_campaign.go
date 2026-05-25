@@ -491,22 +491,26 @@ func (r *BaseModel) UpdateTargetBudgetBatch(reqs []entity.EditTargetBudgetReques
 			}
 
 			// Upsert level budget to target_budget_details using sentinel adnet='' for non-adnet levels
+			// Normalize operator to UPPER to avoid case-variant duplicates across saves
 			var operator, partner, service, adnet string
 			switch req.Level {
 			case "adnet":
-				operator, partner, service, adnet = req.Operator, req.Partner, req.Service, req.Adnet
+				operator, partner, service, adnet = strings.ToUpper(req.Operator), req.Partner, req.Service, req.Adnet
 			case "service":
-				operator, partner, service, adnet = req.Operator, req.Partner, req.Service, ""
+				operator, partner, service, adnet = strings.ToUpper(req.Operator), req.Partner, req.Service, ""
 			case "partner":
-				operator, partner, service, adnet = req.Operator, req.Partner, "", ""
+				operator, partner, service, adnet = strings.ToUpper(req.Operator), req.Partner, "", ""
 			case "operator":
-				operator, partner, service, adnet = req.Operator, "", "", ""
+				operator, partner, service, adnet = strings.ToUpper(req.Operator), "", "", ""
 			}
 			tbdSQL := `INSERT INTO target_budget_details (country, year, month, operator, partner, service, adnet, budget, budget_per_day, created_at, updated_at)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
 				ON CONFLICT (country, year, month, operator, partner, service, adnet) DO UPDATE SET budget = ?, budget_per_day = ?, updated_at = NOW()`
-			if err := tx.Exec(tbdSQL, req.Country, req.Year, req.Month, operator, partner, service, adnet, monthlyBudget, dailyBudget, monthlyBudget, dailyBudget).Error; err != nil {
-				return err
+			res := tx.Exec(tbdSQL, req.Country, req.Year, req.Month, operator, partner, service, adnet, monthlyBudget, dailyBudget, monthlyBudget, dailyBudget)
+			fmt.Printf("[BatchSave] level=%s country=%s %d-%02d op=%q pa=%q svc=%q ad=%q budget=%.2f → rows=%d err=%v\n",
+				req.Level, req.Country, req.Year, req.Month, operator, partner, service, adnet, monthlyBudget, res.RowsAffected, res.Error)
+			if res.Error != nil {
+				return res.Error
 			}
 		}
 		return nil

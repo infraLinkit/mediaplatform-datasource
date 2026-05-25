@@ -88,6 +88,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	v1.Get("/postback", h.PostbackV3)
 	v1.Get("/postback_billed", h.PostbackBilled)
 	v1.Get("/inquire/campid", h.InquiryCampID)
+	v1.Get("/inquire/api-campid", h.InquiryAPICampID)
 
 	// Report
 	rpt := v1.Group("/report") // Report
@@ -112,6 +113,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/redirectiontime", h.DisplayRedirectionTime).Name("Redirection Time")
 	rpt.Post("/resend-data", h.ResendData).Name("Resend Data")
 	rpt.Post("/resend-data-apireport", h.ResendDataAPIReport).Name("Resend Data API Report")
+	rpt.Post("/campaign-monitoring-summary/edit-target-budget", h.EditTargetBudget).Name("Edit Target Budget")
 	rpt.Get("/ioreport", h.DisplaySummaryBudgetIO).Name("IO Report")
 	rpt.Put("/ioreport/update", h.UpdateSummaryBudgetIO).Name("IO Report Update")
 

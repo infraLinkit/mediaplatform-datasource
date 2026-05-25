@@ -254,11 +254,14 @@ type (
 		Spending float64 `json:"spending" gorm:"column:spending"`
 	}
 
-	// BudgetAggEntry holds the effective monthly budget for one (country, operator, year, month),
-	// resolved at the most-aggregate level stored in target_budget_details.
+	// BudgetAggEntry holds one record from target_budget_details (UPPER-normalized, MAX-deduped).
+	// Sentinel levels: operator = Partner=Service=Adnet=""; partner = Service=Adnet=""; service = Adnet=""; adnet = all set.
 	BudgetAggEntry struct {
 		Country  string  `gorm:"column:country"`
 		Operator string  `gorm:"column:operator"`
+		Partner  string  `gorm:"column:partner"`
+		Service  string  `gorm:"column:service"`
+		Adnet    string  `gorm:"column:adnet"`
 		Year     int     `gorm:"column:year"`
 		Month    int     `gorm:"column:month"`
 		Budget   float64 `gorm:"column:budget"`

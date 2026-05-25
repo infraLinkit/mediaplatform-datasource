@@ -362,19 +362,54 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 		currentDate = incrementDate(currentDate, params.DataType)
 	}
 
-	// target_daily_budget: one pre-aggregated row per (country, operator, year, month) from GetBudgetAggByOperator
+	// target_daily_budget: build budget keys from all target_budget_details sentinel records.
+	// Short key  (country|operator|month)                          → operator-level display (existing paths).
+	// Long key   (country|operator|partner|service|adnet|month)    → partner/service/adnet-level display.
 	if containsString(params.DataIndicators, "target_daily_budget") {
+		// partnerSentinelSums accumulates partner-sentinel budgets per operator,
+		// used as fallback when no operator sentinel exists.
+		partnerSentinelSums := make(map[string]map[string]float64)
+
 		for _, agg := range budgetDetails {
 			if agg.Budget <= 0 {
 				continue
 			}
 			month := fmt.Sprintf("%d-%02d", agg.Year, agg.Month)
-			key := fmt.Sprintf("%s|%s|%s", agg.Country, agg.Operator, month)
 			nDays := float64(time.Date(agg.Year, time.Month(agg.Month)+1, 0, 0, 0, 0, 0, time.UTC).Day())
-			if monthlyBudgets[key] == nil {
-				monthlyBudgets[key] = make(map[string]float64)
+			dailyBudget := agg.Budget / nDays
+			country := strings.ToUpper(agg.Country)
+			operator := strings.ToUpper(agg.Operator)
+
+			// Long key — used by partner/service/adnet row lookups
+			longKey := fmt.Sprintf("%s|%s|%s|%s|%s|%s", country, operator, agg.Partner, agg.Service, agg.Adnet, month)
+			if monthlyBudgets[longKey] == nil {
+				monthlyBudgets[longKey] = make(map[string]float64)
 			}
-			monthlyBudgets[key][month] = agg.Budget / nDays
+			monthlyBudgets[longKey][month] = dailyBudget
+
+			// Short key — used by existing operator-level lookup paths
+			if agg.Partner == "" && agg.Service == "" && agg.Adnet == "" {
+				// Operator sentinel → directly sets short key
+				shortKey := fmt.Sprintf("%s|%s|%s", country, operator, month)
+				if monthlyBudgets[shortKey] == nil {
+					monthlyBudgets[shortKey] = make(map[string]float64)
+				}
+				monthlyBudgets[shortKey][month] = dailyBudget
+			} else if agg.Service == "" && agg.Adnet == "" && agg.Partner != "" {
+				// Partner sentinel → accumulate for operator fallback
+				shortKey := fmt.Sprintf("%s|%s|%s", country, operator, month)
+				if partnerSentinelSums[shortKey] == nil {
+					partnerSentinelSums[shortKey] = make(map[string]float64)
+				}
+				partnerSentinelSums[shortKey][month] += dailyBudget
+			}
+		}
+
+		// Fallback: operators with no operator sentinel → use sum of partner sentinels
+		for shortKey, pSums := range partnerSentinelSums {
+			if monthlyBudgets[shortKey] == nil {
+				monthlyBudgets[shortKey] = pSums
+			}
 		}
 	}
 	// target_budget: read from campaign rows
@@ -394,6 +429,23 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 					monthlyBudgets[key][month] += budgetValue
 				}
 			}
+		}
+	}
+
+	// Sub-level context: extract partner/service/adnet from data when groupType is below operator.
+	// All campaigns in data share the same values for these fields at their grouping level.
+	var groupPartner, groupService, groupAdnet string
+	if len(data) > 0 {
+		switch groupType {
+		case "partner":
+			groupPartner = data[0].Partner
+		case "service":
+			groupPartner = data[0].Partner
+			groupService = data[0].Service
+		case "adnet":
+			groupPartner = data[0].Partner
+			groupService = data[0].Service
+			groupAdnet = data[0].Adnet
 		}
 	}
 
@@ -420,7 +472,7 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 		}
 
 		for operator, campaigns := range operators {
-			operatorKey := fmt.Sprintf("%s|%s", country, operator)
+			operatorKey := fmt.Sprintf("%s|%s", strings.ToUpper(country), strings.ToUpper(operator))
 			operatorData := map[string]interface{}{}
 
 			for _, indicator := range params.DataIndicators {
@@ -560,7 +612,18 @@ func generateSummaryValue(data []entity.CampaignSummaryMonitoring, params entity
 						month := currentDate.Format("2006-01")
 						date := formatDate(currentDate, params.DataType)
 
-						if budgets, exists := monthlyBudgets[operatorKey+"|"+month]; exists {
+						// Choose lookup key based on groupType:
+						// sub-levels use the long key (country|operator|partner|service|adnet|month);
+						// operator/country/all use the short key (country|operator|month).
+						var lookupKey string
+						switch groupType {
+						case "partner", "service", "adnet":
+							lookupKey = fmt.Sprintf("%s|%s|%s|%s|%s", operatorKey, groupPartner, groupService, groupAdnet, month)
+						default:
+							lookupKey = operatorKey + "|" + month
+						}
+
+						if budgets, exists := monthlyBudgets[lookupKey]; exists {
 							if budget, ok := budgets[month]; ok {
 								operatorDailyBudgets[operatorKey][date] = budget
 								days[date]["target_daily_budget"]["value"] = safeFloat(days[date]["target_daily_budget"], "value") + budget

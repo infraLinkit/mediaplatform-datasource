@@ -168,11 +168,11 @@ func (r *BaseModel) GetBudgetAggByOperator(country string, startDate, endDate ti
 	where := " AND TRUE"
 	args := []interface{}{periodStart, periodEnd}
 	if country != "" {
-		where += " AND country = ?"
+		where += " AND UPPER(country) = UPPER(?)"
 		args = append(args, country)
 	}
 	if operator != "" {
-		where += " AND operator = ?"
+		where += " AND UPPER(operator) = UPPER(?)"
 		args = append(args, operator)
 	}
 	if partner != "" {
@@ -188,34 +188,25 @@ func (r *BaseModel) GetBudgetAggByOperator(country string, startDate, endDate ti
 		args = append(args, adnet)
 	}
 
+	// Returns all records from target_budget_details, UPPER-normalized on country/operator,
+	// MAX-deduped to collapse case variants (e.g. "Telkomsel" vs "TELKOMSEL").
+	// Includes all sentinel levels: operator ('','',''), partner (*,'',''), service (*,*,''), adnet (*,*,*).
 	SQL := fmt.Sprintf(`
-		WITH ranked AS (
-			SELECT country, operator, year, month, budget,
-				CASE
-					WHEN partner = '' AND service = '' AND adnet = '' THEN 1
-					WHEN service = '' AND adnet = ''                  THEN 2
-					WHEN adnet = ''                                   THEN 3
-					ELSE 4
-				END AS priority
-			FROM target_budget_details
-			WHERE (year::text||'-'||lpad(month::text,2,'0')||'-02')::date BETWEEN ? AND ?
-			%s
-		),
-		min_prio AS (
-			SELECT country, operator, year, month, MIN(priority) AS mp
-			FROM ranked
-			GROUP BY country, operator, year, month
-		)
-		SELECT r.country, r.operator, r.year, r.month, SUM(r.budget) AS budget
-		FROM ranked r
-		JOIN min_prio m ON r.country=m.country AND r.operator=m.operator
-			AND r.year=m.year AND r.month=m.month AND r.priority=m.mp
-		GROUP BY r.country, r.operator, r.year, r.month`, where)
+		SELECT UPPER(country) AS country, UPPER(operator) AS operator,
+		       partner, service, adnet, year, month,
+		       MAX(budget) AS budget
+		FROM target_budget_details
+		WHERE (year::text||'-'||lpad(month::text,2,'0')||'-02')::date BETWEEN ? AND ?
+		%s
+		GROUP BY UPPER(country), UPPER(operator), partner, service, adnet, year, month`, where)
 
 	var out []entity.BudgetAggEntry
 	if err := r.DB.Raw(SQL, args...).Scan(&out).Error; err != nil {
+		fmt.Printf("[BudgetAgg] SQL ERROR: %v\n", err)
 		return nil, err
 	}
+	fmt.Printf("[BudgetAgg] country=%q op=%q partner=%q svc=%q adnet=%q period=%s..%s → %d rows\n",
+		country, operator, partner, service, adnet, periodStart, periodEnd, len(out))
 	return out, nil
 }
 

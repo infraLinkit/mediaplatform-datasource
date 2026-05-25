@@ -135,17 +135,17 @@ func (r *BaseModel) PinReport(o entity.ApiPinReport) int {
 	return int(o.ID)
 }
 
-func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.ApiPinReport, int64, error) {
+func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.ApiPinReportWithAlias, int64, error) {
 	var totalRows int64
-	var ss []entity.ApiPinReport
+	var ss []entity.ApiPinReportWithAlias
 
-	query := r.DB.Model(&entity.ApiPinReport{}).Select(`
+	query := r.DB.Table("api_pin_reports").Select(`
 		api_pin_reports.*,
 		(payout_af * total_postback) AS saaf,
 		(payout_adn * total_postback) AS sbaf,
 		(CASE WHEN total_mo > 0 THEN (payout_af * total_postback) / total_mo ELSE 0 END) AS price_per_mo,
 		((payout_af * total_postback) - (payout_adn * total_postback)) AS waki_revenue
-	`).Where("total_mo > 0")
+	`).Where("api_pin_reports.total_mo > 0")
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {
@@ -194,7 +194,7 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.Api
 	}
 
 	if err := query.Count(&totalRows).Error; err != nil {
-		return []entity.ApiPinReport{}, 0, err
+		return []entity.ApiPinReportWithAlias{}, 0, err
 	}
 
 	if o.OrderColumn != "" {
@@ -223,7 +223,13 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.Api
 		Limit(o.PageSize).
 		Offset((o.Page - 1) * o.PageSize).
 		Find(&ss).Error; err != nil {
-		return []entity.ApiPinReport{}, 0, err
+		return []entity.ApiPinReportWithAlias{}, 0, err
+	}
+
+	if aliases, err := r.GetOperatorAliases(); err == nil {
+		for i := range ss {
+			ss[i].OperatorAlias = ResolveOperatorAlias(ss[i].Operator, ss[i].Service, ss[i].Country, aliases)
+		}
 	}
 
 	return ss, totalRows, nil
@@ -1006,4 +1012,75 @@ func (r *BaseModel) GetOperatorAliases() ([]entity.OperatorAlias, error) {
 		Where("type = ?", "API").
 		Find(&res).Error
 	return res, err
+}
+
+func NormalizeCountry(country string) []string {
+	switch country {
+	case "SA", "KSA":
+		return []string{"SA", "KSA"}
+	case "LA", "LS":
+		return []string{"LA", "LS"}
+	case "LK", "LKA":
+		return []string{"LK", "LKA"}
+	case "PS", "PSE":
+		return []string{"PS", "PSE"}
+	case "SE", "SLE":
+		return []string{"SE", "SLE"}
+	case "NG", "NGA":
+		return []string{"NG", "NGA"}
+	case "CZ", "CZE":
+		return []string{"CZ", "CZE"}
+	case "OM", "OMN":
+		return []string{"OM", "OMN"}
+	default:
+		return []string{country}
+	}
+}
+
+func ResolveOperatorAlias(operator, service, country string, aliases []entity.OperatorAlias) string {
+	operator = strings.ToLower(strings.TrimSpace(operator))
+	service = strings.ToLower(strings.TrimSpace(service))
+	country = strings.ToLower(strings.TrimSpace(country))
+
+	countries := NormalizeCountry(country)
+	for i := range countries {
+		countries[i] = strings.ToLower(strings.TrimSpace(countries[i]))
+	}
+
+	for _, a := range aliases {
+		if strings.ToUpper(a.Type) != "API" {
+			continue
+		}
+		aliasOperator := strings.ToLower(strings.TrimSpace(a.Operator))
+		aliasService := strings.ToLower(strings.TrimSpace(a.Service))
+		aliasCountry := strings.ToLower(strings.TrimSpace(a.Country))
+		if aliasOperator == operator && aliasService != "" &&
+			strings.Contains(service, aliasService) &&
+			aliasSliceContains(countries, aliasCountry) {
+			return strings.ToLower(strings.TrimSpace(a.Alias))
+		}
+	}
+
+	for _, a := range aliases {
+		if strings.ToUpper(a.Type) != "API" {
+			continue
+		}
+		aliasOperator := strings.ToLower(strings.TrimSpace(a.Operator))
+		aliasCountry := strings.ToLower(strings.TrimSpace(a.Country))
+		if aliasOperator == operator && a.Service == "" &&
+			aliasSliceContains(countries, aliasCountry) {
+			return strings.ToLower(strings.TrimSpace(a.Alias))
+		}
+	}
+
+	return operator
+}
+
+func aliasSliceContains(slice []string, val string) bool {
+	for _, s := range slice {
+		if s == val {
+			return true
+		}
+	}
+	return false
 }

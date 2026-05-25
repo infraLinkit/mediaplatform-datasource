@@ -68,7 +68,7 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 	var (
 		err        error
 		total_data int64
-		apireport  []entity.ApiPinReport
+		apireport  []entity.ApiPinReportWithAlias
 	)
 
 	if fe.Action != "" || fe.Reload == "true" {
@@ -82,7 +82,7 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 	if err == nil {
 
 		if apireport == nil {
-			apireport = []entity.ApiPinReport{}
+			apireport = []entity.ApiPinReportWithAlias{}
 		}
 
 		return entity.ReturnResponse{

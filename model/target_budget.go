@@ -56,7 +56,6 @@ func (r *BaseModel) GetTargetBudget(country string, startDate time.Time, endDate
 			if err != nil {
 				fmt.Println("ERROR REPORTED::", err)
 			}
-			fmt.Println("COUTRY:: ", s.Country)
 			ss = append(ss, s)
 		}
 
@@ -149,7 +148,6 @@ func (r *BaseModel) GetTargetBudgetList(country string, startDate time.Time, end
 		return ss, false
 	}
 
-	fmt.Println(ss)
 	return ss, true
 
 }
@@ -205,8 +203,6 @@ func (r *BaseModel) GetBudgetAggByOperator(country string, startDate, endDate ti
 		fmt.Printf("[BudgetAgg] SQL ERROR: %v\n", err)
 		return nil, err
 	}
-	fmt.Printf("[BudgetAgg] country=%q op=%q partner=%q svc=%q adnet=%q period=%s..%s → %d rows\n",
-		country, operator, partner, service, adnet, periodStart, periodEnd, len(out))
 	return out, nil
 }
 

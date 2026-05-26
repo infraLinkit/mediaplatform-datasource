@@ -804,13 +804,14 @@ func (h *IncomingHandler) InquiryAPICampID(c *fiber.Ctx) error {
 
 	request.Country = strings.ToUpper(request.Country)
 	request.Operator = strings.ToUpper(request.Operator)
+	request.Service = strings.ToUpper(request.Service)
 	request.Adnet = strings.ToUpper(request.Adnet)
 
-	if request.Country == "" || request.Operator == "" || request.Adnet == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "mandatory params missing: country, operator, adnet"})
+	if request.Country == "" || request.Operator == "" || request.Service == "" || request.Adnet == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "mandatory params missing: country, operator, service, adnet"})
 	}
 
-	results, err := h.DS.GetAPICampaignDetails(request.Country, request.Operator, request.Adnet)
+	results, err := h.DS.GetAPICampaignDetails(request.Country, request.Operator, request.Service, request.Adnet)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{Code: fiber.StatusInternalServerError, Message: "failed to retrieve configs"})
 	}

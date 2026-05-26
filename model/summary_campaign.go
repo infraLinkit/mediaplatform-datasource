@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -630,9 +629,6 @@ func daysInMonth(year, month int) int {
 }
 
 func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSummary) ([]entity.CampaignSummaryMonitoring, time.Time, time.Time, error) {
-	var (
-		rows *sql.Rows
-	)
 	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
 	query.Where("deleted_at IS NULL")
 	// Apply Indicator Selection
@@ -724,30 +720,13 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 		query.Group("DATE_TRUNC('month', summary_date),country, campaign_name, campaign_id, url_service_key, partner, operator, service, adnet")
 	}
 
-	rows, _ = query.Unscoped().Rows()
-
-	defer rows.Close()
-
-	var (
-		ss []entity.CampaignSummaryMonitoring
-	)
-
-	for rows.Next() {
-		var s entity.CampaignSummaryMonitoring
-		// ScanRows scans a row into a struct
-		r.DB.ScanRows(rows, &s)
-
-		ss = append(ss, s)
-	}
-	return ss, dateStart, dateEnd, rows.Err()
-
+	var ss []entity.CampaignSummaryMonitoring
+	err := query.Find(&ss).Error
+	return ss, dateStart, dateEnd, err
 }
 
 func (r *BaseModel) GetSummaryCampaignChart(params entity.ParamsCampaignSummary) ([]entity.CampaignSummaryChart, time.Time, time.Time, error) {
-	var (
-		rows           *sql.Rows
-		selectedFields []string
-	)
+	var selectedFields []string
 	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
 
 	if params.ChartType == "spending" {
@@ -828,26 +807,17 @@ func (r *BaseModel) GetSummaryCampaignChart(params entity.ParamsCampaignSummary)
 	query.Where("summary_date BETWEEN ? AND ?", dateStart, dateEnd)
 	query.Group("summary_date")
 
-	rows, _ = query.Unscoped().Rows()
-
-	defer rows.Close()
-
-	var (
-		ss []entity.CampaignSummaryChart
-	)
-
-	for rows.Next() {
-		var s entity.CampaignSummaryChart
-		// ScanRows scans a row into a struct
-		r.DB.ScanRows(rows, &s)
-		sDate, err := time.Parse(time.RFC3339, s.SummaryDate)
-		if err == nil {
-			s.SummaryDate = sDate.Format("2006-01-02")
-		}
-		ss = append(ss, s)
+	var ss []entity.CampaignSummaryChart
+	if err := query.Find(&ss).Error; err != nil {
+		return nil, dateStart, dateEnd, err
 	}
-	return ss, dateStart, dateEnd, rows.Err()
-
+	for i := range ss {
+		sDate, err := time.Parse(time.RFC3339, ss[i].SummaryDate)
+		if err == nil {
+			ss[i].SummaryDate = sDate.Format("2006-01-02")
+		}
+	}
+	return ss, dateStart, dateEnd, nil
 }
 
 // helper
@@ -925,9 +895,6 @@ func formatQueryIndicators(selects []string, dataType string) []string {
 }
 
 func (r *BaseModel) GetSummaryCampaignBudgetMonitoring(params entity.ParamsCampaignSummary) ([]entity.CampaignSummaryMonitoring, time.Time, time.Time, error) {
-	var (
-		rows *sql.Rows
-	)
 	query := r.DB.Model(&entity.CampaignSummaryMonitoring{})
 
 	// Apply Indicator Selection -
@@ -1010,34 +977,21 @@ func (r *BaseModel) GetSummaryCampaignBudgetMonitoring(params entity.ParamsCampa
 		query.Group("EXTRACT(YEAR FROM summary_date), EXTRACT(MONTH FROM summary_date), country, partner, operator, service, adnet, url_service_key")
 	}
 
-	rows, _ = query.Unscoped().Rows()
-
-	defer rows.Close()
-
-	var (
-		ss []entity.CampaignSummaryMonitoring
-	)
-
-	for rows.Next() {
-		var s entity.CampaignSummaryMonitoring
-
-		// ScanRows scans a row into a struct
-		r.DB.ScanRows(rows, &s)
-
-		// Cek apakah data sudah ada dalam slice ss berdasarkan campaign_id, campaign_name, country, operator, service, adnet
-		exists := false
-		for _, existingS := range ss {
-			if existingS.CampaignId == s.CampaignId && existingS.CampaignName == s.CampaignName && existingS.Country == s.Country && existingS.Operator == s.Operator && existingS.Service == s.Service && existingS.Adnet == s.Adnet {
-				exists = true
-				break
-			}
-		}
-		if !exists {
+	type dedupKey struct{ CampaignId, CampaignName, Country, Operator, Service, Adnet string }
+	var allRows []entity.CampaignSummaryMonitoring
+	if err := query.Find(&allRows).Error; err != nil {
+		return nil, startDate, endDate, err
+	}
+	seen := make(map[dedupKey]struct{}, len(allRows))
+	ss := make([]entity.CampaignSummaryMonitoring, 0, len(allRows))
+	for _, s := range allRows {
+		k := dedupKey{s.CampaignId, s.CampaignName, s.Country, s.Operator, s.Service, s.Adnet}
+		if _, exists := seen[k]; !exists {
+			seen[k] = struct{}{}
 			ss = append(ss, s)
 		}
 	}
-	return ss, startDate, endDate, rows.Err()
-
+	return ss, startDate, endDate, nil
 }
 
 func formatQueryIndicatorsBudget(selects []string, dataType string) []string {

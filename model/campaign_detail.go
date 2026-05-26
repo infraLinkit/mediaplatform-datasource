@@ -529,7 +529,7 @@ func (r *BaseModel) UpdateStatusCounterMOCampaignDetail(o entity.CampaignDetail)
 	return result.Error
 }
 
-func (r *BaseModel) GetAPICampaignDetails(country, operator, adnet string) ([]entity.InquiryAPICampIDResult, error) {
+func (r *BaseModel) GetAPICampaignDetails(country, operator, service, adnet string) ([]entity.InquiryAPICampIDResult, error) {
 	var results []entity.InquiryAPICampIDResult
 	err := r.DB.Raw(`
 		SELECT
@@ -544,9 +544,10 @@ func (r *BaseModel) GetAPICampaignDetails(country, operator, adnet string) ([]en
 		JOIN campaigns c ON c.campaign_id = cd.campaign_id
 		WHERE cd.country = ?
 		  AND cd.operator = ?
+		  AND cd.service = ?
 		  AND cd.adnet = ?
 		  AND c.campaign_objective = 'API'
-	`, country, operator, adnet).Scan(&results).Error
+	`, country, operator, service, adnet).Scan(&results).Error
 	if err != nil {
 		return nil, err
 	}

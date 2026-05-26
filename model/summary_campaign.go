@@ -449,72 +449,180 @@ func (r *BaseModel) UpdateTargetBudgetBatch(reqs []entity.EditTargetBudgetReques
 	if len(reqs) == 0 {
 		return nil
 	}
+
+	type tbdEntry struct {
+		country, operator, partner, service, adnet string
+		year, month                                 int
+		monthly, daily                              float64
+	}
+	type tbdKey struct {
+		country, operator, partner, service, adnet string
+		year, month                                 int
+	}
+
+	var scEntries []scBatchEntry
+	tbdMap := make(map[tbdKey]tbdEntry)
+
+	for _, req := range reqs {
+		if req.Level == "country" {
+			continue
+		}
+		days := float64(daysInMonth(req.Year, req.Month))
+		daily := req.Budget / days
+		var operator, partner, service, adnet string
+		switch req.Level {
+		case "adnet":
+			operator, partner, service, adnet = strings.ToUpper(req.Operator), req.Partner, req.Service, req.Adnet
+		case "service":
+			operator, partner, service, adnet = strings.ToUpper(req.Operator), req.Partner, req.Service, ""
+		case "partner":
+			operator, partner, service, adnet = strings.ToUpper(req.Operator), req.Partner, "", ""
+		case "operator":
+			operator, partner, service, adnet = strings.ToUpper(req.Operator), "", "", ""
+		}
+		tbdMap[tbdKey{req.Country, operator, partner, service, adnet, req.Year, req.Month}] =
+			tbdEntry{req.Country, operator, partner, service, adnet, req.Year, req.Month, req.Budget, daily}
+		scEntries = append(scEntries, scBatchEntry{req.Level, req.Operator, req.Partner, req.Service, req.Adnet, daily, req.Budget})
+	}
+
 	lockKey := budgetLockKey(reqs[0].Country, reqs[0].Year, reqs[0].Month)
-	return r.DB.Transaction(func(tx *gorm.DB) error {
+	if err := r.DB.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec("SELECT pg_advisory_xact_lock(?)", lockKey).Error; err != nil {
 			return err
 		}
+
+		// Country-level upserts
 		for _, req := range reqs {
-			// Country level: store budget independently in target_budgets, skip summary_campaigns
-			if req.Level == "country" {
-				upsertSQL := `INSERT INTO target_budgets (country, year, month, budget, created_at, updated_at)
-					VALUES (?, ?, ?, ?, NOW(), NOW())
-					ON CONFLICT (country, year, month) DO UPDATE SET budget = ?, updated_at = NOW()`
-				if err := tx.Exec(upsertSQL, req.Country, req.Year, req.Month, req.Budget, req.Budget).Error; err != nil {
-					return err
-				}
+			if req.Level != "country" {
 				continue
 			}
-
-			// Update summary_campaigns for operator/partner/service/adnet levels
-			query := tx.Table("summary_campaigns").
-				Where("EXTRACT(YEAR FROM summary_date) = ? AND EXTRACT(MONTH FROM summary_date) = ?", req.Year, req.Month).
-				Where("country = ?", req.Country)
-			switch req.Level {
-			case "adnet":
-				query = query.Where("operator = ? AND partner = ? AND service = ? AND adnet = ?", req.Operator, req.Partner, req.Service, req.Adnet)
-			case "service":
-				query = query.Where("operator = ? AND partner = ? AND service = ?", req.Operator, req.Partner, req.Service)
-			case "partner":
-				query = query.Where("operator = ? AND partner = ?", req.Operator, req.Partner)
-			case "operator":
-				query = query.Where("operator = ?", req.Operator)
-			}
-			days := float64(daysInMonth(req.Year, req.Month))
-			dailyBudget := req.Budget / days
-			monthlyBudget := req.Budget
-			if err := query.Updates(map[string]interface{}{
-				"target_daily_budget":   dailyBudget,
-				"target_monthly_budget": monthlyBudget,
-			}).Error; err != nil {
+			upsertSQL := `INSERT INTO target_budgets (country, year, month, budget, created_at, updated_at)
+				VALUES (?, ?, ?, ?, NOW(), NOW())
+				ON CONFLICT (country, year, month) DO UPDATE SET budget = ?, updated_at = NOW()`
+			if err := tx.Exec(upsertSQL, req.Country, req.Year, req.Month, req.Budget, req.Budget).Error; err != nil {
 				return err
 			}
+		}
 
-			// Upsert level budget to target_budget_details using sentinel adnet='' for non-adnet levels
-			// Normalize operator to UPPER to avoid case-variant duplicates across saves
-			var operator, partner, service, adnet string
-			switch req.Level {
-			case "adnet":
-				operator, partner, service, adnet = strings.ToUpper(req.Operator), req.Partner, req.Service, req.Adnet
-			case "service":
-				operator, partner, service, adnet = strings.ToUpper(req.Operator), req.Partner, req.Service, ""
-			case "partner":
-				operator, partner, service, adnet = strings.ToUpper(req.Operator), req.Partner, "", ""
-			case "operator":
-				operator, partner, service, adnet = strings.ToUpper(req.Operator), "", "", ""
+		// Batch upsert target_budget_details — single multi-row INSERT (already deduped via map)
+		if len(tbdMap) > 0 {
+			placeholders := make([]string, 0, len(tbdMap))
+			args := make([]interface{}, 0, len(tbdMap)*9)
+			for _, t := range tbdMap {
+				placeholders = append(placeholders, "(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())")
+				args = append(args, t.country, t.year, t.month, t.operator, t.partner, t.service, t.adnet, t.monthly, t.daily)
 			}
 			tbdSQL := `INSERT INTO target_budget_details (country, year, month, operator, partner, service, adnet, budget, budget_per_day, created_at, updated_at)
-				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-				ON CONFLICT (country, year, month, operator, partner, service, adnet) DO UPDATE SET budget = ?, budget_per_day = ?, updated_at = NOW()`
-			res := tx.Exec(tbdSQL, req.Country, req.Year, req.Month, operator, partner, service, adnet, monthlyBudget, dailyBudget, monthlyBudget, dailyBudget)
-			fmt.Printf("[BatchSave] level=%s country=%s %d-%02d op=%q pa=%q svc=%q ad=%q budget=%.2f → rows=%d err=%v\n",
-				req.Level, req.Country, req.Year, req.Month, operator, partner, service, adnet, monthlyBudget, res.RowsAffected, res.Error)
-			if res.Error != nil {
-				return res.Error
+				VALUES ` + strings.Join(placeholders, ", ") + `
+				ON CONFLICT (country, year, month, operator, partner, service, adnet)
+				DO UPDATE SET budget = EXCLUDED.budget, budget_per_day = EXCLUDED.budget_per_day, updated_at = NOW()`
+			if err := tx.Exec(tbdSQL, args...).Error; err != nil {
+				return err
 			}
 		}
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	// Async: update summary_campaigns after transaction commits.
+	// Not on critical path — display reads from target_budget_details.
+	// summary_campaigns.target_monthly_budget still used by budget monitoring page.
+	if len(scEntries) > 0 {
+		year := reqs[0].Year
+		month := reqs[0].Month
+		country := reqs[0].Country
+		startDate := fmt.Sprintf("%d-%02d-01", year, month)
+		endDate := time.Date(year, time.Month(month+1), 1, 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+		entries := scEntries
+		go func() {
+			for _, level := range []string{"operator", "partner", "service", "adnet"} {
+				var levelEntries []scBatchEntry
+				for _, e := range entries {
+					if e.level == level {
+						levelEntries = append(levelEntries, e)
+					}
+				}
+				if len(levelEntries) == 0 {
+					continue
+				}
+				if err := batchUpdateSummaryCampaigns(r.DB, level, country, startDate, endDate, levelEntries); err != nil {
+					fmt.Printf("[UpdateTargetBudget] async SC update error level=%s: %v\n", level, err)
+				}
+			}
+		}()
+	}
+
+	return nil
+}
+
+type scBatchEntry struct {
+	level, operator, partner, service, adnet string
+	daily, monthly                            float64
+}
+
+func batchUpdateSummaryCampaigns(tx *gorm.DB, level, country, startDate, endDate string, entries []scBatchEntry) error {
+	var valRows []string
+	args := make([]interface{}, 0)
+	switch level {
+	case "operator":
+		for _, e := range entries {
+			valRows = append(valRows, "(?, ?::float8, ?::float8)")
+			args = append(args, strings.ToUpper(e.operator), e.daily, e.monthly)
+		}
+		SQL := fmt.Sprintf(`UPDATE summary_campaigns sc
+			SET target_daily_budget = v.daily, target_monthly_budget = v.monthly
+			FROM (VALUES %s) AS v(operator, daily, monthly)
+			WHERE sc.country = ? AND sc.summary_date >= ? AND sc.summary_date < ?
+			  AND UPPER(sc.operator) = v.operator`,
+			strings.Join(valRows, ", "))
+		args = append(args, country, startDate, endDate)
+		return tx.Exec(SQL, args...).Error
+
+	case "partner":
+		for _, e := range entries {
+			valRows = append(valRows, "(?, ?, ?::float8, ?::float8)")
+			args = append(args, strings.ToUpper(e.operator), e.partner, e.daily, e.monthly)
+		}
+		SQL := fmt.Sprintf(`UPDATE summary_campaigns sc
+			SET target_daily_budget = v.daily, target_monthly_budget = v.monthly
+			FROM (VALUES %s) AS v(operator, partner, daily, monthly)
+			WHERE sc.country = ? AND sc.summary_date >= ? AND sc.summary_date < ?
+			  AND UPPER(sc.operator) = v.operator AND sc.partner = v.partner`,
+			strings.Join(valRows, ", "))
+		args = append(args, country, startDate, endDate)
+		return tx.Exec(SQL, args...).Error
+
+	case "service":
+		for _, e := range entries {
+			valRows = append(valRows, "(?, ?, ?, ?::float8, ?::float8)")
+			args = append(args, strings.ToUpper(e.operator), e.partner, e.service, e.daily, e.monthly)
+		}
+		SQL := fmt.Sprintf(`UPDATE summary_campaigns sc
+			SET target_daily_budget = v.daily, target_monthly_budget = v.monthly
+			FROM (VALUES %s) AS v(operator, partner, service, daily, monthly)
+			WHERE sc.country = ? AND sc.summary_date >= ? AND sc.summary_date < ?
+			  AND UPPER(sc.operator) = v.operator AND sc.partner = v.partner AND sc.service = v.service`,
+			strings.Join(valRows, ", "))
+		args = append(args, country, startDate, endDate)
+		return tx.Exec(SQL, args...).Error
+
+	case "adnet":
+		for _, e := range entries {
+			valRows = append(valRows, "(?, ?, ?, ?, ?::float8, ?::float8)")
+			args = append(args, strings.ToUpper(e.operator), e.partner, e.service, e.adnet, e.daily, e.monthly)
+		}
+		SQL := fmt.Sprintf(`UPDATE summary_campaigns sc
+			SET target_daily_budget = v.daily, target_monthly_budget = v.monthly
+			FROM (VALUES %s) AS v(operator, partner, service, adnet, daily, monthly)
+			WHERE sc.country = ? AND sc.summary_date >= ? AND sc.summary_date < ?
+			  AND UPPER(sc.operator) = v.operator AND sc.partner = v.partner
+			  AND sc.service = v.service AND sc.adnet = v.adnet`,
+			strings.Join(valRows, ", "))
+		args = append(args, country, startDate, endDate)
+		return tx.Exec(SQL, args...).Error
+	}
+	return nil
 }
 
 func daysInMonth(year, month int) int {
@@ -590,7 +698,6 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 		dateStart = time.Date(lastMonth.Year(), lastMonth.Month(), 1, 0, 0, 0, 0, today.Location())
 		dateEnd = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).AddDate(0, 0, -1)
 	case "CUSTOM_RANGE":
-		fmt.Println("dr", params.DateCustomRange)
 		splitTime := strings.Split(params.DateCustomRange, "to")
 
 		dateStart, errStart = time.Parse("2006-01-02", strings.TrimSpace(splitTime[0]))
@@ -938,7 +1045,6 @@ func formatQueryIndicatorsBudget(selects []string, dataType string) []string {
 
 	for _, value := range selects {
 		var formattedValue string
-		fmt.Println("indicators:", value)
 		if dataType == "monthly_report" {
 			switch value {
 			case "budget":

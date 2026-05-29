@@ -682,9 +682,9 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 		dateStart, dateEnd = today, today
 	case "YESTERDAY":
 		dateStart, dateEnd = today.AddDate(0, 0, -1), today.AddDate(0, 0, -1)
-	case "LAST_7_DAY":
+	case "LAST_7_DAY", "LAST_7_DAYS":
 		dateStart, dateEnd = today.AddDate(0, 0, -6), today
-	case "LAST_30_DAY":
+	case "LAST_30_DAY", "LAST_30_DAYS":
 		dateStart, dateEnd = today.AddDate(0, -1, 0), today
 	case "THIS_MONTH":
 		dateStart = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
@@ -692,17 +692,20 @@ func (r *BaseModel) GetSummaryCampaignMonitoring(params entity.ParamsCampaignSum
 	case "LAST_MONTH":
 		lastMonth := today.AddDate(0, -1, 0)
 		dateStart = time.Date(lastMonth.Year(), lastMonth.Month(), 1, 0, 0, 0, 0, today.Location())
-		dateEnd = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).AddDate(0, 0, -1)
+		dateEnd = time.Date(today.Year(), today.Month(), 1, 23, 59, 59, 0, today.Location()).AddDate(0, 0, -1)
 	case "CUSTOM_RANGE":
-		splitTime := strings.Split(params.DateCustomRange, "to")
-
-		dateStart, errStart = time.Parse("2006-01-02", strings.TrimSpace(splitTime[0]))
-		dateEnd, errEnd = time.Parse("2006-01-02", strings.TrimSpace(splitTime[1]))
-		if errStart != nil {
+		splitTime := strings.Split(params.DateCustomRange, " to ")
+		if len(splitTime) == 2 {
+			dateStart, errStart = time.Parse("2006-01-02", strings.TrimSpace(splitTime[0]))
+			dateEnd, errEnd = time.Parse("2006-01-02", strings.TrimSpace(splitTime[1]))
+		}
+		if errStart != nil || len(splitTime) != 2 {
 			dateStart = today
 		}
-		if errEnd != nil {
+		if errEnd != nil || len(splitTime) != 2 {
 			dateEnd = today
+		} else {
+			dateEnd = time.Date(dateEnd.Year(), dateEnd.Month(), dateEnd.Day(), 23, 59, 59, 0, today.Location())
 		}
 	default:
 		dateStart = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
@@ -774,9 +777,9 @@ func (r *BaseModel) GetSummaryCampaignChart(params entity.ParamsCampaignSummary)
 		dateStart, dateEnd = today, today
 	case "YESTERDAY":
 		dateStart, dateEnd = today.AddDate(0, 0, -1), today.AddDate(0, 0, -1)
-	case "LAST_7_DAY":
+	case "LAST_7_DAY", "LAST_7_DAYS":
 		dateStart, dateEnd = today.AddDate(0, 0, -6), today
-	case "LAST_30_DAY":
+	case "LAST_30_DAY", "LAST_30_DAYS":
 		dateStart, dateEnd = today.AddDate(0, -1, 0), today
 	case "THIS_MONTH":
 		dateStart = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
@@ -784,16 +787,20 @@ func (r *BaseModel) GetSummaryCampaignChart(params entity.ParamsCampaignSummary)
 	case "LAST_MONTH":
 		lastMonth := today.AddDate(0, -1, 0)
 		dateStart = time.Date(lastMonth.Year(), lastMonth.Month(), 1, 0, 0, 0, 0, today.Location())
-		dateEnd = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).AddDate(0, 0, -1)
+		dateEnd = time.Date(today.Year(), today.Month(), 1, 23, 59, 59, 0, today.Location()).AddDate(0, 0, -1)
 	case "CUSTOM_RANGE":
-		splitTime := strings.Split(params.DateCustomRange, "to")
-		dateStart, errStart = time.Parse("2006-01-02", strings.TrimSpace(splitTime[0]))
-		dateEnd, errEnd = time.Parse("2006-01-02", strings.TrimSpace(splitTime[1]))
-		if errStart != nil {
+		splitTime := strings.Split(params.DateCustomRange, " to ")
+		if len(splitTime) == 2 {
+			dateStart, errStart = time.Parse("2006-01-02", strings.TrimSpace(splitTime[0]))
+			dateEnd, errEnd = time.Parse("2006-01-02", strings.TrimSpace(splitTime[1]))
+		}
+		if errStart != nil || len(splitTime) != 2 {
 			dateStart = today
 		}
-		if errEnd != nil {
+		if errEnd != nil || len(splitTime) != 2 {
 			dateEnd = today
+		} else {
+			dateEnd = time.Date(dateEnd.Year(), dateEnd.Month(), dateEnd.Day(), 23, 59, 59, 0, today.Location())
 		}
 	default:
 		dateStart = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
@@ -941,9 +948,9 @@ func (r *BaseModel) GetSummaryCampaignBudgetMonitoring(params entity.ParamsCampa
 		startDate, endDate = today, today
 	case "YESTERDAY":
 		startDate, endDate = today.AddDate(0, 0, -1), today.AddDate(0, 0, -1)
-	case "LAST_7_DAY":
+	case "LAST_7_DAY", "LAST_7_DAYS":
 		startDate, endDate = today.AddDate(0, 0, -6), today
-	case "LAST_30_DAY":
+	case "LAST_30_DAY", "LAST_30_DAYS":
 		startDate, endDate = today.AddDate(0, -1, 0), today
 	case "THIS_MONTH":
 		startDate = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
@@ -951,15 +958,20 @@ func (r *BaseModel) GetSummaryCampaignBudgetMonitoring(params entity.ParamsCampa
 	case "LAST_MONTH":
 		lastMonth := today.AddDate(0, -1, 0)
 		startDate = time.Date(lastMonth.Year(), lastMonth.Month(), 1, 0, 0, 0, 0, today.Location())
-		endDate = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location()).AddDate(0, 0, -1)
+		endDate = time.Date(today.Year(), today.Month(), 1, 23, 59, 59, 0, today.Location()).AddDate(0, 0, -1)
 	case "CUSTOM_RANGE":
-		startDate, errStart = time.Parse("2006-01-02", params.DateStart)
-		endDate, errEnd = time.Parse("2006-01-02", params.DateEnd)
-		if errStart != nil {
+		splitTime := strings.Split(params.DateCustomRange, " to ")
+		if len(splitTime) == 2 {
+			startDate, errStart = time.Parse("2006-01-02", strings.TrimSpace(splitTime[0]))
+			endDate, errEnd = time.Parse("2006-01-02", strings.TrimSpace(splitTime[1]))
+		}
+		if errStart != nil || len(splitTime) != 2 {
 			startDate = today
 		}
-		if errEnd != nil {
+		if errEnd != nil || len(splitTime) != 2 {
 			endDate = today
+		} else {
+			endDate = time.Date(endDate.Year(), endDate.Month(), endDate.Day(), 23, 59, 59, 0, today.Location())
 		}
 	default:
 		startDate = time.Date(today.Year(), today.Month(), 1, 0, 0, 0, 0, today.Location())
@@ -1093,7 +1105,7 @@ func (r *BaseModel) FormulaCPA(sum entity.SummaryCampaign) entity.SummaryCampaig
 	sum.AgencyFee, _ = strconv.ParseFloat(strings.TrimSpace(gs.AgencyFee), 64)
 	sum.AgencyFee = sum.AgencyFee / 100
 	mo_received := float64(sum.MoReceived)
-	sum.TotalWakiAgencyFee = (sum.CostPerConversion * mo_received) + (sum.AgencyFee * (sum.CostPerConversion + (sum.CostPerConversion * mo_received)))
+	sum.TotalWakiAgencyFee = (sum.CostPerConversion * mo_received) + (sum.AgencyFee * (sum.SBAF + (sum.CostPerConversion * mo_received)))
 
 	// GET SAAF (spending after agency fee)
 	//saaf := total_waki_agency_fee + sbaf
@@ -1106,6 +1118,10 @@ func (r *BaseModel) FormulaCPA(sum entity.SummaryCampaign) entity.SummaryCampaig
 	sum.SAAF = sum.TotalWakiAgencyFee + sum.SBAF + sum.TechnicalFee //saaf
 	if strings.ToLower(sum.ClientType) == "external" {
 		sum.SAAF = mo_received * sum.POAF
+	}
+
+	if strings.Contains(strings.ToUpper(sum.CampaignObjective), "MAINSTREAM") {
+		sum.SAAF = mo_sent * sum.POAF
 	}
 
 	// GET eCPA

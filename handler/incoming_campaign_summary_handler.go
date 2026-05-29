@@ -32,7 +32,7 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 		ReportType:           c.Query("report-type"),
 		Country:              c.Query("country"),
 		Operator:             c.Query("operator"),
-		PartnerName:          c.Query("partner-name"),
+		PartnerName:          c.Query("partner_name"),
 		Adnet:                c.Query("adnet"),
 		Service:              c.Query("service"),
 		DataIndicators:       dataIndicators,
@@ -74,7 +74,7 @@ func (h *IncomingHandler) DisplayCampaignSummaryChart(c *fiber.Ctx) error {
 		ReportType:           c.Query("report-type"),
 		Country:              c.Query("country"),
 		Operator:             c.Query("operator"),
-		PartnerName:          c.Query("partner-name"),
+		PartnerName:          c.Query("partner_name"),
 		CampaignName:         c.Query("campaign-name"),
 		Adnet:                c.Query("adnet"),
 		Service:              c.Query("service"),
@@ -124,14 +124,6 @@ func (h *IncomingHandler) GenerateCampaignSummary(c *fiber.Ctx, params entity.Pa
 	budgetDetail, budgetSummary, budgetSelf, _ := h.DS.GetCampaignBudgetSummary(params, startDate, endDate)
 
 	if err == nil {
-
-		TargetBudget := []entity.TargetBudget{}
-
-		TargetBudget, _ = h.DS.GetTargetBudget(params.Country, startDate, endDate, params.Operator, params.PartnerName, params.Service, params.Adnet)
-
-		fmt.Println("TargetBudget: ", TargetBudget)
-		fmt.Println("TargetBudget: ", TargetBudget)
-
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
 			Rsp: entity.GlobalResponseWithData{

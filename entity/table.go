@@ -165,93 +165,96 @@ type (
 
 	PixelStorage struct {
 		gorm.Model
-		ID                int       `gorm:"primaryKey;autoIncrement" json:"id"`
-		CampaignDetailId  int       `gorm:"index:idx_mocampdetailid_unique;not null;length:20" json:"campaign_detail_id"`
-		Pxdate            time.Time `gorm:"not null" json:"pxdate"`
-		URLServiceKey     string    `gorm:"index:idx_urlservicekey;index:idx_token;index:idx_msisdn;index:idx_pixel,not null;size:50" json:"urlservicekey"`
-		CampaignId        string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
-		CampaignName      string    `gorm:"size:100;deafult:NA" json:"campaign_name"`
-		Country           string    `gorm:"not null;size:50" json:"country"`
-		Operator          string    `gorm:"not null;size:50" json:"operator"`
-		Partner           string    `gorm:"not null;size:50" json:"partner"`
-		Aggregator        string    `gorm:"size:50" json:"aggregator"`
-		Adnet             string    `gorm:"not null;size:50" json:"adnet"`
-		Service           string    `gorm:"not null;size:50" json:"service"`
-		Keyword           string    `gorm:"size:50" json:"keyword"`
-		Subkeyword        string    `gorm:"size:50" json:"subkeyword"`
-		IsBillable        bool      `gorm:"default:false" json:"is_billable"`
-		Plan              string    `gorm:"size:50;default:NA" json:"plan"`
-		PO                string    `gorm:"size:50;default:NA" json:"po"`
-		Cost              string    `gorm:"size:50;default:NA" json:"cost"`
-		PubId             string    `gorm:"size:50;default:NA" json:"pubid"`
-		ShortCode         string    `gorm:"size:50;default:NA" json:"short_code"`
-		URL               string    `gorm:"size:255;default:NA" json:"url"`
-		URLType           string    `gorm:"size:50;default:NA" json:"url_type"`
-		Pixel             string    `gorm:"index:idx_pixel,size:255;default:NA" json:"pixel"`
-		Token             string    `gorm:"index:idx_token,size:255;default:NA" json:"token"`
-		TrxId             string    `gorm:"size:255;default:NA" json:"trx_id"`
-		TrxDate           time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"trx_date"`
-		Msisdn            string    `gorm:"index:idx_msisdn,size:255;default:NA" json:"msisdn"`
-		IsUsed            bool      `gorm:"not null;default:false" json:"is_used"`
-		Browser           string    `gorm:"size:150;default:NA" json:"browser"`
-		OS                string    `gorm:"size:150;default:NA" json:"os"`
-		Ip                string    `gorm:"type:text" json:"ip"`
-		ISP               string    `gorm:"size:150;default:NA" json:"isp"`
-		ReferralURL       string    `gorm:"size:255;default:NA" json:"referral_url"`
-		UserAgent         string    `gorm:"type:text" json:"user_agent"`
-		TrafficSource     bool      `gorm:"not null;default:false" json:"traffic_source"`
-		TrafficSourceData string    `gorm:"size:255;default:NA" json:"traffic_source_data"`
-		UserRejected      bool      `gorm:"not null;default:false" json:"user_rejected"`
-		UniqueClick       bool      `gorm:"not null;default:false" json:"unique_click"`
-		UserDuplicated    bool      `gorm:"not null;default:false" json:"user_duplicated"`
-		Handset           string    `gorm:"type:text" json:"handset"`
-		HandsetCode       string    `gorm:"size:150;default:NA" json:"handset_code"`
-		HandsetType       string    `gorm:"size:150;default:NA" json:"handset_type"`
-		URLLanding        string    `gorm:"size:255;default:NA" json:"url_landing"`
-		URLWarpLanding    string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
-		URLService        string    `gorm:"size:255;default:NA" json:"url_service"`
-		URLTFCORSmartlink string    `gorm:"size:255;default:NA" json:"url_tfc_or_smartlink"`
-		PixelUsedDate     time.Time `gorm:"not null" json:"pixel_used_date"`
-		StatusPostback    bool      `gorm:"not null;default:false" json:"status_postback"`
-		IsUnique          bool      `gorm:"not null;default:false" json:"is_unique"`
-		URLPostback       string    `gorm:"size:255;default:NA" json:"url_postback"`
-		StatusURLPostback string    `gorm:"size:150" json:"status_url_postback"`
-		ReasonURLPostback string    `gorm:"size:255" json:"reason_url_postback"`
-		IsActive          bool      `gorm:"not null;default:false" json:"is_active"`
-		CounterMOCapping  int       `gorm:"length:10;default:0" json:"counter_mo_capping"`
-		MOCapping         int       `gorm:"length:10;default:0" json:"mo_capping"`
-		StatusCapping     bool      `gorm:"not null;default:false" json:"status_capping"`
-		CounterMORatio    int       `gorm:"not null;length:10;default:0" json:"counter_mo_ratio"`
-		RatioSend         int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
-		RatioReceive      int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
-		StatusRatio       bool      `gorm:"not null;default:false" json:"status_ratio"`
-		APIURL            string    `gorm:"type:text" json:"api_url"`
-		CampaignObjective string    `gorm:"size:50;default:NA" json:"campaign_objective"`
-		Channel           string    `gorm:"size:50;default:NA" json:"channel"`
-		GoogleSheet       string    `gorm:"type:text;default:NA" json:"google_sheet"`
-		Currency          string    `gorm:"size:10;default:NA" json:"currency"`
-		PostbackMethod    string    `gorm:"size:50" json:"postback_method"`
-		LandingTime       time.Time `json:"landing_time"`
-		LandedTime        float64   `gorm:"type:double precision;default:0" json:"landed_time"`
-		HttpStatus        int       `gorm:"not null;length:10;default:0" json:"http_status"`
-		IsOperator        bool      `gorm:"not null;default:false" json:"is_operator"`
-		MCampaignId       string    `gorm:"size:255;default:NA" json:"m_campaign_id"`
-		MAdgroupId        string    `gorm:"size:255;default:NA" json:"m_adgroup_id"`
-		MPlacement        string    `gorm:"size:255;default:NA" json:"m_placement"`
-		MCreative         string    `gorm:"size:255;default:NA" json:"m_creative"`
-		MGadCampaignId    string    `gorm:"size:255;default:NA" json:"m_gad_campaign_id"`
-		MStatusCharge     bool      `gorm:"not null;default:false" json:"m_status_charge"`
-		MStatusTimeCharge time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"m_status_time_charge"`
-		MSnackCampaignId  string    `gorm:"size:255;default:NA" json:"m_snack_campaign_id"`
-		IsEvina           bool      `gorm:"default:false" json:"is_evina"`
-		StatusEvinaFraud  bool      `gorm:"default:false" json:"status_evina_fraud"`
-		EvinaTI           string    `gorm:"type:text" json:"evina_ti"`
-		EvinaTRX          string    `gorm:"type:text" json:"evina_trx"`
-		EvinaTS           int64     `gorm:"default:0" json:"evina_ts"`
-		EvinaASCode       int       `gorm:"default:0" json:"evina_as_code"`
-		EvinaFTCode       int       `gorm:"default:0" json:"evina_ft_code"`
-		CreatedAt         time.Time
-		UpdatedAt         time.Time
+		ID                   int       `gorm:"primaryKey;autoIncrement" json:"id"`
+		CampaignDetailId     int       `gorm:"index:idx_mocampdetailid_unique;not null;length:20" json:"campaign_detail_id"`
+		Pxdate               time.Time `gorm:"not null" json:"pxdate"`
+		URLServiceKey        string    `gorm:"index:idx_urlservicekey;index:idx_token;index:idx_msisdn;index:idx_pixel,not null;size:50" json:"urlservicekey"`
+		CampaignId           string    `gorm:"index:idx_campdetailid_unique;not null;size:50" json:"campaign_id"`
+		CampaignName         string    `gorm:"size:100;deafult:NA" json:"campaign_name"`
+		Country              string    `gorm:"not null;size:50" json:"country"`
+		Operator             string    `gorm:"not null;size:50" json:"operator"`
+		Partner              string    `gorm:"not null;size:50" json:"partner"`
+		Aggregator           string    `gorm:"size:50" json:"aggregator"`
+		Adnet                string    `gorm:"not null;size:50" json:"adnet"`
+		Service              string    `gorm:"not null;size:50" json:"service"`
+		Keyword              string    `gorm:"size:50" json:"keyword"`
+		Subkeyword           string    `gorm:"size:50" json:"subkeyword"`
+		IsBillable           bool      `gorm:"default:false" json:"is_billable"`
+		Plan                 string    `gorm:"size:50;default:NA" json:"plan"`
+		PO                   string    `gorm:"size:50;default:NA" json:"po"`
+		Cost                 string    `gorm:"size:50;default:NA" json:"cost"`
+		PubId                string    `gorm:"size:50;default:NA" json:"pubid"`
+		ShortCode            string    `gorm:"size:50;default:NA" json:"short_code"`
+		URL                  string    `gorm:"size:255;default:NA" json:"url"`
+		URLType              string    `gorm:"size:50;default:NA" json:"url_type"`
+		Pixel                string    `gorm:"index:idx_pixel,size:255;default:NA" json:"pixel"`
+		Token                string    `gorm:"index:idx_token,size:255;default:NA" json:"token"`
+		TrxId                string    `gorm:"size:255;default:NA" json:"trx_id"`
+		TrxDate              time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"trx_date"`
+		Msisdn               string    `gorm:"index:idx_msisdn,size:255;default:NA" json:"msisdn"`
+		IsUsed               bool      `gorm:"not null;default:false" json:"is_used"`
+		Browser              string    `gorm:"size:150;default:NA" json:"browser"`
+		OS                   string    `gorm:"size:150;default:NA" json:"os"`
+		Ip                   string    `gorm:"type:text" json:"ip"`
+		ISP                  string    `gorm:"size:150;default:NA" json:"isp"`
+		ReferralURL          string    `gorm:"size:255;default:NA" json:"referral_url"`
+		UserAgent            string    `gorm:"type:text" json:"user_agent"`
+		TrafficSource        bool      `gorm:"not null;default:false" json:"traffic_source"`
+		TrafficSourceData    string    `gorm:"size:255;default:NA" json:"traffic_source_data"`
+		UserRejected         bool      `gorm:"not null;default:false" json:"user_rejected"`
+		UniqueClick          bool      `gorm:"not null;default:false" json:"unique_click"`
+		UserDuplicated       bool      `gorm:"not null;default:false" json:"user_duplicated"`
+		Handset              string    `gorm:"type:text" json:"handset"`
+		HandsetCode          string    `gorm:"size:150;default:NA" json:"handset_code"`
+		HandsetType          string    `gorm:"size:150;default:NA" json:"handset_type"`
+		URLLanding           string    `gorm:"size:255;default:NA" json:"url_landing"`
+		URLWarpLanding       string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
+		URLService           string    `gorm:"size:255;default:NA" json:"url_service"`
+		URLTFCORSmartlink    string    `gorm:"size:255;default:NA" json:"url_tfc_or_smartlink"`
+		PixelUsedDate        time.Time `gorm:"not null" json:"pixel_used_date"`
+		StatusPostback       bool      `gorm:"not null;default:false" json:"status_postback"`
+		IsUnique             bool      `gorm:"not null;default:false" json:"is_unique"`
+		URLPostback          string    `gorm:"size:255;default:NA" json:"url_postback"`
+		StatusURLPostback    string    `gorm:"size:150" json:"status_url_postback"`
+		ReasonURLPostback    string    `gorm:"size:255" json:"reason_url_postback"`
+		IsActive             bool      `gorm:"not null;default:false" json:"is_active"`
+		CounterMOCapping     int       `gorm:"length:10;default:0" json:"counter_mo_capping"`
+		MOCapping            int       `gorm:"length:10;default:0" json:"mo_capping"`
+		StatusCapping        bool      `gorm:"not null;default:false" json:"status_capping"`
+		CounterMORatio       int       `gorm:"not null;length:10;default:0" json:"counter_mo_ratio"`
+		RatioSend            int       `gorm:"not null;length:10;default:1" json:"ratio_send"`
+		RatioReceive         int       `gorm:"not null;length:10;default:4" json:"ratio_receive"`
+		StatusRatio          bool      `gorm:"not null;default:false" json:"status_ratio"`
+		APIURL               string    `gorm:"type:text" json:"api_url"`
+		CampaignObjective    string    `gorm:"size:50;default:NA" json:"campaign_objective"`
+		Channel              string    `gorm:"size:50;default:NA" json:"channel"`
+		GoogleSheet          string    `gorm:"type:text;default:NA" json:"google_sheet"`
+		Currency             string    `gorm:"size:10;default:NA" json:"currency"`
+		PostbackMethod       string    `gorm:"size:50" json:"postback_method"`
+		LandingTime          time.Time `json:"landing_time"`
+		LandedTime           float64   `gorm:"type:double precision;default:0" json:"landed_time"`
+		HttpStatus           int       `gorm:"not null;length:10;default:0" json:"http_status"`
+		IsOperator           bool      `gorm:"not null;default:false" json:"is_operator"`
+		MCampaignId          string    `gorm:"size:255;default:NA" json:"m_campaign_id"`
+		MAdgroupId           string    `gorm:"size:255;default:NA" json:"m_adgroup_id"`
+		MPlacement           string    `gorm:"size:255;default:NA" json:"m_placement"`
+		MCreative            string    `gorm:"size:255;default:NA" json:"m_creative"`
+		MGadCampaignId       string    `gorm:"size:255;default:NA" json:"m_gad_campaign_id"`
+		MStatusCharge        bool      `gorm:"not null;default:false" json:"m_status_charge"`
+		MStatusTimeCharge    time.Time `gorm:"not null;default:CURRENT_TIMESTAMP" json:"m_status_time_charge"`
+		MSnackCampaignId     string    `gorm:"size:255;default:NA" json:"m_snack_campaign_id"`
+		IsEvina              bool      `gorm:"default:false" json:"is_evina"`
+		StatusEvinaFraud     bool      `gorm:"default:false" json:"status_evina_fraud"`
+		EvinaTI              string    `gorm:"type:text" json:"evina_ti"`
+		EvinaTRX             string    `gorm:"type:text" json:"evina_trx"`
+		EvinaTS              int64     `gorm:"default:0" json:"evina_ts"`
+		EvinaASCode          int       `gorm:"default:0" json:"evina_as_code"`
+		EvinaFTCode          int       `gorm:"default:0" json:"evina_ft_code"`
+		StatusBillable       string    `gorm:"size:150" json:"status_billable"`
+		StatusCodeBillable   string    `gorm:"size:150" json:"status_code_billable"`
+		ReasonStatusBillable string    `gorm:"size:255" json:"reason_status_billable"`
+		CreatedAt            time.Time
+		UpdatedAt            time.Time
 	}
 
 	ClickStorage struct {

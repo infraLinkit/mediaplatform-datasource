@@ -401,10 +401,13 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 					isPX := false
 
 					pxData := entity.PixelStorage{
-						URLServiceKey:  p.URLServiceKey,
-						Pxdate:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-						Pixel:          p.AffSub,
-						PostbackMethod: p.Method,
+						URLServiceKey:        p.URLServiceKey,
+						Pxdate:               helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+						Pixel:                p.AffSub,
+						PostbackMethod:       p.Method,
+						StatusBillable:       p.Status,
+						StatusCodeBillable:   p.StatusCode,
+						ReasonStatusBillable: p.StatusDetail,
 					}
 
 					switch p.Method {

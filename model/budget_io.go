@@ -123,8 +123,21 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 
 	if o.Action == "Search" {
 		if o.Country != "" {
-			whereClause = append(whereClause, "s.country = ?")
-			args = append(args, o.Country)
+			cs := []string{}
+			for _, c := range strings.Split(o.Country, ",") {
+				if c = strings.TrimSpace(c); c != "" {
+					cs = append(cs, c)
+				}
+			}
+			if len(cs) == 1 {
+				whereClause = append(whereClause, "s.country = ?")
+				args = append(args, cs[0])
+			} else if len(cs) > 1 {
+				ph := make([]string, len(cs))
+				for i := range ph { ph[i] = "?" }
+				whereClause = append(whereClause, fmt.Sprintf("s.country IN (%s)", strings.Join(ph, ",")))
+				for _, c := range cs { args = append(args, c) }
+			}
 		}
 		if o.Partner != "" {
 			whereClause = append(whereClause, "s.partner = ?")
@@ -193,11 +206,13 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 1  AND 7  THEN s.actual_cost ELSE 0 END) AS actual_week_1,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 8  AND 14 THEN s.actual_cost ELSE 0 END) AS actual_week_2,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 15 AND 21 THEN s.actual_cost ELSE 0 END) AS actual_week_3,
-			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) >= 22             THEN s.actual_cost ELSE 0 END) AS actual_week_4,
+			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 22 AND 28 THEN s.actual_cost ELSE 0 END) AS actual_week_4,
+			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) >= 29             THEN s.actual_cost ELSE 0 END) AS actual_week_5,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 1  AND 7  THEN s.mo_count ELSE 0 END) AS mo_week1,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 8  AND 14 THEN s.mo_count ELSE 0 END) AS mo_week2,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 15 AND 21 THEN s.mo_count ELSE 0 END) AS mo_week3,
-			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) >= 22             THEN s.mo_count ELSE 0 END) AS mo_week4,
+			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 22 AND 28 THEN s.mo_count ELSE 0 END) AS mo_week4,
+			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) >= 29             THEN s.mo_count ELSE 0 END) AS mo_week5,
 			COALESCE(b.id, 0)         AS budget_io_id,
 			COALESCE(b.io_target, 0)  AS io_target,
 			COALESCE(b.mo_target, 0)  AS mo_target,
@@ -221,6 +236,90 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 	if err := r.DB.Raw(rawSQL, args...).Scan(&ss).Error; err != nil {
 		return nil, 0, err
 	}
+
+	// Zero-MO rows: budget_ios entries for explicitly selected countries with no summary data.
+	// Triggered only when specific countries are requested, monthly mode only.
+	if o.Country != "" && o.DateRange != "" {
+		type zeroBIO struct {
+			BudgetIOID int     `gorm:"column:budget_io_id"`
+			Country    string  `gorm:"column:country"`
+			Month      string  `gorm:"column:month"`
+			Continent  string  `gorm:"column:continent"`
+			IOTarget   float64 `gorm:"column:io_target"`
+			MOTarget   float64 `gorm:"column:mo_target"`
+			TargetCAC  float64 `gorm:"column:target_cac"`
+			LTV        float64 `gorm:"column:ltv"`
+			ROAS       float64 `gorm:"column:roas"`
+			ROI        float64 `gorm:"column:roi"`
+		}
+
+		selCs := []string{}
+		for _, c := range strings.Split(o.Country, ",") {
+			if c = strings.TrimSpace(c); c != "" {
+				selCs = append(selCs, c)
+			}
+		}
+
+		if len(selCs) > 0 {
+			ph := make([]string, len(selCs))
+			for i := range ph { ph[i] = "?" }
+
+			zeroInner := fmt.Sprintf(`
+				SELECT
+					b.id AS budget_io_id,
+					b.country,
+					b.month,
+					b.io_target,
+					b.mo_target,
+					b.target_cac,
+					b.ltv,
+					b.roas,
+					b.roi,
+					COALESCE(
+						(SELECT s2.continent FROM summary_budget_ios s2 WHERE s2.country = b.country LIMIT 1),
+						''
+					) AS continent
+				FROM budget_ios b
+				WHERE b.month = ?
+					AND b.deleted_at IS NULL
+					AND b.country IN (%s)
+					AND NOT EXISTS (
+						SELECT 1 FROM summary_budget_ios s
+						WHERE s.country = b.country AND s.month = b.month
+					)`, strings.Join(ph, ","))
+
+			zeroArgs := []interface{}{o.DateRange}
+			for _, c := range selCs { zeroArgs = append(zeroArgs, c) }
+
+			zeroWhere := []string{"1=1"}
+			if o.Continent != "" {
+				zeroWhere = append(zeroWhere, "continent = ?")
+				zeroArgs = append(zeroArgs, o.Continent)
+			}
+
+			zeroSQL := fmt.Sprintf("SELECT * FROM (%s) AS z WHERE %s",
+				zeroInner, strings.Join(zeroWhere, " AND "))
+
+			var zeros []zeroBIO
+			if err := r.DB.Raw(zeroSQL, zeroArgs...).Scan(&zeros).Error; err == nil {
+				for _, z := range zeros {
+					ss = append(ss, entity.SummaryBudgetIOAgg{
+						BudgetIOID: z.BudgetIOID,
+						Country:    z.Country,
+						Continent:  z.Continent,
+						Month:      z.Month,
+						IOTarget:   z.IOTarget,
+						MOTarget:   z.MOTarget,
+						TargetCAC:  z.TargetCAC,
+						LTV:        z.LTV,
+						ROAS:       z.ROAS,
+						ROI:        z.ROI,
+					})
+				}
+			}
+		}
+	}
+
 	return ss, int64(len(ss)), nil
 }
 

@@ -107,7 +107,7 @@ func (r *BaseModel) GetReport(country string, operator string, client_type strin
 
 	switch date_range {
 	case "TODAY":
-		query.Where("summary_date = CURRENT_DATE")
+		query = query.Where("summary_date = CURRENT_DATE")
 	case "YESTERDAY":
 		query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
 	case "LAST7DAY":
@@ -126,27 +126,27 @@ func (r *BaseModel) GetReport(country string, operator string, client_type strin
 	}
 
 	if country != "" {
-		query.Where("country = ?", country)
+		query = query.Where("country = ?", country)
 	}
 
 	if operator != "" {
-		query.Where("operator = ?", operator)
+		query = query.Where("operator = ?", operator)
 	}
 
 	if partner != "" {
-		query.Where("partner = ?", partner)
+		query = query.Where("partner = ?", partner)
 	}
 
 	if client_type != "" {
-		query.Where("client_type = ?", client_type)
+		query = query.Where("client_type = ?", client_type)
 	}
 
 	if service != "" {
-		query.Where("client_type = ?", service)
+		query = query.Where("service = ?", service)
 	}
 
 	if campaign_objective != "" {
-		query.Where("campaign_objective = ?", campaign_objective)
+		query = query.Where("campaign_objective = ?", campaign_objective)
 	}
 
 	rows, err := query.Select(select_date +
@@ -251,7 +251,7 @@ func (r *BaseModel) GetCampaign(order_type string, order_by string, offset strin
 
 	switch date_range {
 	case "TODAY":
-		query.Where("summary_date = CURRENT_DATE")
+		query = query.Where("summary_date = CURRENT_DATE")
 	case "YESTERDAY":
 		query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
 	case "LAST7DAY":

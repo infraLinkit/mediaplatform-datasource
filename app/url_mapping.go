@@ -93,7 +93,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	// Report
 	rpt := v1.Group("/report") // Report
 	//rpt.Get("/report/", h.Report).Name("Report API")
-	rpt.Get("/pinreport", h.DisplayPinReport).Name("Pin Report Summary FE")
+	rpt.Get("/pinreport", h.AuthMiddleware, h.DisplayPinReport).Name("Pin Report Summary FE")
 	rpt.Get("/datasentapiperformance", h.DisplayPinPerformanceReport).Name("Pin Performance Api Report Summary FE")
 	rpt.Get("/cpareportlist", h.AuthMiddleware, h.DisplayCPAReport).Name("Receive Pin CPA Report Transactional")
 	rpt.Get("/costreport/:v", h.AuthMiddleware, h.DisplayCostReport).Name("Receive Pin Cost Report / detail Transactional")

@@ -114,6 +114,15 @@ type (
 		CampaignObjective string    `form:"order_dir" json:"campaign_objective"`
 	}
 
+	TotalSummaryPinReport struct {
+		TotalMO       int     `json:"total_mo"`
+		TotalPostback int     `json:"total_postback"`
+		SBAF          float64 `json:"sbaf"`
+		SAAF          float64 `json:"saaf"`
+		PricePerMO    float64 `json:"price_per_mo"`
+		WakiRevenue   float64 `json:"waki_revenue"`
+	}
+
 	TotalSummaryCampaign struct {
 		MoReceived         int     `json:"mo_received"`
 		Postback           int     `json:"postback"`

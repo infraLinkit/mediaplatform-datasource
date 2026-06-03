@@ -60,23 +60,25 @@ func (h *IncomingHandler) DisplayPinReport(c *fiber.Ctx) error {
 		OrderDir:    m["order_dir"],
 	}
 
-	r := h.DisplayPinReportExtra(c, fe)
+	allowedAdnets, _ := c.Locals("adnets").([]string)
+
+	r := h.DisplayPinReportExtra(c, fe, allowedAdnets)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayPinReport) entity.ReturnResponse {
+func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayPinReport, allowedAdnets []string) entity.ReturnResponse {
 	var (
-		err        error
-		total_data int64
-		apireport  []entity.ApiPinReportWithAlias
+		err          error
+		total_data   int64
+		apireport    []entity.ApiPinReportWithAlias
+		totalSummary entity.TotalSummaryPinReport
 	)
 
 	if fe.Action != "" || fe.Reload == "true" {
 		fmt.Println("-----", fe.Reload, "-----")
-		apireport, total_data, err = h.DS.GetDisplayPinReport(fe)
+		apireport, total_data, totalSummary, err = h.DS.GetDisplayPinReport(fe, allowedAdnets)
 	} else {
-
-		apireport, total_data, err = h.DS.GetDisplayPinReport(fe)
+		apireport, total_data, totalSummary, err = h.DS.GetDisplayPinReport(fe, allowedAdnets)
 	}
 
 	if err == nil {
@@ -92,6 +94,7 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
 				Data:            apireport,
+				TotalSummary:    totalSummary,
 				RecordsTotal:    int(total_data),
 				RecordsFiltered: int(total_data),
 			},

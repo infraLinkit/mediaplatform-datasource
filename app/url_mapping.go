@@ -88,6 +88,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	v1.Get("/postback/:urlservicekey/", h.Postback)
 	v1.Get("/postback", h.PostbackV3)
 	v1.Get("/postback_billed", h.PostbackBilled)
+	v1.Get("/postback_sync", h.PostbackDirectReply)
 	v1.Get("/inquire/campid", h.InquiryCampID)
 	v1.Get("/inquire/api-campid", h.InquiryAPICampID)
 

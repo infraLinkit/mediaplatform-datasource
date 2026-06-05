@@ -65,7 +65,6 @@ type (
 		RabbitMQQos                            int
 		RabbitMQPoolsize                       int
 		RabbitMQCtxTimeout                     int
-		RabbitMQCtx                            context.Context
 		RabbitDeclares                         []helper.RabbitDeclare
 		RabbitMQPixelStorageExchangeName       string
 		RabbitMQPixelStorageQueueName          string
@@ -131,9 +130,6 @@ func InitCfg() *Cfg {
 	time.Local = loc // Set global location
 	rmqpctxtimeout := getEnvInt("RABBITMQCONTEXTTIMEOUT", 30)
 
-	RabbitMQCtx, cancel := context.WithTimeout(context.Background(), time.Duration(rmqpctxtimeout)*time.Second)
-	defer cancel()
-
 	rabbitmq_port, _ := strconv.Atoi(os.Getenv("RABBITMQPORT"))
 	redis_dbindex, _ := strconv.Atoi(os.Getenv("REDISDBINDEX"))
 	redis_cache_pixel, _ := strconv.Atoi(os.Getenv("REDISCACHEPIXEL"))
@@ -176,7 +172,6 @@ func InitCfg() *Cfg {
 		RabbitMQVHost:                          os.Getenv("RABBITMQVHOST"),
 		RabbitMQDataType:                       "application/json",
 		RabbitMQCtxTimeout:                     rmqpctxtimeout,
-		RabbitMQCtx:                            RabbitMQCtx,
 		RabbitMQQos:                            getEnvInt("RABBITMQQOS", 1),
 		RabbitMQPoolsize:                       getEnvInt("RABBITMQPOOLSIZE", 1),
 		RabbitMQPixelStorageExchangeName:       os.Getenv("RABBITMQPIXELSTORAGEEXCHANGENAME"),

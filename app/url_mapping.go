@@ -24,6 +24,7 @@ type App3rdParty struct {
 	R      *rueidis.Storage
 	RCP    *redis.Client
 	Rmqp   rmqp.AMQP
+	RM     *helper.RabbitManager
 	GS     *sheets.Service
 }
 
@@ -93,7 +94,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	// Report
 	rpt := v1.Group("/report") // Report
 	//rpt.Get("/report/", h.Report).Name("Report API")
-	rpt.Get("/pinreport", h.AuthMiddleware, h.DisplayPinReport).Name("Pin Report Summary FE")
+	rpt.Get("/pinreport", h.DisplayPinReport).Name("Pin Report Summary FE")
 	rpt.Get("/datasentapiperformance", h.DisplayPinPerformanceReport).Name("Pin Performance Api Report Summary FE")
 	rpt.Get("/cpareportlist", h.AuthMiddleware, h.DisplayCPAReport).Name("Receive Pin CPA Report Transactional")
 	rpt.Get("/costreport/:v", h.AuthMiddleware, h.DisplayCostReport).Name("Receive Pin Cost Report / detail Transactional")
@@ -104,7 +105,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	rpt.Get("/trafficreport", h.DisplayTrafficReport).Name("Traffic Report list")
 	rpt.Get("/trafficreport/chart", h.GetTrafficReportChart).Name("Traffic Report chart")
 	rpt.Get("/mainstreamreport", h.AuthMiddleware, h.DisplayMainstreamReport).Name("Mainstream Report list")
-	rpt.Get("/google-traffic-report",    h.AuthMiddleware, h.DisplayGoogleTrafficReport).Name("Google Traffic Report")
+	rpt.Get("/google-traffic-report", h.AuthMiddleware, h.DisplayGoogleTrafficReport).Name("Google Traffic Report")
 	rpt.Get("/budgetmonitoring", h.DisplayBudgetMonitoring).Name("Budget Monitoring list")
 	rpt.Get("/performance-report", h.DisplayPerformanceReport).Name("Performance Report list")
 	rpt.Get("/revenuemonitoring", h.DisplayRevenueMonitoring).Name("Revenue Monitoring list")

@@ -73,6 +73,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 		RCP:    obj.RCP,
 		DB:     obj.DB,
 		Rmqp:   obj.Rmqp,
+		RM:     obj.RM,
 		GS:     obj.GS,
 	})
 

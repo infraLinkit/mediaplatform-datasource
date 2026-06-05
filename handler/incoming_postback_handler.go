@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -904,7 +905,10 @@ func (h *IncomingHandler) PostbackDirectReply(c *fiber.Ctx) error {
 								corId := "RTD" + helper.GetUniqId(h.Config.TZ)
 
 								reply := "NOTSHAVED"
-								if respBody, err := h.RM.DirectReplyToWithRetry(h.Config.RabbitMQCtx, h.Config.RabbitMQRatioExchangeName, h.Config.RabbitMQRatioQueueName, bodyReq, corId); err != nil {
+								ctx, cancel := context.WithTimeout(c.UserContext(), time.Duration(h.Config.RabbitMQCtxTimeout)*time.Second)
+								defer cancel()
+
+								if respBody, err := h.RM.DirectReplyToWithRetry(ctx, h.Config.RabbitMQRatioExchangeName, h.Config.RabbitMQRatioQueueName, bodyReq, corId); err != nil {
 									h.Logs.Debug(fmt.Sprintf("[x] Failed published, Data: %s ...", string(bodyReq)))
 								} else {
 									h.Logs.Debug(fmt.Sprintf("[v] Published, Data: %s, Response: %s ...", string(bodyReq), string(respBody)))

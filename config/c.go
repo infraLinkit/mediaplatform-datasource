@@ -62,6 +62,11 @@ type (
 		RabbitMQPassword                       string
 		RabbitMQVHost                          string
 		RabbitMQDataType                       string
+		RabbitMQQos                            int
+		RabbitMQPoolsize                       int
+		RabbitMQCtxTimeout                     int
+		RabbitMQCtx                            context.Context
+		RabbitDeclares                         []helper.RabbitDeclare
 		RabbitMQPixelStorageExchangeName       string
 		RabbitMQPixelStorageQueueName          string
 		RabbitMQClickStorageExchangeName       string
@@ -111,6 +116,7 @@ type (
 		RCP    *redis.Client
 		DB     *gorm.DB
 		Rmqp   rmqp.AMQP
+		RM     *helper.RabbitManager
 		GS     *sheets.Service
 	}
 )
@@ -122,6 +128,11 @@ func InitCfg() *Cfg {
 	}
 
 	loc, _ := time.LoadLocation(os.Getenv("TZ"))
+	time.Local = loc // Set global location
+	rmqpctxtimeout := getEnvInt("RABBITMQCONTEXTTIMEOUT", 30)
+
+	RabbitMQCtx, cancel := context.WithTimeout(context.Background(), time.Duration(rmqpctxtimeout)*time.Second)
+	defer cancel()
 
 	rabbitmq_port, _ := strconv.Atoi(os.Getenv("RABBITMQPORT"))
 	redis_dbindex, _ := strconv.Atoi(os.Getenv("REDISDBINDEX"))
@@ -164,6 +175,10 @@ func InitCfg() *Cfg {
 		RabbitMQPassword:                       os.Getenv("RABBITMQPASSWORD"),
 		RabbitMQVHost:                          os.Getenv("RABBITMQVHOST"),
 		RabbitMQDataType:                       "application/json",
+		RabbitMQCtxTimeout:                     rmqpctxtimeout,
+		RabbitMQCtx:                            RabbitMQCtx,
+		RabbitMQQos:                            getEnvInt("RABBITMQQOS", 1),
+		RabbitMQPoolsize:                       getEnvInt("RABBITMQPOOLSIZE", 1),
 		RabbitMQPixelStorageExchangeName:       os.Getenv("RABBITMQPIXELSTORAGEEXCHANGENAME"),
 		RabbitMQPixelStorageQueueName:          os.Getenv("RABBITMQPIXELSTORAGEQUEUENAME"),
 		RabbitMQClickStorageExchangeName:       os.Getenv("RABBITMQCLICKSTORAGEEXCHANGENAME"),
@@ -223,7 +238,17 @@ func (c *Cfg) Initiate(logname string) *Setup {
 		RCP:    c.InitRedis(l, c.RedisCachePixel),
 		DB:     c.InitGormPgx(l),
 		Rmqp:   c.InitMessageBroker(),
-		GS:     c.InitGoogleSheet(l),
+		RM: helper.InitMessageBroker(helper.RabbitConfig{
+			Host:     c.RabbitMQHost,
+			Port:     c.RabbitMQPort,
+			User:     c.RabbitMQUsername,
+			Password: c.RabbitMQPassword,
+			Vhost:    c.RabbitMQVHost,
+			PoolSize: c.RabbitMQPoolsize,
+			Qos:      c.RabbitMQQos,
+			Declares: c.RabbitDeclares,
+		}, l),
+		GS: c.InitGoogleSheet(l),
 	}
 
 }
@@ -381,4 +406,33 @@ func (c *Cfg) InitGoogleSheet(l *logrus.Logger) *sheets.Service {
 	l.Info("[v] Google sheet connection successful established\n")
 
 	return srv
+}
+
+func getEnv(key, fallback string) string {
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
+func getEnvInt(key string, fallback int) int {
+	if value, ok := os.LookupEnv(key); ok {
+		i, err := strconv.Atoi(value)
+		if err != nil {
+			return fallback
+		}
+		return i
+	}
+	return fallback
+}
+
+func getEnvBool(key string, fallback bool) bool {
+	if value, ok := os.LookupEnv(key); ok {
+		b, err := strconv.ParseBool(value)
+		if err != nil {
+			return fallback
+		}
+		return b
+	}
+	return fallback
 }

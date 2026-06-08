@@ -37,7 +37,6 @@ type GoogleTrafficReportRow struct {
 	Service       string  `json:"service"`
 	Company       string  `json:"company"`
 	AdgroupID     string  `json:"adgroup_id"`
-	Placement     string  `json:"placement"`
 
 	// Period
 	PeriodLabel string `json:"period_label"` // "Week 3 (2026-04)" / "2026-04" / "2026-04-15"

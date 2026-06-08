@@ -42,7 +42,6 @@ func (r *BaseModel) GetDisplayGoogleTrafficReport(
 		service,
 		company,
 		adgroup_id,
-		placement,
 		%s,
 		SUM(status_success) AS status_success,
 		SUM(status_failed)  AS status_failed,
@@ -55,7 +54,7 @@ func (r *BaseModel) GetDisplayGoogleTrafficReport(
 		Group(`
 			url_service_key, campaign_id, campaign_name, country,
 			operator, partner, adnet, service, company,
-			adgroup_id, placement, period_label` + groupExtra)
+			adgroup_id, period_label` + groupExtra)
 
 	// ============================================================
 	// 3. COUNT (SUBQUERY)
@@ -91,7 +90,6 @@ func (r *BaseModel) GetDisplayGoogleTrafficReport(
 		Service       string  `gorm:"column:service"`
 		Company       string  `gorm:"column:company"`
 		AdgroupID     string  `gorm:"column:adgroup_id"`
-		Placement     string  `gorm:"column:placement"`
 		PeriodLabel   string  `gorm:"column:period_label"`
 		WeekNum       *int    `gorm:"column:week_num"`
 		StatusSuccess int     `gorm:"column:status_success"`
@@ -178,7 +176,6 @@ func (r *BaseModel) GetDisplayGoogleTrafficReport(
 			Service:       rr.Service,
 			Company:       rr.Company,
 			AdgroupID:     rr.AdgroupID,
-			Placement:     rr.Placement,
 			PeriodLabel:   label,
 			SummaryDate:   rr.PeriodLabel,
 			StatusSuccess: rr.StatusSuccess,
@@ -266,7 +263,7 @@ func applyPeriod(db *gorm.DB, o entity.DisplayGoogleTrafficReport) (*gorm.DB, st
 			CEIL(EXTRACT(DAY FROM summary_date) / 7.0)::int AS week_num,
 			TO_CHAR(summary_date, 'YYYY-MM') AS period_label
 		`
-		groupExtra = ", week_num"
+		groupExtra = ", CEIL(EXTRACT(DAY FROM summary_date) / 7.0)::int"
 		orderExpr = "week_num ASC, period_label ASC"
 		isWeekly = true
 

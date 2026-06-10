@@ -84,6 +84,14 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	dashboard.Get("get-data", h.AuthMiddleware, h.DisplayDashboardData)
 	dashboard.Get("get-top-campaign", h.AuthMiddleware, h.DisplayDashboardTopCampaign)
 	dashboard.Get("get-report-list", h.AuthMiddleware, h.DisplayDashboardReport)
+	dashboard.Get("get-country-stats", h.AuthMiddleware, h.DisplayCountryStats)
+	dashboard.Get("get-ops-stats", h.AuthMiddleware, h.DisplayOpsStats)
+	dashboard.Get("get-alerts", h.AuthMiddleware, h.DisplayAlerts)
+	dashboard.Get("get-rollup", h.AuthMiddleware, h.DisplayRollup)
+	dashboard.Get("get-adnet-stats", h.AuthMiddleware, h.DisplayAdnetStats)
+	dashboard.Get("get-heatmap", h.AuthMiddleware, h.DisplayHeatmap)
+	dashboard.Get("get-campaign-daily", h.AuthMiddleware, h.DisplayCampaignDaily)
+	dashboard.Get("get-filter-options", h.AuthMiddleware, h.DisplayFilterOptions)
 
 	// Postback
 	v1.Get("/postback/:urlservicekey/", h.Postback)

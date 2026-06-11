@@ -179,6 +179,12 @@ func (r *BaseModel) GetOpsStats(date_range, date_before, date_after, country, se
 	default:
 		lq = lq.Where("DATE(summary_date_hour) BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 	}
+	if country != "" {
+		lq = lq.Where("country = ?", country)
+	}
+	if service != "" {
+		lq = lq.Where("service = ?", service)
+	}
 	lq.Where("total_load_time > 0").Select("AVG(total_load_time)").Scan(&avgLoad)
 	stats.AvgLoadTime = avgLoad
 	return stats, nil

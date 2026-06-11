@@ -70,7 +70,7 @@ func (r *BaseModel) GetCountryStats(date_range, date_before, date_after, country
 		query = query.Where("company IN ?", allowedCompanies)
 	}
 	rows, err := query.Select("country, SUM(sbaf) as spend, SUM(saaf) as revenue, SUM(mo_received) as mo").
-		Group("country").Order("spend DESC").Rows()
+		Group("country").Order("spend DESC").Limit(50).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -165,19 +165,19 @@ func (r *BaseModel) GetOpsStats(date_range, date_before, date_after, country, se
 	lq := r.DB.Model(&entity.SummaryLanding{})
 	switch date_range {
 	case "TODAY":
-		lq = lq.Where("DATE(summary_date_hour) = CURRENT_DATE")
+		lq = lq.Where("summary_date_hour >= CURRENT_DATE AND summary_date_hour < CURRENT_DATE + INTERVAL '1 DAY'")
 	case "YESTERDAY":
-		lq = lq.Where("DATE(summary_date_hour) = CURRENT_DATE - INTERVAL '1 DAY'")
+		lq = lq.Where("summary_date_hour >= CURRENT_DATE - INTERVAL '1 DAY' AND summary_date_hour < CURRENT_DATE")
 	case "LAST30DAY":
-		lq = lq.Where("DATE(summary_date_hour) BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+		lq = lq.Where("summary_date_hour >= CURRENT_DATE - INTERVAL '30 DAY' AND summary_date_hour < CURRENT_DATE + INTERVAL '1 DAY'")
 	case "THISMONTH":
-		lq = lq.Where("DATE(summary_date_hour) >= DATE_TRUNC('month', CURRENT_DATE)")
+		lq = lq.Where("summary_date_hour >= DATE_TRUNC('month', CURRENT_DATE)")
 	case "LASTMONTH":
-		lq = lq.Where("DATE(summary_date_hour) BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+		lq = lq.Where("summary_date_hour >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND summary_date_hour < DATE_TRUNC('month', CURRENT_DATE)")
 	case "CUSTOMRANGE":
-		lq = lq.Where("DATE(summary_date_hour) BETWEEN ? AND ?", date_before, date_after)
+		lq = lq.Where("summary_date_hour >= ? AND summary_date_hour < ?::date + INTERVAL '1 DAY'", date_before, date_after)
 	default:
-		lq = lq.Where("DATE(summary_date_hour) BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+		lq = lq.Where("summary_date_hour >= CURRENT_DATE - INTERVAL '7 DAY' AND summary_date_hour < CURRENT_DATE + INTERVAL '1 DAY'")
 	}
 	if country != "" {
 		lq = lq.Where("country = ?", country)
@@ -347,7 +347,7 @@ func (r *BaseModel) GetRollup(date_range, date_before, date_after, client_type, 
 		SUM(mo_received) as mo,
 		SUM(sbaf) as spend,
 		SUM(saaf) as revenue`).
-		Group("country, operator, service").Order("spend DESC").Rows()
+		Group("country, operator, service").Order("spend DESC").Limit(500).Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +410,7 @@ func (r *BaseModel) GetAdnetStats(date_range, date_before, date_after, client_ty
 		SUM(sbaf) as spend, SUM(saaf) as revenue,
 		SUM(mo_received) as mo,
 		COUNT(DISTINCT campaign_id) as campaigns`).
-		Group("adnet").Order("spend DESC").Rows()
+		Group("adnet").Order("spend DESC").Limit(100).Rows()
 	if err != nil {
 		return nil, err
 	}

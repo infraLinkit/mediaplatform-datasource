@@ -91,6 +91,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	dashboard.Get("get-adnet-stats", h.AuthMiddleware, h.DisplayAdnetStats)
 	dashboard.Get("get-heatmap", h.AuthMiddleware, h.DisplayHeatmap)
 	dashboard.Get("get-campaign-daily", h.AuthMiddleware, h.DisplayCampaignDaily)
+	dashboard.Get("get-service-daily", h.AuthMiddleware, h.DisplayServiceDaily)
 	dashboard.Get("get-filter-options", h.AuthMiddleware, h.DisplayFilterOptions)
 
 	// Postback
@@ -104,7 +105,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	// Report
 	rpt := v1.Group("/report") // Report
 	//rpt.Get("/report/", h.Report).Name("Report API")
-	rpt.Get("/pinreport", h.DisplayPinReport).Name("Pin Report Summary FE")
+	rpt.Get("/pinreport", h.AuthMiddleware, h.DisplayPinReport).Name("Pin Report Summary FE")
 	rpt.Get("/datasentapiperformance", h.DisplayPinPerformanceReport).Name("Pin Performance Api Report Summary FE")
 	rpt.Get("/cpareportlist", h.AuthMiddleware, h.DisplayCPAReport).Name("Receive Pin CPA Report Transactional")
 	rpt.Get("/costreport/:v", h.AuthMiddleware, h.DisplayCostReport).Name("Receive Pin Cost Report / detail Transactional")

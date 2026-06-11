@@ -123,22 +123,20 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 
 	if o.Action == "Search" {
 		if o.Country != "" {
-			countries := strings.Split(o.Country, ",")
-			for i := range countries {
-				countries[i] = strings.TrimSpace(countries[i])
+			cs := []string{}
+			for _, c := range strings.Split(o.Country, ",") {
+				if c = strings.TrimSpace(c); c != "" {
+					cs = append(cs, c)
+				}
 			}
-			if len(countries) == 1 {
+			if len(cs) == 1 {
 				whereClause = append(whereClause, "s.country = ?")
-				args = append(args, countries[0])
-			} else {
-				placeholders := make([]string, len(countries))
-				for i := range placeholders {
-					placeholders[i] = "?"
-				}
-				whereClause = append(whereClause, "s.country IN ("+strings.Join(placeholders, ",")+")")
-				for _, c := range countries {
-					args = append(args, c)
-				}
+				args = append(args, cs[0])
+			} else if len(cs) > 1 {
+				ph := make([]string, len(cs))
+				for i := range ph { ph[i] = "?" }
+				whereClause = append(whereClause, fmt.Sprintf("s.country IN (%s)", strings.Join(ph, ",")))
+				for _, c := range cs { args = append(args, c) }
 			}
 		}
 		if o.Partner != "" {
@@ -208,11 +206,13 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 1  AND 7  THEN s.actual_cost ELSE 0 END) AS actual_week_1,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 8  AND 14 THEN s.actual_cost ELSE 0 END) AS actual_week_2,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 15 AND 21 THEN s.actual_cost ELSE 0 END) AS actual_week_3,
-			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) >= 22             THEN s.actual_cost ELSE 0 END) AS actual_week_4,
+			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 22 AND 28 THEN s.actual_cost ELSE 0 END) AS actual_week_4,
+			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) >= 29             THEN s.actual_cost ELSE 0 END) AS actual_week_5,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 1  AND 7  THEN s.mo_count ELSE 0 END) AS mo_week1,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 8  AND 14 THEN s.mo_count ELSE 0 END) AS mo_week2,
 			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 15 AND 21 THEN s.mo_count ELSE 0 END) AS mo_week3,
-			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) >= 22             THEN s.mo_count ELSE 0 END) AS mo_week4,
+			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) BETWEEN 22 AND 28 THEN s.mo_count ELSE 0 END) AS mo_week4,
+			SUM(CASE WHEN EXTRACT(DAY FROM s.summary_date) >= 29             THEN s.mo_count ELSE 0 END) AS mo_week5,
 			COALESCE(b.id, 0)         AS budget_io_id,
 			COALESCE(b.io_target, 0)  AS io_target,
 			COALESCE(b.mo_target, 0)  AS mo_target,

@@ -208,6 +208,15 @@ func (h *IncomingHandler) DisplayCampaignDaily(c *fiber.Ctx) error {
 	})
 }
 
+func (h *IncomingHandler) DisplayServiceDaily(c *fiber.Ctx) error {
+	m := c.Queries()
+	data, _ := h.DS.GetServiceDaily(m["country"], m["operator"], m["service"], m["date_range"], m["date_before"], m["date_after"])
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithDataTable{
+		Draw: 0, Code: fiber.StatusOK, Message: config.OK_DESC,
+		Data: data, RecordsTotal: 1, RecordsFiltered: 1,
+	})
+}
+
 func (h *IncomingHandler) DisplayFilterOptions(c *fiber.Ctx) error {
 	allowedAdnets, _ := c.Locals("adnets").([]string)
 	allowedCompanies, _ := c.Locals("companies").([]string)

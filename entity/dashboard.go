@@ -63,6 +63,7 @@ type (
 		ExternalSpend           float64 `json:"external_spend"`
 		TotalMO                 int     `json:"total_mo"`
 		TotalActiveAdnet        int     `json:"total_active_adnet"`
+		TotalAdnet              int     `json:"total_adnet"`
 		ECPA                    float64 `json:"ecpa"`
 		CAC                     float64 `json:"cac"`
 		RecoveryDays            float64 `json:"recovery_days"`

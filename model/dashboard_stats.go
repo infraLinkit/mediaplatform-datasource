@@ -179,6 +179,12 @@ func (r *BaseModel) GetOpsStats(date_range, date_before, date_after, country, se
 	default:
 		lq = lq.Where("DATE(summary_date_hour) BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
 	}
+	if country != "" {
+		lq = lq.Where("country = ?", country)
+	}
+	if service != "" {
+		lq = lq.Where("service = ?", service)
+	}
 	lq.Where("total_load_time > 0").Select("AVG(total_load_time)").Scan(&avgLoad)
 	stats.AvgLoadTime = avgLoad
 	return stats, nil
@@ -460,32 +466,32 @@ func (r *BaseModel) GetHeatmap(date_range, date_before, date_after, country, ser
 		query = query.Where("service = ?", service)
 	}
 	type cellRow struct {
-		CampaignId string  `gorm:"column:campaign_id"`
-		Adnet      string  `gorm:"column:adnet"`
-		ROAS       float64 `gorm:"column:roas"`
-		Spend      float64 `gorm:"column:spend"`
+		UrlServiceKey string  `gorm:"column:url_service_key"`
+		Adnet         string  `gorm:"column:adnet"`
+		ROAS          float64 `gorm:"column:roas"`
+		Spend         float64 `gorm:"column:spend"`
 	}
 	var raw []cellRow
-	err := query.Select(`campaign_id, adnet,
+	err := query.Select(`url_service_key, adnet,
 		SUM(saaf)/NULLIF(SUM(sbaf),0)*100 as roas,
 		SUM(sbaf) as spend`).
-		Group("campaign_id, adnet").Order("spend DESC").Limit(200).Scan(&raw).Error
+		Group("url_service_key, adnet").Order("spend DESC").Limit(200).Scan(&raw).Error
 	if err != nil {
 		return entity.HeatmapData{}, err
 	}
 	campSpend := make(map[string]float64)
 	adnetSpend := make(map[string]float64)
 	for _, c := range raw {
-		campSpend[c.CampaignId] += c.Spend
+		campSpend[c.UrlServiceKey] += c.Spend
 		adnetSpend[c.Adnet] += c.Spend
 	}
 	topCamps := topNKeys(campSpend, 8)
 	topAdnets := topNKeys(adnetSpend, 8)
 	var cells []entity.HeatmapCell
 	for _, c := range raw {
-		if containsStr(topCamps, c.CampaignId) && containsStr(topAdnets, c.Adnet) {
+		if containsStr(topCamps, c.UrlServiceKey) && containsStr(topAdnets, c.Adnet) {
 			cells = append(cells, entity.HeatmapCell{
-				Campaign: c.CampaignId,
+				Campaign: c.UrlServiceKey,
 				Adnet:    c.Adnet,
 				ROAS:     c.ROAS,
 				Spend:    c.Spend,
@@ -536,6 +542,46 @@ func (r *BaseModel) GetFilterOptions(country string, allowedAdnets, allowedCompa
 
 func (r *BaseModel) GetCampaignDaily(campaign_id, date_range, date_before, date_after string) ([]entity.CampaignDailyStat, error) {
 	query := r.DB.Model(&entity.SummaryCampaign{}).Where("url_service_key = ? OR campaign_id = ?", campaign_id, campaign_id)
+	switch date_range {
+	case "TODAY":
+		query = query.Where("summary_date = CURRENT_DATE")
+	case "YESTERDAY":
+		query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
+	case "LAST7DAY":
+		query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+	case "LAST30DAY":
+		query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+	case "THISMONTH":
+		query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+	case "LASTMONTH":
+		query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+	case "CUSTOMRANGE":
+		query = query.Where("summary_date BETWEEN ? AND ?", date_before, date_after)
+	default:
+		query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+	}
+	rows, err := query.Select(`DATE(summary_date) as date,
+		SUM(mo_received) as mo,
+		SUM(sbaf) as spend,
+		SUM(saaf) as revenue`).
+		Group("DATE(summary_date)").Order("date ASC").Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var results []entity.CampaignDailyStat
+	for rows.Next() {
+		var row entity.CampaignDailyStat
+		r.DB.ScanRows(rows, &row)
+		row.Date = strings.TrimSuffix(row.Date, "T00:00:00Z")
+		results = append(results, row)
+	}
+	return results, nil
+}
+
+func (r *BaseModel) GetServiceDaily(country, operator, service, date_range, date_before, date_after string) ([]entity.CampaignDailyStat, error) {
+	query := r.DB.Model(&entity.SummaryCampaign{}).
+		Where("country = ? AND operator = ? AND service = ?", country, operator, service)
 	switch date_range {
 	case "TODAY":
 		query = query.Where("summary_date = CURRENT_DATE")

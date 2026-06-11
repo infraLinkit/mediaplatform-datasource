@@ -16,15 +16,6 @@ type ApiPinReportWithAlias struct {
 	OperatorAlias string `json:"operator_alias"`
 }
 
-type PinReportTotalSummary struct {
-	TotalMO       int     `json:"total_mo"`
-	TotalPostback int     `json:"total_postback"`
-	SBAF          float64 `json:"sbaf"`
-	SAAF          float64 `json:"saaf"`
-	PricePerMO    float64 `json:"price_per_mo"`
-	WakiRevenue   float64 `json:"waki_revenue"`
-}
-
 type (
 	DisplayPinReport struct { // api report
 		ID          int       `form:"id" json:"id"`
@@ -139,6 +130,15 @@ type (
 		WakiRevenue        float64 `json:"waki_revenue"`
 		ECPA               float64 `json:"e_cpa"`
 		PricePerMO         float64 `json:"price_per_mo"`
+	}
+
+	TotalSummaryPinReport struct {
+		TotalMO       int     `json:"total_mo"`
+		TotalPostback int     `json:"total_postback"`
+		SBAF          float64 `json:"sbaf"`
+		SAAF          float64 `json:"saaf"`
+		PricePerMO    float64 `json:"price_per_mo"`
+		WakiRevenue   float64 `json:"waki_revenue"`
 	}
 
 	// CostReport is the data row returned by all cost report queries.

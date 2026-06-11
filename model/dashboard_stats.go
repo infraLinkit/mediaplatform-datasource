@@ -70,7 +70,7 @@ func (r *BaseModel) GetCountryStats(date_range, date_before, date_after, country
 		query = query.Where("company IN ?", allowedCompanies)
 	}
 	rows, err := query.Select("country, SUM(sbaf) as spend, SUM(saaf) as revenue, SUM(mo_received) as mo").
-		Group("country").Order("spend DESC").Limit(50).Rows()
+		Group("country").Order("spend DESC").Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +347,7 @@ func (r *BaseModel) GetRollup(date_range, date_before, date_after, client_type, 
 		SUM(mo_received) as mo,
 		SUM(sbaf) as spend,
 		SUM(saaf) as revenue`).
-		Group("country, operator, service").Order("spend DESC").Limit(500).Rows()
+		Group("country, operator, service").Order("spend DESC").Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +410,7 @@ func (r *BaseModel) GetAdnetStats(date_range, date_before, date_after, client_ty
 		SUM(sbaf) as spend, SUM(saaf) as revenue,
 		SUM(mo_received) as mo,
 		COUNT(DISTINCT campaign_id) as campaigns`).
-		Group("adnet").Order("spend DESC").Limit(100).Rows()
+		Group("adnet").Order("spend DESC").Rows()
 	if err != nil {
 		return nil, err
 	}
@@ -475,7 +475,7 @@ func (r *BaseModel) GetHeatmap(date_range, date_before, date_after, country, ser
 	err := query.Select(`url_service_key, adnet,
 		SUM(saaf)/NULLIF(SUM(sbaf),0)*100 as roas,
 		SUM(sbaf) as spend`).
-		Group("url_service_key, adnet").Order("spend DESC").Limit(200).Scan(&raw).Error
+		Group("url_service_key, adnet").Order("spend DESC").Scan(&raw).Error
 	if err != nil {
 		return entity.HeatmapData{}, err
 	}
@@ -486,10 +486,14 @@ func (r *BaseModel) GetHeatmap(date_range, date_before, date_after, country, ser
 		adnetSpend[c.Adnet] += c.Spend
 	}
 	topCamps := topNKeys(campSpend, 8)
-	topAdnets := topNKeys(adnetSpend, 8)
+	topAdnets := topNKeys(adnetSpend, 20)
+	gridAdnetCount := 8
+	if len(topAdnets) < gridAdnetCount {
+		gridAdnetCount = len(topAdnets)
+	}
 	var cells []entity.HeatmapCell
 	for _, c := range raw {
-		if containsStr(topCamps, c.UrlServiceKey) && containsStr(topAdnets, c.Adnet) {
+		if containsStr(topAdnets, c.Adnet) {
 			cells = append(cells, entity.HeatmapCell{
 				Campaign: c.UrlServiceKey,
 				Adnet:    c.Adnet,
@@ -500,7 +504,7 @@ func (r *BaseModel) GetHeatmap(date_range, date_before, date_after, country, ser
 	}
 	return entity.HeatmapData{
 		Campaigns: topCamps,
-		Adnets:    topAdnets,
+		Adnets:    topAdnets[:gridAdnetCount],
 		Cells:     cells,
 	}, nil
 }

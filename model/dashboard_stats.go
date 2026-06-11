@@ -468,14 +468,15 @@ func (r *BaseModel) GetHeatmap(date_range, date_before, date_after, country, ser
 	type cellRow struct {
 		UrlServiceKey string  `gorm:"column:url_service_key"`
 		Adnet         string  `gorm:"column:adnet"`
+		Service       string  `gorm:"column:service"`
 		ROAS          float64 `gorm:"column:roas"`
 		Spend         float64 `gorm:"column:spend"`
 	}
 	var raw []cellRow
-	err := query.Select(`url_service_key, adnet,
+	err := query.Select(`url_service_key, adnet, service,
 		SUM(saaf)/NULLIF(SUM(sbaf),0)*100 as roas,
 		SUM(sbaf) as spend`).
-		Group("url_service_key, adnet").Order("spend DESC").Scan(&raw).Error
+		Group("url_service_key, adnet, service").Order("spend DESC").Scan(&raw).Error
 	if err != nil {
 		return entity.HeatmapData{}, err
 	}
@@ -486,25 +487,20 @@ func (r *BaseModel) GetHeatmap(date_range, date_before, date_after, country, ser
 		adnetSpend[c.Adnet] += c.Spend
 	}
 	topCamps := topNKeys(campSpend, 8)
-	topAdnets := topNKeys(adnetSpend, 20)
-	gridAdnetCount := 8
-	if len(topAdnets) < gridAdnetCount {
-		gridAdnetCount = len(topAdnets)
-	}
+	topAdnets := topNKeys(adnetSpend, 8)
 	var cells []entity.HeatmapCell
 	for _, c := range raw {
-		if containsStr(topAdnets, c.Adnet) {
-			cells = append(cells, entity.HeatmapCell{
-				Campaign: c.UrlServiceKey,
-				Adnet:    c.Adnet,
-				ROAS:     c.ROAS,
-				Spend:    c.Spend,
-			})
-		}
+		cells = append(cells, entity.HeatmapCell{
+			Campaign: c.UrlServiceKey,
+			Adnet:    c.Adnet,
+			Service:  c.Service,
+			ROAS:     c.ROAS,
+			Spend:    c.Spend,
+		})
 	}
 	return entity.HeatmapData{
 		Campaigns: topCamps,
-		Adnets:    topAdnets[:gridAdnetCount],
+		Adnets:    topAdnets,
 		Cells:     cells,
 	}, nil
 }

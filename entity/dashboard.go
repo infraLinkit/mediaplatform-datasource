@@ -190,6 +190,7 @@ type (
 	HeatmapCell struct {
 		Campaign string  `json:"campaign"`
 		Adnet    string  `json:"adnet"`
+		Service  string  `json:"service"`
 		ROAS     float64 `json:"roas"`
 		Spend    float64 `json:"spend"`
 	}

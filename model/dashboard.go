@@ -429,7 +429,7 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 		}
 	}
 
-	query.Where("DATE(summary_date) IN ?", date_list)
+	query = query.Where("summary_date::date IN ?", date_list)
 
 	if client_type != "" {
 		query = query.Where("client_type = ?", client_type)
@@ -452,7 +452,7 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
     	END ,`
 	}
 
-	query_last_month = query_last_month.Where("DATE(summary_date) IN(" + strings.TrimSuffix(where, ",") + ")")
+	query_last_month = query_last_month.Where("summary_date::date IN(" + strings.TrimSuffix(where, ",") + ")")
 
 	if client_type != "" {
 		query_last_month = query_last_month.Where("client_type = ?", client_type)
@@ -467,12 +467,12 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 	}
 
 	if country != "" {
-		query.Where("country = ?", country)
-		query_last_month.Where("country = ?", country)
+		query = query.Where("country = ?", country)
+		query_last_month = query_last_month.Where("country = ?", country)
 	}
 	if service != "" {
-		query.Where("service = ?", service)
-		query_last_month.Where("service = ?", service)
+		query = query.Where("service = ?", service)
+		query_last_month = query_last_month.Where("service = ?", service)
 	}
 
 	// Build DSP / non-DSP adnet lists for channel split
@@ -563,6 +563,39 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 		SUM(clicked) as total_clicked,
 		SUM(postback) as total_postback`
 
+	// Pre-fetch all api_pin_reports for the period in one query — avoids N+1
+	type apiDayRow struct {
+		Date  string  `gorm:"column:date"`
+		Spend float64 `gorm:"column:spend"`
+		MO    int     `gorm:"column:mo"`
+	}
+	var apiDayResults []apiDayRow
+	apiPreQ := r.DB.Model(&entity.ApiPinReport{})
+	switch date_range {
+	case "TODAY":
+		apiPreQ = apiPreQ.Where("date_send = CURRENT_DATE")
+	case "YESTERDAY":
+		apiPreQ = apiPreQ.Where("date_send = CURRENT_DATE - INTERVAL '1 DAY'")
+	case "LAST7DAY":
+		apiPreQ = apiPreQ.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+	case "LAST30DAY":
+		apiPreQ = apiPreQ.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+	case "THISMONTH":
+		apiPreQ = apiPreQ.Where("date_send >= DATE_TRUNC('month', CURRENT_DATE)")
+	case "LASTMONTH":
+		apiPreQ = apiPreQ.Where("date_send BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+	case "CUSTOMRANGE":
+		apiPreQ = apiPreQ.Where("date_send BETWEEN ? AND ?", date_before, date_after)
+	default:
+		apiPreQ = apiPreQ.Where("date_send >= DATE_TRUNC('month', CURRENT_DATE)")
+	}
+	apiPreQ.Select("DATE(date_send) as date, SUM(sbaf) as spend, SUM(total_mo) as mo").
+		Group("DATE(date_send)").Scan(&apiDayResults)
+	apiByDate := make(map[string]apiDayRow, len(apiDayResults))
+	for _, ar := range apiDayResults {
+		apiByDate[strings.TrimSuffix(ar.Date, "T00:00:00Z")] = ar
+	}
+
 	rows, err := query.Select(selectSQL).Group("DATE(summary_date)").Order("date ASC").Rows()
 
 	if err == nil {
@@ -591,15 +624,11 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 			SummaryDashboard.TotalClicked  += s.TotalClicked
 			SummaryDashboard.TotalPostback += s.TotalPostback
 
-			total_spending_api := 0.0
-			total_mo_api := 0
-
-			api_query := r.DB.Model(&entity.ApiPinReport{})
-			api_query.Where("date_send = ? ", s.Date)
-			_ = api_query.Select("SUM(sbaf),SUM(total_mo)").Limit(1).Row().Scan(&total_spending_api, &total_mo_api)
-			SummaryDashboard.TotalAPISpending += total_spending_api
-			SummaryDashboard.TotalSpending += total_spending_api
-			SummaryDashboard.TotalMO += total_mo_api
+			if apiRow, ok := apiByDate[s.Date]; ok {
+				SummaryDashboard.TotalAPISpending += apiRow.Spend
+				SummaryDashboard.TotalSpending += apiRow.Spend
+				SummaryDashboard.TotalMO += apiRow.MO
+			}
 
 			ss = append(ss, s)
 		}

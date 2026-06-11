@@ -123,8 +123,23 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 
 	if o.Action == "Search" {
 		if o.Country != "" {
-			whereClause = append(whereClause, "s.country = ?")
-			args = append(args, o.Country)
+			countries := strings.Split(o.Country, ",")
+			for i := range countries {
+				countries[i] = strings.TrimSpace(countries[i])
+			}
+			if len(countries) == 1 {
+				whereClause = append(whereClause, "s.country = ?")
+				args = append(args, countries[0])
+			} else {
+				placeholders := make([]string, len(countries))
+				for i := range placeholders {
+					placeholders[i] = "?"
+				}
+				whereClause = append(whereClause, "s.country IN ("+strings.Join(placeholders, ",")+")")
+				for _, c := range countries {
+					args = append(args, c)
+				}
+			}
 		}
 		if o.Partner != "" {
 			whereClause = append(whereClause, "s.partner = ?")

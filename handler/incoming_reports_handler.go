@@ -66,18 +66,13 @@ func (h *IncomingHandler) DisplayPinReport(c *fiber.Ctx) error {
 
 func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayPinReport) entity.ReturnResponse {
 	var (
-		err        error
-		total_data int64
-		apireport  []entity.ApiPinReportWithAlias
+		err          error
+		total_data   int64
+		apireport    []entity.ApiPinReportWithAlias
+		totalSummary entity.PinReportTotalSummary
 	)
 
-	if fe.Action != "" || fe.Reload == "true" {
-		fmt.Println("-----", fe.Reload, "-----")
-		apireport, total_data, err = h.DS.GetDisplayPinReport(fe)
-	} else {
-
-		apireport, total_data, err = h.DS.GetDisplayPinReport(fe)
-	}
+	apireport, total_data, totalSummary, err = h.DS.GetDisplayPinReport(fe)
 
 	if err == nil {
 
@@ -92,6 +87,7 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 				Code:            fiber.StatusOK,
 				Message:         config.OK_DESC,
 				Data:            apireport,
+				TotalSummary:    totalSummary,
 				RecordsTotal:    int(total_data),
 				RecordsFiltered: int(total_data),
 			},

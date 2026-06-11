@@ -135,9 +135,10 @@ func (r *BaseModel) PinReport(o entity.ApiPinReport) int {
 	return int(o.ID)
 }
 
-func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.ApiPinReportWithAlias, int64, error) {
+func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.ApiPinReportWithAlias, int64, entity.PinReportTotalSummary, error) {
 	var totalRows int64
 	var ss []entity.ApiPinReportWithAlias
+	var totalSummary entity.PinReportTotalSummary
 
 	query := r.DB.Table("api_pin_reports").Select(`
 		api_pin_reports.*,
@@ -194,15 +195,26 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.Api
 	}
 
 	if err := query.Count(&totalRows).Error; err != nil {
-		return []entity.ApiPinReportWithAlias{}, 0, err
+		return []entity.ApiPinReportWithAlias{}, 0, totalSummary, err
 	}
+
+	// Compute grand-total aggregates across all filtered rows (no pagination).
+	// query.Select(...) returns a new clone preserving all WHERE conditions.
+	query.Select(`
+		COALESCE(SUM(total_mo), 0)                                          AS total_mo,
+		COALESCE(SUM(total_postback), 0)                                    AS total_postback,
+		COALESCE(SUM(payout_adn * total_postback), 0)                       AS sbaf,
+		COALESCE(SUM(payout_af  * total_postback), 0)                       AS saaf,
+		COALESCE(SUM(CASE WHEN total_mo > 0 THEN (payout_af * total_postback) / total_mo ELSE 0 END), 0) AS price_per_mo,
+		COALESCE(SUM((payout_af - payout_adn) * total_postback), 0)         AS waki_revenue
+	`).Scan(&totalSummary)
 
 	if o.OrderColumn != "" {
 		dir := "ASC"
 		if strings.ToUpper(o.OrderDir) == "DESC" {
 			dir = "DESC"
 		}
-	
+
 		switch o.OrderColumn {
 		case "saaf":
 			query = query.Order(fmt.Sprintf("(payout_af * total_postback) %s", dir))
@@ -217,13 +229,13 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.Api
 		}
 	} else {
 		query = query.Order("date_send DESC").Order("id DESC")
-	}	
+	}
 
 	if err := query.
 		Limit(o.PageSize).
 		Offset((o.Page - 1) * o.PageSize).
 		Find(&ss).Error; err != nil {
-		return []entity.ApiPinReportWithAlias{}, 0, err
+		return []entity.ApiPinReportWithAlias{}, 0, totalSummary, err
 	}
 
 	if aliases, err := r.GetOperatorAliases(); err == nil {
@@ -232,7 +244,7 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport) ([]entity.Api
 		}
 	}
 
-	return ss, totalRows, nil
+	return ss, totalRows, totalSummary, nil
 }
 
 func (r *BaseModel) EditPayoutAPIReport(o entity.ApiPinReport) error {

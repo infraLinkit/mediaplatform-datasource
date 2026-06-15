@@ -15,6 +15,7 @@ type (
 		Country             string                `json:"country"`
 		Objective           string                `json:"objective"`
 		MCC                 string                `json:"mcc"`
+		IsBypassIpRange     bool                  `json:"is_bypass"`
 		Data                []URLServiceKeyChilds `json:"data"`
 	}
 
@@ -35,6 +36,7 @@ type (
 		CPCR         string       `json:"cost_per_conversion"`
 		AgencyFee    string       `json:"agency_fee"`
 		MCC          string       `json:"mcc"`
+		IsBypassIpRange           bool    `json:"is_bypass_ip_range"`
 		DataConfig   []DataConfig `json:"data"`
 	}
 
@@ -152,6 +154,7 @@ type (
 		PortalURL                 string  `json:"portal_url"`
 		IsEvina 				  bool    `json:"is_evina"`
 		EvinaRedirectFraudURL     string  `json:"evina_redirect_fraud_url"`
+		IsBypassIpRange           bool    `json:"is_bypass_ip_range"`
 	}
 
 	//'{"id":1,"urlservicekey":"idtelgempastelmbv","campaign_id":"ID01","country":"ID","partner":"pass","operator":"telkomsel","aggregator":"telesat","service":"gazy","short_code":"1234","adnet":"mbv","keyword":"gazy","subkeyword":"","is_billable":false,"plan":"","traffic":0,"landing":0,"click":0,"redirect":0,"traffic_data":[],"landing_data":[],"click_data":[],"redirect_data":[]}'

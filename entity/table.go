@@ -16,6 +16,7 @@ type (
 		CampaignObjective string `gorm:"not null;size:50" json:"campaign_objective"`
 		Country           string `gorm:"not null;size:50" json:"country"`
 		Advertiser        string `gorm:"not null;size:50" json:"advertiser"`
+		IsBypassIpRange   bool   `gorm:"not null;default:false" json:"is_bypass_ip_range"`
 		/* SingleURLServiceKey string `gorm:"not null;size:50" json:"singleurlservicekey"`
 		URLLanding          string `gorm:"type:text;default:NA" json:"url_landing"`
 		URLWarpLanding      string `gorm:"type:text;default:NA" json:"url_warp_landing"`

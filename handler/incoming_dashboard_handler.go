@@ -24,10 +24,7 @@ func (h *IncomingHandler) DisplayDashboardReport(c *fiber.Ctx) error {
 	service := m["service"]
 	campaign_objective := m["campaign_objective"]
 
-	allowedAdnets, _ := c.Locals("adnets").([]string)
-	allowedCompanies, _ := c.Locals("companies").([]string)
-
-	SummaryDashboardReport, _ = h.DS.GetReport(country, operator, client_type, partner, service, campaign_objective, date_range, date_before, date_after, allowedAdnets, allowedCompanies)
+	SummaryDashboardReport, _ = h.DS.GetReport(country, operator, client_type, partner, service, campaign_objective, date_range, date_before, date_after)
 	Response := entity.ReturnResponse{
 		HttpStatus: fiber.StatusOK,
 		Rsp: entity.GlobalResponseWithDataTable{
@@ -61,10 +58,7 @@ func (h *IncomingHandler) DisplayDashboardTopCampaign(c *fiber.Ctx) error {
 	country := m["country"]
 	service := m["service"]
 
-	allowedAdnets, _ := c.Locals("adnets").([]string)
-	allowedCompanies, _ := c.Locals("companies").([]string)
-
-	TopCampaign, _ = h.DS.GetCampaign(order_type, order_by, limit, client_type, date_range, date_before, date_after, country, service, allowedAdnets, allowedCompanies)
+	TopCampaign, _ = h.DS.GetCampaign(order_type, order_by, limit, client_type, date_range, date_before, date_after, country, service)
 
 	Response := entity.ReturnResponse{
 		HttpStatus: fiber.StatusOK,
@@ -98,10 +92,7 @@ func (h *IncomingHandler) DisplayDashboardData(c *fiber.Ctx) error {
 	country := m["country"]
 	service := m["service"]
 
-	allowedAdnets, _ := c.Locals("adnets").([]string)
-	allowedCompanies, _ := c.Locals("companies").([]string)
-
-	SummaryDashboard, _ = h.DS.GetDisplayDashboard(date_range, date_before, date_after, client_type, country, service, allowedAdnets, allowedCompanies)
+	SummaryDashboard, _ = h.DS.GetDisplayDashboard(date_range, date_before, date_after, client_type, country, service)
 
 	Response := entity.ReturnResponse{
 		HttpStatus: fiber.StatusOK,

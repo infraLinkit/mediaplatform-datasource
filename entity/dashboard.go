@@ -23,6 +23,8 @@ type (
 		TotalActiveAdnet        int     `json:"total_active_adnet"`
 		TotalSpending           float64 `json:"total_spending"`
 		TotalSaaf               float64 `json:"total_saaf"`
+		SpendingToAdnets        float64 `json:"spending_to_adnets"`
+		TotalTechnicalFee       float64 `json:"total_technical_fee"`
 		TotalS2sSpending        float64 `json:"total_s2s_spending"`
 		TotalApiSpending        float64 `json:"total_api_spending"`
 		TotalMainstreamSpending float64 `json:"total_mainstream_spending"`
@@ -44,6 +46,7 @@ type (
 		TotalMO                 int     `json:"total_mo"`
 		TotalSpending           float64 `json:"total_spending"`
 		TotalRevenue            float64 `json:"total_revenue"`
+		TotalTechnicalFee       float64 `json:"total_technical_fee"`
 		LastMonthTotalMO        int     `json:"lastmonth_total_mo"`
 		LastMonthTotalSpending  float64 `json:"lastmonth_total_spending"`
 		LastMonthTotalRevenue   float64 `json:"lastmonth_total_revenue"`
@@ -53,6 +56,9 @@ type (
 	SummaryDashboardData struct {
 		Revenue                 float64 `json:"revenue"`
 		TotalSpending           float64 `json:"total_spending"`
+		SpendingToAdnets        float64 `json:"spending_to_adnets"`
+		TotalTechnicalFee       float64 `json:"total_technical_fee"`
+		TargetBudget            float64 `json:"target_budget"`
 		Profit                  float64 `json:"profit"`
 		MarginPct               float64 `json:"margin_pct"`
 		ROAS                    float64 `json:"roas"`
@@ -108,25 +114,27 @@ type (
 	}
 
 	TopCampaign struct {
-		CampaignID    string  `json:"campaign_id"`
-		URLServiceKey string  `json:"url_service_key"`
-		Country       string  `json:"country"`
-		CountryName string  `json:"country_name"`
-		Operator    string  `json:"operator"`
-		Service     string  `json:"service"`
-		ClientType  string  `json:"client_type"`
-		Adnet       string  `json:"adnet"`
-		Landing     int     `json:"landing"`
-		MO          int     `json:"mo_received"`
-		Postback    int     `json:"postback"`
-		CRMO        float64 `json:"cr_mo"`
-		CRPostback  float64 `json:"cr_postback"`
-		URL         string  `json:"url"`
-		ECPA        string  `json:"e_cpa"`
-		Revenue     float64 `json:"revenue"`
-		Spend       float64 `json:"spend"`
-		Profit      float64 `json:"profit"`
-		ROAS        float64 `json:"roas"`
+		CampaignID     string  `json:"campaign_id"`
+		URLServiceKey  string  `json:"url_service_key"`
+		Country        string  `json:"country"`
+		CountryName    string  `json:"country_name"`
+		Operator       string  `json:"operator"`
+		Service        string  `json:"service"`
+		ClientType     string  `json:"client_type"`
+		Adnet          string  `json:"adnet"`
+		Landing        int     `json:"landing"`
+		MO             int     `json:"mo_received"`
+		Postback       int     `json:"postback"`
+		CRMO           float64 `json:"cr_mo"`
+		CRPostback     float64 `json:"cr_postback"`
+		URL            string  `json:"url"`
+		ECPA           string  `json:"e_cpa"`
+		Revenue        float64 `json:"revenue"`
+		Spend          float64 `json:"spend"`
+		SpendToAdnets  float64 `json:"spend_to_adnets"`
+		TechnicalFee   float64 `json:"technical_fee"`
+		Profit         float64 `json:"profit"`
+		ROAS           float64 `json:"roas"`
 	}
 
 	SummaryTopBestCampaign struct {

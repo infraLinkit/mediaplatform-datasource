@@ -2,7 +2,6 @@ package handler
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -13,6 +12,7 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
+	"github.com/wiliehidayat87/rmqp"
 )
 
 func (h *IncomingHandler) DisplayCampaignManagement(c *fiber.Ctx) error {
@@ -159,24 +159,21 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to serialize data"})
 	}
 
-	corId := "CREATE_CAMP_" + helper.GetUniqId(h.Config.TZ)
-	ctx, cancel := context.WithTimeout(c.UserContext(), time.Duration(h.Config.RabbitMQCtxTimeout)*time.Second)
-	defer cancel()
+	published := h.Rmqp.PublishMsg(rmqp.PublishItems{
+		ExchangeName: h.Config.RabbitMQCampaignManagementExchangeName,
+		QueueName:    h.Config.RabbitMQCampaignManagementQueueName,
+		ContentType:  h.Config.RabbitMQDataType,
+		Payload:      bodyReq.String(), // Send the properly formatted JSON
+		Priority:     0,
+	})
 
-	respBody, err := h.RM.DirectReplyToWithRetry(ctx,
-		h.Config.RabbitMQCampaignManagementExchangeName,
-		h.Config.RabbitMQCampaignManagementQueueName,
-		bodyReq.Bytes(), corId)
-	if err != nil {
-		h.Logs.Debug(fmt.Sprintf("[x] Failed campaign RPC: Data: %s, err: %v", bodyReq.String(), err))
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to process campaign"})
+	if !published {
+		h.Logs.Debug(fmt.Sprintf("[x] Failed published: Data: %s ...", bodyReq.String()))
+	} else {
+		h.Logs.Debug(fmt.Sprintf("[v] Published: Data: %s ...", bodyReq.String()))
 	}
 
-	h.Logs.Debug(fmt.Sprintf("[v] Campaign RPC ok: Data: %s, Response: %s", bodyReq.String(), string(respBody)))
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Campaign processed successfully",
-		"data":    json.RawMessage(respBody),
-	})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Campaign data sent to RabbitMQ"})
 }
 
 func (h *IncomingHandler) UpdateStatusCampaign(c *fiber.Ctx) error {

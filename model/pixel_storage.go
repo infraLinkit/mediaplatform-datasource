@@ -139,17 +139,28 @@ func (r *BaseModel) SpecialGetPx(o entity.PixelStorage, si int, ei int) (entity.
 	}
 }
 
-func (r *BaseModel) UpdatePixelBilled(o entity.PixelStorage) error {
+func (r *BaseModel) UpdatePixelBilled(o entity.PixelStorage, pxdate string) error {
+
+	tbl := "pixel_storages"
+	dateClause := "CURRENT_DATE"
+
+	if pxdate != "" {
+		t, err := time.Parse("20060102", pxdate)
+		if err == nil && t.Format("20060102") != time.Now().Format("20060102") {
+			tbl = "pixel_storages_" + t.Format("20060102")
+			dateClause = "'" + t.Format("2006-01-02") + "'"
+		}
+	}
 
 	result := r.DB.Exec(
-		`UPDATE pixel_storages 
-		 SET updated_at = NOW(), 
-		     m_status_time_charge = NOW(), 
+		fmt.Sprintf(`UPDATE %s
+		 SET updated_at = NOW(),
+		     m_status_time_charge = NOW(),
 		     m_status_charge = ?
-		 WHERE DATE(pxdate) = CURRENT_DATE 
-		   AND url_service_key = ? 
-		   AND pixel = ? 
-		   AND is_unique = false `,
+		 WHERE DATE(pxdate) = %s
+		   AND url_service_key = ?
+		   AND pixel = ?
+		   AND is_unique = false `, tbl, dateClause),
 		o.MStatusCharge,
 		o.URLServiceKey,
 		o.Pixel,

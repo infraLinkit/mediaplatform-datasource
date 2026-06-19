@@ -145,17 +145,20 @@ func (h *IncomingHandler) DisplayCampaignManagementDetail(c *fiber.Ctx, fe entit
 }
 
 func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
-	var campaignData map[string]interface{}
-
-	if err := c.BodyParser(&campaignData); err != nil {
+	var obj entity.DataCampaignAction
+	if err := c.BodyParser(&obj); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	if obj.Action != "ADD" && obj.Action != "ADD_UPDATE" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid action"})
+	}
+
+	// Send to worker to generate url_service_keys
 	var bodyReq bytes.Buffer
 	encoder := json.NewEncoder(&bodyReq)
-	encoder.SetEscapeHTML(false) // Prevents encoding & as \u0026
-
-	if err := encoder.Encode(campaignData); err != nil {
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(obj); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to serialize data"})
 	}
 
@@ -173,9 +176,503 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 	}
 
 	h.Logs.Debug(fmt.Sprintf("[v] Campaign RPC ok: Data: %s, Response: %s", bodyReq.String(), string(respBody)))
+
+	// Parse worker response: {campaign_id, keys:[{index, url_service_key, campaign_detail_id}]}
+	var reply struct {
+		CampaignId string `json:"campaign_id"`
+		Keys       []struct {
+			Index            int    `json:"index"`
+			URLServiceKey    string `json:"url_service_key"`
+			CampaignDetailId int    `json:"campaign_detail_id"`
+		} `json:"keys"`
+	}
+	if err := json.Unmarshal(respBody, &reply); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse worker response"})
+	}
+
+	if obj.Action == "ADD" {
+		obj.CampaignId = reply.CampaignId
+	}
+
+	// index -> generated key
+	type keyInfo struct {
+		URLServiceKey    string
+		CampaignDetailId int
+	}
+	keyMap := make(map[int]keyInfo)
+	for _, k := range reply.Keys {
+		keyMap[k.Index] = keyInfo{k.URLServiceKey, k.CampaignDetailId}
+	}
+
+	// Global settings
+	gs, err := h.DS.GetDataConfig("global_setting", "$")
+	if err != nil {
+		gset, _ := json.Marshal(entity.GlobalSetting{
+			CostPerConversion: "0.5",
+			AgencyFee:         "0.5",
+			TargetDailyBudget: "0.5",
+			TechnicalFee:      "0.5",
+		})
+		h.DS.SetData("global_setting", "$", string(gset))
+		gs, _ = h.DS.GetDataConfig("global_setting", "$")
+	} else {
+		changed := false
+		gset := entity.GlobalSetting{CostPerConversion: gs.CPCR, AgencyFee: gs.AgencyFee, TargetDailyBudget: gs.TargetDailyBudget, TechnicalFee: gs.TechnicalFee}
+		if gs.CPCR == "" {
+			gs.CPCR = "0.05"
+			gset.CostPerConversion = "0.05"
+			changed = true
+		}
+		if gs.AgencyFee == "" {
+			gs.AgencyFee = "0.05"
+			gset.AgencyFee = "0.05"
+			changed = true
+		}
+		if gs.TargetDailyBudget == "" {
+			gs.TargetDailyBudget = "0.05"
+			gset.TargetDailyBudget = "0.05"
+			changed = true
+		}
+		if gs.TechnicalFee == "" {
+			gs.TechnicalFee = "0.05"
+			gset.TechnicalFee = "0.05"
+			changed = true
+		}
+		if changed {
+			b, _ := json.Marshal(gset)
+			h.DS.SetData("global_setting", "$", string(b))
+		}
+	}
+
+	h.Logs.Info(fmt.Sprintf("Processing campaign: %#v\n", obj))
+
+	if obj.Action == "ADD" {
+		h.DS.NewCampaign(entity.Campaign{
+			CampaignId:        obj.CampaignId,
+			Name:              obj.CampaignName,
+			CampaignObjective: obj.Objective,
+			Country:           obj.Country,
+			Advertiser:        obj.Advertiser,
+			IsBypassIpRange:   obj.IsBypassIpRange,
+		})
+	} else {
+		h.DS.UpdateCampaign(entity.Campaign{
+			CampaignId:        obj.CampaignId,
+			Name:              obj.CampaignName,
+			CampaignObjective: obj.Objective,
+			Country:           obj.Country,
+			Advertiser:        obj.Advertiser,
+			IsBypassIpRange:   obj.IsBypassIpRange,
+		})
+	}
+
+	var singleURLData entity.DataSingleURL
+	if obj.Objective == "SINGLE URL MAINSTREAM" || obj.Objective == "SINGLE URL S2S" {
+		singleURLData = entity.DataSingleURL{
+			SingleURLServiceKey: helper.Concat("-", "S", obj.CampaignId),
+			Country:             obj.Country,
+			Objective:           obj.Objective,
+			MCC:                 obj.MCC,
+			IsBypassIpRange:     obj.IsBypassIpRange,
+			Data:                []entity.URLServiceKeyChilds{},
+		}
+	}
+
+	for i, dc := range obj.DataConfig {
+		country := strings.ToUpper(dc.Country)
+		operator := strings.ToUpper(dc.Operator)
+		service := strings.ToUpper(dc.Service)
+		partner := strings.ToUpper(dc.Partner)
+		adnet := strings.ToUpper(dc.Adnet)
+
+		var campaignDetailId int
+		if ki, ok := keyMap[i]; ok {
+			dc.URLServiceKey = ki.URLServiceKey
+			campaignDetailId = ki.CampaignDetailId
+		}
+
+		if obj.Objective == "SINGLE URL MAINSTREAM" || obj.Objective == "SINGLE URL S2S" {
+			singleURLData.Data = append(singleURLData.Data, entity.URLServiceKeyChilds{
+				URLServiceKey: dc.URLServiceKey,
+				Operator:      dc.Operator,
+			})
+		}
+
+		cfgRediskey := helper.Concat("-", dc.URLServiceKey, "configIdx")
+
+		globalSettingTDBKey := strings.ToLower(helper.Concat("_", "global_setting_tdb", CheckAndAdd(dc.Country, 2)[0:2], CheckAndAdd(dc.Operator, 3)[0:3]))
+		gsettdb, _ := json.Marshal(entity.GlobalSetting{TargetDailyBudget: gs.TargetDailyBudget})
+		h.DS.SetData(globalSettingTDBKey, "$", string(gsettdb))
+
+		if dc.LastUpdate == "" {
+			dc.LastUpdate = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+		}
+		if dc.LastUpdateCapping == "" {
+			dc.LastUpdateCapping = helper.GetFormatTime(h.Config.TZ, time.RFC3339)
+		}
+
+		urlpostback := h.Config.AppApi + "/v1/postback/?aff_sub={pixel}"
+
+		if !strings.Contains(dc.URLService, "aff_sub") {
+			if strings.Contains(dc.URLService, "?") {
+				dc.URLService = dc.URLService + "&aff_sub={pixel}"
+			} else {
+				dc.URLService = dc.URLService + "/?aff_sub={pixel}"
+			}
+		}
+
+		rpl := strings.NewReplacer("{adnet}", adnet, "{ADNET}", adnet, "[adnet]", adnet, "[ADNET]", adnet)
+		dc.URLService = rpl.Replace(dc.URLService)
+
+		dc.URLLanding = h.Config.AppHost + "/lp/" + dc.URLServiceKey + "/?aff_sub={pixel}&pubid={pubid}"
+
+		expected := "/lp/" + dc.URLServiceKey + "/?aff_sub={pixel}&pubid={pubid}"
+		if !strings.HasSuffix(dc.URLWarpLanding, expected) {
+			dc.URLWarpLanding = strings.TrimRight(dc.URLWarpLanding, "/") + expected
+		}
+
+		if dc.PostbackMethod == "" {
+			dc.PostbackMethod = "PIXEL"
+		}
+
+		dataConfig := entity.DataConfig{
+			Id:                        campaignDetailId,
+			URLServiceKey:             dc.URLServiceKey,
+			CampaignId:                obj.CampaignId,
+			CampaignName:              dc.CampaignName,
+			Objective:                 obj.Objective,
+			Country:                   country,
+			Advertiser:                obj.Advertiser,
+			Operator:                  operator,
+			Partner:                   partner,
+			Aggregator:                dc.Aggregator,
+			Adnet:                     adnet,
+			Service:                   service,
+			Keyword:                   dc.Keyword,
+			SubKeyword:                dc.SubKeyword,
+			IsBillable:                dc.IsBillable,
+			Plan:                      dc.Plan,
+			PO:                        dc.PO,
+			Cost:                      dc.Cost,
+			PubId:                     dc.PubId,
+			ShortCode:                 dc.ShortCode,
+			DeviceType:                dc.DeviceType,
+			OS:                        dc.OS,
+			URLType:                   dc.URLType,
+			ClickType:                 dc.ClickType,
+			ClickDelay:                dc.ClickDelay,
+			ClientType:                dc.ClientType,
+			TrafficSource:             dc.TrafficSource,
+			UniqueClick:               dc.UniqueClick,
+			URLLanding:                dc.URLLanding,
+			URLWarpLanding:            dc.URLWarpLanding,
+			URLService:                dc.URLService,
+			URLTFCSmartlink:           dc.URLTFCSmartlink,
+			GlobPost:                  dc.GlobPost,
+			URLGlobPost:               dc.URLGlobPost,
+			CustomIntegration:         dc.CustomIntegration,
+			IPAddress:                 dc.IPAddress,
+			ISP:                       dc.ISP,
+			IsActive:                  dc.IsActive,
+			MOCapping:                 dc.MOCapping,
+			MOCappingService:          dc.MOCappingService,
+			CounterMOCapping:          dc.CounterMOCapping,
+			CounterMOCappingService:   dc.CounterMOCappingService,
+			StatusCapping:             dc.StatusCapping,
+			KPIUpperLimitCapping:      dc.KPIUpperLimitCapping,
+			IsMachineLearningCapping:  dc.IsMachineLearningCapping,
+			RatioSend:                 dc.RatioSend,
+			RatioReceive:              dc.RatioReceive,
+			CounterMORatio:            dc.CounterMORatio,
+			StatusRatio:               dc.StatusRatio,
+			KPIUpperLimitRatioSend:    dc.KPIUpperLimitRatioSend,
+			KPIUpperLimitRatioReceive: dc.KPIUpperLimitRatioReceive,
+			IsMachineLearningRatio:    dc.IsMachineLearningRatio,
+			APIURL:                    dc.APIURL,
+			LastUpdate:                helper.GetFormatTime(h.Config.TZ, time.RFC3339),
+			LastUpdateCapping:         helper.GetFormatTime(h.Config.TZ, time.RFC3339),
+			CPCR:                      gs.CPCR,
+			AgencyFee:                 gs.AgencyFee,
+			TargetDailyBudget:         gs.TargetDailyBudget,
+			TechnicalFee:              gs.TechnicalFee,
+			URLPostback:               urlpostback,
+			PostbackMethod:            dc.PostbackMethod,
+			MainstreamLpType:          dc.MainstreamLpType,
+			Title:                     dc.Title,
+			TitleOriginal:             dc.TitleOriginal,
+			TitleColor:                dc.TitleColor,
+			TitleStyle:                dc.TitleStyle,
+			TitlePageType:             dc.TitlePageType,
+			TitleFontSize:             dc.TitleFontSize,
+			SubTitle:                  dc.SubTitle,
+			SubTitleOriginal:          dc.SubTitleOriginal,
+			SubTitleColor:             dc.SubTitleColor,
+			SubTitleStyle:             dc.SubTitleStyle,
+			SubTitlePageType:          dc.SubTitlePageType,
+			SubTitleFontSize:          dc.SubTitleFontSize,
+			BackgroundURL:             dc.BackgroundURL,
+			BackgroundColor:           dc.BackgroundColor,
+			LogoURL:                   dc.LogoURL,
+			URLBanner:                 dc.URLBanner,
+			URLBannerOriginal:         dc.URLBannerOriginal,
+			Tnc:                       dc.Tnc,
+			TncOriginal:               dc.TncOriginal,
+			TncColor:                  dc.TncColor,
+			TncStyle:                  dc.TncStyle,
+			TncPageType:               dc.TncPageType,
+			TncFontSize:               dc.TncFontSize,
+			ButtonSubscribe:           dc.ButtonSubscribe,
+			ButtonSubscribeOriginal:   dc.ButtonSubscribeOriginal,
+			ButtonSubscribeColor:      dc.ButtonSubscribeColor,
+			StatusSubmitKeyMainstream: dc.StatusSubmitKeyMainstream,
+			KeyMainstream:             dc.KeyMainstream,
+			Channel:                   dc.Channel,
+			GoogleSheet:               dc.GoogleSheet,
+			GoogleSheetBillable:       dc.GoogleSheetBillable,
+			Currency:                  dc.Currency,
+			MCC:                       dc.MCC,
+			ClickableAnywhere:         dc.ClickableAnywhere,
+			NonTargetURL:              dc.NonTargetURL,
+			EnableIpRanges:            dc.EnableIpRanges,
+			ConversionName:            dc.ConversionName,
+			DomainService:             dc.DomainService,
+			CampaignDetailName:        dc.CampaignDetailName,
+			Prefix:                    dc.Prefix,
+			CountryDialingCode:        dc.CountryDialingCode,
+			UnusedTrafficRedirectType: dc.UnusedTrafficRedirectType,
+			CompanyLegalName:          dc.CompanyLegalName,
+			CompanyAddress:            dc.CompanyAddress,
+			CompanyEmail:              dc.CompanyEmail,
+			CompanyPhone:              dc.CompanyPhone,
+			ServicePrice:              dc.ServicePrice,
+			PortalURL:                 dc.PortalURL,
+			IsEvina:                   dc.IsEvina,
+			EvinaRedirectFraudURL:     dc.EvinaRedirectFraudURL,
+			IsBypassIpRange:           dc.IsBypassIpRange,
+		}
+
+		if cd, _ := h.DS.GetCampaignByCampaignDetailId(entity.CampaignDetail{
+			URLServiceKey: dc.URLServiceKey, Country: country, Operator: operator, Service: service, Partner: partner, Adnet: adnet,
+		}); cd.ID > 0 {
+			dataConfig.Id = cd.ID
+			cfgDataConfig, _ := json.Marshal(dataConfig)
+
+			cd.Country = country
+			cd.Operator = operator
+			cd.Partner = partner
+			cd.Aggregator = dc.Aggregator
+			cd.Adnet = adnet
+			cd.Service = service
+			cd.Keyword = dc.Keyword
+			cd.IsBillable = dc.IsBillable
+			cd.Plan = dc.Plan
+			cd.PO = dc.PO
+			cd.Cost = dc.Cost
+			cd.PubId = dc.PubId
+			cd.ShortCode = dc.ShortCode
+			cd.DeviceType = dc.DeviceType
+			cd.OS = dc.OS
+			cd.URLType = dc.URLType
+			cd.ClickType = dc.ClickType
+			cd.ClickDelay = dc.ClickDelay
+			cd.ClientType = dc.ClientType
+			cd.TrafficSource = dc.TrafficSource
+			cd.UniqueClick = dc.UniqueClick
+			cd.URLLanding = dc.URLLanding
+			cd.URLWarpLanding = dc.URLWarpLanding
+			cd.URLService = dc.URLService
+			cd.URLTFCORSmartlink = dc.URLTFCSmartlink
+			cd.CustomIntegration = dc.CustomIntegration
+			cd.APIURL = dc.APIURL
+			cd.MainstreamLpType = dc.MainstreamLpType
+			cd.Title = dc.Title
+			cd.TitleOriginal = dc.TitleOriginal
+			cd.TitleColor = dc.TitleColor
+			cd.TitleStyle = dc.TitleStyle
+			cd.TitlePageType = dc.TitlePageType
+			cd.TitleFontSize = dc.TitleFontSize
+			cd.SubTitle = dc.SubTitle
+			cd.SubTitleOriginal = dc.SubTitleOriginal
+			cd.SubTitleColor = dc.SubTitleColor
+			cd.SubTitleStyle = dc.SubTitleStyle
+			cd.SubTitlePageType = dc.SubTitlePageType
+			cd.SubTitleFontSize = dc.SubTitleFontSize
+			cd.BackgroundURL = dc.BackgroundURL
+			cd.BackgroundColor = dc.BackgroundColor
+			cd.LogoURL = dc.LogoURL
+			cd.URLBanner = dc.URLBanner
+			cd.URLBannerOriginal = dc.URLBannerOriginal
+			cd.Tnc = dc.Tnc
+			cd.TncOriginal = dc.TncOriginal
+			cd.TncColor = dc.TncColor
+			cd.TncStyle = dc.TncStyle
+			cd.TncPageType = dc.TncPageType
+			cd.TncFontSize = dc.TncFontSize
+			cd.ButtonSubscribe = dc.ButtonSubscribe
+			cd.ButtonSubscribeOriginal = dc.ButtonSubscribeOriginal
+			cd.ButtonSubscribeColor = dc.ButtonSubscribeColor
+			cd.StatusSubmitKeyMainstream = dc.StatusSubmitKeyMainstream
+			cd.KeyMainstream = dc.KeyMainstream
+			cd.Channel = dc.Channel
+			cd.GoogleSheet = dc.GoogleSheet
+			cd.GoogleSheetBillable = dc.GoogleSheetBillable
+			cd.Currency = dc.Currency
+			cd.MCC = dc.MCC
+			cd.ClickableAnywhere = dc.ClickableAnywhere
+			cd.NonTargetURL = dc.NonTargetURL
+			cd.EnableIpRanges = dc.EnableIpRanges
+			cd.ConversionName = dc.ConversionName
+			cd.DomainService = dc.DomainService
+			cd.CampaignDetailName = dc.CampaignDetailName
+			cd.Prefix = dc.Prefix
+			cd.CountryDialingCode = dc.CountryDialingCode
+			cd.UnusedTrafficRedirectType = dc.UnusedTrafficRedirectType
+			cd.CompanyLegalName = dc.CompanyLegalName
+			cd.CompanyAddress = dc.CompanyAddress
+			cd.CompanyEmail = dc.CompanyEmail
+			cd.CompanyPhone = dc.CompanyPhone
+			cd.ServicePrice = dc.ServicePrice
+			cd.PortalURL = dc.PortalURL
+			cd.IsEvina = dc.IsEvina
+			cd.EvinaRedirectFraudURL = dc.EvinaRedirectFraudURL
+
+			h.DS.SaveCampaignDetail(cd)
+			h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+		} else {
+			var ipAddress []string
+			for _, v := range dc.IPAddress {
+				ipAddress = append(ipAddress, strconv.Itoa(int(v)))
+			}
+			cpcr, _ := strconv.ParseFloat(strings.TrimSpace(gs.CPCR), 64)
+			agencyfee, _ := strconv.ParseFloat(strings.TrimSpace(gs.AgencyFee), 64)
+			tdb, _ := strconv.ParseFloat(strings.TrimSpace(gs.TargetDailyBudget), 64)
+			technicalFee, _ := strconv.ParseFloat(strings.TrimSpace(gs.TechnicalFee), 64)
+
+			h.DS.NewCampaignDetail(entity.CampaignDetail{
+				ID:                        campaignDetailId,
+				URLServiceKey:             dc.URLServiceKey,
+				CampaignId:                obj.CampaignId,
+				Country:                   country,
+				Operator:                  operator,
+				Partner:                   partner,
+				Aggregator:                dc.Aggregator,
+				Adnet:                     adnet,
+				Service:                   service,
+				Keyword:                   dc.Keyword,
+				Subkeyword:                dc.SubKeyword,
+				IsBillable:                dc.IsBillable,
+				Plan:                      dc.Plan,
+				PO:                        dc.PO,
+				Cost:                      dc.Cost,
+				PubId:                     dc.PubId,
+				ShortCode:                 dc.ShortCode,
+				DeviceType:                dc.DeviceType,
+				OS:                        dc.OS,
+				URLType:                   dc.URLType,
+				ClickType:                 dc.ClickType,
+				ClickDelay:                dc.ClickDelay,
+				ClientType:                dc.ClientType,
+				TrafficSource:             dc.TrafficSource,
+				UniqueClick:               dc.UniqueClick,
+				URLLanding:                dc.URLLanding,
+				URLWarpLanding:            dc.URLWarpLanding,
+				URLService:                dc.URLService,
+				URLTFCORSmartlink:         dc.URLTFCSmartlink,
+				GlobPost:                  dc.GlobPost,
+				URLGlobPost:               dc.URLGlobPost,
+				CustomIntegration:         dc.CustomIntegration,
+				IpAddress:                 ipAddress,
+				IsActive:                  dc.IsActive,
+				MOCapping:                 dc.MOCapping,
+				MOCappingService:          dc.MOCappingService,
+				CounterMOCapping:          dc.CounterMOCapping,
+				CounterMOCappingService:   dc.CounterMOCappingService,
+				StatusCapping:             dc.StatusCapping,
+				KPIUpperLimitCapping:      dc.KPIUpperLimitCapping,
+				IsMachineLearningCapping:  dc.IsMachineLearningCapping,
+				RatioSend:                 dc.RatioSend,
+				RatioReceive:              dc.RatioReceive,
+				CounterMORatio:            dc.CounterMORatio,
+				StatusRatio:               dc.StatusRatio,
+				KPIUpperLimitRatioSend:    dc.KPIUpperLimitRatioSend,
+				KPIUpperLimitRatioReceive: dc.KPIUpperLimitRatioReceive,
+				IsMachineLearningRatio:    dc.IsMachineLearningRatio,
+				APIURL:                    dc.APIURL,
+				LastUpdate:                helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+				LastUpdateCapping:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+				CostPerConversion:         cpcr,
+				AgencyFee:                 agencyfee,
+				TargetDailyBudget:         tdb,
+				TechnicalFee:              technicalFee,
+				URLPostback:               urlpostback,
+				MainstreamLpType:          dc.MainstreamLpType,
+				Title:                     dc.Title,
+				TitleOriginal:             dc.TitleOriginal,
+				TitleColor:                dc.TitleColor,
+				TitleStyle:                dc.TitleStyle,
+				TitlePageType:             dc.TitlePageType,
+				TitleFontSize:             dc.TitleFontSize,
+				SubTitle:                  dc.SubTitle,
+				SubTitleOriginal:          dc.SubTitleOriginal,
+				SubTitleColor:             dc.SubTitleColor,
+				SubTitleStyle:             dc.SubTitleStyle,
+				SubTitlePageType:          dc.SubTitlePageType,
+				SubTitleFontSize:          dc.SubTitleFontSize,
+				BackgroundURL:             dc.BackgroundURL,
+				BackgroundColor:           dc.BackgroundColor,
+				LogoURL:                   dc.LogoURL,
+				URLBanner:                 dc.URLBanner,
+				URLBannerOriginal:         dc.URLBannerOriginal,
+				Tnc:                       dc.Tnc,
+				TncOriginal:               dc.TncOriginal,
+				TncColor:                  dc.TncColor,
+				TncStyle:                  dc.TncStyle,
+				TncPageType:               dc.TncPageType,
+				TncFontSize:               dc.TncFontSize,
+				ButtonSubscribe:           dc.ButtonSubscribe,
+				ButtonSubscribeOriginal:   dc.ButtonSubscribeOriginal,
+				ButtonSubscribeColor:      dc.ButtonSubscribeColor,
+				StatusSubmitKeyMainstream: dc.StatusSubmitKeyMainstream,
+				KeyMainstream:             dc.KeyMainstream,
+				Channel:                   dc.Channel,
+				GoogleSheet:               dc.GoogleSheet,
+				GoogleSheetBillable:       dc.GoogleSheetBillable,
+				Currency:                  dc.Currency,
+				MCC:                       dc.MCC,
+				ClickableAnywhere:         dc.ClickableAnywhere,
+				NonTargetURL:              dc.NonTargetURL,
+				EnableIpRanges:            dc.EnableIpRanges,
+				ConversionName:            dc.ConversionName,
+				DomainService:             dc.DomainService,
+				CampaignDetailName:        dc.CampaignDetailName,
+				Prefix:                    dc.Prefix,
+				CountryDialingCode:        dc.CountryDialingCode,
+				UnusedTrafficRedirectType: dc.UnusedTrafficRedirectType,
+				CompanyLegalName:          dc.CompanyLegalName,
+				CompanyAddress:            dc.CompanyAddress,
+				CompanyEmail:              dc.CompanyEmail,
+				CompanyPhone:              dc.CompanyPhone,
+				ServicePrice:              dc.ServicePrice,
+				PortalURL:                 dc.PortalURL,
+				IsEvina:                   dc.IsEvina,
+				EvinaRedirectFraudURL:     dc.EvinaRedirectFraudURL,
+			})
+
+			cfgDataConfig, _ := json.Marshal(dataConfig)
+			h.DS.IndexRedis(cfgRediskey, "$.id AS id NUMERIC $.urlservicekey AS urlservicekey TEXT $.campaign_id AS campaign_id TEXT $.name AS name TEXT $.objective AS objective TEXT $.country AS country TEXT $.advertiser AS advertiser TEXT $.operator AS operator TEXT $.partner AS partner TEXT $.aggregator AS aggregator TEXT $.adnet AS adnet TEXT $.service AS service TEXT $.keyword AS keyword TEXT $.subkeyword AS subkeyword TEXT $.is_billable AS is_billable TAG $.plan AS plan TEXT $.pubid AS pubid TEXT $.short_code AS short_code TEXT $.device_type AS device_type TEXT $.os AS os TEXT $.url_type AS url_type TEXT $.click_type AS click_type NUMERIC $.click_delay AS click_delay NUMERIC $.client_type AS client_type TEXT $.traffic_source AS traffic_source TAG $.unique_click AS unique_click TAG $.url_banner AS url_banner TEXT $.url_banner_original AS url_banner_original TEXT $.url_landing AS url_landing TEXT $.url_warp_landing AS url_warp_landing TEXT $.url_service AS url_service TEXT $.url_tfc_or_smartlink AS url_tfc_or_smartlink TEXT $.custom_integration AS custom_integration TEXT $.ip_address AS ip_address TEXT $.is_active AS is_active TAG $.mo_capping AS mo_capping NUMERIC $.mo_capping_service AS mo_capping_service $.counter_mo_capping AS counter_mo_capping NUMERIC $.counter_mo_capping_service AS counter_mo_capping_service $.status_capping AS status_capping TAG $.kpi_upper_limit_capping AS kpi_upper_limit_capping NUMERIC $.is_machine_learning_capping AS is_machine_learning_capping TAG $.ratio_send AS ratio_send NUMERIC $.ratio_receive AS ratio_receive NUMERIC $.counter_mo_ratio AS counter_mo_ratio NUMERIC $.status_ratio AS status_ratio TAG $.kpi_upper_limit_ratio_send AS kpi_upper_limit_ratio_send NUMERIC $.kpi_upper_limit_ratio_receive AS kpi_upper_limit_ratio_receive NUMERIC $.is_machine_learning_ratio AS is_machine_learning_ratio TAG $.api_url AS api_url TEXT $.last_update AS last_update TEXT $.last_update_capping AS last_update_capping TEXT $.po AS po TEXT $.cost AS cost TEXT $.cost_per_conversion AS cost_per_conversion TEXT $.agency_fee AS agency_fee TEXT $.target_daily_budget AS target_daily_budget TEXT $.url_postback AS url_postback TEXT $.postback_method AS postback_method TEXT $.mainstream_lp_type AS mainstream_lp_type TEXT $.title AS title TEXT $.title_original AS title_original TEXT $.title_color AS title_color TEXT $.title_style AS title_style TEXT $.title_page_type AS title_page_type TEXT $.title_font_size AS title_font_size TEXT $.sub_title AS sub_title TEXT $.sub_title_original AS sub_title_original TEXT $.sub_title_color AS sub_title_color TEXT $.sub_title_style AS sub_title_style TEXT $.sub_title_page_type AS sub_title_page_type TEXT $.sub_title_font_size AS sub_title_font_size TEXT $.background_url AS background_url TEXT $.logo_url AS logo_url TEXT $.tnc AS tnc TEXT $.tnc_original AS tnc_original TEXT $.tnc_color AS tnc_color TEXT $.tnc_style AS tnc_style TEXT $.tnc_page_type AS tnc_page_type TEXT $.tnc_font_size AS tnc_font_size TEXT $.button_subscribe AS button_subscribe TEXT $.button_subscribe_original AS button_subscribe_original TEXT $.button_subscribe_color AS button_subscribe_color TEXT $.status_submit_key_mainstream AS status_submit_key_mainstream TAG $.key_mainstream AS key_mainstream TEXT $.channel AS channel TEXT $.google_sheet AS google_sheet TEXT $.google_sheet_billable AS google_sheet_billable TEXT $.currency AS currency TEXT $.mcc AS mcc TEXT $.clickable_anywhere AS clickable_anywhere TAG $.non_target_url AS non_target_url TEXT $.enable_ip_ranges AS enable_ip_ranges TAG $.conversion_name AS conversion_name TEXT $.domain_service AS domain_service TEXT $.campaign_detail_name AS campaign_detail_name TEXT $.prefix AS prefix TEXT $.country_dialing_code AS country_dialing_code TEXT $.unused_traffic_redirect_type AS unused_traffic_redirect_type TEXT $.company_legal_name AS company_legal_name TEXT $.company_address AS company_address TEXT $.company_email AS company_email TEXT $.company_phone AS company_phone TEXT $.service_price AS service_price TEXT $.portal_url AS portal_url TEXT $.is_evina AS is_evina TAG $.evina_redirect_fraud_url AS evina_redirect_fraud_url TEXT $.is_bypass_ip_range AS is_bypass_ip_range TAG")
+			h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+		}
+	}
+
+	if obj.Objective == "SINGLE URL MAINSTREAM" || obj.Objective == "SINGLE URL S2S" {
+		singleURLDataJSON, _ := json.Marshal(singleURLData)
+		h.DS.SetData(singleURLData.SingleURLServiceKey, "$", string(singleURLDataJSON))
+	}
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Campaign processed successfully",
-		"data":    json.RawMessage(respBody),
+		"message":     "Campaign processed successfully",
+		"campaign_id": obj.CampaignId,
+		"data":        json.RawMessage(respBody),
 	})
 }
 

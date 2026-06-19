@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -12,7 +13,6 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/config"
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"github.com/infraLinkit/mediaplatform-datasource/helper"
-	"github.com/wiliehidayat87/rmqp"
 )
 
 func (h *IncomingHandler) DisplayCampaignManagement(c *fiber.Ctx) error {
@@ -162,18 +162,17 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to serialize data"})
 	}
 
-	published := h.Rmqp.PublishMsg(rmqp.PublishItems{
-		ExchangeName: h.Config.RabbitMQCampaignManagementExchangeName,
-		QueueName:    h.Config.RabbitMQCampaignManagementQueueName,
-		ContentType:  h.Config.RabbitMQDataType,
-		Payload:      bodyReq.String(), // Send the properly formatted JSON
-		Priority:     0,
-	})
+	corId := "CREATE_CAMP_" + helper.GetUniqId(h.Config.TZ)
+	ctx, cancel := context.WithTimeout(c.UserContext(), time.Duration(h.Config.RabbitMQCtxTimeout)*time.Second)
+	defer cancel()
 
-	if !published {
-		h.Logs.Debug(fmt.Sprintf("[x] Failed published: Data: %s ...", bodyReq.String()))
-	} else {
-		h.Logs.Debug(fmt.Sprintf("[v] Published: Data: %s ...", bodyReq.String()))
+	respBody, err := h.RM.DirectReplyToWithRetry(ctx,
+		h.Config.RabbitMQCampaignManagementExchangeName,
+		h.Config.RabbitMQCampaignManagementQueueName,
+		bodyReq.Bytes(), corId)
+	if err != nil {
+		h.Logs.Debug(fmt.Sprintf("[x] Failed campaign RPC: Data: %s, err: %v", bodyReq.String(), err))
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to process campaign"})
 	}
 
 	h.Logs.Debug(fmt.Sprintf("[v] Campaign RPC ok: Data: %s, Response: %s", bodyReq.String(), string(respBody)))

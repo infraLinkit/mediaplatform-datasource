@@ -1011,7 +1011,7 @@ func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
 		MStatusCharge: strings.TrimSpace(strings.ToLower(p.Status)) == "success",
 	}
 
-	if err := h.DS.UpdatePixelBilled(pixelStorage); err != nil {
+	if err := h.DS.UpdatePixelBilled(pixelStorage, p.Pxdate); err != nil {
 		h.Logs.Error(fmt.Sprintf("failed update pixel billed: %#v", err))
 	}
 

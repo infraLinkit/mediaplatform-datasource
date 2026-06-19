@@ -590,7 +590,7 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 		SUM(saaf) as total_spending,
 		SUM(saaf) as total_saaf,
 		SUM(sbaf) as spending_to_adnets,
-		SUM(technical_fee) as total_technical_fee,
+		SUM(CASE WHEN campaign_objective IN ('CPA','UPLOAD SMS','SINGLE URL S2S') THEN technical_fee ELSE 0 END) as total_technical_fee,
 		SUM(CASE WHEN campaign_objective IN('CPA','UPLOAD SMS', 'SINGLE URL S2S') AND ` + nonDspIn + ` THEN saaf ELSE 0 END) as total_s2s_spending,
 		0 as total_api_spending,
 		SUM(CASE WHEN campaign_objective IN('MAINSTREAM', 'SINGLE URL MAINSTREAM') THEN saaf ELSE 0 END) as total_mainstream_spending,

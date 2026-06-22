@@ -20,29 +20,9 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 	//fmt.Println("Company: ", o.Company)
 	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
 		summary_campaigns.*,
-		CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
-			 ELSE
-			 (
-				CASE 
-					WHEN LOWER(client_type) = 'external' 
-						THEN (mo_received * poaf) 
-					ELSE (total_waki_agency_fee + (po * postback) + technical_fee) 
-				END
-			)	 
-		END AS saaf,
-		CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf
-			 ELSE (po * postback)
-		END AS sbaf,
-		CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf-sbaf
-			 ELSE
-			 (
-				CASE 
-					WHEN LOWER(client_type) = 'external' 
-						THEN (mo_received * poaf) 
-					ELSE (total_waki_agency_fee + (po * postback) + technical_fee) 
-				END - (po * postback)
-			 )
-		END AS revenue
+		saaf,
+		sbaf,
+		revenue
 	`).Where("mo_received > 0").Where("company IN ?", allowedCompanies).Where("adnet IN ?", allowedAdnets)
 	t_query.Where("mo_received > 0").Where("company IN ?", allowedCompanies).Where("adnet IN ?", allowedAdnets)
 
@@ -725,12 +705,8 @@ func (r *BaseModel) GetDisplayCostReport(o entity.DisplayCostReport, allowedAdne
 				adnet,
 				SUM(mo_received)                    AS mo_received,
 				SUM(postback)                       AS conversion,
-				SUM(CASE WHEN campaign_objective = 'UPLOAD SMS' THEN sbaf
-				         ELSE po * postback END)    AS cost,
-				SUM(CASE WHEN campaign_objective = 'UPLOAD SMS' THEN saaf
-				         WHEN LOWER(client_type) = 'external'   THEN (mo_received * poaf)
-				         ELSE (total_waki_agency_fee + (po * postback) + technical_fee)
-				    END)                            AS saaf,
+				SUM(sbaf)                           AS cost,
+				SUM(saaf)                           AS saaf,
 				's2s'                               AS type,
 				country,
 				operator,
@@ -849,22 +825,8 @@ func (r *BaseModel) GetDisplayCostReportByCountry(o entity.DisplayCostReport, al
 		adnet,
 		SUM(mo_received) AS mo_received,
 		SUM(postback) AS conversion,
-		SUM(
-			CASE
-				WHEN campaign_objective = 'UPLOAD SMS'
-					THEN sbaf
-				ELSE po * postback
-			END
-		) AS cost,
-		SUM(
-			CASE
-				WHEN campaign_objective = 'UPLOAD SMS'
-					THEN saaf
-				WHEN LOWER(client_type) = 'external'
-					THEN mo_received * poaf
-				ELSE total_waki_agency_fee + (po * postback) + technical_fee
-			END
-		) AS saaf,
+		SUM(sbaf) AS cost,
+		SUM(saaf) AS saaf,
 		's2s' AS type,
 		country,
 		operator,
@@ -1025,23 +987,9 @@ func (r *BaseModel) GetDisplayCostReportDetail(o entity.DisplayCostReport, allow
 		SUM(postback) AS conversion,
 		SUM(mo_received) AS mo_received,
 
-		SUM(
-			CASE
-				WHEN campaign_objective = 'UPLOAD SMS'
-				THEN sbaf
-				ELSE po * postback
-			END
-		) AS cost,
+		SUM(sbaf) AS cost,
 
-		SUM(
-			CASE
-				WHEN campaign_objective = 'UPLOAD SMS'
-				THEN saaf
-				WHEN LOWER(client_type) = 'external'
-				THEN mo_received * poaf
-				ELSE total_waki_agency_fee + (po * postback) + technical_fee
-			END
-		) AS saaf,
+		SUM(saaf) AS saaf,
 
 		's2s' AS type
 

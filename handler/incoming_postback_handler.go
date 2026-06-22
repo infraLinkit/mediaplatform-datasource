@@ -411,6 +411,15 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 						ReasonStatusBillable: p.StatusDetail,
 					}
 
+					// delay postback: if pxdate is a past date, use it for partitioned table lookup
+					isPastDate := false
+					if p.Pxdate != "" {
+						if t, err := time.Parse("20060102", p.Pxdate); err == nil && t.Format("20060102") != time.Now().Format("20060102") {
+							pxData.Pxdate = t
+							isPastDate = true
+						}
+					}
+
 					switch p.Method {
 					case "ADNETCODE":
 
@@ -437,7 +446,11 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 						}
 
 						if !breaking { */
-						px, isPX = h.DS.GetByAdnetCode(pxData)
+						if isPastDate {
+							px, isPX = h.DS.GetByAdnetCodeByDate(pxData, p.Pxdate)
+						} else {
+							px, isPX = h.DS.GetByAdnetCode(pxData)
+						}
 
 						/* if !isPX {
 								return c.Status(fiber.StatusNotFound).JSON(
@@ -450,9 +463,17 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 						} */
 
 					case "TOKEN":
-						px, isPX = h.DS.GetToken(pxData)
+						if isPastDate {
+							px, isPX = h.DS.GetTokenByDate(pxData, p.Pxdate)
+						} else {
+							px, isPX = h.DS.GetToken(pxData)
+						}
 					case "JSON-MSISDN", "XML-MSISDN", "HTML-MSISDN":
-						px, isPX = h.DS.GetPxByMsisdn(pxData)
+						if isPastDate {
+							px, isPX = h.DS.GetPxByMsisdnByDate(pxData, p.Pxdate)
+						} else {
+							px, isPX = h.DS.GetPxByMsisdn(pxData)
+						}
 					case "PIXEL":
 						if g := h.RCP.Get(p.AffSub); g.Val() != "" {
 
@@ -467,11 +488,15 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 
 						} else {
 
-							switch dc.Partner {
-							case "ID-XLSMART-LINKIT":
-								px, isPX = h.DS.SpecialGetPx(pxData, h.Config.StartGetIntervalDatePXS, h.Config.EndGetIntervalDatePXS)
-							default:
-								px, isPX = h.DS.GetPx(pxData)
+							if isPastDate {
+								px, isPX = h.DS.GetPxByDate(pxData, p.Pxdate)
+							} else {
+								switch dc.Partner {
+								case "ID-XLSMART-LINKIT":
+									px, isPX = h.DS.SpecialGetPx(pxData, h.Config.StartGetIntervalDatePXS, h.Config.EndGetIntervalDatePXS)
+								default:
+									px, isPX = h.DS.GetPx(pxData)
+								}
 							}
 
 						}
@@ -1013,6 +1038,25 @@ func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
 
 	if err := h.DS.UpdatePixelBilled(pixelStorage, p.Pxdate); err != nil {
 		h.Logs.Error(fmt.Sprintf("failed update pixel billed: %#v", err))
+	}
+
+	// trigger re-summary billing for past date delay postback
+	// filtering by objective/whitelist handled inside SummaryCampaignBillingH1
+	if p.Pxdate != "" {
+		if t, err := time.Parse("20060102", p.Pxdate); err == nil && t.Format("20060102") != time.Now().Format("20060102") {
+			resyncPayload, _ := json.Marshal(map[string]string{
+				"px_date":     p.Pxdate,
+				"pixel_table": "pixel_storages_" + p.Pxdate,
+			})
+			h.Rmqp.PublishMsg(rmqp.PublishItems{
+				ExchangeName: "E_SUMMARYCAMPAIGNBILLING",
+				QueueName:    "Q_SUMMARYCAMPAIGNBILLING",
+				ContentType:  h.Config.RabbitMQDataType,
+				CorId:        "RESYNC_BILLING",
+				Payload:      string(resyncPayload),
+				Priority:     0,
+			})
+		}
 	}
 
 	h.DS.UpdateGoogleSheetPixel(

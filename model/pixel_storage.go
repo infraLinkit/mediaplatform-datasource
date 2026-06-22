@@ -139,6 +139,68 @@ func (r *BaseModel) SpecialGetPx(o entity.PixelStorage, si int, ei int) (entity.
 	}
 }
 
+func pxdateToSQL(pxdate string) (tbl, dateSQL string) {
+	if pxdate != "" {
+		t, err := time.Parse("20060102", pxdate)
+		if err == nil && t.Format("20060102") != time.Now().Format("20060102") {
+			return "pixel_storages_" + t.Format("20060102"), "'" + t.Format("2006-01-02") + "'"
+		}
+	}
+	return "pixel_storages", "CURRENT_DATE"
+}
+
+func (r *BaseModel) GetPxByDate(o entity.PixelStorage, pxdate string) (entity.PixelStorage, bool) {
+	tbl, dateSQL := pxdateToSQL(pxdate)
+	result := r.DB.Raw(
+		fmt.Sprintf("SELECT * FROM %s WHERE url_service_key = ? AND date(pxdate) = %s AND pixel = ? AND is_used = false AND is_unique = false LIMIT 1", tbl, dateSQL),
+		o.URLServiceKey, o.Pixel,
+	).Scan(&o)
+	if result.RowsAffected == 0 {
+		return o, false
+	}
+	r.Logs.Warn(fmt.Sprintf("pixel found %#v", o))
+	return o, true
+}
+
+func (r *BaseModel) GetTokenByDate(o entity.PixelStorage, pxdate string) (entity.PixelStorage, bool) {
+	tbl, dateSQL := pxdateToSQL(pxdate)
+	result := r.DB.Raw(
+		fmt.Sprintf("SELECT * FROM %s WHERE url_service_key = ? AND date(pxdate) = %s AND token = ? AND is_used = false AND is_unique = false LIMIT 1", tbl, dateSQL),
+		o.URLServiceKey, o.Pixel,
+	).Scan(&o)
+	if result.RowsAffected == 0 {
+		return o, false
+	}
+	r.Logs.Warn(fmt.Sprintf("pixel found %#v", o))
+	return o, true
+}
+
+func (r *BaseModel) GetByAdnetCodeByDate(o entity.PixelStorage, pxdate string) (entity.PixelStorage, bool) {
+	tbl, dateSQL := pxdateToSQL(pxdate)
+	result := r.DB.Raw(
+		fmt.Sprintf("SELECT * FROM %s WHERE url_service_key = ? AND date(pxdate) = %s AND pixel LIKE ? AND is_used = false AND is_unique = false LIMIT 1", tbl, dateSQL),
+		o.URLServiceKey, "%"+o.Pixel+"%",
+	).Scan(&o)
+	if result.RowsAffected == 0 {
+		return o, false
+	}
+	r.Logs.Warn(fmt.Sprintf("pixel found %#v", o))
+	return o, true
+}
+
+func (r *BaseModel) GetPxByMsisdnByDate(o entity.PixelStorage, pxdate string) (entity.PixelStorage, bool) {
+	tbl, dateSQL := pxdateToSQL(pxdate)
+	result := r.DB.Raw(
+		fmt.Sprintf("SELECT * FROM %s WHERE url_service_key = ? AND date(pxdate) = %s AND msisdn = ? AND is_used = false AND is_unique = false LIMIT 1", tbl, dateSQL),
+		o.URLServiceKey, o.Pixel,
+	).Scan(&o)
+	if result.RowsAffected == 0 {
+		return o, false
+	}
+	r.Logs.Warn(fmt.Sprintf("pixel found %#v", o))
+	return o, true
+}
+
 func (r *BaseModel) UpdatePixelBilled(o entity.PixelStorage, pxdate string) error {
 
 	tbl := "pixel_storages"

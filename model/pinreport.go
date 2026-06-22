@@ -142,10 +142,10 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedAdnets
 
 	query := r.DB.Table("api_pin_reports").Select(`
 		api_pin_reports.*,
-		(payout_af * total_postback) AS saaf,
-		(payout_adn * total_postback) AS sbaf,
-		(CASE WHEN total_mo > 0 THEN (payout_af * total_postback) / total_mo ELSE 0 END) AS price_per_mo,
-		((payout_af * total_postback) - (payout_adn * total_postback)) AS waki_revenue
+		saaf,
+		sbaf,
+		price_per_mo,
+		waki_revenue
 	`).Where("api_pin_reports.total_mo > 0").Where("adnet IN ?", allowedAdnets)
 
 	t_query := r.DB.Table("api_pin_reports").
@@ -225,13 +225,13 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedAdnets
 	
 		switch o.OrderColumn {
 		case "saaf":
-			query = query.Order(fmt.Sprintf("(payout_af * total_postback) %s", dir))
+			query = query.Order(fmt.Sprintf("saaf %s", dir))
 		case "sbaf":
-			query = query.Order(fmt.Sprintf("(payout_adn * total_postback) %s", dir))
+			query = query.Order(fmt.Sprintf("sbaf %s", dir))
 		case "price_per_mo":
-			query = query.Order(fmt.Sprintf("(CASE WHEN total_mo > 0 THEN (payout_af * total_postback) / total_mo ELSE 0 END) %s", dir))
+			query = query.Order(fmt.Sprintf("price_per_mo %s", dir))
 		case "waki_revenue":
-			query = query.Order(fmt.Sprintf("((payout_af * total_postback) - (payout_adn * total_postback)) %s", dir))
+			query = query.Order(fmt.Sprintf("waki_revenue %s", dir))
 		default:
 			query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
 		}
@@ -256,10 +256,10 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedAdnets
 		_ = t_query.Select(`
 			COALESCE(SUM(total_mo), 0),
 			COALESCE(SUM(total_postback), 0),
-			COALESCE(SUM(payout_adn * total_postback), 0),
-			COALESCE(SUM(payout_af * total_postback), 0),
-			COALESCE(CASE WHEN SUM(total_mo) > 0 THEN SUM(payout_af * total_postback) / SUM(total_mo) ELSE 0 END, 0),
-			COALESCE(SUM((payout_af - payout_adn) * total_postback), 0)
+			COALESCE(SUM(sbaf), 0),
+			COALESCE(SUM(saaf), 0),
+			COALESCE(CASE WHEN SUM(total_mo) > 0 THEN SUM(saaf) / SUM(total_mo) ELSE 0 END, 0),
+			COALESCE(SUM(waki_revenue), 0)
 		`).Row().Scan(
 			&totals.TotalMO,
 			&totals.TotalPostback,

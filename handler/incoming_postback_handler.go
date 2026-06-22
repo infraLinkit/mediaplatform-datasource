@@ -1040,6 +1040,25 @@ func (h *IncomingHandler) PostbackBilled(c *fiber.Ctx) error {
 		h.Logs.Error(fmt.Sprintf("failed update pixel billed: %#v", err))
 	}
 
+	// trigger re-summary billing for past date delay postback
+	// filtering by objective/whitelist handled inside SummaryCampaignBillingH1
+	if p.Pxdate != "" {
+		if t, err := time.Parse("20060102", p.Pxdate); err == nil && t.Format("20060102") != time.Now().Format("20060102") {
+			resyncPayload, _ := json.Marshal(map[string]string{
+				"px_date":     p.Pxdate,
+				"pixel_table": "pixel_storages_" + p.Pxdate,
+			})
+			h.Rmqp.PublishMsg(rmqp.PublishItems{
+				ExchangeName: "E_SUMMARYCAMPAIGNBILLING",
+				QueueName:    "Q_SUMMARYCAMPAIGNBILLING",
+				ContentType:  h.Config.RabbitMQDataType,
+				CorId:        "RESYNC_BILLING",
+				Payload:      string(resyncPayload),
+				Priority:     0,
+			})
+		}
+	}
+
 	h.DS.UpdateGoogleSheetPixel(
 		h.GS,
 		entity.PixelStorage{

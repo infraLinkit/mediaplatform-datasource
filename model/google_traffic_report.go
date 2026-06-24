@@ -64,15 +64,11 @@ func (r *BaseModel) GetDisplayGoogleTrafficReport(
 	}
 
 	// ============================================================
-	// 4. PAGINATION
+	// 4. PAGINATION (pageSize=0 → no limit, return all rows)
 	// ============================================================
 	pageSize := o.PageSize
-	if pageSize == 0 {
-		pageSize = 10
-	}
-
 	offset := 0
-	if o.Page > 1 {
+	if pageSize > 0 && o.Page > 1 {
 		offset = (o.Page - 1) * pageSize
 	}
 
@@ -100,11 +96,11 @@ func (r *BaseModel) GetDisplayGoogleTrafficReport(
 
 	var rawRows []rawRow
 
-	err = r.DB.Table("(?) as sub", grouped).
-		Order(orderExpr).
-		Offset(offset).
-		Limit(pageSize).
-		Scan(&rawRows).Error
+	q := r.DB.Table("(?) as sub", grouped).Order(orderExpr)
+	if pageSize > 0 {
+		q = q.Offset(offset).Limit(pageSize)
+	}
+	err = q.Scan(&rawRows).Error
 
 	if err != nil {
 		return nil, 0, totalSummary, err

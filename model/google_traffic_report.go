@@ -54,7 +54,7 @@ func (r *BaseModel) GetDisplayGoogleTrafficReport(
 		Group(`
 			url_service_key, campaign_id, campaign_name, country,
 			operator, partner, adnet, service, company,
-			adgroup_id, period_label` + groupExtra)
+			adgroup_id` + groupExtra)
 
 	// ============================================================
 	// 3. COUNT (SUBQUERY)
@@ -263,32 +263,23 @@ func applyPeriod(db *gorm.DB, o entity.DisplayGoogleTrafficReport) (*gorm.DB, st
 			CEIL(EXTRACT(DAY FROM summary_date) / 7.0)::int AS week_num,
 			TO_CHAR(summary_date, 'YYYY-MM') AS period_label
 		`
-		groupExtra = ", CEIL(EXTRACT(DAY FROM summary_date) / 7.0)::int"
+		groupExtra = ", TO_CHAR(summary_date, 'YYYY-MM'), CEIL(EXTRACT(DAY FROM summary_date) / 7.0)::int"
 		orderExpr = "week_num ASC, period_label ASC"
 		isWeekly = true
 
-		// FIX: filter by specific week number jika bukan "all"
 		if o.Week != "" && o.Week != "all" {
 			weekNum := 0
 			_, scanErr := fmt.Sscanf(o.Week, "%d", &weekNum)
 			if scanErr == nil && weekNum > 0 {
-				// Hitung rentang tanggal untuk week tersebut
 				startDay := (weekNum-1)*7 + 1
 				endDay := weekNum * 7
-
-				// Clamp endDay ke akhir bulan
 				lastDay := monthEnd.Day()
 				if endDay > lastDay {
 					endDay = lastDay
 				}
-
 				startDate := fmt.Sprintf("%s-%02d", o.Month, startDay)
 				endDate := fmt.Sprintf("%s-%02d", o.Month, endDay)
-
-				// Ganti kondisi WHERE date: pakai rentang yang lebih spesifik
-				db = db.Where("EXTRACT(DAY FROM summary_date) BETWEEN ? AND ?", startDay, endDay)
-				_ = startDate
-				_ = endDate
+				db = db.Where("summary_date BETWEEN ? AND ?", startDate, endDate)
 			}
 		}
 
@@ -299,6 +290,7 @@ func applyPeriod(db *gorm.DB, o entity.DisplayGoogleTrafficReport) (*gorm.DB, st
 		db = db.Where("summary_date BETWEEN ? AND ?", o.Year+"-01-01", o.Year+"-12-31")
 		periodSelectExpr = `TO_CHAR(summary_date, 'YYYY-MM') AS period_label`
 		orderExpr = "period_label ASC"
+		groupExtra = ", TO_CHAR(summary_date, 'YYYY-MM')"
 
 	case "custom":
 		if o.DateFrom == "" || o.DateTo == "" {
@@ -307,6 +299,7 @@ func applyPeriod(db *gorm.DB, o entity.DisplayGoogleTrafficReport) (*gorm.DB, st
 		db = db.Where("summary_date BETWEEN ? AND ?", o.DateFrom, o.DateTo)
 		periodSelectExpr = `TO_CHAR(summary_date, 'YYYY-MM-DD') AS period_label`
 		orderExpr = "period_label ASC"
+		groupExtra = ", TO_CHAR(summary_date, 'YYYY-MM-DD')"
 
 	default:
 		return nil, "", "", "", false, fmt.Errorf("invalid period_type: must be weekly, monthly, or custom")

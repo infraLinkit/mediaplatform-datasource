@@ -135,7 +135,7 @@ func (r *BaseModel) PinReport(o entity.ApiPinReport) int {
 	return int(o.ID)
 }
 
-func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedAdnets []string) ([]entity.ApiPinReportWithAlias, int64, entity.TotalSummaryPinReport, error) {
+func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedAdnets []string, allowedCountries []string) ([]entity.ApiPinReportWithAlias, int64, entity.TotalSummaryPinReport, error) {
 	var totalRows int64
 	var ss []entity.ApiPinReportWithAlias
 	var totals entity.TotalSummaryPinReport
@@ -146,10 +146,11 @@ func (r *BaseModel) GetDisplayPinReport(o entity.DisplayPinReport, allowedAdnets
 		sbaf,
 		price_per_mo,
 		waki_revenue
-	`).Where("api_pin_reports.total_mo > 0").Where("adnet IN ?", allowedAdnets)
+	`).Where("api_pin_reports.total_mo > 0").Where("adnet IN ?", allowedAdnets).Where("country IN ?", allowedCountries)
 
 	t_query := r.DB.Table("api_pin_reports").
-		Where("total_mo > 0").Where("adnet IN ?", allowedAdnets)
+		Where("total_mo > 0").Where("adnet IN ?", allowedAdnets).
+		Where("country IN ?", allowedCountries)
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {

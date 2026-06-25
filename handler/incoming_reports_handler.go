@@ -61,12 +61,13 @@ func (h *IncomingHandler) DisplayPinReport(c *fiber.Ctx) error {
 	}
 
 	allowedAdnets, _ := c.Locals("adnets").([]string)
+	allowedCountries, _ := c.Locals("countries").([]string)
 
-	r := h.DisplayPinReportExtra(c, fe, allowedAdnets)
+	r := h.DisplayPinReportExtra(c, fe, allowedAdnets, allowedCountries)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
-func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayPinReport, allowedAdnets []string) entity.ReturnResponse {
+func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayPinReport, allowedAdnets []string, allowedCountries []string) entity.ReturnResponse {
 	var (
 		err          error
 		total_data   int64
@@ -76,9 +77,9 @@ func (h *IncomingHandler) DisplayPinReportExtra(c *fiber.Ctx, fe entity.DisplayP
 
 	if fe.Action != "" || fe.Reload == "true" {
 		fmt.Println("-----", fe.Reload, "-----")
-		apireport, total_data, totalSummary, err = h.DS.GetDisplayPinReport(fe, allowedAdnets)
+		apireport, total_data, totalSummary, err = h.DS.GetDisplayPinReport(fe, allowedAdnets, allowedCountries)
 	} else {
-		apireport, total_data, totalSummary, err = h.DS.GetDisplayPinReport(fe, allowedAdnets)
+		apireport, total_data, totalSummary, err = h.DS.GetDisplayPinReport(fe, allowedAdnets, allowedCountries)
 	}
 
 	if err == nil {

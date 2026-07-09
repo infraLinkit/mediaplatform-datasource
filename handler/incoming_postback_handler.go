@@ -627,6 +627,9 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 								bodyReq, _ := json.Marshal(px)
 
 								corId := "RTO" + helper.GetUniqId(h.Config.TZ)
+								if isPastDate {
+									corId = corId + "_" + p.Pxdate
+								}
 
 								published := h.Rmqp.PublishMsg(rmqp.PublishItems{
 									ExchangeName: h.Config.RabbitMQRatioExchangeName,

@@ -497,6 +497,11 @@ type (
 		Channel                  string    `gorm:"size:50;default:NA" json:"channel"`
 		PricePerMO               float64   `gorm:"type:double precision;default:0" json:"price_per_mo"`
 		POAF                     float64   `gorm:"type:double precision;default:0" json:"po_af"`
+		CounterRatio             int       `gorm:"length:10;default:0" json:"counter_ratio"`
+		MOCappingService         int       `gorm:"length:10;default:0" json:"mo_capping_service"`
+		CounterMOCappingService  int       `gorm:"length:10;default:0" json:"counter_mo_capping_service"`
+		CappingStatus            bool      `gorm:"default:false" json:"capping_status"`
+		StatusRatio              bool      `gorm:"default:false" json:"status_ratio"`
 		CreatedAt                time.Time
 		UpdatedAt                time.Time
 	}

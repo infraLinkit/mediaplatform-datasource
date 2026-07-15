@@ -530,7 +530,7 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 	}
 	//fmt.Println("BODY CAMPAIGN URL SERVICE : ", campaign.URLServiceKey)
 
-	if campaign.CampaignObjective == "UPLOAD SMS" {
+	if campaign.CampaignObjective == "UPLOAD SMS" || campaign.CampaignObjective == "UPLOAD SMS MAINSTREAM" {
 
 		// UPSERT QUERY
 		campaign.SuccessFP = 0
@@ -543,7 +543,12 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 		campaign.CrPostback = 0
 		campaign.CrMO = 0
 
-		err := h.DS.AddSMSReport(campaign)
+		var err error
+		if campaign.CampaignObjective == "UPLOAD SMS MAINSTREAM" {
+			err = h.DS.AddSMSReportMainstream(campaign)
+		} else {
+			err = h.DS.AddSMSReport(campaign)
+		}
 
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

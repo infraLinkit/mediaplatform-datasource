@@ -56,7 +56,7 @@ func (r *BaseModel) CreateSummaryDashboard(s entity.SummaryCampaign) error {
 		SUM(saaf) as total_saaf,
 		SUM(CASE WHEN campaign_objective IN ('CPA','SINGLE URL S2S') THEN saaf ELSE 0 END) as total_cpa_saaf,
 		SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf ELSE 0 END) as total_sms_saaf,
-		SUM(CASE WHEN campaign_objective IN('MAINSTREAM', SINGLE URL MAINSTREAM') THEN saaf ELSE 0 END) as total_mainstream_saaf,
+		SUM(CASE WHEN campaign_objective IN('MAINSTREAM', 'SINGLE URL MAINSTREAM') THEN saaf ELSE 0 END) as total_mainstream_saaf,
 		NOW() FROM summary_campaigns WHERE
 		DATE(summary_date) = DATE(?) AND
 		adnet = ? AND

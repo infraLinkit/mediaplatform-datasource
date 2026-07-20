@@ -418,6 +418,10 @@ func (t *ApiPinReport) ValidateParams(Logs *logrus.Logger) ReturnResponse {
 
 		return ReturnResponse{HttpStatus: fiber.StatusBadRequest, Rsp: GlobalResponse{Code: fiber.StatusBadRequest, Message: "Parameter Operator is mandatory"}}
 
+	} else if t.TotalPostback > t.TotalMO {
+
+		return ReturnResponse{HttpStatus: fiber.StatusBadRequest, Rsp: GlobalResponse{Code: fiber.StatusBadRequest, Message: "Parameter total_postback cannot be greater than total_mo"}}
+
 	} else {
 
 		return ReturnResponse{HttpStatus: fiber.StatusOK, Rsp: GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC}}

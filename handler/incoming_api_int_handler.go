@@ -538,10 +538,21 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 		campaign.AgencyFee = 0
 		campaign.TotalWakiAgencyFee = 0
 		campaign.TechnicalFee = 0
-		//campaign.CPA = 0
 		campaign.Traffic = 0
 		campaign.CrPostback = 0
 		campaign.CrMO = 0
+
+		// Derive CPA/PricePerMO/Revenue from the SBAF/SAAF already supplied by the
+		// Excel row instead of recomputing spend via FormulaCPA (no PO/POAF/agency
+		// fee inputs exist on an SMS upload row).
+		if campaign.MoReceived > 0 {
+			campaign.CPA = campaign.SAAF / float64(campaign.MoReceived)
+			campaign.PricePerMO = campaign.SAAF / float64(campaign.MoReceived)
+		} else {
+			campaign.CPA = 0
+			campaign.PricePerMO = 0
+		}
+		campaign.Revenue = campaign.SAAF - campaign.SBAF
 
 		var err error
 		if campaign.CampaignObjective == "UPLOAD SMS MAINSTREAM" {

@@ -1142,21 +1142,24 @@ func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
 	?, -- sbaf
 	?, -- saaf
 	?, -- cpa
-	0, cd.url_landing, cd.url_landing, ?, ?,
-	?, -- ratio_receive 
+	?, -- revenue
+	cd.url_landing, cd.url_landing, 500, ?,
+	?, -- ratio_receive
 	pt.company, pt.client_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'UPLOAD SMS',
-	'NA', 0, 0, 0
-	from campaign_details cd 
-	left join partners as pt on pt.name=cd.partner 
-	left join campaigns as cp on cp.id = cd.campaign_id::INTEGER where 
+	'NA', ?, 0, 0
+	from campaign_details cd
+	left join partners as pt on pt.name=cd.partner
+	left join campaigns as cp on cp.id = cd.campaign_id::INTEGER where
 	cd.url_service_key = ?
-	ON CONFLICT (summary_date,url_service_key,campaign_id,country,operator,partner,adnet,service,campaign_objective) 
-	DO UPDATE SET 
+	ON CONFLICT (summary_date,url_service_key,campaign_id,country,operator,partner,adnet,service,campaign_objective)
+	DO UPDATE SET
 		updated_at=NOW(),
 		po = EXCLUDED.po,
 		cpa = EXCLUDED.cpa,
 		sbaf = EXCLUDED.sbaf,
 		saaf = EXCLUDED.saaf,
+		revenue = EXCLUDED.revenue,
+		price_per_mo = EXCLUDED.price_per_mo,
 		ratio_send = EXCLUDED.ratio_send,
 		ratio_receive = EXCLUDED.ratio_receive,
 		mo_received = EXCLUDED.mo_received,
@@ -1164,8 +1167,8 @@ func (r *BaseModel) AddSMSReport(s entity.SummaryCampaign) error {
 
 	q := r.DB.Exec(SQL, s.SummaryDate, s.Operator, s.Partner, s.Adnet,
 		s.Service, s.ShortCode, s.MoReceived, s.Postback,
-		s.PO, s.SBAF, s.SAAF, s.CPA, 500, s.RatioSend, s.RatioReceive,
-		s.URLServiceKey)
+		s.PO, s.SBAF, s.SAAF, s.CPA, s.Revenue, s.RatioSend, s.RatioReceive,
+		s.PricePerMO, s.URLServiceKey)
 	return q.Error
 }
 
@@ -1189,10 +1192,11 @@ func (r *BaseModel) AddSMSReportMainstream(s entity.SummaryCampaign) error {
 	?, -- sbaf
 	?, -- saaf
 	?, -- cpa
-	0, cd.url_landing, cd.url_landing, ?, ?,
+	?, -- revenue
+	cd.url_landing, cd.url_landing, 500, ?,
 	?, -- ratio_receive
 	pt.company, pt.client_type, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'UPLOAD SMS MAINSTREAM',
-	cd.channel, 0, 0, 0
+	cd.channel, ?, 0, 0
 	from campaign_details cd
 	left join partners as pt on pt.name=cd.partner
 	left join campaigns as cp on cp.id = cd.campaign_id::INTEGER where
@@ -1204,6 +1208,8 @@ func (r *BaseModel) AddSMSReportMainstream(s entity.SummaryCampaign) error {
 		cpa = EXCLUDED.cpa,
 		sbaf = EXCLUDED.sbaf,
 		saaf = EXCLUDED.saaf,
+		revenue = EXCLUDED.revenue,
+		price_per_mo = EXCLUDED.price_per_mo,
 		ratio_send = EXCLUDED.ratio_send,
 		ratio_receive = EXCLUDED.ratio_receive,
 		mo_received = EXCLUDED.mo_received,
@@ -1211,7 +1217,7 @@ func (r *BaseModel) AddSMSReportMainstream(s entity.SummaryCampaign) error {
 
 	q := r.DB.Exec(SQL, s.SummaryDate, s.Operator, s.Partner, s.Adnet,
 		s.Service, s.ShortCode, s.MoReceived, s.Postback,
-		s.PO, s.SBAF, s.SAAF, s.CPA, 500, s.RatioSend, s.RatioReceive,
-		s.URLServiceKey)
+		s.PO, s.SBAF, s.SAAF, s.CPA, s.Revenue, s.RatioSend, s.RatioReceive,
+		s.PricePerMO, s.URLServiceKey)
 	return q.Error
 }

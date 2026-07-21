@@ -175,7 +175,7 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 			 SUM(mo_received) as mo_received,
 			 SUM(postback) as postback,
 			 AVG(po) as price_per_postback,
-			 SUM(cost_per_conversion) as cost_per_conversion,
+			 AVG(cost_per_conversion) as cost_per_conversion,
 			 SUM(total_waki_agency_fee) as total_waki_agency_fee,
 			 SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN sbaf 
 			 		  ELSE po * postback
@@ -203,7 +203,16 @@ func (r *BaseModel) GetDisplayCPAReport(o entity.DisplayCPAReport, allowedCompan
 					 END) as waki_revenue,
 			 CASE WHEN SUM(landing)>0 THEN ROUND(SUM(mo_received)/SUM(landing)::numeric,5) ELSE 0 END as cr_mo,
 			 CASE WHEN SUM(landing)>0 THEN ROUND(SUM(postback)/SUM(landing)::numeric,5) ELSE 0 END as cr_postback,
-			 ROUND(AVG(cpa)::numeric,5) as avg_cpa`).Row().Scan(
+			 CASE WHEN SUM(mo_received)>0 THEN ROUND(
+				 SUM(CASE WHEN campaign_objective='UPLOAD SMS' THEN saaf
+				 		  ELSE
+							CASE
+								WHEN LOWER(client_type) = 'external'
+									THEN (mo_received * poaf)
+								ELSE (total_waki_agency_fee + (po * postback) + technical_fee)
+							END
+					 END)::numeric / SUM(mo_received)::numeric, 5)
+			 ELSE 0 END as avg_cpa`).Row().Scan(
 			&TotalSummaryCampaign.Landing,
 			&TotalSummaryCampaign.MoReceived,
 			&TotalSummaryCampaign.Postback,

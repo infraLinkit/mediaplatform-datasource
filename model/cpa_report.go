@@ -480,9 +480,9 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 			 SUM(clicked) as clicked,
 			 SUM(saaf) as saaf,
 			 SUM(sbaf) as sbaf,
-			 SUM(price_per_mo) as price_per_mo,
+			 CASE WHEN SUM(mo_received)>0 THEN ROUND(SUM(saaf)::numeric / SUM(mo_received)::numeric, 5) ELSE 0 END as price_per_mo,
 		     SUM(revenue) as revenue,
-			 SUM(po) as po`).Row().Scan(
+			 AVG(po) as po`).Row().Scan(
 			&total_summary.MoReceived,
 			&total_summary.Postback,
 			&total_summary.Landing,

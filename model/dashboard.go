@@ -1005,14 +1005,14 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 				// roi_months_payback is already in months, not a ratio — do not scale.
 				SummaryDashboard.EstROI = cohortROIMonths
 			} else {
-				SummaryDashboard.EstROAS = SummaryDashboard.ROAS
-				// No backend ROI field exists to fall back to — the CMS blade
-				// still computes realized ROI client-side from profit/spending
-				// and will keep using that value when est_roi is 0 (see Task 9).
+				// 0 is a sentinel for "no cohort data" — the blade renders
+				// "—" for 0 rather than duplicating the realized ROAS as if
+				// it were a separate estimate.
+				SummaryDashboard.EstROAS = 0
 				SummaryDashboard.EstROI = 0
 			}
 		} else {
-			SummaryDashboard.EstROAS = SummaryDashboard.ROAS
+			SummaryDashboard.EstROAS = 0
 			SummaryDashboard.EstROI = 0
 		}
 		SummaryDashboard.Profit = SummaryDashboard.TotalSpending - SummaryDashboard.SpendingToAdnets - SummaryDashboard.TotalTechnicalFee

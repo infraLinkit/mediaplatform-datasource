@@ -475,6 +475,24 @@ func (r *BaseModel) GetCampaignROASCohortAgg(dateList []string, country, service
 		query = query.Where("service = ?", service)
 	}
 
+	// Mart's cohort table covers every campaign it tracks for a country,
+	// which is a much broader set than what actually ran (has mo/spend) in
+	// summary_campaigns for this filter — summing gross revenue over all of
+	// them while totalMO/cac only reflect the campaigns that actually ran
+	// would silently inflate est_roas. Restrict the sum to campaigns that
+	// are actually present in summary_campaigns for the same window/filter,
+	// so the numerator and the totalMO/cac denominator cover the same set.
+	activeCampaigns := r.DB.Model(&entity.SummaryCampaign{}).
+		Select("DISTINCT url_service_key").
+		Where("summary_date::date IN ?", dateList)
+	if country != "" {
+		activeCampaigns = activeCampaigns.Where("country = ?", country)
+	}
+	if service != "" {
+		activeCampaigns = activeCampaigns.Where("service = ?", service)
+	}
+	query = query.Where("url_service_key IN (?)", activeCampaigns)
+
 	type aggRow struct {
 		SumGrossRevenue float64 `gorm:"column:sum_gross_revenue"`
 		AvgROIMonths    float64 `gorm:"column:avg_roi_months"`
@@ -562,6 +580,39 @@ func (r *BaseModel) cohortGrossRevenueByGroup(date_range, date_before, date_afte
 	if service != "" {
 		query = query.Where("service = ?", service)
 	}
+
+	// Same reasoning as GetCampaignROASCohortAgg: restrict to campaigns that
+	// actually ran (have a row in summary_campaigns) for this window/filter,
+	// so a group's cohort sum can't be inflated by campaigns Mart tracks but
+	// that never ran here — those would otherwise silently pull in revenue
+	// with no matching mo/spend to divide it by.
+	activeCampaigns := r.DB.Model(&entity.SummaryCampaign{}).Select("DISTINCT url_service_key")
+	switch date_range {
+	case "TODAY":
+		activeCampaigns = activeCampaigns.Where("summary_date = CURRENT_DATE")
+	case "YESTERDAY":
+		activeCampaigns = activeCampaigns.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
+	case "LAST7DAY":
+		activeCampaigns = activeCampaigns.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+	case "LAST30DAY":
+		activeCampaigns = activeCampaigns.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+	case "THISMONTH":
+		activeCampaigns = activeCampaigns.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+	case "LASTMONTH":
+		activeCampaigns = activeCampaigns.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+	case "CUSTOMRANGE":
+		activeCampaigns = activeCampaigns.Where("summary_date BETWEEN ? AND ?", date_before, date_after)
+	default:
+		activeCampaigns = activeCampaigns.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+	}
+	if country != "" {
+		activeCampaigns = activeCampaigns.Where("country = ?", country)
+	}
+	if service != "" {
+		activeCampaigns = activeCampaigns.Where("service = ?", service)
+	}
+	query = query.Where("url_service_key IN (?)", activeCampaigns)
+
 	err := query.Select(selectCols).Group(groupByCols).Scan(dest).Error
 	if err != nil {
 		r.Logs.Error(fmt.Sprintf("cohortGrossRevenueByGroup(%s) query error: %v", groupByCols, err))
@@ -576,7 +627,11 @@ func (r *BaseModel) cohortGrossRevenueByGroup(date_range, date_before, date_afte
 // strip's EstROAS.
 func estROASOrFallback(sumGrossRevenue float64, hasCohort bool, mo int, cac, realizedROAS float64) float64 {
 	if !hasCohort || mo <= 0 || cac <= 0 {
-		return realizedROAS
+		// 0 is a sentinel here, not a real estimate — no cohort data means
+		// no cohort-based number to show. Callers (blade) render "—" for 0
+		// rather than duplicating the realized ROAS as if it were a
+		// separate estimate.
+		return 0
 	}
 	estLTV := sumGrossRevenue / float64(mo)
 	return estLTV / cac * 100

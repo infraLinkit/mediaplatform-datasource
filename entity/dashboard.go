@@ -46,6 +46,7 @@ type (
 		TotalMO                 int     `json:"total_mo"`
 		TotalSpending           float64 `json:"total_spending"`
 		TotalRevenue            float64 `json:"total_revenue"`
+		TotalROAS               float64 `json:"total_roas"`
 		TotalTechnicalFee       float64 `json:"total_technical_fee"`
 		LastMonthTotalMO        int     `json:"lastmonth_total_mo"`
 		LastMonthTotalSpending  float64 `json:"lastmonth_total_spending"`
@@ -63,10 +64,14 @@ type (
 		MarginPct               float64 `json:"margin_pct"`
 		ROAS                    float64 `json:"roas"`
 		EstROAS                 float64 `json:"est_roas"`
+		ROI                     float64 `json:"roi"`
+		EstROI                  float64 `json:"est_roi"`
 		InternalRevenue         float64 `json:"internal_revenue"`
 		ExternalRevenue         float64 `json:"external_revenue"`
 		InternalSpend           float64 `json:"internal_spend"`
 		ExternalSpend           float64 `json:"external_spend"`
+		InternalROAS            float64 `json:"internal_roas"`
+		ExternalROAS            float64 `json:"external_roas"`
 		TotalMO                 int     `json:"total_mo"`
 		TotalActiveAdnet        int     `json:"total_active_adnet"`
 		TotalAdnet              int     `json:"total_adnet"`
@@ -135,6 +140,7 @@ type (
 		TechnicalFee   float64 `json:"technical_fee"`
 		Profit         float64 `json:"profit"`
 		ROAS           float64 `json:"roas"`
+		EstROAS        float64 `json:"est_roas"`
 	}
 
 	SummaryTopBestCampaign struct {
@@ -179,6 +185,7 @@ type (
 		Spend        float64 `json:"spend"`
 		Revenue      float64 `json:"revenue"`
 		ROAS         float64 `json:"roas"`
+		EstROAS      float64 `json:"est_roas"`
 		MarginPct    float64 `json:"margin_pct"`
 		RecoveryDays float64 `json:"recovery_days"`
 		CAC          float64 `json:"cac"`
@@ -191,6 +198,7 @@ type (
 		MO           int     `json:"mo"`
 		Campaigns    int     `json:"campaigns"`
 		ROAS         float64 `json:"roas"`
+		EstROAS      float64 `json:"est_roas"`
 		RecoveryDays float64 `json:"recovery_days"`
 		CAC          float64 `json:"cac"`
 	}
@@ -200,7 +208,9 @@ type (
 		Adnet    string  `json:"adnet"`
 		Service  string  `json:"service"`
 		ROAS     float64 `json:"roas"`
+		EstROAS  float64 `json:"est_roas"`
 		Spend    float64 `json:"spend"`
+		MO       int     `json:"mo"`
 	}
 
 	HeatmapData struct {
@@ -214,6 +224,7 @@ type (
 		MO      int     `json:"mo"`
 		Spend   float64 `json:"spend"`
 		Revenue float64 `json:"revenue"`
+		ROAS    float64 `json:"roas"`
 	}
 
 	FilterOptions struct {

@@ -106,6 +106,8 @@ type (
 		CronResetCapping                       string
 		StartGetIntervalDatePXS                int
 		EndGetIntervalDatePXS                  int
+		MartAPIBaseURL                         string
+		MartAPIKey                             string
 	}
 
 	Setup struct {
@@ -214,6 +216,8 @@ func InitCfg() *Cfg {
 		CronResetCapping:                       os.Getenv("CRONRESETCAPPING"),
 		StartGetIntervalDatePXS:                start_get_interval_date_pxs,
 		EndGetIntervalDatePXS:                  end_get_interval_date_pxs,
+		MartAPIBaseURL:                         os.Getenv("MART_API_BASE_URL"),
+		MartAPIKey:                             os.Getenv("MART_API_KEY"),
 	}
 
 	return cfg

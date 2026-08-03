@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -420,6 +421,8 @@ func (r *BaseModel) GetCampaign(order_type string, order_by string, offset strin
 
 		var ss []entity.TopCampaign
 
+		cohortSums, cohortErr := r.GetCampaignROASCohortSumByCampaign(date_range, date_before, date_after, country, service)
+
 		for rows.Next() {
 			var s entity.TopCampaign
 
@@ -428,6 +431,16 @@ func (r *BaseModel) GetCampaign(order_type string, order_by string, offset strin
 			if s.SpendToAdnets > 0 {
 				s.ROAS = s.Spend / s.SpendToAdnets * 100
 				s.Profit = s.Spend - s.SpendToAdnets - s.TechnicalFee
+			}
+
+			s.EstROAS = s.ROAS
+			if cohortErr == nil {
+				sumGrossRevenue, hasCohort := cohortSums[s.URLServiceKey]
+				cac := 0.0
+				if s.MO > 0 {
+					cac = s.SpendToAdnets / float64(s.MO)
+				}
+				s.EstROAS = estROASOrFallback(sumGrossRevenue, hasCohort, s.MO, cac, s.ROAS)
 			}
 
 			c := r.DB.Model(&entity.Country{})
@@ -440,6 +453,219 @@ func (r *BaseModel) GetCampaign(order_type string, order_by string, offset strin
 	}
 
 	return []entity.TopCampaign{}, err
+}
+
+// GetCampaignROASCohortAgg computes est_ltv = SUM(estimated_gross_revenue_full)
+// / totalMO and roasAvg = est_ltv / cac — combining Mart's revenue projection
+// with our own volume (totalMO) and cost (cac) data, rather than trusting
+// Mart's own precomputed estimated_roas ratio. roasAvg is a plain ratio, the
+// caller scales it to a percentage. roiMonthsAvg (roi_months_payback,
+// averaged as-is) is already in months — NOT a ratio, do not scale. ok is
+// false when no cohort rows match (or totalMO/cac are non-positive, making
+// the formula undefined), so callers can fall back to the realized
+// placeholders instead of showing a misleading zero.
+func (r *BaseModel) GetCampaignROASCohortAgg(dateList []string, country, service string, totalMO int, cac float64) (roasAvg, roiMonthsAvg float64, ok bool) {
+
+	query := r.DB.Model(&entity.CampaignROASCohort{}).Where("summary_date::date IN ?", dateList)
+
+	if country != "" {
+		query = query.Where("country = ?", country)
+	}
+	if service != "" {
+		query = query.Where("service = ?", service)
+	}
+
+	type aggRow struct {
+		SumGrossRevenue float64 `gorm:"column:sum_gross_revenue"`
+		AvgROIMonths    float64 `gorm:"column:avg_roi_months"`
+		MatchCount      int64   `gorm:"column:match_count"`
+	}
+	var agg aggRow
+
+	err := query.Select("SUM(estimated_gross_revenue_full) as sum_gross_revenue, AVG(roi_months_payback) as avg_roi_months, COUNT(*) as match_count").Scan(&agg).Error
+	if err != nil {
+		r.Logs.Error(fmt.Sprintf("GetCampaignROASCohortAgg query error: %v", err))
+		return 0, 0, false
+	}
+	if agg.MatchCount == 0 || totalMO <= 0 || cac <= 0 {
+		return 0, 0, false
+	}
+
+	estLTV := agg.SumGrossRevenue / float64(totalMO)
+	roasAvg = estLTV / cac
+
+	return roasAvg, agg.AvgROIMonths, true
+}
+
+// operatorKeywordOverrides maps a keyword found in the Mart API's raw
+// operator string (campaign_roas_cohorts.operator, stored as-is from the
+// API) to the canonical operator name used in summary_campaigns.operator.
+// Mart's operator strings are a free-form "<company> <carrier>" label (e.g.
+// "LINKIT TSEL DIRECT", "INDOSAT WAKI") that never equals our own operator
+// value outright — only a specific, known abbreviation inside it does.
+// Applied at query time (not storage time) so the raw Mart value stays
+// intact in the table. Extend as more mismatches are confirmed; unmapped
+// operators are left unresolved (raw) rather than guessed at.
+var operatorKeywordOverrides = map[string]string{
+	"TSEL":    "TELKOMSEL",
+	"INDOSAT": "INDOSAT",
+}
+
+// resolveOperator looks for a known keyword (case-insensitive) inside raw
+// and returns the matching canonical operator name, or raw unchanged when
+// nothing matches.
+func resolveOperator(raw string) string {
+	upper := strings.ToUpper(raw)
+	for keyword, canonical := range operatorKeywordOverrides {
+		if strings.Contains(upper, keyword) {
+			return canonical
+		}
+	}
+	return raw
+}
+
+// cohortGrossRevenueByGroup runs SUM(estimated_gross_revenue_full) from
+// campaign_roas_cohorts grouped by groupByCols, filtered the same way
+// GetCampaign/GetRollup/GetAdnetStats/GetHeatmap filter summary_campaigns
+// (date_range BETWEEN-style, plus optional country/service). selectCols must
+// list groupByCols followed by "SUM(estimated_gross_revenue_full) as
+// sum_gross_revenue", and dest must be a pointer to a slice of a struct
+// whose gorm column tags match selectCols exactly — callers build their own
+// lookup map from the result.
+func (r *BaseModel) cohortGrossRevenueByGroup(date_range, date_before, date_after, country, service, selectCols, groupByCols string, dest interface{}) error {
+	query := r.DB.Model(&entity.CampaignROASCohort{})
+	switch date_range {
+	case "TODAY":
+		query = query.Where("summary_date = CURRENT_DATE")
+	case "YESTERDAY":
+		query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
+	case "LAST7DAY":
+		query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+	case "LAST30DAY":
+		query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+	case "THISMONTH":
+		query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+	case "LASTMONTH":
+		query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+	case "CUSTOMRANGE":
+		query = query.Where("summary_date BETWEEN ? AND ?", date_before, date_after)
+	default:
+		// Matches GetRollup/GetAdnetStats/GetHeatmap's own default branch —
+		// without this, an empty/unrecognized date_range left the cohort
+		// side unfiltered (full table history) while those realized queries
+		// scoped to this month, silently inflating EstROAS.
+		query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+	}
+	if country != "" {
+		query = query.Where("country = ?", country)
+	}
+	if service != "" {
+		query = query.Where("service = ?", service)
+	}
+	err := query.Select(selectCols).Group(groupByCols).Scan(dest).Error
+	if err != nil {
+		r.Logs.Error(fmt.Sprintf("cohortGrossRevenueByGroup(%s) query error: %v", groupByCols, err))
+	}
+	return err
+}
+
+// estROASOrFallback applies the est_ltv/cac formula for one group's summed
+// cohort revenue against that same group's own mo/cac (already computed by
+// the realized-ROAS query), falling back to realizedROAS when there's no
+// cohort match or mo/cac are non-positive — same convention as the KPI
+// strip's EstROAS.
+func estROASOrFallback(sumGrossRevenue float64, hasCohort bool, mo int, cac, realizedROAS float64) float64 {
+	if !hasCohort || mo <= 0 || cac <= 0 {
+		return realizedROAS
+	}
+	estLTV := sumGrossRevenue / float64(mo)
+	return estLTV / cac * 100
+}
+
+// GetCampaignROASCohortSumByCampaign sums estimated_gross_revenue_full per
+// url_service_key, for GetCampaign's per-campaign EstROAS.
+func (r *BaseModel) GetCampaignROASCohortSumByCampaign(date_range, date_before, date_after, country, service string) (map[string]float64, error) {
+	type row struct {
+		URLServiceKey   string  `gorm:"column:url_service_key"`
+		SumGrossRevenue float64 `gorm:"column:sum_gross_revenue"`
+	}
+	var rows []row
+	if err := r.cohortGrossRevenueByGroup(date_range, date_before, date_after, country, service,
+		"url_service_key, SUM(estimated_gross_revenue_full) as sum_gross_revenue",
+		"url_service_key", &rows); err != nil {
+		return nil, err
+	}
+	out := make(map[string]float64, len(rows))
+	for _, rr := range rows {
+		out[rr.URLServiceKey] = rr.SumGrossRevenue
+	}
+	return out, nil
+}
+
+// GetCampaignROASCohortSumByRollup sums estimated_gross_revenue_full per
+// (country, operator, service), for GetRollup's per-row EstROAS. Key format:
+// "<country>|<operator>|<service>".
+func (r *BaseModel) GetCampaignROASCohortSumByRollup(date_range, date_before, date_after, country, service string) (map[string]float64, error) {
+	type row struct {
+		Country         string  `gorm:"column:country"`
+		Operator        string  `gorm:"column:operator"`
+		Service         string  `gorm:"column:service"`
+		SumGrossRevenue float64 `gorm:"column:sum_gross_revenue"`
+	}
+	var rows []row
+	if err := r.cohortGrossRevenueByGroup(date_range, date_before, date_after, country, service,
+		"country, operator, service, SUM(estimated_gross_revenue_full) as sum_gross_revenue",
+		"country, operator, service", &rows); err != nil {
+		return nil, err
+	}
+	out := make(map[string]float64, len(rows))
+	for _, rr := range rows {
+		out[rr.Country+"|"+resolveOperator(rr.Operator)+"|"+rr.Service] = rr.SumGrossRevenue
+	}
+	return out, nil
+}
+
+// GetCampaignROASCohortSumByAdnet sums estimated_gross_revenue_full per
+// adnet, for GetAdnetStats' per-row EstROAS.
+func (r *BaseModel) GetCampaignROASCohortSumByAdnet(date_range, date_before, date_after, country, service string) (map[string]float64, error) {
+	type row struct {
+		Adnet           string  `gorm:"column:adnet"`
+		SumGrossRevenue float64 `gorm:"column:sum_gross_revenue"`
+	}
+	var rows []row
+	if err := r.cohortGrossRevenueByGroup(date_range, date_before, date_after, country, service,
+		"adnet, SUM(estimated_gross_revenue_full) as sum_gross_revenue",
+		"adnet", &rows); err != nil {
+		return nil, err
+	}
+	out := make(map[string]float64, len(rows))
+	for _, rr := range rows {
+		out[rr.Adnet] = rr.SumGrossRevenue
+	}
+	return out, nil
+}
+
+// GetCampaignROASCohortSumByHeatmapCell sums estimated_gross_revenue_full
+// per (url_service_key, adnet, service), for GetHeatmap's per-cell EstROAS.
+// Key format: "<url_service_key>|<adnet>|<service>".
+func (r *BaseModel) GetCampaignROASCohortSumByHeatmapCell(date_range, date_before, date_after, country, service string) (map[string]float64, error) {
+	type row struct {
+		URLServiceKey   string  `gorm:"column:url_service_key"`
+		Adnet           string  `gorm:"column:adnet"`
+		Service         string  `gorm:"column:service"`
+		SumGrossRevenue float64 `gorm:"column:sum_gross_revenue"`
+	}
+	var rows []row
+	if err := r.cohortGrossRevenueByGroup(date_range, date_before, date_after, country, service,
+		"url_service_key, adnet, service, SUM(estimated_gross_revenue_full) as sum_gross_revenue",
+		"url_service_key, adnet, service", &rows); err != nil {
+		return nil, err
+	}
+	out := make(map[string]float64, len(rows))
+	for _, rr := range rows {
+		out[rr.URLServiceKey+"|"+rr.Adnet+"|"+rr.Service] = rr.SumGrossRevenue
+	}
+	return out, nil
 }
 
 func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, date_after string, client_type string, country, service string) (entity.SummaryDashboardData, error) {
@@ -704,16 +930,51 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 		// Compute derived metrics
 		if SummaryDashboard.SpendingToAdnets > 0 {
 			SummaryDashboard.ROAS = SummaryDashboard.TotalSpending / SummaryDashboard.SpendingToAdnets * 100
-			SummaryDashboard.EstROAS = SummaryDashboard.ROAS
-		}
-		SummaryDashboard.Profit = SummaryDashboard.TotalSpending - SummaryDashboard.SpendingToAdnets - SummaryDashboard.TotalTechnicalFee
-		if SummaryDashboard.TotalSpending > 0 {
-			SummaryDashboard.MarginPct = SummaryDashboard.Profit / SummaryDashboard.TotalSpending * 100
 		}
 		if SummaryDashboard.TotalMO > 0 {
 			SummaryDashboard.ECPA = SummaryDashboard.SpendingToAdnets / float64(SummaryDashboard.TotalMO)
 			SummaryDashboard.CAC = SummaryDashboard.ECPA
 		}
+		// The campaign_roas_cohorts table has no client_type column, so cohort
+		// data can't be honestly split by segment. Only apply the cohort
+		// override when client_type == "" (both segments combined), since
+		// that's the only case where the realized ROAS above is also
+		// unsegmented and the comparison stays apples-to-apples.
+		if client_type == "" {
+			// est_ltv = SUM(estimated_gross_revenue_full) / total_mo, est_roas = est_ltv / cac
+			// — combines Mart's revenue projection with our own volume/cost
+			// data, rather than trusting Mart's own precomputed ratio.
+			cohortROAS, cohortROIMonths, cohortOK := r.GetCampaignROASCohortAgg(date_list, country, service, SummaryDashboard.TotalMO, SummaryDashboard.CAC)
+			if cohortOK {
+				SummaryDashboard.EstROAS = cohortROAS * 100
+				// roi_months_payback is already in months, not a ratio — do not scale.
+				SummaryDashboard.EstROI = cohortROIMonths
+			} else {
+				SummaryDashboard.EstROAS = SummaryDashboard.ROAS
+				// No backend ROI field exists to fall back to — the CMS blade
+				// still computes realized ROI client-side from profit/spending
+				// and will keep using that value when est_roi is 0 (see Task 9).
+				SummaryDashboard.EstROI = 0
+			}
+		} else {
+			SummaryDashboard.EstROAS = SummaryDashboard.ROAS
+			SummaryDashboard.EstROI = 0
+		}
+		SummaryDashboard.Profit = SummaryDashboard.TotalSpending - SummaryDashboard.SpendingToAdnets - SummaryDashboard.TotalTechnicalFee
+		if SummaryDashboard.TotalSpending > 0 {
+			SummaryDashboard.MarginPct = SummaryDashboard.Profit / SummaryDashboard.TotalSpending * 100
+			// ROI realized == margin on spend, same formula the CMS blade used
+			// to compute client-side from profit/total_spending.
+			SummaryDashboard.ROI = SummaryDashboard.MarginPct
+		}
+		if SummaryDashboard.InternalSpend > 0 {
+			SummaryDashboard.InternalROAS = SummaryDashboard.InternalRevenue / SummaryDashboard.InternalSpend * 100
+		}
+		if SummaryDashboard.ExternalSpend > 0 {
+			SummaryDashboard.ExternalROAS = SummaryDashboard.ExternalRevenue / SummaryDashboard.ExternalSpend * 100
+		}
+		// ECPA/CAC computed earlier in this function, before the cohort block —
+		// GetCampaignROASCohortAgg needs them.
 		if SummaryDashboard.Revenue > 0 {
 			SummaryDashboard.RecoveryDays = SummaryDashboard.SpendingToAdnets * 30.0 / SummaryDashboard.Revenue
 		}
@@ -846,6 +1107,10 @@ func (r *BaseModel) GetDisplayDashboard(date_range string, date_before string, d
 						DetailChart.LastMonthTotalRevenue += last_waki_rev_api
 					}
 				}
+			}
+
+			if DetailChart.TotalSpending > 0 {
+				DetailChart.TotalROAS = DetailChart.TotalRevenue / DetailChart.TotalSpending * 100
 			}
 
 			DetailChartData = append(DetailChartData, DetailChart)

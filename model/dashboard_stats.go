@@ -353,6 +353,9 @@ func (r *BaseModel) GetRollup(date_range, date_before, date_after, client_type, 
 	}
 	defer rows.Close()
 	var results []entity.RollupRow
+
+	cohortSums, cohortErr := r.GetCampaignROASCohortSumByRollup(date_range, date_before, date_after, country, service)
+
 	for rows.Next() {
 		var row entity.RollupRow
 		r.DB.ScanRows(rows, &row)
@@ -366,6 +369,13 @@ func (r *BaseModel) GetRollup(date_range, date_before, date_after, client_type, 
 		if row.MO > 0 {
 			row.CAC = row.Spend / float64(row.MO)
 		}
+
+		row.EstROAS = row.ROAS
+		if cohortErr == nil {
+			sumGrossRevenue, hasCohort := cohortSums[row.Country+"|"+row.Operator+"|"+row.Service]
+			row.EstROAS = estROASOrFallback(sumGrossRevenue, hasCohort, row.MO, row.CAC, row.ROAS)
+		}
+
 		results = append(results, row)
 	}
 	return results, nil
@@ -416,6 +426,9 @@ func (r *BaseModel) GetAdnetStats(date_range, date_before, date_after, client_ty
 	}
 	defer rows.Close()
 	var results []entity.AdnetStat
+
+	cohortSums, cohortErr := r.GetCampaignROASCohortSumByAdnet(date_range, date_before, date_after, country, service)
+
 	for rows.Next() {
 		var row entity.AdnetStat
 		r.DB.ScanRows(rows, &row)
@@ -428,6 +441,13 @@ func (r *BaseModel) GetAdnetStats(date_range, date_before, date_after, client_ty
 		if row.MO > 0 {
 			row.CAC = row.Spend / float64(row.MO)
 		}
+
+		row.EstROAS = row.ROAS
+		if cohortErr == nil {
+			sumGrossRevenue, hasCohort := cohortSums[row.Adnet]
+			row.EstROAS = estROASOrFallback(sumGrossRevenue, hasCohort, row.MO, row.CAC, row.ROAS)
+		}
+
 		results = append(results, row)
 	}
 	return results, nil
@@ -471,11 +491,13 @@ func (r *BaseModel) GetHeatmap(date_range, date_before, date_after, country, ser
 		Service       string  `gorm:"column:service"`
 		ROAS          float64 `gorm:"column:roas"`
 		Spend         float64 `gorm:"column:spend"`
+		MO            int     `gorm:"column:mo"`
 	}
 	var raw []cellRow
 	err := query.Select(`url_service_key, adnet, service,
 		SUM(saaf)/NULLIF(SUM(sbaf),0)*100 as roas,
-		SUM(sbaf) as spend`).
+		SUM(sbaf) as spend,
+		SUM(mo_received) as mo`).
 		Group("url_service_key, adnet, service").Order("spend DESC").Scan(&raw).Error
 	if err != nil {
 		return entity.HeatmapData{}, err
@@ -488,14 +510,28 @@ func (r *BaseModel) GetHeatmap(date_range, date_before, date_after, country, ser
 	}
 	topCamps := topNKeys(campSpend, 8)
 	topAdnets := topNKeys(adnetSpend, 8)
+
+	cohortSums, cohortErr := r.GetCampaignROASCohortSumByHeatmapCell(date_range, date_before, date_after, country, service)
+
 	var cells []entity.HeatmapCell
 	for _, c := range raw {
+		estROAS := c.ROAS
+		if cohortErr == nil {
+			cac := 0.0
+			if c.MO > 0 {
+				cac = c.Spend / float64(c.MO)
+			}
+			sumGrossRevenue, hasCohort := cohortSums[c.UrlServiceKey+"|"+c.Adnet+"|"+c.Service]
+			estROAS = estROASOrFallback(sumGrossRevenue, hasCohort, c.MO, cac, c.ROAS)
+		}
 		cells = append(cells, entity.HeatmapCell{
 			Campaign: c.UrlServiceKey,
 			Adnet:    c.Adnet,
 			Service:  c.Service,
 			ROAS:     c.ROAS,
+			EstROAS:  estROAS,
 			Spend:    c.Spend,
+			MO:       c.MO,
 		})
 	}
 	return entity.HeatmapData{
@@ -563,7 +599,8 @@ func (r *BaseModel) GetCampaignDaily(campaign_id, date_range, date_before, date_
 	rows, err := query.Select(`DATE(summary_date) as date,
 		SUM(mo_received) as mo,
 		SUM(sbaf) as spend,
-		SUM(saaf) as revenue`).
+		SUM(saaf) as revenue,
+		SUM(saaf)/NULLIF(SUM(sbaf),0)*100 as roas`).
 		Group("DATE(summary_date)").Order("date ASC").Rows()
 	if err != nil {
 		return nil, err
@@ -603,7 +640,8 @@ func (r *BaseModel) GetServiceDaily(country, operator, service, date_range, date
 	rows, err := query.Select(`DATE(summary_date) as date,
 		SUM(mo_received) as mo,
 		SUM(sbaf) as spend,
-		SUM(saaf) as revenue`).
+		SUM(saaf) as revenue,
+		SUM(saaf)/NULLIF(SUM(sbaf),0)*100 as roas`).
 		Group("DATE(summary_date)").Order("date ASC").Rows()
 	if err != nil {
 		return nil, err

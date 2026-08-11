@@ -83,6 +83,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	dashboard := f.Group("/dashboard")
 	dashboard.Get("get-data", h.AuthMiddleware, h.DisplayDashboardData)
 	dashboard.Get("get-top-campaign", h.AuthMiddleware, h.DisplayDashboardTopCampaign)
+	dashboard.Get("get-top-partner-spend", h.AuthMiddleware, h.DisplayDashboardTopPartnerSpend)
 	dashboard.Get("get-report-list", h.AuthMiddleware, h.DisplayDashboardReport)
 	dashboard.Get("get-country-stats", h.AuthMiddleware, h.DisplayCountryStats)
 	dashboard.Get("get-ops-stats", h.AuthMiddleware, h.DisplayOpsStats)

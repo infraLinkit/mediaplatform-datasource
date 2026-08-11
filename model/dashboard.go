@@ -6,7 +6,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
+	"gorm.io/gorm"
 )
 
 func uniqueStrings(arr []string) []string {
@@ -453,6 +455,76 @@ func (r *BaseModel) GetCampaign(order_type string, order_by string, offset strin
 	}
 
 	return []entity.TopCampaign{}, err
+}
+
+// GetPartnerSpend returns all partners ranked by total spend (SAAF) desc,
+// plus each partner's share of the total spend across all partners for the
+// same filters. Pagination/limiting is left to the caller (FE).
+func (r *BaseModel) GetPartnerSpend(client_type string, date_range string, date_before string, date_after string, country, service string) ([]entity.TopPartnerSpend, error) {
+	applyFilters := func(query *gorm.DB) *gorm.DB {
+		switch date_range {
+		case "TODAY":
+			query = query.Where("summary_date = CURRENT_DATE")
+		case "YESTERDAY":
+			query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
+		case "LAST7DAY":
+			query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+		case "LAST30DAY":
+			query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+		case "THISMONTH":
+			query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+		case "LASTMONTH":
+			query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+		case "CUSTOMRANGE":
+			query = query.Where("summary_date BETWEEN ? AND ?", date_before, date_after)
+		}
+
+		if client_type != "" {
+			query = query.Where("client_type = ?", client_type)
+		}
+		if country != "" {
+			query = query.Where("country = ?", country)
+		}
+		if service != "" {
+			query = query.Where("service = ?", service)
+		}
+
+		return query
+	}
+
+	var totalSpend float64
+	totalQuery := applyFilters(r.DB.Model(&entity.SummaryCampaign{}))
+	if err := totalQuery.Select("COALESCE(SUM(saaf),0)").Row().Scan(&totalSpend); err != nil {
+		return []entity.TopPartnerSpend{}, err
+	}
+
+	query := applyFilters(r.DB.Model(&entity.SummaryCampaign{}))
+	rows, err := query.
+		Where("partner <> ''").
+		Select("partner, SUM(saaf) as spend").
+		Group("partner").
+		Having("SUM(saaf) > 0").
+		Order("SUM(saaf) DESC").
+		Rows()
+
+	if err != nil {
+		return []entity.TopPartnerSpend{}, err
+	}
+	defer rows.Close()
+
+	var ss []entity.TopPartnerSpend
+	for rows.Next() {
+		var s entity.TopPartnerSpend
+		r.DB.ScanRows(rows, &s)
+
+		if totalSpend > 0 {
+			s.Pct = s.Spend / totalSpend * 100
+		}
+
+		ss = append(ss, s)
+	}
+
+	return ss, nil
 }
 
 // GetCampaignROASCohortAgg computes est_ltv = SUM(estimated_gross_revenue_full)

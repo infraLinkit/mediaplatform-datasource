@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
-	"gorm.io/gorm"
 )
 
 func uniqueStrings(arr []string) []string {
@@ -460,69 +459,121 @@ func (r *BaseModel) GetCampaign(order_type string, order_by string, offset strin
 // GetPartnerSpend returns all partners ranked by total spend (SAAF) desc,
 // plus each partner's share of the total spend across all partners for the
 // same filters. Pagination/limiting is left to the caller (FE).
+//
+// Spend is aggregated from two sources and merged by name (case-insensitive,
+// stored uppercase):
+//   - summary_campaigns.partner (the normal reseller/agency partner)
+//   - api_pin_reports.operator, since api_pin_reports has no partner column;
+//     the telco operator (e.g. TELKOMSEL, XL) is used as a stand-in label.
+//     api_pin_reports has no client_type column, so it's skipped entirely
+//     when client_type == "internal" (mirrors GetReport's own API-objective
+//     handling, which only folds api_pin_reports in for non-internal scope).
 func (r *BaseModel) GetPartnerSpend(client_type string, date_range string, date_before string, date_after string, country, service string) ([]entity.TopPartnerSpend, error) {
-	applyFilters := func(query *gorm.DB) *gorm.DB {
-		switch date_range {
-		case "TODAY":
-			query = query.Where("summary_date = CURRENT_DATE")
-		case "YESTERDAY":
-			query = query.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
-		case "LAST7DAY":
-			query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
-		case "LAST30DAY":
-			query = query.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
-		case "THISMONTH":
-			query = query.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
-		case "LASTMONTH":
-			query = query.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
-		case "CUSTOMRANGE":
-			query = query.Where("summary_date BETWEEN ? AND ?", date_before, date_after)
-		}
-
-		if client_type != "" {
-			query = query.Where("client_type = ?", client_type)
-		}
-		if country != "" {
-			query = query.Where("country = ?", country)
-		}
-		if service != "" {
-			query = query.Where("service = ?", service)
-		}
-
-		return query
+	summaryQuery := r.DB.Model(&entity.SummaryCampaign{})
+	switch date_range {
+	case "TODAY":
+		summaryQuery = summaryQuery.Where("summary_date = CURRENT_DATE")
+	case "YESTERDAY":
+		summaryQuery = summaryQuery.Where("summary_date = CURRENT_DATE - INTERVAL '1 DAY'")
+	case "LAST7DAY":
+		summaryQuery = summaryQuery.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+	case "LAST30DAY":
+		summaryQuery = summaryQuery.Where("summary_date BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+	case "THISMONTH":
+		summaryQuery = summaryQuery.Where("summary_date >= DATE_TRUNC('month', CURRENT_DATE)")
+	case "LASTMONTH":
+		summaryQuery = summaryQuery.Where("summary_date BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+	case "CUSTOMRANGE":
+		summaryQuery = summaryQuery.Where("summary_date BETWEEN ? AND ?", date_before, date_after)
+	}
+	if client_type != "" {
+		summaryQuery = summaryQuery.Where("client_type = ?", client_type)
+	}
+	if country != "" {
+		summaryQuery = summaryQuery.Where("country = ?", country)
+	}
+	if service != "" {
+		summaryQuery = summaryQuery.Where("service = ?", service)
 	}
 
-	var totalSpend float64
-	totalQuery := applyFilters(r.DB.Model(&entity.SummaryCampaign{}))
-	if err := totalQuery.Select("COALESCE(SUM(saaf),0)").Row().Scan(&totalSpend); err != nil {
-		return []entity.TopPartnerSpend{}, err
-	}
+	spendByPartner := make(map[string]float64)
 
-	query := applyFilters(r.DB.Model(&entity.SummaryCampaign{}))
-	rows, err := query.
+	summaryRows, err := summaryQuery.
 		Where("partner <> ''").
 		Select("partner, SUM(saaf) as spend").
 		Group("partner").
 		Having("SUM(saaf) > 0").
-		Order("SUM(saaf) DESC").
 		Rows()
-
 	if err != nil {
 		return []entity.TopPartnerSpend{}, err
 	}
-	defer rows.Close()
-
-	var ss []entity.TopPartnerSpend
-	for rows.Next() {
+	for summaryRows.Next() {
 		var s entity.TopPartnerSpend
-		r.DB.ScanRows(rows, &s)
+		r.DB.ScanRows(summaryRows, &s)
+		spendByPartner[strings.ToUpper(s.Partner)] += s.Spend
+	}
+	summaryRows.Close()
 
+	if client_type != "internal" {
+		apiQuery := r.DB.Model(&entity.ApiPinReport{})
+		switch date_range {
+		case "TODAY":
+			apiQuery = apiQuery.Where("date_send = CURRENT_DATE")
+		case "YESTERDAY":
+			apiQuery = apiQuery.Where("date_send = CURRENT_DATE - INTERVAL '1 DAY'")
+		case "LAST7DAY":
+			apiQuery = apiQuery.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '7 DAY' AND CURRENT_DATE")
+		case "LAST30DAY":
+			apiQuery = apiQuery.Where("date_send BETWEEN CURRENT_DATE - INTERVAL '30 DAY' AND CURRENT_DATE")
+		case "THISMONTH":
+			apiQuery = apiQuery.Where("date_send >= DATE_TRUNC('month', CURRENT_DATE)")
+		case "LASTMONTH":
+			apiQuery = apiQuery.Where("date_send BETWEEN DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 MONTH') AND DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 DAY'")
+		case "CUSTOMRANGE":
+			apiQuery = apiQuery.Where("date_send BETWEEN ? AND ?", date_before, date_after)
+		}
+		if country != "" {
+			apiQuery = apiQuery.Where("country = ?", country)
+		}
+		if service != "" {
+			apiQuery = apiQuery.Where("service = ?", service)
+		}
+
+		apiRows, apiErr := apiQuery.
+			Where("operator <> ''").
+			Select("operator, SUM(saaf) as spend").
+			Group("operator").
+			Having("SUM(saaf) > 0").
+			Rows()
+		if apiErr != nil {
+			return []entity.TopPartnerSpend{}, apiErr
+		}
+		for apiRows.Next() {
+			var row struct {
+				Operator string
+				Spend    float64
+			}
+			r.DB.ScanRows(apiRows, &row)
+			spendByPartner[strings.ToUpper(row.Operator)] += row.Spend
+		}
+		apiRows.Close()
+	}
+
+	var totalSpend float64
+	for _, v := range spendByPartner {
+		totalSpend += v
+	}
+
+	ss := make([]entity.TopPartnerSpend, 0, len(spendByPartner))
+	for name, spend := range spendByPartner {
+		s := entity.TopPartnerSpend{Partner: name, Spend: spend}
 		if totalSpend > 0 {
 			s.Pct = s.Spend / totalSpend * 100
 		}
-
 		ss = append(ss, s)
 	}
+
+	sort.Slice(ss, func(i, j int) bool { return ss[i].Spend > ss[j].Spend })
 
 	return ss, nil
 }

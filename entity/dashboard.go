@@ -197,6 +197,27 @@ type (
 		CAC          float64 `json:"cac"`
 	}
 
+	HierarchyCampaignRow struct {
+		Country      string  `json:"country"`
+		Operator     string  `json:"operator"`
+		Service      string  `json:"service"`
+		Adnet        string  `json:"adnet"`
+		CampaignID   string  `json:"campaign_id"`
+		ClientType   string  `json:"client_type"`
+		MO           int     `json:"mo"`
+		Spend        float64 `json:"spend"`
+		Revenue      float64 `json:"revenue"`
+		ROAS         float64 `json:"roas"`
+		EstROAS      float64 `json:"est_roas"`
+		HasEstROAS   bool    `json:"has_est_roas"`
+		RecoveryDays float64 `json:"recovery_days"`
+		CR           float64 `json:"cr"`
+		CPA          float64 `json:"cpa"`
+		Payout       float64 `json:"payout"`
+		Status       string  `json:"status"`
+		Source       string  `json:"source"`
+	}
+
 	AdnetStat struct {
 		Adnet        string  `json:"adnet"`
 		Spend        float64 `json:"spend"`
@@ -226,11 +247,13 @@ type (
 	}
 
 	CampaignDailyStat struct {
-		Date    string  `json:"date"`
-		MO      int     `json:"mo"`
-		Spend   float64 `json:"spend"`
-		Revenue float64 `json:"revenue"`
-		ROAS    float64 `json:"roas"`
+		Date       string  `json:"date"`
+		MO         int     `json:"mo"`
+		Spend      float64 `json:"spend"`
+		Revenue    float64 `json:"revenue"`
+		ROAS       float64 `json:"roas"`
+		EstROAS    float64 `json:"est_roas"`
+		HasEstROAS bool    `json:"has_est_roas"`
 	}
 
 	FilterOptions struct {

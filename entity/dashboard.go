@@ -141,6 +141,8 @@ type (
 		Profit         float64 `json:"profit"`
 		ROAS           float64 `json:"roas"`
 		EstROAS        float64 `json:"est_roas"`
+		ROIMonths      float64 `json:"roi_months"`
+		HasROI         bool    `json:"has_roi"`
 	}
 
 	SummaryTopBestCampaign struct {
@@ -192,6 +194,8 @@ type (
 		Revenue      float64 `json:"revenue"`
 		ROAS         float64 `json:"roas"`
 		EstROAS      float64 `json:"est_roas"`
+		ROIMonths    float64 `json:"roi_months"`
+		HasROI       bool    `json:"has_roi"`
 		MarginPct    float64 `json:"margin_pct"`
 		RecoveryDays float64 `json:"recovery_days"`
 		CAC          float64 `json:"cac"`
@@ -210,6 +214,8 @@ type (
 		ROAS         float64 `json:"roas"`
 		EstROAS      float64 `json:"est_roas"`
 		HasEstROAS   bool    `json:"has_est_roas"`
+		ROIMonths    float64 `json:"roi_months"`
+		HasROI       bool    `json:"has_roi"`
 		RecoveryDays float64 `json:"recovery_days"`
 		CR           float64 `json:"cr"`
 		CPA          float64 `json:"cpa"`
@@ -226,6 +232,8 @@ type (
 		Campaigns    int     `json:"campaigns"`
 		ROAS         float64 `json:"roas"`
 		EstROAS      float64 `json:"est_roas"`
+		ROIMonths    float64 `json:"roi_months"`
+		HasROI       bool    `json:"has_roi"`
 		RecoveryDays float64 `json:"recovery_days"`
 		CAC          float64 `json:"cac"`
 	}
@@ -254,6 +262,8 @@ type (
 		ROAS       float64 `json:"roas"`
 		EstROAS    float64 `json:"est_roas"`
 		HasEstROAS bool    `json:"has_est_roas"`
+		ROIMonths  float64 `json:"roi_months"`
+		HasROI     bool    `json:"has_roi"`
 	}
 
 	FilterOptions struct {

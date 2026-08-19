@@ -89,6 +89,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	dashboard.Get("get-ops-stats", h.AuthMiddleware, h.DisplayOpsStats)
 	dashboard.Get("get-alerts", h.AuthMiddleware, h.DisplayAlerts)
 	dashboard.Get("get-rollup", h.AuthMiddleware, h.DisplayRollup)
+	dashboard.Get("get-campaign-hierarchy", h.AuthMiddleware, h.DisplayCampaignHierarchy)
 	dashboard.Get("get-adnet-stats", h.AuthMiddleware, h.DisplayAdnetStats)
 	dashboard.Get("get-heatmap", h.AuthMiddleware, h.DisplayHeatmap)
 	dashboard.Get("get-campaign-daily", h.AuthMiddleware, h.DisplayCampaignDaily)

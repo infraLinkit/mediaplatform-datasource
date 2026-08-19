@@ -355,6 +355,7 @@ func (r *BaseModel) GetRollup(date_range, date_before, date_after, client_type, 
 	var results []entity.RollupRow
 
 	cohortSums, cohortErr := r.GetCampaignROASCohortSumByRollup(date_range, date_before, date_after, country, service)
+	cohortROI, cohortROIErr := r.GetCampaignROASCohortROIByRollup(date_range, date_before, date_after, country, service)
 
 	for rows.Next() {
 		var row entity.RollupRow
@@ -374,6 +375,13 @@ func (r *BaseModel) GetRollup(date_range, date_before, date_after, client_type, 
 		if cohortErr == nil {
 			sumGrossRevenue, hasCohort := cohortSums[row.Country+"|"+row.Operator+"|"+row.Service]
 			row.EstROAS = estROASOrFallback(sumGrossRevenue, hasCohort, row.MO, row.CAC, row.ROAS)
+		}
+		if cohortROIErr == nil {
+			roiMonths, hasROI := cohortROI[row.Country+"|"+row.Operator+"|"+row.Service]
+			if hasROI {
+				row.ROIMonths = roiMonths
+				row.HasROI = true
+			}
 		}
 
 		results = append(results, row)
@@ -466,6 +474,7 @@ func (r *BaseModel) GetCampaignHierarchy(date_range, date_before, date_after, cl
 	}
 
 	cohortSums, cohortErr := r.GetCampaignROASCohortSumByCampaign(date_range, date_before, date_after, country, service)
+	cohortROI, cohortROIErr := r.GetCampaignROASCohortROIByCampaign(date_range, date_before, date_after, country, service)
 
 	var results []entity.HierarchyCampaignRow
 	for _, s := range summaryRows {
@@ -501,6 +510,13 @@ func (r *BaseModel) GetCampaignHierarchy(date_range, date_before, date_after, cl
 			if hasCohort && row.MO > 0 && cac > 0 {
 				row.EstROAS = (sumGrossRevenue / float64(row.MO)) / cac * 100
 				row.HasEstROAS = true
+			}
+		}
+		if cohortROIErr == nil {
+			roiMonths, hasROI := cohortROI[row.CampaignID]
+			if hasROI {
+				row.ROIMonths = roiMonths
+				row.HasROI = true
 			}
 		}
 
@@ -594,6 +610,13 @@ func (r *BaseModel) GetCampaignHierarchy(date_range, date_before, date_after, cl
 						row.HasEstROAS = true
 					}
 				}
+				if cohortROIErr == nil {
+					roiMonths, hasROI := cohortROI[row.CampaignID]
+					if hasROI {
+						row.ROIMonths = roiMonths
+						row.HasROI = true
+					}
+				}
 				results = append(results, row)
 			}
 		}
@@ -649,6 +672,7 @@ func (r *BaseModel) GetAdnetStats(date_range, date_before, date_after, client_ty
 	var results []entity.AdnetStat
 
 	cohortSums, cohortErr := r.GetCampaignROASCohortSumByAdnet(date_range, date_before, date_after, country, service)
+	cohortROI, cohortROIErr := r.GetCampaignROASCohortROIByAdnet(date_range, date_before, date_after, country, service)
 
 	for rows.Next() {
 		var row entity.AdnetStat
@@ -667,6 +691,13 @@ func (r *BaseModel) GetAdnetStats(date_range, date_before, date_after, client_ty
 		if cohortErr == nil {
 			sumGrossRevenue, hasCohort := cohortSums[row.Adnet]
 			row.EstROAS = estROASOrFallback(sumGrossRevenue, hasCohort, row.MO, row.CAC, row.ROAS)
+		}
+		if cohortROIErr == nil {
+			roiMonths, hasROI := cohortROI[row.Adnet]
+			if hasROI {
+				row.ROIMonths = roiMonths
+				row.HasROI = true
+			}
 		}
 
 		results = append(results, row)
@@ -842,24 +873,30 @@ func (r *BaseModel) GetCampaignDaily(campaign_id, date_range, date_before, date_
 	type cohortDayRow struct {
 		Date            string  `gorm:"column:date"`
 		SumGrossRevenue float64 `gorm:"column:sum_gross_revenue"`
+		AvgROIMonths    float64 `gorm:"column:avg_roi_months"`
 	}
 	var cohortDays []cohortDayRow
 	cohortErr := r.DB.Model(&entity.CampaignROASCohort{}).
 		Where("url_service_key = ?", campaign_id).
-		Select("DATE(summary_date) as date, SUM(estimated_gross_revenue_full) as sum_gross_revenue").
+		Select("DATE(summary_date) as date, SUM(estimated_gross_revenue_full) as sum_gross_revenue, AVG(roi_months_payback) as avg_roi_months").
 		Group("DATE(summary_date)").Scan(&cohortDays).Error
 	if cohortErr == nil && len(cohortDays) > 0 {
-		cohortByDate := make(map[string]float64, len(cohortDays))
+		cohortByDate := make(map[string]cohortDayRow, len(cohortDays))
 		for _, cd := range cohortDays {
-			cohortByDate[strings.TrimSuffix(cd.Date, "T00:00:00Z")] = cd.SumGrossRevenue
+			cohortByDate[strings.TrimSuffix(cd.Date, "T00:00:00Z")] = cd
 		}
 		for i := range results {
-			sumGrossRevenue, hasCohort := cohortByDate[results[i].Date]
-			if !hasCohort || results[i].MO <= 0 || results[i].Spend <= 0 {
+			cd, hasCohort := cohortByDate[results[i].Date]
+			if !hasCohort {
+				continue
+			}
+			results[i].ROIMonths = cd.AvgROIMonths
+			results[i].HasROI = true
+			if results[i].MO <= 0 || results[i].Spend <= 0 {
 				continue
 			}
 			cac := results[i].Spend / float64(results[i].MO)
-			results[i].EstROAS = (sumGrossRevenue / float64(results[i].MO)) / cac * 100
+			results[i].EstROAS = (cd.SumGrossRevenue / float64(results[i].MO)) / cac * 100
 			results[i].HasEstROAS = true
 		}
 	}

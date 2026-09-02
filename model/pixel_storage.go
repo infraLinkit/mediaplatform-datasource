@@ -201,6 +201,65 @@ func (r *BaseModel) GetPxByMsisdnByDate(o entity.PixelStorage, pxdate string) (e
 	return o, true
 }
 
+// GetPxFallbackNotUnique fetches the oldest unused pixel for today for the
+// given url_service_key regardless of the pixel/token/msisdn value, and
+// immediately marks it as non-unique (is_unique = false). Used for the TRF
+// postback method fallback when the pixel is not found in Redis: any unused
+// row can be consumed, and duplicate hits are expected, so uniqueness is not
+// enforced.
+func (r *BaseModel) GetPxFallbackNotUnique(o entity.PixelStorage) (entity.PixelStorage, bool) {
+
+	result := r.DB.Model(&o).
+		Where("url_service_key = ? AND date(pxdate) = CURRENT_DATE AND is_used = false", o.URLServiceKey).
+		Order("pxdate ASC").
+		First(&o)
+
+	b := errors.Is(result.Error, gorm.ErrRecordNotFound)
+
+	if b {
+		return o, false
+	}
+
+	updateResult := r.DB.Model(&entity.PixelStorage{}).
+		Where("id = ?", o.ID).
+		Updates(map[string]interface{}{"is_unique": false, "updated_at": time.Now()})
+
+	r.Logs.Debug(fmt.Sprintf("[TRF_FALLBACK] pixel id=%d affected=%d error=%v", o.ID, updateResult.RowsAffected, updateResult.Error))
+
+	o.IsUnique = false
+
+	r.Logs.Warn(fmt.Sprintf("pixel found (fallback not-unique) %#v", o))
+	return o, true
+}
+
+// GetPxByDateFallbackNotUnique is the date-aware (past-date/partitioned
+// table) counterpart of GetPxFallbackNotUnique. See GetPxFallbackNotUnique
+// for behavior.
+func (r *BaseModel) GetPxByDateFallbackNotUnique(o entity.PixelStorage, pxdate string) (entity.PixelStorage, bool) {
+	tbl, dateSQL := pxdateToSQL(pxdate)
+
+	result := r.DB.Raw(
+		fmt.Sprintf("SELECT * FROM %s WHERE url_service_key = ? AND date(pxdate) = %s AND is_used = false ORDER BY pxdate ASC LIMIT 1", tbl, dateSQL),
+		o.URLServiceKey,
+	).Scan(&o)
+
+	if result.RowsAffected == 0 {
+		return o, false
+	}
+
+	updateResult := r.DB.Exec(
+		fmt.Sprintf("UPDATE %s SET is_unique = false, updated_at = NOW() WHERE id = ?", tbl),
+		o.ID,
+	)
+
+	r.Logs.Debug(fmt.Sprintf("[TRF_FALLBACK] pixel id=%d affected=%d error=%v", o.ID, updateResult.RowsAffected, updateResult.Error))
+
+	o.IsUnique = false
+
+	r.Logs.Warn(fmt.Sprintf("pixel found (fallback not-unique) %#v", o))
+	return o, true
+}
+
 func (r *BaseModel) UpdatePixelBilled(o entity.PixelStorage, pxdate string) error {
 
 	tbl := "pixel_storages"

@@ -500,6 +500,26 @@ func (h *IncomingHandler) PostbackV3(c *fiber.Ctx) error {
 							}
 
 						}
+					case "TRF":
+						if g := h.RCP.Get(p.AffSub); g.Val() != "" {
+
+							isPX = true
+
+							if err = json.Unmarshal([]byte(g.Val()), &px); err != nil {
+
+								return c.Status(fiber.StatusNotAcceptable).JSON(entity.GlobalResponse{Code: fiber.StatusNotAcceptable, Message: "Invalid pixel format or this pixel not found, pixel : " + p.AffSub})
+							}
+
+							h.RCP.Del(p.AffSub)
+
+						} else {
+
+							if isPastDate {
+								px, isPX = h.DS.GetPxByDateFallbackNotUnique(pxData, p.Pxdate)
+							} else {
+								px, isPX = h.DS.GetPxFallbackNotUnique(pxData)
+							}
+						}
 					case "SPC-MVLS", "SPC-TFCS", "SPC":
 
 						//campIdRemover := strings.NewReplacer(dc.URLServiceKey+"-", "")

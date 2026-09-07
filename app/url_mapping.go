@@ -147,6 +147,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	internal.Put("/updateagencycost/:v", h.UpdateAgencyCost).Name("Update Agency fee and cost per conversion in db")
 	internal.Put("/updatestatusalert/:v", h.UpdateStatusAlert).Name("Update Status Alert in db")
 	internal.Get("/datasentapipinreport/", h.TrxPinReport).Name("Receive Pin Report Transactional")
+	internal.Get("/uploadsmsapipinreport/", h.TrxUploadSmsApiPinReport).Name("Receive Upload SMS API Pin Report (requires existing campaign)")
 	internal.Post("/pinreport/editpayout", h.EditPayoutAPIReport).Name("Edit payout api report")
 	internal.Get("/datasentapiperformance/", h.TrxPerformancePinReport).Name("Receive Pin API Performance Report Transactional")
 	internal.Post("/pinperformance/editcpa", h.EditCpaAPIPerformanceReport).Name("Edit cpa api performance report")

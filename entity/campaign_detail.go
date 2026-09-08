@@ -37,7 +37,7 @@ type (
 		URLBanner                 string    `gorm:"type:text;default:NA" json:"url_banner"`
 		URLLanding                string    `gorm:"size:255;default:NA" json:"url_landing"`
 		URLWarpLanding            string    `gorm:"size:255;default:NA" json:"url_warp_landing"`
-		URLService                string    `gorm:"size:255;default:NA" json:"url_service"`
+		URLService                string    `gorm:"type:text;default:NA" json:"url_service"`
 		URLTFCORSmartlink         string    `gorm:"size:255;default:NA" json:"url_tfc_or_smartlink"`
 		GlobPost                  bool      `gorm:"not null;default:false" json:"glob_post"`
 		URLGlobPost               string    `gorm:"size:255;default:NA" json:"url_glob_post"`

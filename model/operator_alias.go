@@ -26,7 +26,7 @@ func (r *BaseModel) GetOperatorAliasList(o entity.GlobalRequestFromDataTable) ([
 		total_rows int64
 	)
 
-	query := r.DB.Model(&entity.OperatorAlias{})
+	query := r.DB.Model(&entity.OperatorAlias{}).Where("type = ?", "API")
 	if o.Search != "" {
 		search_value := strings.Trim(o.Search, " ")
 		query = query.Where("operator ILIKE ? OR alias ILIKE ? OR service ILIKE ? OR country ILIKE ?",

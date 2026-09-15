@@ -112,6 +112,7 @@ type (
 		OrderColumn       string    `form:"order_column" json:"order_column"`
 		OrderDir          string    `form:"order_dir" json:"order_dir"`
 		CampaignObjective string    `form:"order_dir" json:"campaign_objective"`
+		ShowLanding       bool      `form:"show_landing" json:"show_landing"`
 	}
 
 	TotalSummaryCampaign struct {
@@ -168,8 +169,8 @@ type (
 		Country       string    `json:"country"`
 		Operator      string    `json:"operator"`
 		ChannelType   string    `json:"channel_type"`   // NEW: filter by channel type
-		GroupBy       string    `json:"group_by"`        // NEW: "adnet" | "country"
-		DataIndicator string    `json:"data_indicator"`  // NEW: "s2s" | "api" | ""
+		GroupBy       string    `json:"group_by"`       // NEW: "adnet" | "country"
+		DataIndicator string    `json:"data_indicator"` // NEW: "s2s" | "api" | ""
 		Landing       float64   `json:"landing"`
 		CrPostback    float64   `json:"cr_postback"`
 		ShortCode     string    `json:"short_code"`
@@ -187,7 +188,7 @@ type (
 		Page          int       `json:"page"`
 		Draw          int       `json:"draw"`
 		DataBasedOn   string    `json:"data_based_on"`
-		FromChannel   bool 
+		FromChannel   bool
 	}
 
 	DisplayAlertReport struct {
@@ -458,16 +459,16 @@ func NewInstanceTrxPinPerfonrmanceReport(c *fiber.Ctx, cfg *config.Cfg) *ApiPinP
 	}
 
 	pin := ApiPinPerformance{
-		Adnet:               strings.ToUpper(m["adnet"]),
-		Country:             country,
-		Company:             strings.ToUpper(m["company"]),
-		Service:             strings.ToUpper(m["service"]),
-		Operator:            operator,
-		DateSend:            dateSend,
-		PinRequest:          pinRequest,
-		UniquePinRequest:    uniquePinRequest,
-		PinSuccess:          pinSent,
-		PinFailed:           pinFailed,
+		Adnet:                  strings.ToUpper(m["adnet"]),
+		Country:                country,
+		Company:                strings.ToUpper(m["company"]),
+		Service:                strings.ToUpper(m["service"]),
+		Operator:               operator,
+		DateSend:               dateSend,
+		PinRequest:             pinRequest,
+		UniquePinRequest:       uniquePinRequest,
+		PinSuccess:             pinSent,
+		PinFailed:              pinFailed,
 		PinVerifyRequest:       verifyRequest,
 		PinVerifyRequestUnique: verifyRequestUnique,
 		PinOK:                  pinOK,

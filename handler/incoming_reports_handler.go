@@ -480,6 +480,7 @@ func (h *IncomingHandler) DisplayCPAReport(c *fiber.Ctx) error {
 		OrderColumn:       m["order_column"],
 		OrderDir:          m["order_dir"],
 		CampaignObjective: m["campaign_objective"],
+		ShowLanding:       m["show_landing"] == "true",
 	}
 
 	allowedCompanies, _ := c.Locals("companies").([]string)
@@ -642,9 +643,9 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 	c.Set("Content-type", "application/x-www-form-urlencoded")
 	c.Accepts("application/x-www-form-urlencoded")
 	c.AcceptsCharsets("utf-8", "iso-8859-1")
- 
+
 	m := c.Queries()
- 
+
 	page, errPage := strconv.Atoi(m["page"])
 	pageSize, err := strconv.Atoi(m["page_size"])
 	if err != nil {
@@ -653,17 +654,17 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 	if errPage != nil {
 		page = 10
 	}
- 
+
 	draw, _ := strconv.Atoi(m["draw"])
 	v := c.Params("v")
- 
+
 	var adnets []string
 	for k, val := range m {
 		if strings.HasPrefix(k, "adnets[") {
 			adnets = append(adnets, val)
 		}
 	}
- 
+
 	var adnetFilter []string
 	for k, val := range m {
 		if strings.HasPrefix(k, "adnet[") {
@@ -673,52 +674,51 @@ func (h *IncomingHandler) DisplayCostReport(c *fiber.Ctx) error {
 	if len(adnets) == 0 && len(adnetFilter) > 0 {
 		adnets = adnetFilter
 	}
- 
+
 	fromChannel := m["from_channel"] == "1"
- 
+
 	fe := entity.DisplayCostReport{
-		Adnet:       m["adnet"],
-		Adnets:      adnets,
-		Country:     m["country"],
-		Operator:    m["operator"],
-		ChannelType: m["channel_type"],
-		GroupBy:     m["group_by"],
+		Adnet:         m["adnet"],
+		Adnets:        adnets,
+		Country:       m["country"],
+		Operator:      m["operator"],
+		ChannelType:   m["channel_type"],
+		GroupBy:       m["group_by"],
 		DataIndicator: m["data_indicator"],
-		Page:        page,
-		Action:      m["action"],
-		DateRange:   m["date_range"],
-		DateBefore:  m["date_before"],
-		DateAfter:   m["date_after"],
-		DataBasedOn: m["data_based_on"],
-		PageSize:    pageSize,
-		Draw:        draw,
-		FromChannel: fromChannel,
+		Page:          page,
+		Action:        m["action"],
+		DateRange:     m["date_range"],
+		DateBefore:    m["date_before"],
+		DateAfter:     m["date_after"],
+		DataBasedOn:   m["data_based_on"],
+		PageSize:      pageSize,
+		Draw:          draw,
+		FromChannel:   fromChannel,
 	}
- 
+
 	allowedAdnets, _ := c.Locals("adnets").([]string)
- 
+
 	r := h.DisplayCostReportExtra(c, fe, v, allowedAdnets)
 	return c.Status(r.HttpStatus).JSON(r.Rsp)
 }
 
- 
 func (h *IncomingHandler) DisplayCostReportExtra(
 	c *fiber.Ctx,
 	fe entity.DisplayCostReport,
 	v string,
 	allowedAdnets []string,
 ) entity.ReturnResponse {
- 
-	key       := "temp_key_api_cost_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
+
+	key := "temp_key_api_cost_report_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
 	keydetail := "temp_key_api_cost_report_detail_" + strings.ReplaceAll(helper.GetIpAddress(c), ".", "_")
- 
+
 	var (
 		err        error
 		isempty    bool
 		total_data int64
 		costreport []entity.CostReport
 	)
- 
+
 	if v == "list" {
 		if fe.GroupBy == "country" {
 			if fe.Action != "" {
@@ -756,7 +756,7 @@ func (h *IncomingHandler) DisplayCostReportExtra(
 			}
 		}
 	}
- 
+
 	if err == nil {
 		return entity.ReturnResponse{
 			HttpStatus: fiber.StatusOK,
@@ -770,7 +770,7 @@ func (h *IncomingHandler) DisplayCostReportExtra(
 			},
 		}
 	}
- 
+
 	return entity.ReturnResponse{
 		HttpStatus: fiber.StatusNotFound,
 		Rsp: entity.GlobalResponse{
@@ -1166,7 +1166,7 @@ func (h *IncomingHandler) ResendDataAPIReport(c *fiber.Ctx) error {
 			"aggregator":     {""},
 			"country":        {strings.ToLower(sc.Country)},
 			"service":        {strings.ToLower(sc.Service)},
-			"channel": 		  {"API"},
+			"channel":        {"API"},
 			"total_mo":       {strconv.Itoa(sc.TotalMO)},
 			"total_postback": {strconv.Itoa(sc.TotalPostback)},
 			"landing":        {""},

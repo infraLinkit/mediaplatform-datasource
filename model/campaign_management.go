@@ -10,9 +10,9 @@ import (
 )
 
 func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([]entity.CampaignManagementData, entity.CampaignCounts, error) {
-    // Subquery agregasi campaign_details
-    agg := r.DB.Model(&entity.CampaignDetail{}).
-        Select(`
+	// Subquery agregasi campaign_details
+	agg := r.DB.Model(&entity.CampaignDetail{}).
+		Select(`
             campaign_id,
             country,
             partner,
@@ -24,14 +24,15 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
             ARRAY_AGG(DISTINCT id) AS id,
             ARRAY_AGG(DISTINCT url_service_key) AS url_service_key
         `).
-        Group("campaign_id, country, partner, is_active")
+		Group("campaign_id, country, partner, is_active")
 
-    // Query utama join ke campaigns
-    query := r.DB.Table("(?) as agg", agg).
-        Select(`
+	// Query utama join ke campaigns
+	query := r.DB.Table("(?) as agg", agg).
+		Select(`
             campaigns.campaign_id,
             campaigns.name AS campaign_name,
             campaigns.campaign_objective,
+            campaigns.created_at,
             agg.country,
             agg.partner,
             agg.total_operator,
@@ -42,81 +43,81 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
             agg.id,
             agg.url_service_key
         `).
-        Joins("INNER JOIN campaigns ON campaigns.campaign_id = agg.campaign_id")
+		Joins("INNER JOIN campaigns ON campaigns.campaign_id = agg.campaign_id")
 
-    // filter search
-    if o.Action == "Search" {
-        if o.Country != "" {
-            query = query.Where("agg.country = ?", o.Country)
-        }
-        if o.Operator != "" {
-            query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.operator = ?)", o.Operator)
-        }
-        if o.Service != "" {
-            query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.service = ?)", o.Service)
-        }
-        if o.Adnet != "" {
-            query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.adnet = ?)", o.Adnet)
-        }
-        if o.Partner != "" {
-            query = query.Where("agg.partner = ?", o.Partner)
-        }
-        if o.Status != "" {
-            query = query.Where("agg.is_active = ?", o.Status)
-        }
-        if o.CampaignName != "" {
-            query = query.Where("campaigns.name = ?", o.CampaignName)
-        }
-        if o.CampaignType != "" {
-            if o.CampaignType == "mainstream" {
-                query = query.Where("campaigns.campaign_objective LIKE ?", "%MAINSTREAM%")
-            } else {
-                query = query.Where("campaigns.campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM", "SINGLE URL S2S"})
-            }
-        }
-        if o.URLServiceKey != "" {
-            query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.url_service_key ILIKE ?)", "%"+o.URLServiceKey+"%")
-        }
-    }
+	// filter search
+	if o.Action == "Search" {
+		if o.Country != "" {
+			query = query.Where("agg.country = ?", o.Country)
+		}
+		if o.Operator != "" {
+			query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.operator = ?)", o.Operator)
+		}
+		if o.Service != "" {
+			query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.service = ?)", o.Service)
+		}
+		if o.Adnet != "" {
+			query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.adnet = ?)", o.Adnet)
+		}
+		if o.Partner != "" {
+			query = query.Where("agg.partner = ?", o.Partner)
+		}
+		if o.Status != "" {
+			query = query.Where("agg.is_active = ?", o.Status)
+		}
+		if o.CampaignName != "" {
+			query = query.Where("campaigns.name = ?", o.CampaignName)
+		}
+		if o.CampaignType != "" {
+			if o.CampaignType == "mainstream" {
+				query = query.Where("campaigns.campaign_objective LIKE ?", "%MAINSTREAM%")
+			} else {
+				query = query.Where("campaigns.campaign_objective IN ?", []string{"CPA", "CPC", "CPI", "CPM", "SINGLE URL S2S"})
+			}
+		}
+		if o.URLServiceKey != "" {
+			query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.url_service_key ILIKE ?)", "%"+o.URLServiceKey+"%")
+		}
+	}
 
-    // order
-    orderColumn := map[string]string{
-        "total_operator": "agg.total_operator",
-        "service":        "agg.service",
-        "total_adnet":    "agg.total_adnet",
-    }
-    if col, ok := orderColumn[o.OrderColumn]; ok {
-        dir := "ASC"
-        if strings.ToUpper(o.OrderDir) == "DESC" {
-            dir = "DESC"
-        }
-        query = query.Order(fmt.Sprintf("%s %s", col, dir))
-    } else {
-        query = query.Order("campaigns.created_at DESC")
-    }
+	// order
+	orderColumn := map[string]string{
+		"total_operator": "agg.total_operator",
+		"service":        "agg.service",
+		"total_adnet":    "agg.total_adnet",
+	}
+	if col, ok := orderColumn[o.OrderColumn]; ok {
+		dir := "ASC"
+		if strings.ToUpper(o.OrderDir) == "DESC" {
+			dir = "DESC"
+		}
+		query = query.Order(fmt.Sprintf("%s %s", col, dir))
+	} else {
+		query = query.Order("campaigns.created_at DESC")
+	}
 
-    // eksekusi query
-    var campaigns []entity.CampaignManagementData
-    if err := query.Scan(&campaigns).Error; err != nil {
-        return nil, entity.CampaignCounts{}, err
-    }
+	// eksekusi query
+	var campaigns []entity.CampaignManagementData
+	if err := query.Scan(&campaigns).Error; err != nil {
+		return nil, entity.CampaignCounts{}, err
+	}
 
-    // Hitung total aktif / non aktif
-    var total, active, nonActive int
-    for _, c := range campaigns {
-        total++
-        if c.IsActive {
-            active++
-        } else {
-            nonActive++
-        }
-    }
+	// Hitung total aktif / non aktif
+	var total, active, nonActive int
+	for _, c := range campaigns {
+		total++
+		if c.IsActive {
+			active++
+		} else {
+			nonActive++
+		}
+	}
 
-    return campaigns, entity.CampaignCounts{
-        TotalCampaigns:          total,
-        TotalActiveCampaigns:    active,
-        TotalNonActiveCampaigns: nonActive,
-    }, nil
+	return campaigns, entity.CampaignCounts{
+		TotalCampaigns:          total,
+		TotalActiveCampaigns:    active,
+		TotalNonActiveCampaigns: nonActive,
+	}, nil
 }
 
 func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManagement) ([]entity.CampaignManagementDataDetail, error) {
@@ -157,11 +158,12 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 		campaign_details.channel,
 		campaign_details.url_type,
 		campaign_details.device_type,
-		campaign_details.is_billable`
+		campaign_details.is_billable,
+		campaigns.created_at`
 
 	// Add cc_email only if campaign objective is not MAINSTREAM
 	if !strings.Contains(campaignObjective, "MAINSTREAM") {
-    selectClause += `,
+		selectClause += `,
         adnet_lists.cc_email`
 	} else {
 		selectClause += `,
@@ -199,7 +201,7 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 			&detail.Partner, &detail.Adnet, &detail.ShortCode, &detail.MOLimit, &detail.Payout,
 			&detail.RatioSend, &detail.RatioReceive, &detail.URLPostback, &detail.URLService,
 			&detail.URLanding, &detail.URLWarpLanding, &detail.APIURL, &detail.IsActive, &detail.UrlServiceKey, &detail.Channel, &detail.URLType,
-			&detail.DeviceType, &detail.IsBillable, &ccEmail,
+			&detail.DeviceType, &detail.IsBillable, &detail.CreatedAt, &ccEmail,
 		}
 
 		if err := rows.Scan(scanArgs...); err != nil {
@@ -207,7 +209,7 @@ func (r *BaseModel) GetCampaignManagementDetail(o entity.DisplayCampaignManageme
 		}
 
 		// Handle cc_email based on campaign objective
-		if !strings.Contains(campaignObjective, "MAINSTREAM"){
+		if !strings.Contains(campaignObjective, "MAINSTREAM") {
 			if ccEmail != nil {
 				// Convert string to pq.StringArray if needed
 				if ccEmailStr, ok := ccEmail.(string); ok {

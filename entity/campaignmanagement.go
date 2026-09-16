@@ -8,21 +8,23 @@ import (
 
 type (
 	DisplayCampaignManagement struct {
-		Country       string `form:"country" json:"country"`
-		Adnet         string `form:"adnet" json:"adnet"`
-		Operator      string `form:"operator" json:"operator"`
-		Service       string `form:"service" json:"service"`
-		Status        string `form:"status" json:"status"`
-		Partner       string `form:"partner" json:"partner"`
-		CampaignName  string `form:"campaign_name" json:"campaign_name"`
-		CampaignType  string `form:"campaign_type" json:"campaign_type"`
-		CampaignId    string `form:"campaign_id" json:"campaign_id"`
-		Page          int    `form:"page" json:"page"`
-		Draw          int    `form:"draw" json:"draw"`
-		Action        string `form:"action" json:"action"`
-		URLServiceKey string `form:"url_service_key" json:"url_service_key"`
-		OrderColumn   string `form:"order_column" json:"order_column"`
-		OrderDir      string `form:"order_dir" json:"order_dir"`
+		Country           string `form:"country" json:"country"`
+		Adnet             string `form:"adnet" json:"adnet"`
+		Operator          string `form:"operator" json:"operator"`
+		Service           string `form:"service" json:"service"`
+		Status            string `form:"status" json:"status"`
+		Partner           string `form:"partner" json:"partner"`
+		CampaignName      string `form:"campaign_name" json:"campaign_name"`
+		CampaignType      string `form:"campaign_type" json:"campaign_type"`
+		CampaignId        string `form:"campaign_id" json:"campaign_id"`
+		Page              int    `form:"page" json:"page"`
+		Draw              int    `form:"draw" json:"draw"`
+		Action            string `form:"action" json:"action"`
+		URLServiceKey     string `form:"url_service_key" json:"url_service_key"`
+		OrderColumn       string `form:"order_column" json:"order_column"`
+		OrderDir          string `form:"order_dir" json:"order_dir"`
+		CreatedDateBefore string `form:"created_date_before" json:"created_date_before"`
+		CreatedDateAfter  string `form:"created_date_after" json:"created_date_after"`
 	}
 
 	CampaignManagementData struct {

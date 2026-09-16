@@ -78,6 +78,9 @@ func (r *BaseModel) GetCampaignManagement(o entity.DisplayCampaignManagement) ([
 		if o.URLServiceKey != "" {
 			query = query.Where("EXISTS (SELECT 1 FROM campaign_details cd WHERE cd.campaign_id = agg.campaign_id AND cd.url_service_key ILIKE ?)", "%"+o.URLServiceKey+"%")
 		}
+		if o.CreatedDateBefore != "" && o.CreatedDateAfter != "" {
+			query = query.Where("campaigns.created_at BETWEEN ? AND ?", o.CreatedDateBefore, o.CreatedDateAfter)
+		}
 	}
 
 	// order

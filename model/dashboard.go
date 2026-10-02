@@ -472,7 +472,8 @@ func (r *BaseModel) GetCampaign(order_type string, order_by string, offset strin
 // stored uppercase):
 //   - summary_campaigns.partner (the normal reseller/agency partner)
 //   - api_pin_reports.operator, since api_pin_reports has no partner column;
-//     the telco operator (e.g. TELKOMSEL, XL) is used as a stand-in label.
+//     the telco operator (e.g. TELKOMSEL, XL) is used as a stand-in label,
+//     resolved to its operator alias (same as API report) when one exists.
 //     api_pin_reports has no client_type column, so it's skipped entirely
 //     when client_type == "internal" (mirrors GetReport's own API-objective
 //     handling, which only folds api_pin_reports in for non-internal scope).
@@ -547,10 +548,14 @@ func (r *BaseModel) GetPartnerSpend(client_type string, date_range string, date_
 			apiQuery = apiQuery.Where("service = ?", service)
 		}
 
+		// Alias depends on operator + service + country, so group by all three
+		// and resolve per row (same as API report), then merge by alias.
+		aliases, _ := r.GetOperatorAliases()
+
 		apiRows, apiErr := apiQuery.
 			Where("operator <> ''").
-			Select("operator, SUM(saaf) as spend").
-			Group("operator").
+			Select("operator, service, country, SUM(saaf) as spend").
+			Group("operator, service, country").
 			Having("SUM(saaf) > 0").
 			Rows()
 		if apiErr != nil {
@@ -559,10 +564,13 @@ func (r *BaseModel) GetPartnerSpend(client_type string, date_range string, date_
 		for apiRows.Next() {
 			var row struct {
 				Operator string
+				Service  string
+				Country  string
 				Spend    float64
 			}
 			r.DB.ScanRows(apiRows, &row)
-			spendByPartner[strings.ToUpper(row.Operator)] += row.Spend
+			name := ResolveOperatorAlias(row.Operator, row.Service, row.Country, aliases)
+			spendByPartner[strings.ToUpper(name)] += row.Spend
 		}
 		apiRows.Close()
 	}

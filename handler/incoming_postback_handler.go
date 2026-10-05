@@ -1184,10 +1184,5 @@ func (h *IncomingHandler) InquiryAPICampID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "no campaign found for given params"})
 	}
 
-	grouped := make(map[string][]entity.InquiryAPICampIDResult)
-	for _, r := range results {
-		grouped[r.Adnet] = append(grouped[r.Adnet], r)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: grouped})
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: results})
 }

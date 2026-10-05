@@ -33,6 +33,7 @@ func (h *IncomingHandler) DisplayCampaignSummary(c *fiber.Ctx) error {
 		Country:              c.Query("country"),
 		Operator:             c.Query("operator"),
 		PartnerName:          c.Query("partner_name"),
+		CampaignName:         c.Query("campaign-name"),
 		Adnet:                c.Query("adnet"),
 		Service:              c.Query("service"),
 		DataIndicators:       dataIndicators,

@@ -303,7 +303,6 @@ type (
 		Country   string `json:"country" query:"country"`
 		Operator  string `json:"operator" query:"operator"`
 		Service   string `json:"service" query:"service"`
-		Adnet     string `json:"adnet" query:"adnet"`
 	}
 
 	InquiryAPICampIDResult struct {

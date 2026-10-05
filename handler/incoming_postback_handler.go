@@ -1164,19 +1164,18 @@ func (h *IncomingHandler) InquiryAPICampID(c *fiber.Ctx) error {
 	request := new(entity.InquiryAPICampID)
 
 	if err := c.QueryParser(request); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "check mandatory param : country, operator, adnet"})
+		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "check mandatory param : country, operator, service"})
 	}
 
 	request.Country = strings.ToUpper(request.Country)
 	request.Operator = strings.ToUpper(request.Operator)
 	request.Service = strings.ToUpper(request.Service)
-	request.Adnet = strings.ToUpper(request.Adnet)
 
-	if request.Country == "" || request.Operator == "" || request.Service == "" || request.Adnet == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "mandatory params missing: country, operator, service, adnet"})
+	if request.Country == "" || request.Operator == "" || request.Service == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "mandatory params missing: country, operator, service"})
 	}
 
-	results, err := h.DS.GetAPICampaignDetails(request.Country, request.Operator, request.Service, request.Adnet)
+	results, err := h.DS.GetAPICampaignDetails(request.Country, request.Operator, request.Service)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(entity.GlobalResponse{Code: fiber.StatusInternalServerError, Message: "failed to retrieve configs"})
 	}
@@ -1185,5 +1184,10 @@ func (h *IncomingHandler) InquiryAPICampID(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(entity.GlobalResponse{Code: fiber.StatusNotFound, Message: "no campaign found for given params"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: results})
+	grouped := make(map[string][]entity.InquiryAPICampIDResult)
+	for _, r := range results {
+		grouped[r.Adnet] = append(grouped[r.Adnet], r)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponseWithData{Code: fiber.StatusOK, Message: "OK", Data: grouped})
 }

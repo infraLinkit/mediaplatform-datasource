@@ -435,6 +435,7 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 			MCC:                       dc.MCC,
 			ClickableAnywhere:         dc.ClickableAnywhere,
 			NonTargetURL:              dc.NonTargetURL,
+			ShowPrelanderNonTarget:    dc.ShowPrelanderNonTarget,
 			EnableIpRanges:            dc.EnableIpRanges,
 			ConversionName:            dc.ConversionName,
 			DomainService:             dc.DomainService,
@@ -522,6 +523,7 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 			cd.MCC = dc.MCC
 			cd.ClickableAnywhere = dc.ClickableAnywhere
 			cd.NonTargetURL = dc.NonTargetURL
+			cd.ShowPrelanderNonTarget = dc.ShowPrelanderNonTarget
 			cd.EnableIpRanges = dc.EnableIpRanges
 			cd.ConversionName = dc.ConversionName
 			cd.DomainService = dc.DomainService
@@ -643,6 +645,7 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 				MCC:                       dc.MCC,
 				ClickableAnywhere:         dc.ClickableAnywhere,
 				NonTargetURL:              dc.NonTargetURL,
+				ShowPrelanderNonTarget:    dc.ShowPrelanderNonTarget,
 				EnableIpRanges:            dc.EnableIpRanges,
 				ConversionName:            dc.ConversionName,
 				DomainService:             dc.DomainService,
@@ -1693,6 +1696,7 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 			MCC:                       dc.MCC,
 			ClickableAnywhere:         dc.ClickableAnywhere,
 			NonTargetURL:              dc.NonTargetURL,
+			ShowPrelanderNonTarget:    dc.ShowPrelanderNonTarget,
 			EnableIpRanges:            dc.EnableIpRanges,
 			ConversionName:            dc.ConversionName,
 			DomainService:             dc.DomainService,
@@ -1780,6 +1784,7 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 			cd.MCC = dc.MCC
 			cd.ClickableAnywhere = dc.ClickableAnywhere
 			cd.NonTargetURL = dc.NonTargetURL
+			cd.ShowPrelanderNonTarget = dc.ShowPrelanderNonTarget
 			cd.EnableIpRanges = dc.EnableIpRanges
 			cd.ConversionName = dc.ConversionName
 			cd.DomainService = dc.DomainService
@@ -1901,6 +1906,7 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 				MCC:                       dc.MCC,
 				ClickableAnywhere:         dc.ClickableAnywhere,
 				NonTargetURL:              dc.NonTargetURL,
+				ShowPrelanderNonTarget:    dc.ShowPrelanderNonTarget,
 				EnableIpRanges:            dc.EnableIpRanges,
 				ConversionName:            dc.ConversionName,
 				DomainService:             dc.DomainService,

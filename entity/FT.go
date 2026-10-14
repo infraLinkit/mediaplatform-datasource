@@ -139,6 +139,7 @@ type (
 		MCC                       string  `json:"mcc"`
 		ClickableAnywhere         bool    `json:"clickable_anywhere"`
 		NonTargetURL              string  `json:"non_target_url"`
+		ShowPrelanderNonTarget    bool    `json:"show_prelander_non_target"`
 		EnableIpRanges            bool    `json:"enable_ip_ranges"`
 		ConversionName            string  `json:"conversion_name"`
 		DomainService             string  `json:"domain_service"`

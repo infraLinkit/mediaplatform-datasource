@@ -101,6 +101,7 @@ type (
 		MCC                       string    `gorm:"size:255;default:NA" json:"mcc"`
 		ClickableAnywhere         bool      `gorm:"not null;default:false" json:"clickable_anywhere"`
 		NonTargetURL              string    `gorm:"type:text;default:NA" json:"non_target_url"`
+		ShowPrelanderNonTarget    bool      `gorm:"not null;default:false" json:"show_prelander_non_target"`
 		EnableIpRanges            bool      `gorm:"not null;default:false" json:"enable_ip_ranges"`
 		ConversionName            string    `gorm:"type:text;default:NA" json:"conversion_name"`
 		DomainService             string    `gorm:"type:varchar(255)" json:"domain_service"`

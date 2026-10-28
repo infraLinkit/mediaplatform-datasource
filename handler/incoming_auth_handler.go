@@ -120,7 +120,7 @@ func (h *IncomingHandler) AuthMiddleware(c *fiber.Ctx) error {
 
 	var agencies []entity.Agency
 	err = h.DB.Raw(`
-		SELECT a.id, upper(a.name) as name
+		SELECT a.id, upper(a.code) as code, upper(a.name) as name
 		FROM user_agencies ua
 		JOIN agencies a ON ua.agency_id = a.id
 		WHERE ua.user_id = ? AND ua.status = true
@@ -133,6 +133,9 @@ func (h *IncomingHandler) AuthMiddleware(c *fiber.Ctx) error {
 	var agencyNames []string
 	for _, agency := range agencies {
 		agencyNames = append(agencyNames, agency.Name)
+		if agency.Code != "" {
+			agencyNames = append(agencyNames, agency.Code)
+		}
 	}
 
 	c.Locals("agencies", agencyNames)

@@ -335,7 +335,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 	t_query := r.DB.Model(&entity.SummaryCampaign{}).Where("campaign_objective LIKE ?", "%MAINSTREAM%").
 		Where(moCondition).
 		Where("company IN ?", allowedCompanies).
-		Where("adnet IN ?", allowedAgencies)
+		Where("UPPER(adnet) IN ?", allowedAgencies)
 
 	query := r.DB.Model(&entity.SummaryCampaign{}).Select(`
 		summary_campaigns.*,
@@ -346,7 +346,7 @@ func (r *BaseModel) GetDisplayMainstreamReport(o entity.DisplayCPAReport, allowe
 	`).Where("campaign_objective LIKE ?", "%MAINSTREAM%").
 		Where(moCondition).
 		Where("company IN ?", allowedCompanies).
-		Where("adnet IN ?", allowedAgencies)
+		Where("UPPER(adnet) IN ?", allowedAgencies)
 
 	if o.Action == "Search" {
 		if o.CampaignId != "" {

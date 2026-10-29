@@ -42,6 +42,7 @@ type (
 		AppHostPort                            string
 		AppApi                                 string
 		AppApiPort                             string
+		ExtApiKey                              string
 		TrustedProxyHeader                     bool
 		ReduceMemoryUsage                      bool
 		ConcurrencyConnection                  int
@@ -153,6 +154,7 @@ func InitCfg() *Cfg {
 		AppHostPort:                            os.Getenv("APPHOSTPORT"),
 		AppApi:                                 os.Getenv("APPAPI"),
 		AppApiPort:                             os.Getenv("APPAPIPORT"),
+		ExtApiKey:                              os.Getenv("EXTAPIKEY"),
 		TrustedProxyHeader:                     trusted_proxy_header,
 		ReduceMemoryUsage:                      reduce_memory_usage,
 		ConcurrencyConnection:                  concurrency_connection,

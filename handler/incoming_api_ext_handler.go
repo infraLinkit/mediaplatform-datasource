@@ -15,10 +15,16 @@ const (
 )
 
 type extCampaignDetail struct {
+	Date       string  `json:"date"`
 	CampaignId string  `json:"campaign_id"`
 	Service    string  `json:"service"`
 	ShortCode  string  `json:"shortcode"`
 	Adnet      string  `json:"adnet"`
+	Landing    int     `json:"landing"`
+	MO         int     `json:"mo"`
+	Postback   int     `json:"postback"`
+	CrMO       float64 `json:"cr_mo"`
+	CrPostback float64 `json:"cr_postback"`
 	Cost       float64 `json:"cost"`
 }
 
@@ -43,10 +49,12 @@ func (h *IncomingHandler) ExtAPIKeyMiddleware(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-// GetExtCampaignDetails returns campaign_id, service, shortcode, adnet, cost (saaf) from summary_campaigns.
+// GetExtCampaignDetails returns date, campaign_id, service, shortcode, adnet, landing, mo, postback,
+// cr_mo, cr_postback, cost (saaf) from summary_campaigns.
 // Optional query params: service, shortcode, start_date, end_date (YYYY-MM-DD), limit, page.
-// campaign_id in the response is summary_campaigns.url_service_key. summary_campaigns is one row per day,
-// so the range defaults to today and saaf is summed per url_service_key, service, short_code, adnet.
+// campaign_id in the response is summary_campaigns.url_service_key. The range defaults to today and
+// rows are summed per date, url_service_key, service, short_code, adnet. cr_mo = mo/landing and
+// cr_postback = postback/landing (ratios, same as the summary cron), recomputed from the sums.
 func (h *IncomingHandler) GetExtCampaignDetails(c *fiber.Ctx) error {
 	service := c.Query("service")
 	shortCode := c.Query("shortcode", c.Query("short_code"))
@@ -80,9 +88,19 @@ func (h *IncomingHandler) GetExtCampaignDetails(c *fiber.Ctx) error {
 	}
 
 	q := h.DB.Model(&entity.SummaryCampaign{}).
-		Select("url_service_key AS campaign_id, service, short_code, adnet, SUM(saaf) AS cost").
+		Select(`TO_CHAR(summary_date, 'YYYY-MM-DD') AS date,
+			url_service_key AS campaign_id,
+			service,
+			short_code,
+			adnet,
+			COALESCE(SUM(landing), 0) AS landing,
+			COALESCE(SUM(mo_received), 0) AS mo,
+			COALESCE(SUM(postback), 0) AS postback,
+			COALESCE(SUM(mo_received)::float8 / NULLIF(SUM(landing), 0), 0) AS cr_mo,
+			COALESCE(SUM(postback)::float8 / NULLIF(SUM(landing), 0), 0) AS cr_postback,
+			COALESCE(SUM(saaf), 0) AS cost`).
 		Where("summary_date BETWEEN ? AND ?", startDate, endDate).
-		Group("url_service_key, service, short_code, adnet")
+		Group("summary_date, url_service_key, service, short_code, adnet")
 
 	if service != "" {
 		q = q.Where("LOWER(service) = LOWER(?)", service)
@@ -92,7 +110,7 @@ func (h *IncomingHandler) GetExtCampaignDetails(c *fiber.Ctx) error {
 	}
 
 	var rows []extCampaignDetail
-	if err := q.Order("url_service_key ASC, adnet ASC, service ASC, short_code ASC").
+	if err := q.Order("summary_date ASC, url_service_key ASC, adnet ASC, service ASC, short_code ASC").
 		Limit(limit).Offset((page - 1) * limit).
 		Scan(&rows).Error; err != nil {
 		h.Logs.WithError(err).Error("GetExtCampaignDetails: database error")

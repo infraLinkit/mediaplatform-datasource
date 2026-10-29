@@ -301,7 +301,8 @@ func MapUrls(obj App3rdParty) *fiber.App {
 	ipRange.Post("/download", h.DownloadIPRangeCSV).Name("Download IP Ranges")
 
 	// API External
-	v1.Group("/ext") // External API
+	ext := v1.Group("/ext", h.ExtAPIKeyMiddleware) // External API
+	ext.Get("/campaign-details", h.GetExtCampaignDetails).Name("External Campaign Summary (campaign_id, service, shortcode, adnet, cost)")
 
 	return f
 }

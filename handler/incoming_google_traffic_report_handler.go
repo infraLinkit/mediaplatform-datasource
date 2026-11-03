@@ -19,7 +19,8 @@ func (h *IncomingHandler) DisplayGoogleTrafficReport(c *fiber.Ctx) error {
 	draw, _ := strconv.Atoi(m["draw"])
 	page, _ := strconv.Atoi(m["page"])
 	pageSize, err := strconv.Atoi(m["page_size"])
-	if err != nil || pageSize == 0 {
+	// page_size=0 asks for every row. The report groups rows on the client, so it needs them all.
+	if err != nil {
 		pageSize = PAGESIZE
 	}
 

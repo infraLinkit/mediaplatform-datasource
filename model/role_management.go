@@ -73,47 +73,38 @@ func (r *BaseModel) DeleteRole(roleID int) error {
 	return nil
 }
 
+// GetAllRolesWithPermission is RoleRepository::getAllRoleWithPermission: every role by name, with or without permissions.
 func (r *BaseModel) GetAllRolesWithPermission() ([]entity.RoleManagementData, error) {
-	var roles []entity.RoleManagementData
+	var stored []entity.Role
+	if err := r.DB.Order("name ASC").Find(&stored).Error; err != nil {
+		return nil, err
+	}
 
-	rows, err := r.DB.Table("roles").
-		Select("roles.id, roles.code, roles.name, menus.name as permission_name").
-		Joins("INNER JOIN permissions ON roles.id = permissions.role_id").
-		Joins("INNER JOIN menus ON permissions.menu_id = menus.id").
+	var granted []struct {
+		RoleID int
+		Name   string
+	}
+	err := r.DB.Table("permissions").
+		Select("permissions.role_id, COALESCE(menus.name, '') AS name").
+		Joins("LEFT JOIN menus ON permissions.menu_id = menus.id").
 		Where("permissions.status = ?", true).
-		Rows()
+		Order("permissions.id ASC").
+		Scan(&granted).Error
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-
-	roleMap := make(map[int]*entity.RoleManagementData)
-
-	for rows.Next() {
-		var roleID int
-		var roleCode, roleName, permissionName string
-
-		if err := rows.Scan(&roleID, &roleCode, &roleName, &permissionName); err != nil {
-			return nil, err
-		}
-
-		if _, exists := roleMap[roleID]; !exists {
-			roleMap[roleID] = &entity.RoleManagementData{
-				ID:          roleID,
-				Code:        roleCode,
-				Name:        roleName,
-				Permissions: []string{},
-			}
-		}
-
-		if permissionName != "" {
-			roleMap[roleID].Permissions = append(roleMap[roleID].Permissions, permissionName)
-		}
+	names := make(map[int][]string)
+	for _, row := range granted {
+		names[row.RoleID] = append(names[row.RoleID], row.Name)
 	}
 
-	for _, role := range roleMap {
-		roles = append(roles, *role)
+	roles := make([]entity.RoleManagementData, 0, len(stored))
+	for _, role := range stored {
+		permissions := names[role.ID]
+		if permissions == nil {
+			permissions = []string{}
+		}
+		roles = append(roles, entity.RoleManagementData{ID: role.ID, Code: role.Code, Name: role.Name, Permissions: permissions})
 	}
-
 	return roles, nil
 }

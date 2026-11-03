@@ -21,21 +21,23 @@ func (h *IncomingHandler) DisplayBudgetMonitoring(c *fiber.Ctx) error {
 	}
 
 	params := entity.ParamsCampaignSummary{
-		DataType:       c.Query("data-type"),
-		ReportType:     c.Query("report-type"),
-		Country:        c.Query("country"),
-		Operator:       c.Query("operator"),
-		PartnerName:    c.Query("partner-name"),
-		Adnet:          c.Query("adnet"),
-		Service:        c.Query("service"),
-		CampaignName:   c.Query("campaign_name"),
-		UrlServiceKey:  c.Query("url_service_key"),
-		DataIndicators: dataIndicators,
-		DataBasedOn:    c.Query("data-based-on"),
-		DateRange:      c.Query("date-range"),
-		DateStart:      c.Query("date-start"),
-		DateEnd:        c.Query("date-end"),
-		All:            c.Query("all"),
+		DataType:             c.Query("data-type"),
+		ReportType:           c.Query("report-type"),
+		Country:              c.Query("country"),
+		Operator:             c.Query("operator"),
+		PartnerName:          c.Query("partner-name"),
+		Adnet:                c.Query("adnet"),
+		Service:              c.Query("service"),
+		CampaignName:         c.Query("campaign_name"),
+		UrlServiceKey:        c.Query("url_service_key"),
+		DataIndicators:       dataIndicators,
+		DataBasedOn:          c.Query("data-based-on"),
+		DataBasedOnIndicator: c.Query("data-based-on-indicator"),
+		DateRange:            c.Query("date-range"),
+		DateStart:            c.Query("date-start"),
+		DateEnd:              c.Query("date-end"),
+		DateCustomRange:      c.Query("date-custom-range"),
+		All:                  c.Query("all"),
 	}
 
 	r := h.GenerateCampaignSummaryforBudget(c, params)
@@ -45,6 +47,9 @@ func (h *IncomingHandler) DisplayBudgetMonitoring(c *fiber.Ctx) error {
 func (h *IncomingHandler) GenerateCampaignSummaryforBudget(c *fiber.Ctx, params entity.ParamsCampaignSummary) entity.ReturnResponse {
 	summaryCampaign, startDate, endDate, err := h.DS.GetSummaryCampaignBudgetMonitoring(params)
 	summary := formatBudgetMonitoringData(summaryCampaign, params, startDate, endDate)
+	if params.DataBasedOnIndicator != "" {
+		summary = sortData(summary, params.DataBasedOn, params.DataBasedOnIndicator)
+	}
 
 	if err == nil {
 		return entity.ReturnResponse{

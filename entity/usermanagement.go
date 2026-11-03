@@ -30,5 +30,33 @@ type (
 		ActiveUsers   int `json:"activeUsers"`
 		NonActiveUsers int `json:"nonActiveUsers"`
 	}
-	
+
+	ServiceOption struct {
+		ID   int    `json:"id"`
+		Code string `json:"code"`
+		Name string `json:"name"`
+	}
+
+	ServiceGroupOption struct {
+		Group      string          `json:"group"`
+		CountryID  int             `json:"country_id"`
+		OperatorID int             `json:"operator_id"`
+		Services   []ServiceOption `json:"services"`
+	}
+
+	UserOptionsData struct {
+		Roles     []Role               `json:"roles"`
+		Companies []Company            `json:"companies"`
+		Agencies  []Agency             `json:"agencies"`
+		Adnets    []AdnetList          `json:"adnets"`
+		Services  []ServiceGroupOption `json:"services"`
+	}
+
+	UserDetailResponse struct {
+		User        User          `json:"user"`
+		DetailUser  []DetailUser  `json:"detail_user"`
+		UserAdnet   []UserAdnet   `json:"user_adnet"`
+		UserCompany []UserCompany `json:"user_company"`
+		UserAgency  []UserAgency  `json:"user_agency"`
+	}
 )

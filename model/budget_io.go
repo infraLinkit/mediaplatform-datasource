@@ -1,7 +1,6 @@
 package model
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -9,113 +8,6 @@ import (
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
 	"gorm.io/gorm/clause"
 )
-
-// GetDisplayBudgetIO — BudgetIO is now country+month only; allowedCompanies param kept for signature compat.
-func (r *BaseModel) GetDisplayBudgetIO(o entity.DisplayBudgetIO, allowedCompanies []string) ([]entity.BudgetIO, int64, error) {
-	var rows *sql.Rows
-	var err error
-	var total_rows int64
-
-	query := r.DB.Model(&entity.BudgetIO{})
-
-	if o.Action == "Search" {
-		if o.Country != "" {
-			query = query.Where("country = ?", o.Country)
-		}
-		if o.DateRange != "" {
-			query = query.Where("month = ?", o.DateRange)
-		} else {
-			query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
-		}
-	}
-
-	if o.OrderColumn != "" {
-		dir := "ASC"
-		if strings.ToUpper(o.OrderDir) == "DESC" {
-			dir = "DESC"
-		}
-		query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
-	} else {
-		query = query.Order("month DESC").Order("id DESC")
-	}
-
-	query.Unscoped().Count(&total_rows)
-	query_limit := query.Limit(o.PageSize)
-	if o.Page > 0 {
-		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
-	}
-	rows, err = query_limit.Rows()
-	if err != nil {
-		return []entity.BudgetIO{}, 0, err
-	}
-	defer rows.Close()
-
-	var ss []entity.BudgetIO
-	for rows.Next() {
-		var s entity.BudgetIO
-		r.DB.ScanRows(rows, &s)
-		ss = append(ss, s)
-	}
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-	return ss, total_rows, rows.Err()
-}
-
-func (r *BaseModel) GetDisplayBudgetIOAll(o entity.DisplayBudgetIO) ([]entity.BudgetIO, int64, error) {
-	var rows *sql.Rows
-	var err error
-	var total_rows int64
-
-	query := r.DB.Model(&entity.BudgetIO{})
-
-	if o.Action == "Search" {
-		if o.Country != "" {
-			query = query.Where("country = ?", o.Country)
-		}
-		if o.DateRange != "" {
-			query = query.Where("month = ?", o.DateRange)
-		} else {
-			query = query.Where("month = TO_CHAR(CURRENT_DATE, 'YYYY-MM')")
-		}
-	}
-
-	if o.OrderColumn != "" {
-		dir := "ASC"
-		if strings.ToUpper(o.OrderDir) == "DESC" {
-			dir = "DESC"
-		}
-		query = query.Order(fmt.Sprintf("%s %s", o.OrderColumn, dir))
-	} else {
-		query = query.Order("month DESC").Order("id DESC")
-	}
-
-	query.Unscoped().Count(&total_rows)
-	query_limit := query.Limit(o.PageSize)
-	if o.Page > 0 {
-		query_limit = query_limit.Offset((o.Page - 1) * o.PageSize)
-	}
-	rows, err = query_limit.Rows()
-	if err != nil {
-		return []entity.BudgetIO{}, 0, err
-	}
-	defer rows.Close()
-
-	var ss []entity.BudgetIO
-	for rows.Next() {
-		var s entity.BudgetIO
-		r.DB.ScanRows(rows, &s)
-		ss = append(ss, s)
-	}
-	r.Logs.Debug(fmt.Sprintf("Total data : %d ... \n", len(ss)))
-	return ss, total_rows, rows.Err()
-}
-
-func (r *BaseModel) GetDisplayBudgetIOApproved(o entity.DisplayBudgetIO, allowedCompanies []string) ([]entity.BudgetIO, int64, error) {
-	return r.GetDisplayBudgetIO(o, allowedCompanies)
-}
-
-func (r *BaseModel) GetDisplayBudgetIOApprovedAll(o entity.DisplayBudgetIO) ([]entity.BudgetIO, int64, error) {
-	return r.GetDisplayBudgetIOAll(o)
-}
 
 func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) ([]entity.SummaryBudgetIOAgg, int64, error) {
 	var whereClause []string
@@ -134,9 +26,13 @@ func (r *BaseModel) GetDisplaySummaryBudgetIO(o entity.DisplaySummaryBudgetIO) (
 				args = append(args, cs[0])
 			} else if len(cs) > 1 {
 				ph := make([]string, len(cs))
-				for i := range ph { ph[i] = "?" }
+				for i := range ph {
+					ph[i] = "?"
+				}
 				whereClause = append(whereClause, fmt.Sprintf("s.country IN (%s)", strings.Join(ph, ",")))
-				for _, c := range cs { args = append(args, c) }
+				for _, c := range cs {
+					args = append(args, c)
+				}
 			}
 		}
 		if o.Partner != "" {

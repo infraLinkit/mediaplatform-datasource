@@ -774,6 +774,7 @@ type (
 		DetailUser  []DetailUser  `gorm:"foreignKey:UserID;references:ID"`
 		UserAdnet   []UserAdnet   `gorm:"foreignKey:UserID;references:ID"`
 		UserCompany []UserCompany `gorm:"foreignKey:UserID;references:ID"`
+		UserAgency  []UserAgency  `gorm:"foreignKey:UserID;references:ID"`
 	}
 
 	CcEmail struct {
@@ -1068,6 +1069,37 @@ type (
 		UpdatedAt time.Time
 	}
 
+	// BudgetIORequest is one IO request in the submit, approve/reject and revise workflow.
+	// budget_ios holds the country+month targets that IO Report and the dashboard read.
+	BudgetIORequest struct {
+		ID                 int        `gorm:"primaryKey;autoIncrement" json:"id"`
+		Status             string     `gorm:"size:20;default:submitted;index" json:"status"`
+		VerifiedAt         *time.Time `json:"verified_at"`
+		SubmittedBy        string     `gorm:"size:255" json:"submitted_by"`
+		ApprovedBy         string     `gorm:"size:255" json:"approved_by"`
+		IOID               string     `gorm:"column:io_id;size:255" json:"io_id"`
+		CampaignType       string     `gorm:"size:100" json:"campaign_type"`
+		Month              string     `gorm:"size:20;index" json:"month"`
+		Country            string     `gorm:"size:10" json:"country"`
+		CountryName        string     `gorm:"size:255" json:"country_name"`
+		Continent          string     `gorm:"size:50" json:"continent"`
+		CompanyGroupName   string     `gorm:"size:255" json:"company_group_name"`
+		Company            string     `gorm:"size:255;index" json:"company"`
+		Partner            string     `gorm:"size:255" json:"partner"`
+		Service            string     `gorm:"size:255" json:"service"`
+		TargetCAC          float64    `gorm:"column:target_cac;type:double precision" json:"target_cac"`
+		TargetROI          int        `gorm:"column:target_roi;type:int" json:"target_roi"`
+		MonthlyMOTarget    float64    `gorm:"column:monthly_mo_target;type:double precision" json:"monthly_mo_target"`
+		MonthlySpendTarget float64    `gorm:"type:double precision" json:"monthly_spend_target"`
+		CPName             string     `gorm:"column:cp_name;size:255" json:"cp_name"`
+		PICName            string     `gorm:"column:pic_name;size:255" json:"pic_name"`
+		ContactEmail       string     `gorm:"size:255" json:"contact_email"`
+		CPBusinessPICName  string     `gorm:"column:cp_business_pic_name;size:255" json:"cp_business_pic_name"`
+		Signature          string     `gorm:"type:text" json:"signature"`
+		CreatedAt          time.Time  `json:"created_at"`
+		UpdatedAt          time.Time  `json:"updated_at"`
+	}
+
 	SummaryBudgetIO struct {
 		gorm.Model
 		ID           int       `gorm:"primaryKey;autoIncrement" json:"id"`
@@ -1100,6 +1132,20 @@ type (
 		// Relations
 		User    User    `gorm:"foreignKey:UserID;references:ID"`
 		Company Company `gorm:"foreignKey:CompanyID;references:ID"`
+	}
+
+	UserAgency struct {
+		gorm.Model
+		ID        int  `gorm:"primaryKey;autoIncrement" json:"id"`
+		UserID    int  `gorm:"length:20" json:"user_id"`
+		AgencyID  int  `gorm:"length:20" json:"agency_id"`
+		Status    bool `gorm:"not null" json:"status"`
+		CreatedAt time.Time
+		UpdatedAt time.Time
+
+		// Relations
+		User   User   `gorm:"foreignKey:UserID;references:ID"`
+		Agency Agency `gorm:"foreignKey:AgencyID;references:ID"`
 	}
 
 	DomainService struct {

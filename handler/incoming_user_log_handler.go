@@ -152,6 +152,14 @@ func (h *IncomingHandler) CreateUserLog(c *fiber.Ctx) error {
 		})
 	}
 
+	// The SPA cannot know its own public IP, and ip_address is an inet column.
+	if audit.IPAddress == "" {
+		audit.IPAddress = c.IP()
+	}
+	if audit.UserAgent == "" {
+		audit.UserAgent = string(c.Request().Header.UserAgent())
+	}
+
 	if errValidation := validate.Struct(audit); errValidation != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"message": "Validation error",

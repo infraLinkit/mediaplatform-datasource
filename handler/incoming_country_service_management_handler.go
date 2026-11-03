@@ -1979,8 +1979,8 @@ func (h *IncomingHandler) DisplayDomainService(c *fiber.Ctx) error {
 func (h *IncomingHandler) UpdateDSPAdnetStatus(c *fiber.Ctx) error {
 
 	var params struct {
-		ID     string "id"
-		Status string "status"
+		ID     string `json:"id"`
+		Status string `json:"status"`
 	}
 
 	var adnet_list entity.AdnetList

@@ -55,6 +55,9 @@ func (r *BaseModel) GetRevenueMonitoring(params entity.ParamsRevenueMonitoring) 
 	if params.CampaignId != "" {
 		query.Where("campaign_id = ?", params.CampaignId)
 	}
+	if params.UrlServiceKey != "" {
+		query.Where("url_service_key = ?", params.UrlServiceKey)
+	}
 
 	// Handle Date Range
 	var dateStart, dateEnd time.Time
@@ -167,6 +170,9 @@ func (r *BaseModel) GetRevenueChart(params entity.ParamsRevenueMonitoring) (enti
 	}
 	if params.CampaignId != "" {
 		query.Where("campaign_id = ?", params.CampaignId)
+	}
+	if params.UrlServiceKey != "" {
+		query.Where("url_service_key = ?", params.UrlServiceKey)
 	}
 
 	// Handle Date Range

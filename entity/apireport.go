@@ -47,7 +47,7 @@ type (
 		Adnet      string   `form:"adnet" json:"adnet"`
 		Operator   string   `form:"operator" json:"operator"`
 		Service    string   `form:"service" json:"service"`
-		Adnets     []string `form:"adnet" json:"adnet"`
+		Adnets     []string `form:"adnets" json:"adnets"`
 		Page       int      `form:"page" json:"page"`
 		DateRange  string   `form:"date_range" json:"date_range"`
 		DateBefore string   `form:"date_before" json:"date_before"`

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -151,9 +152,23 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 	if err := c.BodyParser(&obj); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
+	reply, status, err := h.sendCampaignAction(c.UserContext(), &obj)
+	if err != nil {
+		return c.Status(status).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":     "Campaign processed successfully",
+		"campaign_id": obj.CampaignId,
+		"data":        reply,
+	})
+}
 
+// sendCampaignAction runs a new campaign through the worker and writes its config, rows and summary.
+// The returned status is the HTTP status to report when err is set.
+func (h *IncomingHandler) sendCampaignAction(parent context.Context, objPtr *entity.DataCampaignAction) (json.RawMessage, int, error) {
+	obj := objPtr
 	if obj.Action != "ADD" && obj.Action != "ADD_UPDATE" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid action"})
+		return nil, fiber.StatusBadRequest, errors.New("Invalid action")
 	}
 
 	// Send to worker to generate url_service_keys
@@ -161,11 +176,11 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 	encoder := json.NewEncoder(&bodyReq)
 	encoder.SetEscapeHTML(false)
 	if err := encoder.Encode(obj); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to serialize data"})
+		return nil, fiber.StatusInternalServerError, errors.New("Failed to serialize data")
 	}
 
 	corId := "CREATE_CAMP_" + helper.GetUniqId(h.Config.TZ)
-	ctx, cancel := context.WithTimeout(c.UserContext(), time.Duration(h.Config.RabbitMQCtxTimeout)*time.Second)
+	ctx, cancel := context.WithTimeout(parent, time.Duration(h.Config.RabbitMQCtxTimeout)*time.Second)
 	defer cancel()
 
 	respBody, err := h.RM.DirectReplyToWithRetry(ctx,
@@ -174,7 +189,7 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 		bodyReq.Bytes(), corId)
 	if err != nil {
 		h.Logs.Debug(fmt.Sprintf("[x] Failed campaign RPC: Data: %s, err: %v", bodyReq.String(), err))
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to process campaign"})
+		return nil, fiber.StatusInternalServerError, errors.New("Failed to process campaign")
 	}
 
 	h.Logs.Debug(fmt.Sprintf("[v] Campaign RPC ok: Data: %s, Response: %s", bodyReq.String(), string(respBody)))
@@ -189,7 +204,7 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 		} `json:"keys"`
 	}
 	if err := json.Unmarshal(respBody, &reply); err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse worker response"})
+		return nil, fiber.StatusInternalServerError, errors.New("Failed to parse worker response")
 	}
 
 	if obj.Action == "ADD" {
@@ -674,11 +689,7 @@ func (h *IncomingHandler) SendCampaignHandler(c *fiber.Ctx) error {
 		h.DS.SetData(singleURLData.SingleURLServiceKey, "$", string(singleURLDataJSON))
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":     "Campaign processed successfully",
-		"campaign_id": obj.CampaignId,
-		"data":        json.RawMessage(respBody),
-	})
+	return json.RawMessage(respBody), fiber.StatusOK, nil
 }
 
 func (h *IncomingHandler) UpdateStatusCampaign(c *fiber.Ctx) error {
@@ -691,36 +702,7 @@ func (h *IncomingHandler) UpdateStatusCampaign(c *fiber.Ctx) error {
 
 		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
 
-		// Update to redis with key
-		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
-		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
-		cfgCmp.IsActive = o.IsActive
-
-		if o.IsActive {
-			cfgCmp.StatusCapping = false
-		}
-
-		cfgDataConfig, _ := json.Marshal(cfgCmp)
-
-		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
-
-		// Update to database
-		h.DS.UpdateStatusCounterMOCampaignDetail(entity.CampaignDetail{
-			URLServiceKey: o.URLServiceKey,
-			IsActive:      o.IsActive,
-		})
-
-		h.DS.UpdateSummaryCampaign(entity.SummaryCampaign{
-			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-			Status:        o.IsActive,
-			URLServiceKey: o.URLServiceKey,
-			Country:       cfgCmp.Country,
-			Operator:      cfgCmp.Operator,
-			Partner:       cfgCmp.Partner,
-			Adnet:         cfgCmp.Adnet,
-			Service:       cfgCmp.Service,
-			CampaignId:    cfgCmp.CampaignId,
-		})
+		h.applyCampaignStatus(o.URLServiceKey, o.IsActive)
 
 		return c.Status(fiber.StatusOK).Send([]byte("OK"))
 	}
@@ -1094,59 +1076,8 @@ func (h *IncomingHandler) DelCampaign(c *fiber.Ctx) error {
 
 		h.Logs.Debug(fmt.Sprintf("data : %#v ...", o))
 
-		// DELETE REDIS KEY
-		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
-		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
-		h.DS.DelData(cfgRediskey, "$")
-
-		// DROP Index redis
-		h.DS.R.Conn().B().FtDropindex().Index(cfgRediskey).Build()
-
-		ctrRedisKey := helper.Concat("-", o.URLServiceKey, "counterIdx")
-
-		h.DS.DelData(ctrRedisKey, "$")
-
-		// DROP Index redis
-		h.DS.R.Conn().B().FtDropindex().Index(ctrRedisKey).Build()
-
-		sumRedisKey := helper.Concat("-", o.URLServiceKey, "summary")
-
-		h.DS.DelData(sumRedisKey, "$")
-
-		// DROP Index redis
-		h.DS.R.Conn().B().FtDropindex().Index(sumRedisKey).Build()
-
-		h.DS.DelCampaignDetail(entity.CampaignDetail{
-			URLServiceKey: o.URLServiceKey,
-			Country:       cfgCmp.Country,
-			Operator:      cfgCmp.Operator,
-			Partner:       cfgCmp.Partner,
-			Adnet:         cfgCmp.Adnet,
-			Service:       cfgCmp.Service,
-			CampaignId:    o.CampaignId,
-		})
-
-		h.DS.DelSummaryCampaign(entity.SummaryCampaign{
-			SummaryDate:   helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-			URLServiceKey: o.URLServiceKey,
-			Country:       cfgCmp.Country,
-			Operator:      cfgCmp.Operator,
-			Partner:       cfgCmp.Partner,
-			Adnet:         cfgCmp.Adnet,
-			Service:       cfgCmp.Service,
-			CampaignId:    o.CampaignId,
-		})
-
-		count, err := h.DS.CountCampaignDetailByCampaignID(entity.CampaignDetail{CampaignId: o.CampaignId})
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to count campaign details"})
-		}
-
-		if count == 0 {
-			err = h.DS.DelCampaign(entity.Campaign{CampaignId: o.CampaignId})
-			if err != nil {
-				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to delete campaign"})
-			}
+		if err := h.applyCampaignDelete(o.URLServiceKey, o.CampaignId); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 		}
 
 		return c.Status(fiber.StatusOK).Send([]byte("OK"))
@@ -1381,13 +1312,14 @@ func (h *IncomingHandler) EditCampaignManagementDetail(c *fiber.Ctx) error {
 
 		// Update to redis with key
 		cfgRediskey := helper.Concat("-", o.URLServiceKey, "configIdx")
-		cfgCmp, _ := h.DS.GetDataConfig(cfgRediskey, "$")
+		cfgCmp, cached := h.campaignConfig(cfgRediskey, o.URLServiceKey)
 
 		cfgCmp.APIURL = o.APIURL
 
-		cfgDataConfig, _ := json.Marshal(cfgCmp)
-
-		h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+		if cached {
+			cfgDataConfig, _ := json.Marshal(cfgCmp)
+			h.DS.SetData(cfgRediskey, "$", string(cfgDataConfig))
+		}
 
 		h.DS.EditCampaignManagementDetail(entity.CampaignDetail{
 			APIURL:        cfgCmp.APIURL,
@@ -1431,10 +1363,18 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid action"})
 	}
 
+	if err := h.applyCampaignUpdate(obj); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Campaign updated successfully"})
+}
+
+// applyCampaignUpdate writes a validated campaign update to the database and the config cache.
+func (h *IncomingHandler) applyCampaignUpdate(obj entity.DataCampaignAction) error {
 	tx := h.DB.Begin()
 	if tx.Error != nil {
-		return c.Status(fiber.StatusInternalServerError).
-			JSON(fiber.Map{"error": "failed to begin transaction"})
+		return errors.New("failed to begin transaction")
 	}
 	defer func() {
 		if r := recover(); r != nil {
@@ -1541,14 +1481,14 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 				FOR UPDATE
 			`, country, operator, service, partner, adnet).Scan(&dummy).Error; err != nil {
 				tx.Rollback()
-				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+				return err
 			}
 
 			if err := tx.Raw(
 				"SELECT nextval('public.campaign_details_id_seq')",
 			).Scan(&campaign_detail_id).Error; err != nil {
 				tx.Rollback()
-				return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+				return err
 			}
 
 			dc.URLServiceKey = h.CampaignLandingId(
@@ -1950,8 +1890,102 @@ func (h *IncomingHandler) UpdateCampaign(c *fiber.Ctx) error {
 
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		return err
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Campaign updated successfully"})
+	return nil
+}
+
+func (h *IncomingHandler) GetCampaignOptions(c *fiber.Ctx) error {
+	var countries []entity.Country
+	h.DB.Order("name ASC").Find(&countries)
+
+	var operators []entity.Operator
+	h.DB.Order("name ASC").Find(&operators)
+
+	var partners []entity.Partner
+	h.DB.Order("name ASC").Find(&partners)
+
+	var adnets []entity.AdnetList
+	h.DB.Order("code ASC").Find(&adnets)
+
+	var services []entity.Service
+	h.DB.Order("service ASC").Find(&services)
+
+	var domains []entity.Domain
+	h.DB.Order("url ASC").Find(&domains)
+
+	var companies []entity.Company
+	h.DB.Order("name ASC").Find(&companies)
+
+	var companyGroups []entity.CompanyGroup
+	h.DB.Order("name ASC").Find(&companyGroups)
+
+	var channels []entity.Channel
+	h.DB.Order("name ASC").Find(&channels)
+
+	var campaigns []struct {
+		Name    string `json:"name"`
+		Country string `json:"country"`
+	}
+	h.DB.Table("campaigns").Select("DISTINCT name, country").Where("deleted_at IS NULL").Order("name ASC").Scan(&campaigns)
+
+	var campaignIDs []struct {
+		URLServiceKey string `json:"url_service_key"`
+		Country       string `json:"country"`
+	}
+	h.DB.Table("campaign_details").Select("DISTINCT url_service_key, country").Where("deleted_at IS NULL").Order("url_service_key ASC").Scan(&campaignIDs)
+
+	var agencies []entity.Agency
+	h.DB.Order("name ASC").Find(&agencies)
+
+	// This response reaches the browser; these are only needed for server-side postbacks.
+	for i := range channels {
+		channels[i].ApiKey = ""
+	}
+	for i := range agencies {
+		agencies[i].APIURL = ""
+	}
+
+	var urlRedirects []struct {
+		Partner        string `json:"partner"`
+		Operator       string `json:"operator"`
+		Adnet          string `json:"adnet"`
+		ClientType     string `json:"client_type"`
+		URLWarpLanding string `json:"url_warp_landing"`
+	}
+	h.DB.Table("campaign_details").Select("partner, operator, adnet, client_type, url_warp_landing").Where("url_warp_landing != ''").Limit(1000).Scan(&urlRedirects)
+
+	var mainstreamGroups []entity.MainstreamGroup
+	h.DB.Order("id ASC").Find(&mainstreamGroups)
+
+	var continents []entity.Continent
+	h.DB.Order("name ASC").Find(&continents)
+
+	var domainServices []entity.DomainService
+	h.DB.Order("name ASC").Find(&domainServices)
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"code":    fiber.StatusOK,
+		"message": config.OK_DESC,
+		"data": fiber.Map{
+			"mainstream_groups": mainstreamGroups,
+			"continents":        continents,
+			"domain_services":   domainServices,
+			"countries":         countries,
+			"operators":         operators,
+			"partners":          partners,
+			"adnets":            adnets,
+			"services":          services,
+			"domains":           domains,
+			"companies":         companies,
+			"company_groups":    companyGroups,
+			"channels":          channels,
+			"campaigns":         campaigns,
+			"campaign_ids":      campaignIDs,
+			"agencies":          agencies,
+			"url_redirects":     urlRedirects,
+			"app_host":          h.Config.AppHost,
+		},
+	})
 }

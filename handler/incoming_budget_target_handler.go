@@ -78,7 +78,7 @@ func (h *IncomingHandler) EditTargetBudget(c *fiber.Ctx) error {
 		total_data := 0
 		for index, value := range service_list {
 			total_budget += value.Budget
-			fmt.Printf("Index: %d, Value: %s\n", index, value)
+			fmt.Printf("Index: %d, Value: %v\n", index, value)
 			if value.Budget == 0 {
 				total_data += 1
 			}

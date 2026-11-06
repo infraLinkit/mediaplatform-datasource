@@ -525,9 +525,10 @@ func (h *IncomingHandler) campaignNameTaken(name string) bool {
 	return count > 0
 }
 
-// publicStorageURL gives a stored file the absolute address asset() would, since landing pages load it from any domain.
+// publicStorageURL gives a stored file an absolute address, since landing pages load it from any domain.
+// It uses APPAPI because this server serves /storage; APPHOST is the landing page host.
 func (h *IncomingHandler) publicStorageURL(path string) string {
-	return strings.TrimRight(h.Config.AppHost, "/") + path
+	return strings.TrimRight(h.Config.AppApi, "/") + path
 }
 
 // saveCampaignImage stores an uploaded image under ./storage. The type comes from the bytes and the

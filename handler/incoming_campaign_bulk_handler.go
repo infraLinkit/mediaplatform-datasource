@@ -66,15 +66,12 @@ func (h *IncomingHandler) applyCampaignDelete(urlServiceKey, campaignID string) 
 	cfgRediskey := helper.Concat("-", urlServiceKey, "configIdx")
 	cfgCmp, _ := h.campaignConfig(cfgRediskey, urlServiceKey)
 	h.DS.DelData(cfgRediskey, "$")
-	h.DS.R.Conn().B().FtDropindex().Index(cfgRediskey).Build()
 
 	ctrRedisKey := helper.Concat("-", urlServiceKey, "counterIdx")
 	h.DS.DelData(ctrRedisKey, "$")
-	h.DS.R.Conn().B().FtDropindex().Index(ctrRedisKey).Build()
 
 	sumRedisKey := helper.Concat("-", urlServiceKey, "summary")
 	h.DS.DelData(sumRedisKey, "$")
-	h.DS.R.Conn().B().FtDropindex().Index(sumRedisKey).Build()
 
 	h.DS.DelCampaignDetail(entity.CampaignDetail{
 		URLServiceKey: urlServiceKey,

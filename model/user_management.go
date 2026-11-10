@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/infraLinkit/mediaplatform-datasource/entity"
@@ -53,6 +54,40 @@ func (r *BaseModel) CreateOrUpdateUserAdnet(adnet *entity.UserAdnet) (*entity.Us
 		return nil, err
 	}
 	return adnet, nil
+}
+
+// Create or Update User Company
+func (r *BaseModel) CreateOrUpdateUserCompany(company *entity.UserCompany) (*entity.UserCompany, error) {
+	var existing entity.UserCompany
+	if err := r.DB.Where("user_id = ? AND company_id = ?", company.UserID, company.CompanyID).First(&existing).Error; err == nil {
+		existing.Status = company.Status
+		if err := r.DB.Save(&existing).Error; err != nil {
+			return nil, err
+		}
+		return &existing, nil
+	}
+
+	if err := r.DB.Create(company).Error; err != nil {
+		return nil, err
+	}
+	return company, nil
+}
+
+// Create or Update User Agency
+func (r *BaseModel) CreateOrUpdateUserAgency(agency *entity.UserAgency) (*entity.UserAgency, error) {
+	var existing entity.UserAgency
+	if err := r.DB.Where("user_id = ? AND agency_id = ?", agency.UserID, agency.AgencyID).First(&existing).Error; err == nil {
+		existing.Status = agency.Status
+		if err := r.DB.Save(&existing).Error; err != nil {
+			return nil, err
+		}
+		return &existing, nil
+	}
+
+	if err := r.DB.Create(agency).Error; err != nil {
+		return nil, err
+	}
+	return agency, nil
 }
 
 // GetAllusers retrieves all users
@@ -168,10 +203,11 @@ func (r *BaseModel) UpdateUserStatus(id int, status bool) (*entity.User, error) 
 		return nil, err
 	}
 
-	user.Status = status
-	if err := r.DB.Save(user).Error; err != nil {
+	// Only the status: saving the whole row would rewrite NULL columns as empty strings.
+	if err := r.DB.Model(&entity.User{}).Where("id = ?", id).Updates(map[string]interface{}{"status": status, "updated_at": time.Now()}).Error; err != nil {
 		return nil, err
 	}
+	user.Status = status
 
 	return user, nil
 }
@@ -231,3 +267,101 @@ func (r *BaseModel) ApproveUser(id int, roleID int, verifyBy string) error {
 
 	return nil
 }
+
+// GetUserDetail retrieves full user details with relations for editing / assign service
+func (r *BaseModel) GetUserDetail(userID int) (*entity.UserDetailResponse, error) {
+	var user entity.User
+	if err := r.DB.Where("id = ?", userID).Preload("Role").First(&user).Error; err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	var detailUser []entity.DetailUser
+	r.DB.Where("user_id = ?", userID).Find(&detailUser)
+
+	var userAdnet []entity.UserAdnet
+	r.DB.Where("user_id = ?", userID).Find(&userAdnet)
+
+	var userCompany []entity.UserCompany
+	r.DB.Unscoped().Where("user_id = ?", userID).Find(&userCompany)
+
+	var userAgency []entity.UserAgency
+	r.DB.Unscoped().Where("user_id = ?", userID).Find(&userAgency)
+
+	return &entity.UserDetailResponse{
+		User:        user,
+		DetailUser:  detailUser,
+		UserAdnet:   userAdnet,
+		UserCompany: userCompany,
+		UserAgency:  userAgency,
+	}, nil
+}
+
+// GetUserOptions retrieves master data for user management forms (create/edit/assign service)
+func (r *BaseModel) GetUserOptions() (*entity.UserOptionsData, error) {
+	var roles []entity.Role
+	// RoleRepository::getAll without the admin role, which these forms never offer.
+	r.DB.Where("id <> 1").Order("name ASC").Find(&roles)
+
+	var companies []entity.Company
+	r.DB.Order("id ASC").Find(&companies)
+
+	var agencies []entity.Agency
+	r.DB.Order("id ASC").Find(&agencies)
+
+	var adnets []entity.AdnetList
+	r.DB.Order("code ASC").Find(&adnets)
+
+	type sRow struct {
+		ID           int    `gorm:"column:id"`
+		Service      string `gorm:"column:service"`
+		Adn          string `gorm:"column:adn"`
+		CountryID    int    `gorm:"column:country_id"`
+		CountryCode  string `gorm:"column:country_code"`
+		OperatorID   int    `gorm:"column:operator_id"`
+		OperatorName string `gorm:"column:operator_name"`
+	}
+
+	var rows []sRow
+	r.DB.Table("services as s").
+		Select("s.id, s.service, s.adn, c.id as country_id, c.code as country_code, o.id as operator_id, o.name as operator_name").
+		// One row per service even when a code or name repeats, as Eloquent's belongsTo gives one parent.
+		Joins("JOIN countries c ON c.id = (SELECT MAX(id) FROM countries WHERE code = s.country)").
+		Joins("JOIN operators o ON o.id = (SELECT MAX(id) FROM operators WHERE name = s.operator)").
+		Order("s.service ASC").
+		Scan(&rows)
+
+	groupMap := make(map[string]*entity.ServiceGroupOption)
+	var groupOrder []string
+
+	for _, row := range rows {
+		groupKey := fmt.Sprintf("[%s] %s", row.CountryCode, row.OperatorName)
+		if _, exists := groupMap[groupKey]; !exists {
+			groupMap[groupKey] = &entity.ServiceGroupOption{
+				Group:      groupKey,
+				CountryID:  row.CountryID,
+				OperatorID: row.OperatorID,
+				Services:   []entity.ServiceOption{},
+			}
+			groupOrder = append(groupOrder, groupKey)
+		}
+		groupMap[groupKey].Services = append(groupMap[groupKey].Services, entity.ServiceOption{
+			ID:   row.ID,
+			Code: row.Adn,
+			Name: row.Service,
+		})
+	}
+
+	var serviceGroups []entity.ServiceGroupOption
+	for _, k := range groupOrder {
+		serviceGroups = append(serviceGroups, *groupMap[k])
+	}
+
+	return &entity.UserOptionsData{
+		Roles:     roles,
+		Companies: companies,
+		Agencies:  agencies,
+		Adnets:    adnets,
+		Services:  serviceGroups,
+	}, nil
+}
+

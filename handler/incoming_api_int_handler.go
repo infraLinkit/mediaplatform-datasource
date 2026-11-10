@@ -46,32 +46,87 @@ func (h *IncomingHandler) SetData(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "target_monthly_budget is not a valid number"})
 		}
 
-		redisKey := strings.ToLower(helper.Concat("_", "global_setting_tdb", country[0:2], operator[0:3]))
-
-		gset, _ := json.Marshal(entity.GlobalSetting{
-			TargetDailyBudget: target_daily_budget,
-		})
-
-		h.DS.SetData(redisKey, "$", string(gset))
-
-		// h.DS.UpdateCampaignMonitoringBudget(entity.CampaignDetail{
-		// 	TargetDailyBudget: targetDailyBudget,
-		// 	Country:           country,
-		// 	Operator:          operator,
-		// })
-
-		h.DS.UpdateReportSummaryCampaignMonitoringBudget(entity.SummaryCampaign{
-			SummaryDate:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
-			TargetDailyBudget:   targetDailyBudget,
-			TargetMonthlyBudget: targetMonthlyBudget,
-			Country:             country,
-			Operator:            operator,
-		})
+		h.applyTargetDailyBudget(country, operator, target_daily_budget, targetDailyBudget, targetMonthlyBudget)
 
 		return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 	} else {
 		return c.Status(fiber.StatusBadRequest).JSON(entity.GlobalResponse{Code: fiber.StatusBadRequest, Message: "Request parameter unknown"})
 	}
+}
+
+func (h *IncomingHandler) applyTargetDailyBudget(country, operator, rawDaily string, daily, monthly float64) {
+	redisKey := strings.ToLower(helper.Concat("_", "global_setting_tdb", country[0:2], operator[0:3]))
+
+	gset, _ := json.Marshal(entity.GlobalSetting{
+		TargetDailyBudget: rawDaily,
+	})
+
+	h.DS.SetData(redisKey, "$", string(gset))
+
+	// h.DS.UpdateCampaignMonitoringBudget(entity.CampaignDetail{
+	// 	TargetDailyBudget: targetDailyBudget,
+	// 	Country:           country,
+	// 	Operator:          operator,
+	// })
+
+	h.DS.UpdateReportSummaryCampaignMonitoringBudget(entity.SummaryCampaign{
+		SummaryDate:         helper.GetCurrentTime(h.Config.TZ, time.RFC3339),
+		TargetDailyBudget:   daily,
+		TargetMonthlyBudget: monthly,
+		Country:             country,
+		Operator:            operator,
+	})
+}
+
+type SetTargetDailyBudgetRequest struct {
+	Country             string   `json:"country"`
+	Operator            string   `json:"operator"`
+	TargetDailyBudget   *float64 `json:"target_daily_budget"`
+	TargetMonthlyBudget *float64 `json:"target_monthly_budget"`
+	Date                string   `json:"date"`
+}
+
+// SetTargetDailyBudget replaces CampaignMonitoringSummaryController::setTargetDailyBudget,
+// which read and updated summary_campaigns directly. Limit: three changes per month.
+func (h *IncomingHandler) SetTargetDailyBudget(c *fiber.Ctx) error {
+	var req SetTargetDailyBudgetRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"message": "Invalid request body", "success": false})
+	}
+	date, errMonth := time.Parse("2006-01", req.Date)
+	if errMonth != nil {
+		var errDay error
+		date, errDay = time.Parse("2006-01-02", req.Date)
+		errMonth = errDay
+	}
+	// applyTargetDailyBudget slices country[0:2] and operator[0:3] for the Redis key.
+	if len(req.Country) < 2 || len(req.Operator) < 3 || req.TargetDailyBudget == nil || req.TargetMonthlyBudget == nil || errMonth != nil {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON("Budget Not Valid")
+	}
+
+	var changes []int
+	const scope = "country = ? AND operator = ? AND EXTRACT(MONTH FROM summary_date) = ? AND EXTRACT(YEAR FROM summary_date) = ? AND deleted_at IS NULL"
+	args := []interface{}{req.Country, req.Operator, int(date.Month()), date.Year()}
+	if err := h.DB.Raw("SELECT target_daily_budget_changes FROM summary_campaigns WHERE "+scope+" LIMIT 1", args...).Scan(&changes).Error; err != nil {
+		h.Logs.Errorf("SetTargetDailyBudget: read changes: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Failed", "success": false})
+	}
+	if len(changes) == 0 {
+		return c.JSON(fiber.Map{"message": "There is no campaign on that day", "success": false})
+	}
+	if changes[0] > 2 {
+		return c.JSON(fiber.Map{"message": "You have already changed the target daily budget three times this month!", "success": false})
+	}
+	update := append([]interface{}{changes[0] + 1}, args...)
+	if err := h.DB.Exec("UPDATE summary_campaigns SET target_daily_budget_changes = ? WHERE "+scope, update...).Error; err != nil {
+		h.Logs.Errorf("SetTargetDailyBudget: update changes: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"message": "Failed", "success": false})
+	}
+
+	h.applyTargetDailyBudget(strings.ToUpper(req.Country), strings.ToUpper(req.Operator),
+		strconv.FormatFloat(*req.TargetDailyBudget, 'f', -1, 64), *req.TargetDailyBudget, *req.TargetMonthlyBudget)
+
+	return c.JSON(fiber.Map{"message": "Budget updated successfully", "success": true})
 }
 
 func (h *IncomingHandler) UpdateAgencyFeeAndCostConversion(c *fiber.Ctx) error {
@@ -560,6 +615,159 @@ func (h *IncomingHandler) UpdateExcel(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{Code: fiber.StatusOK, Message: config.OK_DESC})
 }
 
+// saveSMSCampaign upserts one UPLOAD SMS row and its dashboard summary. On failure it also
+// returns the user-facing message.
+func (h *IncomingHandler) saveSMSCampaign(campaign entity.SummaryCampaign) (string, error) {
+	// UPSERT QUERY
+	campaign.SuccessFP = 0
+	campaign.PO = 0
+	campaign.AgencyFee = 0
+	campaign.TotalWakiAgencyFee = 0
+	campaign.TechnicalFee = 0
+	campaign.Traffic = 0
+	campaign.CrPostback = 0
+	campaign.CrMO = 0
+
+	// campaign.CPA is left as-is (the raw "cost" column from the Excel row).
+	// PricePerMO/Revenue are derived from the SBAF/SAAF already supplied by
+	// the Excel row instead of recomputing spend via FormulaCPA (no PO/POAF/
+	// agency fee inputs exist on an SMS upload row).
+	if campaign.MoReceived > 0 {
+		campaign.PricePerMO = campaign.SAAF / float64(campaign.MoReceived)
+	} else {
+		campaign.PricePerMO = 0
+	}
+	campaign.Revenue = campaign.SAAF - campaign.SBAF
+
+	var err error
+	if campaign.CampaignObjective == "UPLOAD SMS MAINSTREAM" {
+		err = h.DS.AddSMSReportMainstream(campaign)
+	} else {
+		err = h.DS.AddSMSReport(campaign)
+	}
+	if err != nil {
+		return "[0] Failed to update SMS Campaign", err
+	}
+
+	if err = h.DS.CreateSummaryDashboard(campaign); err != nil {
+		return "[1] Failed to update SMS Campaign", err
+	}
+	return "", nil
+}
+
+func smsCellString(v interface{}) string {
+	switch t := v.(type) {
+	case nil:
+		return ""
+	case float64:
+		return strconv.FormatFloat(t, 'f', -1, 64)
+	default:
+		return strings.TrimSpace(fmt.Sprint(t))
+	}
+}
+
+func smsCellFloat(v interface{}) float64 {
+	f, _ := strconv.ParseFloat(smsCellString(v), 64)
+	return f
+}
+
+// UploadSMSExcel replaces Laravel CPAReportController::uploadExcel, including its Partner lookup.
+// With objective "UPLOAD SMS MAINSTREAM" it replaces uploadExcelMainstream: the adnet comes from the
+// "agency" column instead of "publisher", and "clicked" is stored too.
+// Row 0 is the header and row 1 is skipped, matching the SMS upload templates.
+func (h *IncomingHandler) UploadSMSExcel(c *fiber.Ctx) error {
+	var body struct {
+		Data      [][]interface{} `json:"data"`
+		Objective string          `json:"objective"`
+	}
+	if err := c.BodyParser(&body); err != nil || len(body.Data) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"success": false, "message": "Invalid request body"})
+	}
+
+	objective, adnetColumn := "UPLOAD SMS", "publisher"
+	if body.Objective == "UPLOAD SMS MAINSTREAM" {
+		objective, adnetColumn = body.Objective, "agency"
+	}
+
+	headers := make([]string, len(body.Data[0]))
+	for i, v := range body.Data[0] {
+		headers[i] = strings.ReplaceAll(strings.ToLower(smsCellString(v)), " ", "_")
+	}
+
+	var errs []string
+	for index, row := range body.Data[min(2, len(body.Data)):] {
+		if len(row) == 0 || smsCellString(row[0]) == "" {
+			continue
+		}
+		rowNumber := index + 1
+
+		cell := make(map[string]interface{}, len(headers))
+		for i, name := range headers {
+			if i < len(row) {
+				cell[name] = row[i]
+			}
+		}
+
+		var partner entity.Partner
+		if err := h.DB.Where("LOWER(name) = LOWER(?) AND LOWER(operator) = LOWER(?)", smsCellString(cell["cp"]), smsCellString(cell["operator"])).First(&partner).Error; err != nil {
+			errs = append(errs, fmt.Sprintf("1 Row %d: No reference campaign found for creation. : %s/%s/%s/%s", rowNumber, smsCellString(cell[adnetColumn]), smsCellString(cell["cp"]), smsCellString(cell["operator"]), smsCellString(cell["service"])))
+			continue
+		}
+
+		var ratioSend, ratioReceive int
+		ratioRaw := smsCellString(cell["ratio"])
+		if parts := strings.Split(ratioRaw, ":"); len(parts) == 2 {
+			send, errSend := strconv.Atoi(strings.TrimSpace(parts[0]))
+			receive, errReceive := strconv.Atoi(strings.TrimSpace(parts[1]))
+			if errSend != nil || errReceive != nil {
+				errs = append(errs, fmt.Sprintf("Row %d: Invalid ratio format on row %d: must be x:y or numeric.", rowNumber, rowNumber))
+				continue
+			}
+			ratioSend, ratioReceive = send, receive
+		} else if n, err := strconv.Atoi(ratioRaw); err == nil {
+			ratioSend, ratioReceive = n, n
+		} else {
+			errs = append(errs, fmt.Sprintf("Row %d: Invalid ratio value on row %d.", rowNumber, rowNumber))
+			continue
+		}
+
+		cost := smsCellFloat(cell["cost"])
+		campaign := entity.SummaryCampaign{
+			SummaryDate:       time.Unix((int64(smsCellFloat(cell["date"]))-25569)*86400, 0).UTC(),
+			CampaignObjective: objective,
+			URLServiceKey:     smsCellString(cell["campaign_id"]),
+			Adnet:             strings.ToUpper(smsCellString(cell[adnetColumn])),
+			Operator:          strings.ToUpper(smsCellString(cell["operator"])),
+			Service:           strings.ToUpper(smsCellString(cell["service"])),
+			Company:           strings.ToUpper(partner.Company),
+			Partner:           strings.ToUpper(smsCellString(cell["cp"])),
+			ShortCode:         smsCellString(cell["sdc"]),
+			MoReceived:        int(smsCellFloat(cell["pixel_received"])),
+			Postback:          int(smsCellFloat(cell["pixel_sent"])),
+			CostPerConversion: cost,
+			CPA:               cost,
+			SBAF:              smsCellFloat(cell["sbaf"]),
+			SAAF:              smsCellFloat(cell["saaf"]),
+			RatioSend:         ratioSend,
+			RatioReceive:      ratioReceive,
+			Landing:           int(smsCellFloat(cell["landing"])),
+			Clicked:           int(smsCellFloat(cell["clicked"])),
+		}
+
+		if msg, err := h.saveSMSCampaign(campaign); err != nil {
+			errs = append(errs, fmt.Sprintf("Row %d: %s: %s", rowNumber, msg, err.Error()))
+		}
+	}
+
+	if len(errs) > 0 {
+		return c.Status(fiber.StatusMultiStatus).JSON(fiber.Map{
+			"success": true,
+			"message": "Processed with some errors:<br>" + strings.Join(errs, "<br>"),
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"success": true, "message": "All rows processed successfully."})
+}
+
 func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 	var campaign entity.SummaryCampaign
 
@@ -573,46 +781,9 @@ func (h *IncomingHandler) UpsertExcel(c *fiber.Ctx) error {
 
 	if campaign.CampaignObjective == "UPLOAD SMS" || campaign.CampaignObjective == "UPLOAD SMS MAINSTREAM" {
 
-		// UPSERT QUERY
-		campaign.SuccessFP = 0
-		campaign.PO = 0
-		campaign.AgencyFee = 0
-		campaign.TotalWakiAgencyFee = 0
-		campaign.TechnicalFee = 0
-		campaign.Traffic = 0
-		campaign.CrPostback = 0
-		campaign.CrMO = 0
-
-		// campaign.CPA is left as-is (the raw "cost" column from the Excel row).
-		// PricePerMO/Revenue are derived from the SBAF/SAAF already supplied by
-		// the Excel row instead of recomputing spend via FormulaCPA (no PO/POAF/
-		// agency fee inputs exist on an SMS upload row).
-		if campaign.MoReceived > 0 {
-			campaign.PricePerMO = campaign.SAAF / float64(campaign.MoReceived)
-		} else {
-			campaign.PricePerMO = 0
-		}
-		campaign.Revenue = campaign.SAAF - campaign.SBAF
-
-		var err error
-		if campaign.CampaignObjective == "UPLOAD SMS MAINSTREAM" {
-			err = h.DS.AddSMSReportMainstream(campaign)
-		} else {
-			err = h.DS.AddSMSReport(campaign)
-		}
-
-		if err != nil {
+		if msg, err := h.saveSMSCampaign(campaign); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "[0] Failed to update SMS Campaign",
-				"error":   err.Error(),
-			})
-		}
-
-		err = h.DS.CreateSummaryDashboard(campaign)
-
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"message": "[1] Failed to update SMS Campaign",
+				"message": msg,
 				"error":   err.Error(),
 			})
 		}
@@ -810,5 +981,32 @@ func (h *IncomingHandler) UpdateResponseURLServiceInSummaryLanding(c *fiber.Ctx)
 	return c.Status(fiber.StatusOK).JSON(entity.GlobalResponse{
 		Code:    fiber.StatusOK,
 		Message: "OK",
+	})
+}
+
+type UpdatePayoutRequest struct {
+	ID         interface{} `json:"id"`
+	RealPayout float64     `json:"real_payout"`
+}
+
+func (h *IncomingHandler) UpdateRealPayout(c *fiber.Ctx) error {
+	var req UpdatePayoutRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	idStr := fmt.Sprintf("%v", req.ID)
+	if idStr == "" || idStr == "0" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ID is required"})
+	}
+
+	err := h.DB.Table("summary_campaigns").Where("id = ?", idStr).Update("real_payout", req.RealPayout).Error
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to update real payout"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"code":    fiber.StatusOK,
+		"message": "Payout updated successfully",
 	})
 }

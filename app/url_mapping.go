@@ -404,7 +404,7 @@ func MapUrls(obj App3rdParty) *fiber.App {
 
 	// API External
 	ext := v1.Group("/ext", h.ExtAPIKeyMiddleware) // External API
-	ext.Get("/campaign-details", h.GetExtCampaignDetails).Name("External Campaign Summary (campaign_id, service, shortcode, adnet, cost)")
+	ext.Get("/campaign-details", h.GetExtCampaignDetails).Name("External Campaign Summary (campaign_id, country, service, shortcode, adnet, cost)")
 
 	return f
 }

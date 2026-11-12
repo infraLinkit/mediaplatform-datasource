@@ -17,6 +17,7 @@ const (
 type extCampaignDetail struct {
 	Date       string  `json:"date"`
 	CampaignId string  `json:"campaign_id"`
+	Country    string  `json:"country"`
 	Service    string  `json:"service"`
 	ShortCode  string  `json:"shortcode"`
 	Adnet      string  `json:"adnet"`
@@ -49,13 +50,14 @@ func (h *IncomingHandler) ExtAPIKeyMiddleware(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-// GetExtCampaignDetails returns date, campaign_id, service, shortcode, adnet, landing, mo, postback,
+// GetExtCampaignDetails returns date, campaign_id, country, service, shortcode, adnet, landing, mo, postback,
 // cr_mo, cr_postback, cost (saaf) from summary_campaigns.
-// Optional query params: service, shortcode, start_date, end_date (YYYY-MM-DD), limit, page.
+// Optional query params: country, service, shortcode, start_date, end_date (YYYY-MM-DD), limit, page.
 // campaign_id in the response is summary_campaigns.url_service_key. The range defaults to today and
-// rows are summed per date, url_service_key, service, short_code, adnet. cr_mo = mo/landing and
+// rows are summed per date, url_service_key, country, service, short_code, adnet. cr_mo = mo/landing and
 // cr_postback = postback/landing (ratios, same as the summary cron), recomputed from the sums.
 func (h *IncomingHandler) GetExtCampaignDetails(c *fiber.Ctx) error {
+	country := c.Query("country")
 	service := c.Query("service")
 	shortCode := c.Query("shortcode", c.Query("short_code"))
 
@@ -90,6 +92,7 @@ func (h *IncomingHandler) GetExtCampaignDetails(c *fiber.Ctx) error {
 	q := h.DB.Model(&entity.SummaryCampaign{}).
 		Select(`TO_CHAR(summary_date, 'YYYY-MM-DD') AS date,
 			url_service_key AS campaign_id,
+			country,
 			service,
 			short_code,
 			adnet,
@@ -100,8 +103,11 @@ func (h *IncomingHandler) GetExtCampaignDetails(c *fiber.Ctx) error {
 			COALESCE(SUM(postback)::float8 / NULLIF(SUM(landing), 0), 0) AS cr_postback,
 			COALESCE(SUM(saaf), 0) AS cost`).
 		Where("summary_date BETWEEN ? AND ?", startDate, endDate).
-		Group("summary_date, url_service_key, service, short_code, adnet")
+		Group("summary_date, url_service_key, country, service, short_code, adnet")
 
+	if country != "" {
+		q = q.Where("LOWER(country) = LOWER(?)", country)
+	}
 	if service != "" {
 		q = q.Where("LOWER(service) = LOWER(?)", service)
 	}
@@ -110,7 +116,7 @@ func (h *IncomingHandler) GetExtCampaignDetails(c *fiber.Ctx) error {
 	}
 
 	var rows []extCampaignDetail
-	if err := q.Order("summary_date ASC, url_service_key ASC, adnet ASC, service ASC, short_code ASC").
+	if err := q.Order("summary_date ASC, url_service_key ASC, country ASC, adnet ASC, service ASC, short_code ASC").
 		Limit(limit).Offset((page - 1) * limit).
 		Scan(&rows).Error; err != nil {
 		h.Logs.WithError(err).Error("GetExtCampaignDetails: database error")

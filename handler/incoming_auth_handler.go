@@ -186,6 +186,8 @@ type LoginRequest struct {
 	Username       string `json:"username"`
 	Password       string `json:"password"`
 	RecaptchaToken string `json:"recaptcha_token"`
+	// Remember keeps the session for refreshTTLRemember instead of refreshTTL.
+	Remember bool `json:"remember"`
 }
 
 type RefreshRequest struct {
@@ -199,6 +201,12 @@ type ProfileUpdateRequest struct {
 	OldPassword string `json:"old_password"`
 	NewPassword string `json:"new_password"`
 }
+
+const (
+	accessTTL          = 15 * time.Minute
+	refreshTTL         = 24 * time.Hour      // login without "remember me"
+	refreshTTLRemember = 30 * 24 * time.Hour // login with "remember me"
+)
 
 func getJWTSecretKey() []byte {
 	return []byte(strings.TrimSpace(os.Getenv("JWT_SECRET")))
@@ -270,7 +278,7 @@ func (h *IncomingHandler) Login(c *fiber.Ctx) error {
 		"sub":   user.ID,
 		"email": user.Email,
 		"iat":   time.Now().Unix(),
-		"exp":   time.Now().Add(15 * time.Minute).Unix(),
+		"exp":   time.Now().Add(accessTTL).Unix(),
 		"type":  "access",
 		"jti":   generateJTI(),
 	}
@@ -280,13 +288,18 @@ func (h *IncomingHandler) Login(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create access token"})
 	}
 
+	sessionTTL := refreshTTL
+	if req.Remember {
+		sessionTTL = refreshTTLRemember
+	}
 	refreshClaims := jwt.MapClaims{
-		"sub":   user.ID,
-		"email": user.Email,
-		"iat":   time.Now().Unix(),
-		"exp":   time.Now().Add(30 * 24 * time.Hour).Unix(),
-		"type":  "refresh",
-		"jti":   generateJTI(),
+		"sub":      user.ID,
+		"email":    user.Email,
+		"iat":      time.Now().Unix(),
+		"exp":      time.Now().Add(sessionTTL).Unix(),
+		"type":     "refresh",
+		"remember": req.Remember,
+		"jti":      generateJTI(),
 	}
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	refreshString, err := refreshToken.SignedString(secret)
@@ -314,10 +327,12 @@ func (h *IncomingHandler) Login(c *fiber.Ctx) error {
 		"token":         accessString,
 		"access_token":  accessString,
 		"refresh_token": refreshString,
+		"expires_in":    int(accessTTL.Seconds()),
 		"user":          userPayload,
 		"data": fiber.Map{
 			"access_token":  accessString,
 			"refresh_token": refreshString,
+			"expires_in":    int(accessTTL.Seconds()),
 			"user":          userPayload,
 		},
 	})
@@ -371,7 +386,7 @@ func (h *IncomingHandler) RefreshToken(c *fiber.Ctx) error {
 		"sub":   user.ID,
 		"email": user.Email,
 		"iat":   time.Now().Unix(),
-		"exp":   time.Now().Add(15 * time.Minute).Unix(),
+		"exp":   time.Now().Add(accessTTL).Unix(),
 		"type":  "access",
 		"jti":   generateJTI(),
 	}
@@ -381,8 +396,16 @@ func (h *IncomingHandler) RefreshToken(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to generate token"})
 	}
 
+	// The refresh token keeps its original expiry, so a session ends at most refreshTTL(Remember) after login.
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"token": accessString,
+		"code":         fiber.StatusOK,
+		"token":        accessString,
+		"access_token": accessString,
+		"expires_in":   int(accessTTL.Seconds()),
+		"data": fiber.Map{
+			"access_token": accessString,
+			"expires_in":   int(accessTTL.Seconds()),
+		},
 	})
 }
 
